@@ -99,28 +99,51 @@ export function useBehaviorActions() {
       .maybeSingle()
 
     if (existing) {
-      // Already checked in today — update bag number if provided
+      // Already checked in today — update bag number if provided (ignore error if column missing)
       if (phoneBagNumber) {
-        await supabase
-          .from('daily_behavior_tracking')
-          .update({ phone_bag_number: phoneBagNumber })
-          .eq('id', existing.id)
+        try {
+          await supabase
+            .from('daily_behavior_tracking')
+            .update({ phone_bag_number: phoneBagNumber })
+            .eq('id', existing.id)
+        } catch (_) { /* column may not exist yet */ }
       }
       return { data: existing, error: null, alreadyCheckedIn: true }
     } else {
       // Create new record
+      const baseData = {
+        student_id: studentId,
+        campus_id: campusId,
+        district_id: districtId,
+        tracking_date: today,
+        check_in_time: now,
+        status: 'checked_in',
+        period_scores: {},
+      }
+
+      if (phoneBagNumber) {
+        // Try with bag number first; fall back without if column doesn't exist yet
+        const { data, error } = await supabase
+          .from('daily_behavior_tracking')
+          .insert({ ...baseData, phone_bag_number: phoneBagNumber })
+          .select()
+          .single()
+
+        if (error) {
+          // Retry without phone_bag_number in case migration 011 hasn't been applied
+          const retry = await supabase
+            .from('daily_behavior_tracking')
+            .insert(baseData)
+            .select()
+            .single()
+          return retry
+        }
+        return { data, error }
+      }
+
       const { data, error } = await supabase
         .from('daily_behavior_tracking')
-        .insert({
-          student_id: studentId,
-          campus_id: campusId,
-          district_id: districtId,
-          tracking_date: today,
-          check_in_time: now,
-          status: 'checked_in',
-          period_scores: {},
-          phone_bag_number: phoneBagNumber || null,
-        })
+        .insert(baseData)
         .select()
         .single()
       return { data, error }
