@@ -85,9 +85,10 @@ export function useDailyBehavior(studentId, date) {
  * Daily behavior CRUD actions
  */
 export function useBehaviorActions() {
-  const checkIn = async (studentId, campusId, districtId) => {
+  const checkIn = async (studentId, campusId, districtId, options = {}) => {
     const today = new Date().toISOString().split('T')[0]
     const now = new Date().toISOString()
+    const { phoneBagNumber } = options
 
     // Check if record exists for today
     const { data: existing } = await supabase
@@ -98,7 +99,13 @@ export function useBehaviorActions() {
       .maybeSingle()
 
     if (existing) {
-      // Already checked in today — do not re-stamp
+      // Already checked in today — update bag number if provided
+      if (phoneBagNumber) {
+        await supabase
+          .from('daily_behavior_tracking')
+          .update({ phone_bag_number: phoneBagNumber })
+          .eq('id', existing.id)
+      }
       return { data: existing, error: null, alreadyCheckedIn: true }
     } else {
       // Create new record
@@ -112,6 +119,7 @@ export function useBehaviorActions() {
           check_in_time: now,
           status: 'checked_in',
           period_scores: {},
+          phone_bag_number: phoneBagNumber || null,
         })
         .select()
         .single()
@@ -165,6 +173,40 @@ export function useBehaviorActions() {
   }
 
   return { checkIn, checkOut, updatePeriodScore, updateDailyNotes }
+}
+
+/**
+ * Fetch today's check-ins for a campus (admin end-of-day phone return view)
+ */
+export function useTodayCheckIns(campusId) {
+  const [records, setRecords] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchRecords = useCallback(async () => {
+    if (!campusId) {
+      setRecords([])
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    const today = new Date().toISOString().split('T')[0]
+    const { data } = await supabase
+      .from('daily_behavior_tracking')
+      .select('id, student_id, check_in_time, check_out_time, status, phone_bag_number, students(id, first_name, last_name, student_id_number, grade_level)')
+      .eq('campus_id', campusId)
+      .eq('tracking_date', today)
+      .order('check_in_time', { ascending: true })
+
+    setRecords(data || [])
+    setLoading(false)
+  }, [campusId])
+
+  useEffect(() => {
+    fetchRecords()
+  }, [fetchRecords])
+
+  return { records, loading, refetch: fetchRecords }
 }
 
 /**

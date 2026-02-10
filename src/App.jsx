@@ -34,6 +34,7 @@ import ParentPlanViewPage from './pages/ParentPlanViewPage'
 import ReportsPage from './pages/ReportsPage'
 import DaepDashboardPage from './pages/DaepDashboardPage'
 import ImportDataPage from './pages/ImportDataPage'
+import PhoneReturnPage from './pages/PhoneReturnPage'
 
 // Constants
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES, DAEP_ROLES } from './lib/constants'
@@ -87,6 +88,7 @@ function App() {
 
             {/* DAEP Dashboard */}
             <Route path="/daep" element={<RequireRole roles={DAEP_ROLES}><DaepDashboardPage /></RequireRole>} />
+            <Route path="/daep/phone-return" element={<RequireRole roles={DAEP_ROLES}><PhoneReturnPage /></RequireRole>} />
 
             {/* Discipline Matrix */}
             <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />

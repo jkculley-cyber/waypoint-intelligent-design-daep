@@ -20,6 +20,7 @@ export default function KioskPage() {
   const [studentIdInput, setStudentIdInput] = useState('')
   const [view, setView] = useState('login') // login | confirm_identity | confirmation
   const loginIdleRef = useRef(null)
+  const [phoneBagNumber, setPhoneBagNumber] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [countdown, setCountdown] = useState(AUTO_RETURN_SECONDS)
 
@@ -99,6 +100,7 @@ export default function KioskPage() {
         lastName: student.last_name,
         gradeLevel: student.grade_level,
         studentIdNumber: student.student_id_number,
+        phoneBagNumber: record?.phone_bag_number || null,
         remaining,
         totalInstructional,
         elapsed,
@@ -131,6 +133,7 @@ export default function KioskPage() {
   const resetToLogin = () => {
     logout()
     setStudentIdInput('')
+    setPhoneBagNumber('')
     setPlacement(null)
     setPlacementLoaded(false)
     setConfirmationData(null)
@@ -147,7 +150,9 @@ export default function KioskPage() {
   const performCheckIn = async () => {
     if (actionLoading) return
     setActionLoading(true)
-    const { error } = await checkIn(student.id, student.campus_id, student.district_id)
+    const { error } = await checkIn(student.id, student.campus_id, student.district_id, {
+      phoneBagNumber: phoneBagNumber.trim() || null,
+    })
     if (error) {
       toast.error('Check-in failed')
       setActionLoading(false)
@@ -160,6 +165,7 @@ export default function KioskPage() {
       lastName: student.last_name,
       gradeLevel: student.grade_level,
       studentIdNumber: student.student_id_number,
+      phoneBagNumber: phoneBagNumber.trim() || null,
       remaining,
       totalInstructional,
       elapsed,
@@ -250,6 +256,23 @@ export default function KioskPage() {
             <p className="text-xl text-gray-300">{student.first_name} {student.last_name}</p>
             <p className="text-sm text-gray-500 mt-1">Grade {student.grade_level} | ID: {student.student_id_number}</p>
 
+            {/* Phone Bag / Locker Number */}
+            {!hasCheckedInToday && (
+              <div className="mt-6 text-left">
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Phone Bag / Locker # <span className="text-gray-600">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={phoneBagNumber}
+                  onChange={(e) => setPhoneBagNumber(e.target.value)}
+                  placeholder="e.g. 42"
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-xl text-center font-mono text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
+                  maxLength={20}
+                />
+              </div>
+            )}
+
             <div className="flex gap-4 mt-8">
               <Button
                 variant="secondary"
@@ -294,6 +317,13 @@ export default function KioskPage() {
             <p className="text-sm text-gray-500 mt-1">
               Grade {confirmationData.gradeLevel} | ID: {confirmationData.studentIdNumber}
             </p>
+            {confirmationData.phoneBagNumber && (
+              <div className="mt-4 bg-gray-800 rounded-xl px-6 py-4 inline-block">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Phone Bag / Locker</p>
+                <p className="text-3xl font-bold text-orange-400 font-mono">{confirmationData.phoneBagNumber}</p>
+              </div>
+            )}
+
             {confirmationData.alreadyCheckedIn && (
               <p className="text-sm text-yellow-400 mt-3">
                 You have already checked in today. Only one check-in per day is recorded.
