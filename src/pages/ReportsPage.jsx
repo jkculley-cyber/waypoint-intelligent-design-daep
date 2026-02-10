@@ -85,6 +85,7 @@ export default function ReportsPage() {
 // =================== OVERVIEW TAB ===================
 
 function OverviewTab() {
+  const navigate = useNavigate()
   const { stats, loading: statsLoading } = useAnalyticsSummary()
   const { trends, loading: trendsLoading } = useIncidentTrends()
 
@@ -162,10 +163,10 @@ function OverviewTab() {
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Area type="monotone" dataKey="total" name="Total" stroke="#f97316" fill="url(#totalGrad)" strokeWidth={2} />
-                <Line type="monotone" dataKey="iss" name="ISS" stroke="#f97316" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="oss" name="OSS" stroke="#ef4444" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="daep" name="DAEP" stroke="#dc2626" strokeWidth={1.5} dot={false} />
+                <Area type="monotone" dataKey="total" name="Total" stroke="#f97316" fill="url(#totalGrad)" strokeWidth={2} cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Line type="monotone" dataKey="iss" name="ISS" stroke="#f97316" strokeWidth={1.5} dot={false} cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Line type="monotone" dataKey="oss" name="OSS" stroke="#ef4444" strokeWidth={1.5} dot={false} cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Line type="monotone" dataKey="daep" name="DAEP" stroke="#dc2626" strokeWidth={1.5} dot={false} cursor="pointer" onClick={() => navigate('/incidents')} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -187,10 +188,10 @@ function OverviewTab() {
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="iss" name="ISS" fill="#f97316" stackId="a" />
-                <Bar dataKey="oss" name="OSS" fill="#ef4444" stackId="a" />
-                <Bar dataKey="daep" name="DAEP" fill="#dc2626" stackId="a" />
-                <Bar dataKey="other" name="Other" fill="#9ca3af" stackId="a" />
+                <Bar dataKey="iss" name="ISS" fill="#f97316" stackId="a" cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Bar dataKey="oss" name="OSS" fill="#ef4444" stackId="a" cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Bar dataKey="daep" name="DAEP" fill="#dc2626" stackId="a" cursor="pointer" onClick={() => navigate('/incidents')} />
+                <Bar dataKey="other" name="Other" fill="#9ca3af" stackId="a" cursor="pointer" onClick={() => navigate('/incidents')} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -311,8 +312,8 @@ function DisproportionalityChart({ title, data, description, drilldownBase }) {
               formatter={(value, name) => [`${value}%`, name]}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="populationPct" name="% of Student Population" fill="#93c5fd" />
-            <Bar dataKey="incidentPct" name="% of Incidents" fill="#ef4444" />
+            <Bar dataKey="populationPct" name="% of Student Population" fill="#93c5fd" cursor="pointer" onClick={() => navigate('/students')} />
+            <Bar dataKey="incidentPct" name="% of Incidents" fill="#ef4444" cursor="pointer" onClick={() => navigate('/incidents')} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -362,6 +363,7 @@ function DisproportionalityChart({ title, data, description, drilldownBase }) {
 // =================== RECIDIVISM TAB ===================
 
 function RecidivismTab() {
+  const navigate = useNavigate()
   const { data, loading } = useRecidivismData()
 
   const handleExport = (format) => {
@@ -445,7 +447,7 @@ function RecidivismTab() {
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} label={{ value: 'Students', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Bar dataKey="count" name="Students" fill="#f97316" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="count" name="Students" fill="#f97316" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate('/students')}>
                   {data.distribution.map((_, index) => (
                     <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
@@ -546,8 +548,8 @@ function InterventionsTab() {
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#6b7280' }} width={160} />
               <Tooltip contentStyle={{ fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="active" name="Active" fill="#22c55e" stackId="a" />
-              <Bar dataKey="completed" name="Completed" fill="#f97316" stackId="a" />
+              <Bar dataKey="active" name="Active" fill="#22c55e" stackId="a" cursor="pointer" onClick={() => navigate('/plans')} />
+              <Bar dataKey="completed" name="Completed" fill="#f97316" stackId="a" cursor="pointer" onClick={() => navigate('/plans')} />
             </BarChart>
           </ResponsiveContainer>
         </div>

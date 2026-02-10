@@ -1,8 +1,10 @@
 import { useAuth } from '../../contexts/AuthContext'
+import { PageLoader } from '../ui/LoadingSpinner'
 
 export default function RequireRole({ roles, children }) {
-  const { hasRole, profile } = useAuth()
+  const { hasRole, profile, loading } = useAuth()
 
+  if (loading) return <PageLoader message="Loading..." />
   if (!profile) return null
 
   if (!hasRole(roles)) {

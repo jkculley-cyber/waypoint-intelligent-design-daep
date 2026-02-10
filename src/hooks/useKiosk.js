@@ -101,12 +101,11 @@ export function useBehaviorActions() {
     if (existing) {
       // Already checked in today — update bag number if provided (ignore error if column missing)
       if (phoneBagNumber) {
-        try {
-          await supabase
-            .from('daily_behavior_tracking')
-            .update({ phone_bag_number: phoneBagNumber })
-            .eq('id', existing.id)
-        } catch (_) { /* column may not exist yet */ }
+        await supabase
+          .from('daily_behavior_tracking')
+          .update({ phone_bag_number: phoneBagNumber })
+          .eq('id', existing.id)
+        // Ignore errors — column may not exist if migration 011 hasn't run
       }
       return { data: existing, error: null, alreadyCheckedIn: true }
     } else {
