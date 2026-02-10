@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -130,13 +131,13 @@ function OverviewTab() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <SummaryCard label="Total Incidents" value={stats?.totalIncidents} color="blue" />
-        <SummaryCard label="Active" value={stats?.activeIncidents} color="indigo" />
-        <SummaryCard label="DAEP Placements" value={stats?.daepPlacements} color="red" />
-        <SummaryCard label="Compliance Holds" value={stats?.complianceHolds} color="yellow" />
-        <SummaryCard label="Active Alerts" value={stats?.activeAlerts} color="orange" />
-        <SummaryCard label="Active Plans" value={stats?.activePlans} color="green" />
-        <SummaryCard label="Students w/ Incidents" value={stats?.uniqueStudents} color="purple" />
+        <SummaryCard label="Total Incidents" value={stats?.totalIncidents} color="blue" href="/incidents" />
+        <SummaryCard label="Active" value={stats?.activeIncidents} color="indigo" href="/incidents?status=active" />
+        <SummaryCard label="DAEP Placements" value={stats?.daepPlacements} color="red" href="/incidents?consequence=daep" />
+        <SummaryCard label="Compliance Holds" value={stats?.complianceHolds} color="yellow" href="/compliance" />
+        <SummaryCard label="Active Alerts" value={stats?.activeAlerts} color="orange" href="/alerts" />
+        <SummaryCard label="Active Plans" value={stats?.activePlans} color="green" href="/plans" />
+        <SummaryCard label="Students w/ Incidents" value={stats?.uniqueStudents} color="purple" href="/students" />
       </div>
 
       {/* Incident Trends Chart */}
@@ -260,6 +261,7 @@ function DisproportionalityTab() {
         title="By Race/Ethnicity"
         data={data.byRace}
         description="Compares discipline incident rates with student population proportions by race."
+        drilldownBase="/students"
       />
 
       {/* SPED Status */}
@@ -267,6 +269,7 @@ function DisproportionalityTab() {
         title="By SPED / 504 Status"
         data={data.bySped}
         description="Compares discipline rates between SPED, 504, and general education students."
+        drilldownBase="/students"
       />
 
       {/* Gender */}
@@ -274,6 +277,7 @@ function DisproportionalityTab() {
         title="By Gender"
         data={data.byGender}
         description="Compares discipline incident rates by student gender."
+        drilldownBase="/students"
       />
 
       {/* ELL Status */}
@@ -281,12 +285,14 @@ function DisproportionalityTab() {
         title="By ELL Status"
         data={data.byEll}
         description="Compares discipline rates between English Language Learners and non-ELL students."
+        drilldownBase="/students"
       />
     </div>
   )
 }
 
-function DisproportionalityChart({ title, data, description }) {
+function DisproportionalityChart({ title, data, description, drilldownBase }) {
+  const navigate = useNavigate()
   if (!data?.length) return null
 
   return (
@@ -326,7 +332,11 @@ function DisproportionalityChart({ title, data, description }) {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {data.map((row) => (
-              <tr key={row.name}>
+              <tr
+                key={row.name}
+                className={drilldownBase ? 'hover:bg-gray-50 cursor-pointer' : ''}
+                onClick={drilldownBase ? () => navigate(drilldownBase) : undefined}
+              >
                 <td className="px-3 py-2 font-medium text-gray-900">{row.name}</td>
                 <td className="px-3 py-2 text-gray-600">{row.incidents}</td>
                 <td className="px-3 py-2 text-gray-600">{row.population}</td>
@@ -396,24 +406,28 @@ function RecidivismTab() {
           value={`${data.daepRate}%`}
           sublabel={`${data.daepRepeatStudents} of ${data.daepUniqueStudents} students`}
           color={data.daepRate > 30 ? 'red' : data.daepRate > 15 ? 'yellow' : 'green'}
+          href="/incidents?consequence=daep"
         />
         <MetricCard
           label="Overall Repeat Rate"
           value={`${data.overallRepeatRate}%`}
           sublabel={`${data.repeatOffenders} repeat offenders`}
           color={data.overallRepeatRate > 40 ? 'red' : data.overallRepeatRate > 25 ? 'yellow' : 'green'}
+          href="/incidents"
         />
         <MetricCard
           label="Total DAEP Placements"
           value={data.totalDaepPlacements}
           sublabel="This school year"
           color="blue"
+          href="/incidents?consequence=daep"
         />
         <MetricCard
           label="Unique Students"
           value={data.totalUniqueStudents}
           sublabel="With incidents this year"
           color="purple"
+          href="/students"
         />
       </div>
 
@@ -469,6 +483,7 @@ function RecidivismTab() {
 // =================== INTERVENTIONS TAB ===================
 
 function InterventionsTab() {
+  const navigate = useNavigate()
   const { data, loading } = useInterventionEffectiveness()
 
   const handleExport = (format) => {
@@ -510,9 +525,9 @@ function InterventionsTab() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <SummaryCard label="Total Assignments" value={data.reduce((s, d) => s + d.total, 0)} color="blue" />
-        <SummaryCard label="Currently Active" value={data.reduce((s, d) => s + d.active, 0)} color="green" />
-        <SummaryCard label="Completed" value={data.reduce((s, d) => s + d.completed, 0)} color="indigo" />
+        <SummaryCard label="Total Assignments" value={data.reduce((s, d) => s + d.total, 0)} color="blue" href="/plans" />
+        <SummaryCard label="Currently Active" value={data.reduce((s, d) => s + d.active, 0)} color="green" href="/plans" />
+        <SummaryCard label="Completed" value={data.reduce((s, d) => s + d.completed, 0)} color="indigo" href="/plans" />
         <SummaryCard
           label="Avg Effectiveness"
           value={`${Math.round(data.filter(d => d.effectivenessRate !== null).reduce((s, d) => s + (d.effectivenessRate || 0), 0) / Math.max(1, data.filter(d => d.effectivenessRate !== null).length))}%`}
@@ -556,7 +571,7 @@ function InterventionsTab() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {data.map((row) => (
-                <tr key={row.name}>
+                <tr key={row.name} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate('/plans')}>
                   <td className="px-3 py-2 font-medium text-gray-900">{row.name}</td>
                   <td className="px-3 py-2">
                     <Badge color={TIER_COLORS_MAP[row.tier] || 'gray'} size="sm">
@@ -818,24 +833,29 @@ function ExportTab() {
 
 // =================== SHARED COMPONENTS ===================
 
-function SummaryCard({ label, value, color }) {
+function SummaryCard({ label, value, color, href }) {
   const textColors = {
     blue: 'text-orange-600', red: 'text-red-600', green: 'text-green-600',
     yellow: 'text-yellow-600', orange: 'text-orange-600', purple: 'text-purple-600',
-    indigo: 'text-indigo-600',
+    indigo: 'text-orange-600',
   }
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+  const content = (
+    <div className={`bg-white border border-gray-200 rounded-lg px-4 py-3 ${href ? 'hover:border-orange-300 hover:shadow-md transition-all cursor-pointer' : ''}`}>
       <p className="text-xs text-gray-500 truncate">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${textColors[color] || 'text-gray-900'}`}>
         {value ?? '--'}
       </p>
     </div>
   )
+
+  if (href) {
+    return <Link to={href} className="block">{content}</Link>
+  }
+  return content
 }
 
-function MetricCard({ label, value, sublabel, color }) {
+function MetricCard({ label, value, sublabel, color, href }) {
   const bgColors = {
     red: 'bg-red-50 border-red-200',
     yellow: 'bg-yellow-50 border-yellow-200',
@@ -848,13 +868,18 @@ function MetricCard({ label, value, sublabel, color }) {
     blue: 'text-orange-700', purple: 'text-purple-700',
   }
 
-  return (
-    <div className={`rounded-lg border px-4 py-3 ${bgColors[color] || 'bg-gray-50 border-gray-200'}`}>
+  const content = (
+    <div className={`rounded-lg border px-4 py-3 ${bgColors[color] || 'bg-gray-50 border-gray-200'} ${href ? 'hover:shadow-md transition-all cursor-pointer' : ''}`}>
       <p className="text-xs text-gray-500">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${textColors[color] || 'text-gray-900'}`}>{value}</p>
       {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
     </div>
   )
+
+  if (href) {
+    return <Link to={href} className="block">{content}</Link>
+  }
+  return content
 }
 
 function ExportButtons({ onExport }) {
