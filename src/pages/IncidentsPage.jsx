@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
@@ -9,6 +9,7 @@ import { SelectField } from '../components/ui/FormField'
 import { StudentFlagsSummary } from '../components/students/StudentFlags'
 import { useIncidents } from '../hooks/useIncidents'
 import { useCampuses } from '../hooks/useCampuses'
+import { useAuth } from '../contexts/AuthContext'
 import { formatStudentName, formatDate } from '../lib/utils'
 import {
   INCIDENT_STATUS_LABELS,
@@ -16,23 +17,44 @@ import {
   CONSEQUENCE_TYPE_LABELS,
   INCIDENT_STATUS,
 } from '../lib/constants'
+import { useAccessScope } from '../hooks/useAccessScope'
+import { canImport, getImportTier } from '../lib/importPermissions'
+import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 
 export default function IncidentsPage() {
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [campusFilter, setCampusFilter] = useState('')
   const [consequenceFilter, setConsequenceFilter] = useState('')
+  const { scope } = useAccessScope()
+  const { profile } = useAuth()
 
   const filters = useMemo(() => {
     const f = {}
+    if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+      f._campusScope = scope.scopedCampusIds
+    }
     if (statusFilter) f.status = statusFilter
     if (campusFilter) f.campus_id = campusFilter
     if (consequenceFilter) f.consequence_type = consequenceFilter
     return f
-  }, [statusFilter, campusFilter, consequenceFilter])
+  }, [statusFilter, campusFilter, consequenceFilter, scope])
 
-  const { incidents, loading } = useIncidents(filters)
+  const { incidents: rawIncidents, loading } = useIncidents(filters)
   const { campuses } = useCampuses()
+
+  // Client-side search across student name and offense
+  const incidents = useMemo(() => {
+    if (!search.trim()) return rawIncidents
+    const q = search.toLowerCase()
+    return rawIncidents.filter(inc => {
+      const studentName = inc.student ? `${inc.student.first_name} ${inc.student.last_name}`.toLowerCase() : ''
+      const offenseTitle = inc.offense?.title?.toLowerCase() || ''
+      const studentId = inc.student?.student_id_number?.toLowerCase() || ''
+      return studentName.includes(q) || offenseTitle.includes(q) || studentId.includes(q)
+    })
+  }, [rawIncidents, search])
 
   const columns = [
     {
@@ -103,21 +125,80 @@ export default function IncidentsPage() {
     label,
   }))
 
+  const exportHeaders = ['Student', 'Date', 'Offense', 'Consequence', 'Status', 'Campus']
+
+  const buildExportRows = useCallback(() => {
+    const campusMap = Object.fromEntries(campuses.map(c => [c.id, c.name]))
+    return incidents.map(inc => [
+      inc.student ? formatStudentName(inc.student) : '—',
+      formatDate(inc.incident_date),
+      inc.offense?.title || '—',
+      CONSEQUENCE_TYPE_LABELS[inc.consequence_type] || inc.consequence_type || '—',
+      INCIDENT_STATUS_LABELS[inc.status] || inc.status,
+      campusMap[inc.campus_id] || '—',
+    ])
+  }, [incidents, campuses])
+
+  const handleExportPdf = useCallback(() => {
+    exportToPdf('Incidents', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+      landscape: true,
+    })
+  }, [buildExportRows, profile])
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel('Incidents', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
   return (
     <div>
       <Topbar
         title="Incidents"
         subtitle={`${incidents.length} incident${incidents.length !== 1 ? 's' : ''}`}
         actions={
-          <Link to="/incidents/new">
-            <Button size="sm">+ New Incident</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button onClick={handleExportPdf} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export PDF">
+                PDF
+              </button>
+              <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
+                Excel
+              </button>
+            </div>
+            {canImport({ role: scope.role, importType: 'incidents', tier: getImportTier() }).allowed && (
+              <Link
+                to="/settings/import-data"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                Import
+              </Link>
+            )}
+            <Link to="/incidents/new">
+              <Button size="sm">+ New Incident</Button>
+            </Link>
+          </div>
         }
       />
 
       <div className="p-6">
         {/* Filters */}
         <Card className="mb-6">
+          <div className="mb-4">
+            <label htmlFor="incident-search" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input
+              id="incident-search"
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by student name, ID, or offense..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <SelectField
               label="Status"

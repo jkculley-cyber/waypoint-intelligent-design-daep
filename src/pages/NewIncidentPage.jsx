@@ -116,9 +116,9 @@ export default function NewIncidentPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     i < step
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-orange-500 text-white'
                       : i === step
-                      ? 'bg-blue-600 text-white ring-4 ring-blue-100'
+                      ? 'bg-orange-500 text-white ring-4 ring-orange-100'
                       : 'bg-gray-200 text-gray-500'
                   }`}
                 >
@@ -130,12 +130,12 @@ export default function NewIncidentPage() {
                     i + 1
                   )}
                 </div>
-                <span className={`text-xs mt-1 ${i <= step ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                <span className={`text-xs mt-1 ${i <= step ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
                   {label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-12 sm:w-20 h-0.5 mx-1 ${i < step ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`w-12 sm:w-20 h-0.5 mx-1 ${i < step ? 'bg-orange-500' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}

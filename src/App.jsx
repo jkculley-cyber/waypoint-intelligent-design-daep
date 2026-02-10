@@ -32,9 +32,11 @@ import ParentDashboardPage from './pages/ParentDashboardPage'
 import ParentIncidentViewPage from './pages/ParentIncidentViewPage'
 import ParentPlanViewPage from './pages/ParentPlanViewPage'
 import ReportsPage from './pages/ReportsPage'
+import DaepDashboardPage from './pages/DaepDashboardPage'
+import ImportDataPage from './pages/ImportDataPage'
 
 // Constants
-import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES } from './lib/constants'
+import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES, DAEP_ROLES } from './lib/constants'
 
 function App() {
   return (
@@ -83,6 +85,9 @@ function App() {
             <Route path="/plans/new" element={<RequireRole roles={STAFF_ROLES}><NewTransitionPlanPage /></RequireRole>} />
             <Route path="/plans/:id" element={<RequireRole roles={STAFF_ROLES}><TransitionPlanDetailPage /></RequireRole>} />
 
+            {/* DAEP Dashboard */}
+            <Route path="/daep" element={<RequireRole roles={DAEP_ROLES}><DaepDashboardPage /></RequireRole>} />
+
             {/* Discipline Matrix */}
             <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />
             <Route
@@ -118,6 +123,14 @@ function App() {
               element={
                 <RequireRole roles={[ROLES.ADMIN]}>
                   <OffenseCodeManagerPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/settings/import-data"
+              element={
+                <RequireRole roles={STAFF_ROLES}>
+                  <ImportDataPage />
                 </RequireRole>
               }
             />

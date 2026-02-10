@@ -4,19 +4,27 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const ADMIN_USER_ID = '2a276f4c-b972-406a-a26a-1f2f0a7a6bf8';
+const ADMIN_USER_ID = '1f2defa0-8f23-4173-9b55-01380cd0a836';
 const DISTRICT_ID = '11111111-1111-1111-1111-111111111111';
 const HS = 'aaaa0001-0001-0001-0001-000000000001';
 const MS = 'aaaa0001-0001-0001-0001-000000000002';
 const EL = 'aaaa0001-0001-0001-0001-000000000003';
 const DAEP = 'aaaa0001-0001-0001-0001-000000000004';
 
+const DB_HOST = process.env.SUPABASE_DB_HOST || 'db.kvxecksvkimcgwhxxyhw.supabase.co';
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
+if (!DB_PASSWORD) {
+  console.error('Missing SUPABASE_DB_PASSWORD environment variable.');
+  console.error('Set it via: $env:SUPABASE_DB_PASSWORD="your-password"');
+  process.exit(1);
+}
+
 const client = new pg.Client({
-  host: 'db.bbmolhntcrtcwouqoyse.supabase.co',
+  host: DB_HOST,
   port: 5432,
   database: 'postgres',
   user: 'postgres',
-  password: 'CVw&-%.iE/6F84T',
+  password: DB_PASSWORD,
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 15000,
 });
@@ -37,9 +45,11 @@ async function run() {
   await q('DELETE FROM student_interventions WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM transition_plan_reviews WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM transition_plans WHERE district_id = $1', [DISTRICT_ID]);
-  await q('DELETE FROM compliance_checklists WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM alerts WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM daily_behavior_tracking WHERE district_id = $1', [DISTRICT_ID]);
+  // Clear compliance FK on incidents before deleting checklists
+  await q('UPDATE incidents SET compliance_checklist_id = NULL WHERE district_id = $1', [DISTRICT_ID]);
+  await q('DELETE FROM compliance_checklists WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM incidents WHERE district_id = $1', [DISTRICT_ID]);
   await q('DELETE FROM discipline_matrix WHERE district_id = $1', [DISTRICT_ID]);
   console.log('  ✓ Previous seed data cleaned\n');
@@ -120,9 +130,9 @@ async function run() {
     // Marcus (0) - Fighting OSS active
     { campus: HS, student: sid(0), date: '2025-11-12', time: '12:45', loc: 'Cafeteria', offense: oc['FIGHT-02'],
       desc: 'Marcus involved in a second fighting incident in the cafeteria. Another student suffered a minor injury.', type: 'oss', days: 5, start: '2025-11-13', end: '2025-11-19', status: 'active' },
-    // Tyler Williams SPED (2) - Drug DAEP compliance_hold
-    { campus: HS, student: sid(2), date: '2025-10-22', time: '08:30', loc: 'Parking Lot', offense: oc['DRUG-03'],
-      desc: 'Tyler was found in possession of marijuana in the school parking lot. Student admitted to personal use.', type: 'daep', days: 30, start: '2025-10-23', end: '2025-11-21', status: 'compliance_hold' },
+    // Tyler Williams SPED (2) - Drug DAEP active with days_absent
+    { campus: HS, student: sid(2), date: '2026-01-12', time: '08:30', loc: 'Parking Lot', offense: oc['DRUG-03'],
+      desc: 'Tyler was found in possession of marijuana in the school parking lot. Student admitted to personal use.', type: 'daep', days: 30, start: '2026-01-12', end: '2026-03-06', status: 'active', days_absent: 4 },
     // Sofia Garcia (1) - Vaping detention completed
     { campus: HS, student: sid(1), date: '2025-09-28', time: '11:00', loc: 'Restroom', offense: oc['VAPE-01'],
       desc: 'Sofia was found vaping (nicotine) in the girls restroom. Device confiscated. First offense.', type: 'detention', days: 2, start: null, end: null, status: 'completed' },
@@ -156,15 +166,31 @@ async function run() {
     // Destiny Moore SPED (19) - Profanity ISS active
     { campus: DAEP, student: sid(19), date: '2025-11-14', time: '14:00', loc: 'Hallway', offense: oc['DEFY-03'],
       desc: 'Destiny used profane language directed at a staff member when asked to return to class.', type: 'iss', days: 2, start: '2025-11-15', end: '2025-11-16', status: 'active' },
+    // --- ADDITIONAL DAEP PLACEMENTS (16-20) ---
+    // Marcus Johnson (0) - Fighting 2nd offense → DAEP, 45 days
+    { campus: HS, student: sid(0), date: '2026-01-20', time: '11:00', loc: 'Cafeteria', offense: oc['FIGHT-02'],
+      desc: 'Marcus was involved in a serious physical altercation resulting in injury. Second fighting offense, escalating to DAEP.', type: 'daep', days: 45, start: '2026-01-20', end: '2026-04-03', status: 'active', days_absent: 3 },
+    // Sofia Garcia (1, ELL) - Marijuana → DAEP, 30 days
+    { campus: HS, student: sid(1), date: '2026-01-26', time: '09:15', loc: 'Restroom', offense: oc['DRUG-01'],
+      desc: 'Sofia was found with marijuana in the restroom. SRO confirmed substance. First drug offense.', type: 'daep', days: 30, start: '2026-01-26', end: '2026-03-13', status: 'active', days_absent: 1 },
+    // Carlos Hernandez (10, ELL) - Cyberbullying 2nd offense → DAEP, 30 days
+    { campus: MS, student: sid(10), date: '2026-01-15', time: '08:00', loc: 'Online/Virtual', offense: oc['BULLY-02'],
+      desc: 'Carlos posted additional threatening content on social media targeting multiple students. Second cyberbullying offense.', type: 'daep', days: 30, start: '2026-01-15', end: '2026-03-02', status: 'active', days_absent: 5 },
+    // Aaliyah Brown (3, 504) - Drug possession → DAEP, 45 days
+    { campus: HS, student: sid(3), date: '2025-12-01', time: '13:45', loc: 'Parking Lot', offense: oc['DRUG-03'],
+      desc: 'Aaliyah was found in possession of a controlled substance in the school parking lot. 504 accommodations reviewed.', type: 'daep', days: 45, start: '2025-12-01', end: '2026-02-20', status: 'active', days_absent: 2 },
+    // DeShawn Jackson (12, SPED) - Fighting with injury → DAEP, 30 days
+    { campus: MS, student: sid(12), date: '2026-02-02', time: '12:30', loc: 'Gymnasium', offense: oc['FIGHT-02'],
+      desc: 'DeShawn was involved in a physical altercation during PE resulting in injury. SPED manifestation determination required.', type: 'daep', days: 30, start: '2026-02-02', end: '2026-03-19', status: 'active', days_absent: 0 },
   ];
 
   const incidentIds = [];
   for (const inc of incidents) {
     const { rows } = await q(`
-      INSERT INTO incidents (district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      INSERT INTO incidents (district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING id
-    `, [DISTRICT_ID, inc.campus, inc.student, ADMIN_USER_ID, inc.date, inc.time, inc.loc, inc.offense, inc.desc, inc.type, inc.days, inc.start, inc.end, inc.status]);
+    `, [DISTRICT_ID, inc.campus, inc.student, ADMIN_USER_ID, inc.date, inc.time, inc.loc, inc.offense, inc.desc, inc.type, inc.days, inc.start, inc.end, inc.status, inc.days_absent || 0]);
     incidentIds.push(rows[0].id);
   }
   console.log(`  ✓ ${incidentIds.length} incidents created\n`);
@@ -272,6 +298,72 @@ async function run() {
   console.log('  ✓ 6 student interventions created\n');
 
   // =============================================
+  // TRANSITION PLAN REVIEWS (demo data)
+  // =============================================
+  console.log('Seeding transition plan reviews...');
+
+  // Marcus Johnson plan (planIds[0]) - behavioral/fighting, 30-day review completed
+  await q(`
+    INSERT INTO transition_plan_reviews (district_id, plan_id, student_id, reviewer_id, review_type, review_date,
+      overall_progress, progress_rating, intervention_effectiveness, implementation_fidelity,
+      behavioral_notes, academic_notes, implementation_notes, parent_contact_notes,
+      strengths, concerns, recommendations, next_steps,
+      continue_plan, escalation_needed, days_present, days_absent)
+    VALUES ($1, $2, $3, $4, '30_day', '2025-12-13',
+      'on_track', 'on_track', 'effective', 'full',
+      'Marcus has shown improvement in conflict resolution. Zero fighting incidents since placement. He is responding well to de-escalation techniques taught in anger management sessions.',
+      'Grades have remained stable. No academic concerns at this time.',
+      'CICO check-ins happening daily with 95% compliance. Anger management group meets weekly — Marcus has attended all 4 sessions so far.',
+      'Mother attended parent conference on 12/10. She is supportive and reinforcing strategies at home.',
+      'Marcus is actively participating in anger management group and has demonstrated willingness to use coping strategies when frustrated.',
+      'Peer interactions during unstructured time (lunch, passing periods) remain a trigger. Marcus still struggles with verbal provocations from peers.',
+      'Continue current plan through 60-day review. Consider adding peer mediation component.',
+      'Complete remaining 4 anger management sessions. Begin peer mediation training. Schedule follow-up parent conference for January.',
+      true, false, 22, 1)
+  `, [DISTRICT_ID, planIds[0], sid(0), ADMIN_USER_ID]);
+
+  // Tyler Williams plan (planIds[1]) - daep_exit/drugs, 30-day and 60-day reviews
+  await q(`
+    INSERT INTO transition_plan_reviews (district_id, plan_id, student_id, reviewer_id, review_type, review_date,
+      overall_progress, progress_rating, intervention_effectiveness, implementation_fidelity,
+      behavioral_notes, academic_notes, implementation_notes, parent_contact_notes,
+      strengths, concerns, recommendations, next_steps,
+      continue_plan, escalation_needed, days_present, days_absent)
+    VALUES ($1, $2, $3, $4, '30_day', '2025-11-22',
+      'at_risk', 'at_risk', 'somewhat_effective', 'partial',
+      'Tyler has been compliant with DAEP rules but shows minimal engagement in substance education sessions. Passed first random drug screening.',
+      'Grades are below 70 in Math (62) and Science (68). Needs academic tutoring support.',
+      'Substance abuse counseling sessions attended (4/4). Individual counseling started but Tyler is resistant to opening up. Mentoring sessions inconsistent due to mentor scheduling conflicts.',
+      'Father attended initial conference. Expressed concern about academic decline. Requested tutoring resources.',
+      'Tyler is physically present and following DAEP behavioral expectations. Passed first drug screening.',
+      'Academic performance declining. Low engagement in substance education. Mentoring program not fully implemented due to scheduling.',
+      'Add academic tutoring for Math and Science. Reassign mentor or adjust schedule. Increase substance education engagement strategies.',
+      'Schedule Math/Science tutoring 3x/week. Find alternative mentor or adjust meeting times. Contact father with progress update.',
+      true, false, 18, 4)
+  `, [DISTRICT_ID, planIds[1], sid(2), ADMIN_USER_ID]);
+
+  await q(`
+    INSERT INTO transition_plan_reviews (district_id, plan_id, student_id, reviewer_id, review_type, review_date,
+      overall_progress, progress_rating, intervention_effectiveness, implementation_fidelity,
+      behavioral_notes, academic_notes, implementation_notes, parent_contact_notes,
+      strengths, concerns, recommendations, next_steps,
+      continue_plan, escalation_needed, days_present, days_absent)
+    VALUES ($1, $2, $3, $4, '60_day', '2025-12-22',
+      'on_track', 'on_track', 'effective', 'full',
+      'Significant improvement since 30-day review. Tyler is actively participating in substance education and has completed 10 of 12 sessions. Passed second drug screening.',
+      'Math grade improved to 74. Science now at 71. Tutoring is helping. All other subjects above 75.',
+      'All interventions now fully implemented. New mentor assigned and meeting consistently 2x/week. Substance counseling continues with good rapport.',
+      'Father attended 60-day review meeting. Very pleased with progress. Mother called to express support.',
+      'Tyler is showing genuine engagement in recovery education. Academic improvement is encouraging. Strong relationship with new mentor.',
+      'Still 2 substance education sessions remaining. Need to ensure completion before 90-day review. Attendance has 4 absences — need to monitor.',
+      'Continue current plan. Tyler is on track for successful DAEP exit if progress continues. Prepare transition-back-to-campus plan.',
+      'Complete final 2 substance education sessions. Schedule 3rd drug screening. Begin campus re-entry planning with home campus counselor. Final parent conference before 90-day review.',
+      true, false, 20, 2)
+  `, [DISTRICT_ID, planIds[1], sid(2), ADMIN_USER_ID]);
+
+  console.log('  ✓ 3 transition plan reviews created\n');
+
+  // =============================================
   // Re-enable triggers
   // =============================================
   console.log('Re-enabling triggers...');
@@ -280,23 +372,64 @@ async function run() {
   console.log('  ✓ Triggers re-enabled\n');
 
   // =============================================
-  // Manually create compliance checklists for SPED/DAEP incidents
+  // SPED COMPLIANCE CHECKLISTS (demo data for all SPED/504 DAEP students)
   // =============================================
-  console.log('Creating compliance checklists for SPED students...');
-  // Tyler Williams (SPED, DAEP consequence) - incident index 3
+  console.log('Creating SPED compliance checklists...');
+
+  // --- Tyler Williams (SPED ED, incident index 3) ---
+  // Status: INCOMPLETE — placement fully blocked, MDR not started
   const tyler_incident_id = incidentIds[3];
-  const { rows: checklist_rows } = await q(`
+  const { rows: tyler_cl } = await q(`
     INSERT INTO compliance_checklists (district_id, incident_id, student_id, status, placement_blocked)
     VALUES ($1, $2, $3, 'incomplete', true)
     RETURNING id
   `, [DISTRICT_ID, tyler_incident_id, sid(2)]);
-
-  // Update the incident to link to the checklist and set compliance_hold
   await q(`
     UPDATE incidents SET sped_compliance_required = true, status = 'compliance_hold', compliance_cleared = false, compliance_checklist_id = $1
     WHERE id = $2
-  `, [checklist_rows[0].id, tyler_incident_id]);
-  console.log('  ✓ Compliance checklist created for Tyler Williams\n');
+  `, [tyler_cl[0].id, tyler_incident_id]);
+  console.log('  ✓ Tyler Williams — compliance_hold, checklist incomplete');
+
+  // --- DeShawn Jackson (SPED OHI, incident index 19) ---
+  // Status: IN_PROGRESS — ARD notified, parent notified, MDR pending
+  const deshawn_incident_id = incidentIds[19];
+  const { rows: deshawn_cl } = await q(`
+    INSERT INTO compliance_checklists (
+      district_id, incident_id, student_id, status, placement_blocked,
+      ard_committee_notified, parent_notified, parent_notification_method
+    ) VALUES ($1, $2, $3, 'in_progress', true,
+      '2026-02-03T10:00:00Z', '2026-02-03T14:00:00Z', 'phone')
+    RETURNING id
+  `, [DISTRICT_ID, deshawn_incident_id, sid(12)]);
+  await q(`
+    UPDATE incidents SET sped_compliance_required = true, status = 'compliance_hold', compliance_cleared = false, compliance_checklist_id = $1
+    WHERE id = $2
+  `, [deshawn_cl[0].id, deshawn_incident_id]);
+  console.log('  ✓ DeShawn Jackson — compliance_hold, checklist in_progress (MDR pending)');
+
+  // --- Aaliyah Brown (504, incident index 18) ---
+  // Status: COMPLETED — MDR done (not_manifestation), all required items done, cleared for DAEP
+  const aaliyah_incident_id = incidentIds[18];
+  const { rows: aaliyah_cl } = await q(`
+    INSERT INTO compliance_checklists (
+      district_id, incident_id, student_id, status, placement_blocked,
+      ard_committee_notified, ard_committee_met, manifestation_determination,
+      manifestation_result, bip_reviewed, parent_notified, parent_notification_method,
+      fape_plan_documented, iep_goals_reviewed, educational_services_arranged,
+      completed_at
+    ) VALUES ($1, $2, $3, 'completed', false,
+      '2025-12-02T09:00:00Z', '2025-12-05T13:00:00Z', '2025-12-05T14:00:00Z',
+      'not_manifestation', '2025-12-05T14:30:00Z', '2025-12-02T09:30:00Z', 'in_person',
+      '2025-12-06T10:00:00Z', '2025-12-05T15:00:00Z', '2025-12-08T09:00:00Z',
+      '2025-12-08T09:00:00Z')
+    RETURNING id
+  `, [DISTRICT_ID, aaliyah_incident_id, sid(3)]);
+  await q(`
+    UPDATE incidents SET sped_compliance_required = true, status = 'approved', compliance_cleared = true, compliance_checklist_id = $1
+    WHERE id = $2
+  `, [aaliyah_cl[0].id, aaliyah_incident_id]);
+  console.log('  ✓ Aaliyah Brown — approved, MDR complete (not manifestation), cleared for DAEP');
+  console.log('  ✓ 3 SPED compliance checklists created\n');
 
   // =============================================
   // VERIFY

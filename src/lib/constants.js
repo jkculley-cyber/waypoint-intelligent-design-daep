@@ -31,6 +31,16 @@ export const STAFF_ROLES = [
   ROLES.TEACHER,
 ]
 
+// Roles that can access the DAEP Dashboard
+export const DAEP_ROLES = [
+  ROLES.ADMIN,
+  ROLES.PRINCIPAL,
+  ROLES.AP,
+  ROLES.COUNSELOR,
+  ROLES.SPED_COORDINATOR,
+  ROLES.TEACHER,
+]
+
 // Roles that can manage compliance
 export const COMPLIANCE_ROLES = [
   ROLES.ADMIN,
@@ -405,4 +415,31 @@ export const NOTIFICATION_METHODS = {
   PHONE: 'phone',
   LETTER: 'letter',
   IN_PERSON: 'in_person',
+}
+
+// Import system
+export const IMPORT_TYPES = [
+  { value: 'campuses', label: 'Campuses', description: 'Schools and facilities' },
+  { value: 'students', label: 'Students', description: 'Student roster data' },
+  { value: 'profiles', label: 'Staff', description: 'Staff accounts and roles' },
+  { value: 'incidents', label: 'Incidents', description: 'Discipline incidents' },
+]
+
+export const IMPORT_TYPE_LABELS = {
+  campuses: 'Campuses',
+  students: 'Students',
+  profiles: 'Staff',
+  incidents: 'Incidents',
+}
+
+export const DUPLICATE_STRATEGIES = [
+  { value: 'skip', label: 'Skip Duplicates', description: 'Existing records are left unchanged; only new records are imported.' },
+  { value: 'upsert', label: 'Update Duplicates', description: 'Existing records are updated with the imported data; new records are created.' },
+]
+
+export const IMPORT_STATUS_CONFIG = {
+  processing: { label: 'Processing', color: 'orange' },
+  completed: { label: 'Completed', color: 'green' },
+  failed: { label: 'Failed', color: 'red' },
+  partial: { label: 'Partial', color: 'yellow' },
 }

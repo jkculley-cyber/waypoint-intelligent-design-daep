@@ -186,7 +186,7 @@ export default function OffenseCodeManagerPage() {
                 placeholder="Search offense codes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             <div className="w-full sm:w-48">
@@ -203,7 +203,7 @@ export default function OffenseCodeManagerPage() {
                 type="checkbox"
                 checked={showInactive}
                 onChange={(e) => setShowInactive(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-orange-600"
               />
               Show inactive
             </label>
@@ -243,7 +243,7 @@ export default function OffenseCodeManagerPage() {
                       <div
                         className={`w-1.5 h-8 rounded-full flex-shrink-0 ${
                           {
-                            minor: 'bg-blue-400',
+                            minor: 'bg-orange-400',
                             moderate: 'bg-yellow-400',
                             serious: 'bg-orange-400',
                             severe: 'bg-red-500',
@@ -291,7 +291,7 @@ export default function OffenseCodeManagerPage() {
                         {code.district_id && (
                           <button
                             onClick={() => handleEdit(code)}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-gray-100 transition-colors"
                             title="Edit"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

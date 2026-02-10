@@ -63,6 +63,20 @@ INSERT INTO students (id, district_id, campus_id, student_id_number, first_name,
 ('bbbb0001-0001-0001-0001-000000000020', '11111111-1111-1111-1111-111111111111', 'aaaa0001-0001-0001-0001-000000000004', 'LS-40002', 'Destiny', 'Moore', NULL, '2009-04-22', 9, 'F', 'Black', true, 'ED', false, false, false, false, true);
 
 -- ============================================
+-- 3b. ADMIN PROFILE (needed before incidents for reported_by FK)
+-- ============================================
+INSERT INTO profiles (id, district_id, email, full_name, role)
+VALUES ('1f2defa0-8f23-4173-9b55-01380cd0a836', '11111111-1111-1111-1111-111111111111', 'admin@lonestar-isd.org', 'Admin User', 'admin')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profile_campus_assignments (profile_id, campus_id, is_primary) VALUES
+('1f2defa0-8f23-4173-9b55-01380cd0a836', 'aaaa0001-0001-0001-0001-000000000001', true),
+('1f2defa0-8f23-4173-9b55-01380cd0a836', 'aaaa0001-0001-0001-0001-000000000002', false),
+('1f2defa0-8f23-4173-9b55-01380cd0a836', 'aaaa0001-0001-0001-0001-000000000003', false),
+('1f2defa0-8f23-4173-9b55-01380cd0a836', 'aaaa0001-0001-0001-0001-000000000004', false)
+ON CONFLICT DO NOTHING;
+
+-- ============================================
 -- 4. INCIDENTS (15 incidents across campuses)
 --    NOTE: We reference offense codes by looking up their code.
 --    The SPED compliance trigger will auto-fire for DAEP/expulsion.
@@ -76,7 +90,7 @@ DECLARE
   v_ms UUID := 'aaaa0001-0001-0001-0001-000000000002';
   v_el UUID := 'aaaa0001-0001-0001-0001-000000000003';
   v_daep UUID := 'aaaa0001-0001-0001-0001-000000000004';
-  v_admin UUID := '00000000-0000-0000-0000-000000000001'; -- Placeholder, update after creating auth user
+  v_admin UUID := '1f2defa0-8f23-4173-9b55-01380cd0a836'; -- Admin user created via create_admin.mjs
   -- Offense code IDs
   oc_fight1 UUID;
   oc_fight2 UUID;
@@ -123,10 +137,9 @@ BEGIN
   INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status)
   VALUES ('cccc0001-0001-0001-0001-000000000003', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000001', v_admin, '2025-11-12', '12:45', 'Cafeteria', oc_fight2, 'Marcus was involved in a second fighting incident, this time in the cafeteria. Another student suffered a minor injury (bloody nose). Security footage reviewed.', 'oss', 5, '2025-11-13', '2025-11-19', 'active');
 
-  -- 4. Tyler Williams (SPED) - Drug possession (DAEP)
-  -- This should trigger the SPED compliance checkpoint
-  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status)
-  VALUES ('cccc0001-0001-0001-0001-000000000004', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000003', v_admin, '2025-10-22', '08:30', 'Parking Lot', oc_drug3, 'Tyler was found in possession of marijuana in the school parking lot during arrival. School resource officer confirmed substance. Student admitted to having it for personal use.', 'daep', 30, '2025-10-23', '2025-11-21', 'compliance_hold');
+  -- 4. Tyler Williams (SPED) - Drug possession (DAEP) — active with days_absent
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000004', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000003', v_admin, '2026-01-12', '08:30', 'Parking Lot', oc_drug3, 'Tyler was found in possession of marijuana in the school parking lot during arrival. School resource officer confirmed substance. Student admitted to having it for personal use.', 'daep', 30, '2026-01-12', '2026-03-06', 'active', 4);
 
   -- 5. Sofia Garcia - Vaping (detention, completed)
   INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, status)
@@ -184,6 +197,32 @@ BEGIN
   INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status)
   VALUES ('cccc0001-0001-0001-0001-000000000015', v_district, v_daep, 'bbbb0001-0001-0001-0001-000000000020', v_admin, '2025-11-14', '14:00', 'Hallway', oc_defy3, 'Destiny used profane language directed at a staff member when asked to return to class. Student was escorted to admin. Behavioral support plan review initiated.', 'iss', 2, '2025-11-15', '2025-11-16', 'active');
 
+  -- ============================================
+  -- ADDITIONAL DAEP PLACEMENTS (16-20)
+  -- These create a populated DAEP dashboard with
+  -- diverse students, campuses, and flags.
+  -- ============================================
+
+  -- 16. Marcus Johnson (HS) - Fighting 2nd offense → DAEP, 45 days
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000016', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000001', v_admin, '2026-01-20', '11:00', 'Cafeteria', oc_fight2, 'Marcus was involved in a serious physical altercation resulting in injury to another student. This is his second fighting offense this school year, escalating consequence to DAEP placement per district matrix.', 'daep', 45, '2026-01-20', '2026-04-03', 'active', 3);
+
+  -- 17. Sofia Garcia (HS, ELL) - Marijuana → DAEP, 30 days
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000017', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000002', v_admin, '2026-01-26', '09:15', 'Restroom', oc_drug1, 'Sofia was found with marijuana in the restroom during 2nd period. School resource officer confirmed substance. Parent contacted. First drug offense.', 'daep', 30, '2026-01-26', '2026-03-13', 'active', 1);
+
+  -- 18. Carlos Hernandez (MS, ELL) - Cyberbullying 2nd offense → DAEP, 30 days
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000018', v_district, v_ms, 'bbbb0001-0001-0001-0001-000000000011', v_admin, '2026-01-15', '08:00', 'Online/Virtual', oc_bully2, 'Carlos posted additional threatening and harassing content on social media targeting multiple students. Second cyberbullying offense this year. Screenshots collected and documented. Parents notified.', 'daep', 30, '2026-01-15', '2026-03-02', 'active', 5);
+
+  -- 19. Aaliyah Brown (HS, 504) - Drug possession → DAEP, 45 days
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000019', v_district, v_hs, 'bbbb0001-0001-0001-0001-000000000004', v_admin, '2025-12-01', '13:45', 'Parking Lot', oc_drug3, 'Aaliyah was found in possession of a controlled substance in the school parking lot. SRO confirmed substance through field test. Student has a 504 plan — accommodations reviewed prior to placement.', 'daep', 45, '2025-12-01', '2026-02-20', 'active', 2);
+
+  -- 20. DeShawn Jackson (MS, SPED) - Fighting with injury → DAEP, 30 days
+  INSERT INTO incidents (id, district_id, campus_id, student_id, reported_by, incident_date, incident_time, location, offense_code_id, description, consequence_type, consequence_days, consequence_start, consequence_end, status, days_absent)
+  VALUES ('cccc0001-0001-0001-0001-000000000020', v_district, v_ms, 'bbbb0001-0001-0001-0001-000000000013', v_admin, '2026-02-02', '12:30', 'Gymnasium', oc_fight2, 'DeShawn was involved in a physical altercation during PE resulting in injury to another student (bruised jaw). Security footage reviewed. SPED manifestation determination required prior to placement.', 'daep', 30, '2026-02-02', '2026-03-19', 'active', 0);
+
 END $$;
 
 -- ============================================
@@ -201,7 +240,7 @@ Goal 4: Complete anger management counseling (8 sessions)',
 Teacher observation rubric (weekly)
 Daily behavior tracking average ≥ 3.5
 Counseling attendance (8/8 sessions)',
- '2025-11-13', '2026-01-12', '2025-12-13', '2026-01-12', NULL, 'active', '00000000-0000-0000-0000-000000000001', '2025-11-13'),
+ '2025-11-13', '2026-01-12', '2025-12-13', '2026-01-12', NULL, 'active', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-11-13'),
 
 -- Tyler Williams - DAEP Exit Plan
 ('dddd0001-0001-0001-0001-000000000002', '11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', 'cccc0001-0001-0001-0001-000000000004', 'daep_exit', 'drugs_alcohol',
@@ -215,7 +254,7 @@ Drug screening results (3 clean tests)
 Attendance rate ≥ 90%
 Academic grades ≥ 70 in all subjects
 Personal accountability plan presentation',
- '2025-10-23', '2026-01-21', '2025-11-22', '2025-12-22', '2026-01-21', 'active', '00000000-0000-0000-0000-000000000001', '2025-10-23'),
+ '2025-10-23', '2026-01-21', '2025-11-22', '2025-12-22', '2026-01-21', 'active', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-10-23'),
 
 -- Destiny Moore - DAEP behavioral plan
 ('dddd0001-0001-0001-0001-000000000003', '11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000020', 'cccc0001-0001-0001-0001-000000000015', 'behavioral', 'defiance',
@@ -227,7 +266,7 @@ Goal 4: Maintain CICO daily average ≥ 3.0/5.0',
 Appropriate communication log (3/week minimum)
 Counseling attendance (6/6 sessions)
 CICO average ≥ 3.0',
- '2025-11-15', '2025-12-15', '2025-12-15', NULL, NULL, 'draft', '00000000-0000-0000-0000-000000000001', NULL);
+ '2025-11-15', '2025-12-15', '2025-12-15', NULL, NULL, 'draft', '1f2defa0-8f23-4173-9b55-01380cd0a836', NULL);
 
 -- ============================================
 -- 6. DISCIPLINE MATRIX ENTRIES (sample rules)
@@ -336,15 +375,15 @@ BEGIN
 
   -- Marcus Johnson's plan interventions
   INSERT INTO student_interventions (district_id, student_id, intervention_id, plan_id, assigned_by, start_date, end_date, status, effectiveness_rating) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_cico, 'dddd0001-0001-0001-0001-000000000001', '00000000-0000-0000-0000-000000000001', '2025-11-13', '2026-01-12', 'active', NULL),
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_anger, 'dddd0001-0001-0001-0001-000000000001', '00000000-0000-0000-0000-000000000001', '2025-11-13', '2025-12-25', 'active', NULL),
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_conflict, 'dddd0001-0001-0001-0001-000000000001', '00000000-0000-0000-0000-000000000001', '2025-11-13', '2025-12-13', 'active', NULL);
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_cico, 'dddd0001-0001-0001-0001-000000000001', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-11-13', '2026-01-12', 'active', NULL),
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_anger, 'dddd0001-0001-0001-0001-000000000001', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-11-13', '2025-12-25', 'active', NULL),
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000001', int_conflict, 'dddd0001-0001-0001-0001-000000000001', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-11-13', '2025-12-13', 'active', NULL);
 
   -- Tyler Williams' DAEP plan interventions
   INSERT INTO student_interventions (district_id, student_id, intervention_id, plan_id, assigned_by, start_date, end_date, status, effectiveness_rating) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_substance, 'dddd0001-0001-0001-0001-000000000002', '00000000-0000-0000-0000-000000000001', '2025-10-23', '2026-01-21', 'active', NULL),
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_individual, 'dddd0001-0001-0001-0001-000000000002', '00000000-0000-0000-0000-000000000001', '2025-10-23', '2026-01-21', 'active', NULL),
-  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_mentor, 'dddd0001-0001-0001-0001-000000000002', '00000000-0000-0000-0000-000000000001', '2025-10-23', '2026-01-21', 'active', NULL);
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_substance, 'dddd0001-0001-0001-0001-000000000002', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-10-23', '2026-01-21', 'active', NULL),
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_individual, 'dddd0001-0001-0001-0001-000000000002', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-10-23', '2026-01-21', 'active', NULL),
+  ('11111111-1111-1111-1111-111111111111', 'bbbb0001-0001-0001-0001-000000000003', int_mentor, 'dddd0001-0001-0001-0001-000000000002', '1f2defa0-8f23-4173-9b55-01380cd0a836', '2025-10-23', '2026-01-21', 'active', NULL);
 END $$;
 
 -- ============================================
@@ -372,13 +411,13 @@ END $$;
 -- 5. Update the placeholder admin IDs in incidents/plans:
 --
 --    UPDATE incidents SET reported_by = 'YOUR_USER_UUID'
---    WHERE reported_by = '00000000-0000-0000-0000-000000000001';
+--    WHERE reported_by = '1f2defa0-8f23-4173-9b55-01380cd0a836';
 --
 --    UPDATE transition_plans SET created_by = 'YOUR_USER_UUID'
---    WHERE created_by = '00000000-0000-0000-0000-000000000001';
+--    WHERE created_by = '1f2defa0-8f23-4173-9b55-01380cd0a836';
 --
 --    UPDATE student_interventions SET assigned_by = 'YOUR_USER_UUID'
---    WHERE assigned_by = '00000000-0000-0000-0000-000000000001';
+--    WHERE assigned_by = '1f2defa0-8f23-4173-9b55-01380cd0a836';
 --
 -- 6. Navigate to http://localhost:5173/login and sign in!
 -- ============================================

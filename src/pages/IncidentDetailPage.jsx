@@ -42,7 +42,7 @@ export default function IncidentDetailPage() {
         <Topbar title="Incident Not Found" />
         <div className="p-6 text-center text-gray-500">
           <p>This incident could not be found.</p>
-          <Link to="/incidents" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+          <Link to="/incidents" className="text-orange-600 hover:underline text-sm mt-2 inline-block">
             Back to Incidents
           </Link>
         </div>
@@ -54,8 +54,12 @@ export default function IncidentDetailPage() {
   const offense = incident.offense
   const compliance = incident.compliance
   const isComplianceHold = incident.status === 'compliance_hold'
+  const isDaep = incident.consequence_type === 'daep'
+  const mdrRequired = incident.sped_compliance_required && isDaep
+  const mdrCleared = incident.compliance_cleared
+  const mdrBlocked = mdrRequired && !mdrCleared
   const canApprove = hasRole(['admin', 'principal', 'ap']) && incident.status === 'submitted'
-  const canActivate = hasRole(['admin', 'principal', 'ap']) && incident.status === 'approved'
+  const canActivate = hasRole(['admin', 'principal', 'ap']) && incident.status === 'approved' && !mdrBlocked
   const canComplete = hasRole(['admin', 'principal', 'ap']) && incident.status === 'active'
 
   const handleApprove = async () => {
@@ -69,6 +73,10 @@ export default function IncidentDetailPage() {
   }
 
   const handleActivate = async () => {
+    if (mdrRequired && !mdrCleared) {
+      toast.error('Cannot activate DAEP placement — MDR not complete')
+      return
+    }
     const { error } = await activateIncident(incident.id)
     if (error) {
       toast.error('Failed to activate incident')
@@ -118,6 +126,22 @@ export default function IncidentDetailPage() {
         {/* Compliance Block Banner */}
         {isComplianceHold && (
           <ComplianceBlockBanner checklist={compliance} student={student} />
+        )}
+
+        {/* MDR Required Warning - show when approved but compliance not fully cleared */}
+        {mdrBlocked && incident.status === 'approved' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">MDR Required Before DAEP Enrollment</p>
+              <p className="text-sm text-amber-700 mt-1">
+                This student is identified as {student?.is_sped ? 'SPED' : '504'}. A Manifestation Determination Review (MDR) must be completed
+                before this student can be enrolled in DAEP. Complete the SPED compliance checklist below.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Policy Mismatch Warning */}
@@ -223,7 +247,7 @@ export default function IncidentDetailPage() {
               <div className="mt-4 space-y-3">
                 <Link
                   to={`/students/${student?.id}`}
-                  className="text-base font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                  className="text-base font-medium text-orange-600 hover:text-orange-700 hover:underline"
                 >
                   {formatStudentName(student)}
                 </Link>
@@ -323,9 +347,9 @@ function DetailRow({ label, value }) {
 
 function TimelineItem({ label, value, active, variant = 'default' }) {
   const dotColors = {
-    default: 'bg-blue-500',
+    default: 'bg-orange-500',
     warning: 'bg-yellow-500',
-    info: 'bg-blue-500',
+    info: 'bg-orange-500',
     success: 'bg-green-500',
   }
 

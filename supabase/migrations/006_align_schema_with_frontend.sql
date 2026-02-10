@@ -8,7 +8,11 @@
 -- 1. STUDENTS: race_ethnicity → race
 --    Frontend uses `students.race` everywhere
 -- ============================================
-ALTER TABLE students RENAME COLUMN race_ethnicity TO race;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='students' AND column_name='race_ethnicity') THEN
+    ALTER TABLE students RENAME COLUMN race_ethnicity TO race;
+  END IF;
+END $$;
 
 -- Add parent_user_id column
 -- ParentDashboardPage queries .eq('parent_user_id', user.id)
@@ -81,11 +85,17 @@ WHERE behavior_scores IS NOT NULL AND behavior_scores != '[]'::jsonb;
 --    Frontend uses: effectiveness_rating, plan_id, end_date
 --    Schema has: effectiveness, transition_plan_id, target_end_date
 -- ============================================
-ALTER TABLE student_interventions
-  RENAME COLUMN effectiveness TO effectiveness_rating;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_interventions' AND column_name='effectiveness') THEN
+    ALTER TABLE student_interventions RENAME COLUMN effectiveness TO effectiveness_rating;
+  END IF;
+END $$;
 
-ALTER TABLE student_interventions
-  RENAME COLUMN transition_plan_id TO plan_id;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_interventions' AND column_name='transition_plan_id') THEN
+    ALTER TABLE student_interventions RENAME COLUMN transition_plan_id TO plan_id;
+  END IF;
+END $$;
 
 -- Add end_date as an alias view or just add a column
 -- Frontend uses `end_date` — map from target_end_date
@@ -114,11 +124,17 @@ ALTER TABLE transition_plans
 --    Frontend uses: plan_id, reviewer_id
 --    Schema has: transition_plan_id, reviewed_by
 -- ============================================
-ALTER TABLE transition_plan_reviews
-  RENAME COLUMN transition_plan_id TO plan_id;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transition_plan_reviews' AND column_name='transition_plan_id') THEN
+    ALTER TABLE transition_plan_reviews RENAME COLUMN transition_plan_id TO plan_id;
+  END IF;
+END $$;
 
-ALTER TABLE transition_plan_reviews
-  RENAME COLUMN reviewed_by TO reviewer_id;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transition_plan_reviews' AND column_name='reviewed_by') THEN
+    ALTER TABLE transition_plan_reviews RENAME COLUMN reviewed_by TO reviewer_id;
+  END IF;
+END $$;
 
 -- Update the index name reference
 DROP INDEX IF EXISTS idx_tpr_plan;

@@ -1,7 +1,12 @@
 import pg from 'pg';
 
-const SUPABASE_URL = 'https://bbmolhntcrtcwouqoyse.supabase.co';
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibW9saG50Y3J0Y3dvdXFveXNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQzMTE3MCwiZXhwIjoyMDg2MDA3MTcwfQ.SEh9VDe4s_m1VL71CmLxLnempk12EDwwHSSpiFB7BF8';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://kvxecksvkimcgwhxxyhw.supabase.co';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
+if (!SERVICE_KEY || !DB_PASSWORD) {
+  console.error('Missing required environment variables: SUPABASE_SERVICE_ROLE_KEY, SUPABASE_DB_PASSWORD');
+  process.exit(1);
+}
 const DISTRICT_ID = '11111111-1111-1111-1111-111111111111';
 const HS = 'aaaa0001-0001-0001-0001-000000000001';
 
@@ -57,11 +62,11 @@ async function run() {
 
   // Step 2: Create parent profile and link students in DB
   const client = new pg.Client({
-    host: 'db.bbmolhntcrtcwouqoyse.supabase.co',
+    host: process.env.SUPABASE_DB_HOST || 'db.kvxecksvkimcgwhxxyhw.supabase.co',
     port: 5432,
     database: 'postgres',
     user: 'postgres',
-    password: 'CVw&-%.iE/6F84T',
+    password: DB_PASSWORD,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 15000,
   });

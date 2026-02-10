@@ -22,7 +22,7 @@ export function useComplianceChecklists(filters = {}) {
         .select(`
           *,
           student:students(id, first_name, last_name, student_id_number, grade_level, is_sped, is_504, sped_eligibility),
-          incident:incidents(id, incident_date, offense_code_id, consequence_type, status,
+          incident:incidents!incident_id(id, incident_date, offense_code_id, consequence_type, status,
             offense:offense_codes(id, code, title, category)
           )
         `)
@@ -74,11 +74,9 @@ export function useComplianceChecklist(checklistId) {
         .select(`
           *,
           student:students(*),
-          incident:incidents(*,
+          incident:incidents!incident_id(*,
             offense:offense_codes(*)
-          ),
-          completed_by_profile:profiles!completed_by(id, full_name),
-          override_by_profile:profiles!override_by(id, full_name)
+          )
         `)
         .eq('id', checklistId)
         .single()

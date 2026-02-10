@@ -2,9 +2,9 @@ import { cn } from '../../lib/utils'
 
 const variants = {
   info: {
-    container: 'bg-blue-50 border-blue-200',
-    icon: 'text-blue-500',
-    text: 'text-blue-800',
+    container: 'bg-orange-50 border-orange-200',
+    icon: 'text-orange-500',
+    text: 'text-orange-800',
   },
   warning: {
     container: 'bg-yellow-50 border-yellow-200',

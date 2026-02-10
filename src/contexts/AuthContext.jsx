@@ -1,13 +1,20 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
+
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+const WARNING_BEFORE_MS = 5 * 60 * 1000 // Show warning 5 minutes before logout
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [campusIds, setCampusIds] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sessionWarning, setSessionWarning] = useState(false)
+
+  const timeoutRef = useRef(null)
+  const warningRef = useRef(null)
 
   useEffect(() => {
     // Get initial session
@@ -34,6 +41,47 @@ export function AuthProvider({ children }) {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Inactivity timeout - FERPA compliance
+  const resetInactivityTimer = useCallback(() => {
+    if (!session) return
+
+    setSessionWarning(false)
+
+    if (warningRef.current) clearTimeout(warningRef.current)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+
+    // Show warning before timeout
+    warningRef.current = setTimeout(() => {
+      setSessionWarning(true)
+    }, INACTIVITY_TIMEOUT_MS - WARNING_BEFORE_MS)
+
+    // Auto-logout on full timeout
+    timeoutRef.current = setTimeout(() => {
+      signOut()
+      setSessionWarning(false)
+    }, INACTIVITY_TIMEOUT_MS)
+  }, [session])
+
+  useEffect(() => {
+    if (!session) {
+      if (warningRef.current) clearTimeout(warningRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      return
+    }
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart']
+    const handler = () => resetInactivityTimer()
+
+    events.forEach(e => window.addEventListener(e, handler, { passive: true }))
+    resetInactivityTimer()
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler))
+      if (warningRef.current) clearTimeout(warningRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [session, resetInactivityTimer])
 
   async function fetchProfile(userId) {
     try {
@@ -111,12 +159,54 @@ export function AuthProvider({ children }) {
     isAdmin,
     isStaff,
     districtId: profile?.district_id || null,
+    sessionWarning,
+    extendSession: resetInactivityTimer,
   }
 
   return (
     <AuthContext.Provider value={value}>
       {children}
+      {sessionWarning && (
+        <SessionWarningModal
+          onExtend={resetInactivityTimer}
+          onLogout={signOut}
+        />
+      )}
     </AuthContext.Provider>
+  )
+}
+
+function SessionWarningModal({ onExtend, onLogout }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm mx-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+            <svg className="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">Session Expiring</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-6">
+          Your session will expire in 5 minutes due to inactivity. To protect student data privacy (FERPA), you will be logged out automatically.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onLogout}
+            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Log Out Now
+          </button>
+          <button
+            onClick={onExtend}
+            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600"
+          >
+            Stay Logged In
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

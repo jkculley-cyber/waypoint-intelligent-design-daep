@@ -119,7 +119,7 @@ export default function ParentDashboardPage() {
               {children.map((child) => (
                 <Card key={child.id}>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg font-bold">
+                    <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
                       {child.first_name.charAt(0)}
                     </div>
                     <div>

@@ -5,25 +5,35 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const DB_HOST = process.env.SUPABASE_DB_HOST || 'db.kvxecksvkimcgwhxxyhw.supabase.co';
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
+if (!DB_PASSWORD) {
+  console.error('Missing SUPABASE_DB_PASSWORD environment variable.');
+  console.error('Set it via: $env:SUPABASE_DB_PASSWORD="your-password"');
+  process.exit(1);
+}
+
 const client = new pg.Client({
-  host: 'db.bbmolhntcrtcwouqoyse.supabase.co',
+  host: DB_HOST,
   port: 5432,
   database: 'postgres',
   user: 'postgres',
-  password: 'CVw&-%.iE/6F84T',
+  password: DB_PASSWORD,
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 15000,
   statement_timeout: 60000,
 });
 
-// Skip 001 since it already ran successfully
 const migrations = [
+  { file: '001_initial_schema.sql', name: '001: Initial Schema' },
   { file: '002_rls_policies.sql', name: '002: RLS Policies' },
   { file: '003_triggers_and_functions.sql', name: '003: Triggers & Functions' },
   { file: '004_seed_offense_codes.sql', name: '004: Seed Offense Codes' },
   { file: '005_seed_interventions.sql', name: '005: Seed Interventions' },
   { file: '006_align_schema_with_frontend.sql', name: '006: Align Schema with Frontend' },
   { file: '007_demo_seed_data.sql', name: '007: Demo Seed Data' },
+  { file: '008_daep_days_absent.sql', name: '008: DAEP Days Absent Column' },
+  { file: '009_transition_plan_reviews_enhance.sql', name: '009: Transition Plan Reviews Enhancement' },
 ];
 
 async function run() {

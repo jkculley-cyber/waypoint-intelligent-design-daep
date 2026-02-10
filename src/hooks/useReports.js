@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useAccessScope } from './useAccessScope'
+import { applyCampusScope } from '../lib/accessControl'
 import { getSchoolYearStart } from '../lib/utils'
 
 /**
@@ -10,9 +12,10 @@ export function useAnalyticsSummary() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
 
   useEffect(() => {
-    if (!districtId) return
+    if (!districtId || scopeLoading) return
 
     const fetchStats = async () => {
       setLoading(true)
@@ -20,33 +23,24 @@ export function useAnalyticsSummary() {
 
       try {
         // Total incidents this school year
-        const { count: totalIncidents } = await supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .gte('incident_date', schoolYearStart)
+        const { count: totalIncidents } = await applyCampusScope(
+          supabase.from('incidents').select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId).gte('incident_date', schoolYearStart), scope)
 
         // Active incidents
-        const { count: activeIncidents } = await supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .in('status', ['submitted', 'under_review', 'approved', 'active'])
+        const { count: activeIncidents } = await applyCampusScope(
+          supabase.from('incidents').select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId).in('status', ['submitted', 'under_review', 'approved', 'active']), scope)
 
         // DAEP placements this year
-        const { count: daepPlacements } = await supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('consequence_type', 'daep')
-          .gte('incident_date', schoolYearStart)
+        const { count: daepPlacements } = await applyCampusScope(
+          supabase.from('incidents').select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId).eq('consequence_type', 'daep').gte('incident_date', schoolYearStart), scope)
 
         // Compliance holds
-        const { count: complianceHolds } = await supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('status', 'compliance_hold')
+        const { count: complianceHolds } = await applyCampusScope(
+          supabase.from('incidents').select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId).eq('status', 'compliance_hold'), scope)
 
         // Active alerts
         const { count: activeAlerts } = await supabase
@@ -63,11 +57,9 @@ export function useAnalyticsSummary() {
           .eq('status', 'active')
 
         // Total students with incidents
-        const { data: studentCounts } = await supabase
-          .from('incidents')
-          .select('student_id')
-          .eq('district_id', districtId)
-          .gte('incident_date', schoolYearStart)
+        const { data: studentCounts } = await applyCampusScope(
+          supabase.from('incidents').select('student_id')
+            .eq('district_id', districtId).gte('incident_date', schoolYearStart), scope)
 
         const uniqueStudents = new Set(studentCounts?.map(i => i.student_id) || [])
 
@@ -88,7 +80,7 @@ export function useAnalyticsSummary() {
     }
 
     fetchStats()
-  }, [districtId])
+  }, [districtId, scopeLoading, scope])
 
   return { stats, loading }
 }
@@ -100,9 +92,10 @@ export function useDisproportionalityData() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
 
   useEffect(() => {
-    if (!districtId) return
+    if (!districtId || scopeLoading) return
 
     const fetchData = async () => {
       setLoading(true)
@@ -110,14 +103,11 @@ export function useDisproportionalityData() {
 
       try {
         // Get all incidents with student demographics
-        const { data: incidents } = await supabase
-          .from('incidents')
-          .select(`
+        const { data: incidents } = await applyCampusScope(
+          supabase.from('incidents').select(`
             id, consequence_type,
             students (id, race, gender, is_sped, is_504, is_ell, grade_level)
-          `)
-          .eq('district_id', districtId)
-          .gte('incident_date', schoolYearStart)
+          `).eq('district_id', districtId).gte('incident_date', schoolYearStart), scope)
 
         if (!incidents) {
           setData({ byRace: [], byGender: [], bySped: [], byEll: [], byConsequence: [] })
@@ -187,7 +177,7 @@ export function useDisproportionalityData() {
     }
 
     fetchData()
-  }, [districtId])
+  }, [districtId, scopeLoading, scope])
 
   return { data, loading }
 }
@@ -438,8 +428,7 @@ export function usePeimsExport() {
         students (student_id_number, first_name, last_name, grade_level, race, gender,
           is_sped, is_504, is_ell, date_of_birth, campus_id),
         offense_codes (code, name, category, severity, tec_reference,
-          is_mandatory_daep, is_mandatory_expulsion),
-        campuses:students(campus_id)
+          is_mandatory_daep, is_mandatory_expulsion)
       `)
       .eq('district_id', districtId)
       .gte('incident_date', schoolYearStart)

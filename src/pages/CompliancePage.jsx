@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
@@ -7,12 +7,15 @@ import Badge from '../components/ui/Badge'
 import { SelectField } from '../components/ui/FormField'
 import { StudentFlagsSummary } from '../components/students/StudentFlags'
 import { useComplianceChecklists } from '../hooks/useCompliance'
+import { useAuth } from '../contexts/AuthContext'
 import { formatStudentName, formatDate, formatDateTime } from '../lib/utils'
 import { CONSEQUENCE_TYPE_LABELS } from '../lib/constants'
+import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 
 export default function CompliancePage() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState('')
+  const { profile } = useAuth()
 
   const filters = useMemo(() => {
     const f = {}
@@ -83,7 +86,7 @@ export default function CompliancePage() {
           <div className="flex items-center gap-2">
             <div className="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-full rounded-full ${pct === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                className={`h-full rounded-full ${pct === 100 ? 'bg-green-500' : 'bg-orange-500'}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -126,11 +129,62 @@ export default function CompliancePage() {
     },
   ]
 
+  const exportHeaders = ['Student', 'Incident Date', 'Consequence', 'Compliance Status', 'Items Complete']
+
+  const statusLabels = {
+    incomplete: 'Blocked',
+    in_progress: 'In Progress',
+    completed: 'Cleared',
+    waived: 'Waived',
+  }
+
+  const buildExportRows = useCallback(() => {
+    return checklists.map(c => {
+      const items = [
+        c.ard_committee_notified,
+        c.manifestation_determination,
+        c.parent_notified,
+        c.fape_plan_documented,
+      ]
+      const done = items.filter(Boolean).length
+      const displayStatus = c.block_overridden ? 'Overridden' : (statusLabels[c.status] || c.status)
+      return [
+        c.student ? formatStudentName(c.student) : '—',
+        formatDate(c.incident?.incident_date),
+        CONSEQUENCE_TYPE_LABELS[c.incident?.consequence_type] || '—',
+        displayStatus,
+        `${done}/4`,
+      ]
+    })
+  }, [checklists])
+
+  const handleExportPdf = useCallback(() => {
+    exportToPdf('SPED Compliance', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel('SPED Compliance', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
   return (
     <div>
       <Topbar
         title="SPED Compliance"
         subtitle="Manage compliance checklists for SPED/504 students recommended for DAEP"
+        actions={
+          <div className="flex items-center gap-1.5">
+            <button onClick={handleExportPdf} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export PDF">
+              PDF
+            </button>
+            <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
+              Excel
+            </button>
+          </div>
+        }
       />
 
       <div className="p-6">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
@@ -10,6 +10,12 @@ import { useStudents } from '../hooks/useStudents'
 import { useCampuses } from '../hooks/useCampuses'
 import { formatStudentName, formatGradeLevel } from '../lib/utils'
 import { GRADE_LEVELS } from '../lib/constants'
+import { useAccessScope } from '../hooks/useAccessScope'
+import { getInstructionalDaysRemaining } from '../lib/instructionalCalendar'
+import { useAuth } from '../contexts/AuthContext'
+import { Link } from 'react-router-dom'
+import { canImport, getImportTier } from '../lib/importPermissions'
+import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 
 export default function StudentsPage() {
   const navigate = useNavigate()
@@ -17,9 +23,14 @@ export default function StudentsPage() {
   const [campusFilter, setCampusFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [flagFilter, setFlagFilter] = useState('')
+  const { scope } = useAccessScope()
+  const { districtId, profile } = useAuth()
 
   const filters = useMemo(() => {
     const f = {}
+    if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+      f._campusScope = scope.scopedCampusIds
+    }
     if (search) f.search = search
     if (campusFilter) f.campus_id = campusFilter
     if (gradeFilter !== '') f.grade_level = parseInt(gradeFilter)
@@ -27,7 +38,7 @@ export default function StudentsPage() {
     if (flagFilter === '504') f.is_504 = true
     if (flagFilter === 'ell') f.is_ell = true
     return f
-  }, [search, campusFilter, gradeFilter, flagFilter])
+  }, [search, campusFilter, gradeFilter, flagFilter, scope])
 
   const { students, loading } = useStudents(filters)
   const { campuses } = useCampuses()
@@ -64,13 +75,78 @@ export default function StudentsPage() {
       render: (_, row) => <StudentFlagsSummary student={row} />,
       sortable: false,
     },
+    {
+      key: 'days_remaining',
+      header: 'Days Remaining',
+      render: (_, row) => {
+        const activeDaep = row.incidents?.find(
+          i => i.consequence_type === 'daep' && ['active', 'approved'].includes(i.status)
+        )
+        if (!activeDaep) return <span className="text-gray-300 text-sm">—</span>
+        const days = getInstructionalDaysRemaining(activeDaep.consequence_end, districtId)
+        if (days == null) return <span className="text-gray-400 text-sm">N/A</span>
+        const color = days <= 5 ? 'red' : days <= 15 ? 'yellow' : 'green'
+        return <Badge color={color} size="sm">{days}d</Badge>
+      },
+      sortable: false,
+    },
   ]
+
+  const exportHeaders = ['Name', 'Student ID', 'Grade', 'Campus', 'SPED', '504', 'ELL']
+
+  const buildExportRows = useCallback(() => {
+    return students.map(s => [
+      formatStudentName(s),
+      s.student_id_number || '—',
+      formatGradeLevel(s.grade_level),
+      s.campus?.name || '—',
+      s.is_sped ? 'Yes' : 'No',
+      s.is_504 ? 'Yes' : 'No',
+      s.is_ell ? 'Yes' : 'No',
+    ])
+  }, [students])
+
+  const handleExportPdf = useCallback(() => {
+    exportToPdf('Students', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+      landscape: true,
+    })
+  }, [buildExportRows, profile])
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel('Students', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
 
   return (
     <div>
       <Topbar
         title="Students"
         subtitle={`${students.length} student${students.length !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button onClick={handleExportPdf} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export PDF">
+                PDF
+              </button>
+              <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
+                Excel
+              </button>
+            </div>
+            {canImport({ role: scope.role, importType: 'students', tier: getImportTier() }).allowed && (
+              <Link
+                to="/settings/import-data"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                Import
+              </Link>
+            )}
+          </div>
+        }
       />
 
       <div className="p-6">
@@ -84,7 +160,7 @@ export default function StudentsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Name or student ID..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <SelectField

@@ -127,7 +127,7 @@ export default function DisciplineMatrixPage() {
                 placeholder="Search offense codes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             <div className="w-full sm:w-64">
@@ -300,7 +300,7 @@ function OffenseMatrixRow({ offenseCode, entries, hasMatrix, isExpanded, onToggl
                       <td className="px-3 py-2 text-gray-700">
                         {CONSEQUENCE_TYPE_LABELS[entry.min_consequence] || entry.min_consequence}
                       </td>
-                      <td className="px-3 py-2 font-medium text-blue-600">
+                      <td className="px-3 py-2 font-medium text-orange-600">
                         {CONSEQUENCE_TYPE_LABELS[entry.default_consequence] || entry.default_consequence}
                       </td>
                       <td className="px-3 py-2 text-gray-700">
@@ -338,7 +338,7 @@ function OffenseMatrixRow({ offenseCode, entries, hasMatrix, isExpanded, onToggl
 
 function StatCard({ label, value, color }) {
   const colorMap = {
-    blue: 'bg-blue-50 text-blue-600',
+    blue: 'bg-orange-50 text-orange-600',
     green: 'bg-green-50 text-green-600',
     indigo: 'bg-indigo-50 text-indigo-600',
     red: 'bg-red-50 text-red-600',

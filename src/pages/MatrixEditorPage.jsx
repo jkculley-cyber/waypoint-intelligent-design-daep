@@ -278,7 +278,7 @@ export default function MatrixEditorPage() {
                 placeholder="Search offense codes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             <div className="w-full sm:w-64">
@@ -378,7 +378,7 @@ export default function MatrixEditorPage() {
                             <td className="px-3 py-2 text-gray-600">
                               {CONSEQUENCE_TYPE_LABELS[entry.min_consequence] || '—'}
                             </td>
-                            <td className="px-3 py-2 font-medium text-blue-600">
+                            <td className="px-3 py-2 font-medium text-orange-600">
                               {CONSEQUENCE_TYPE_LABELS[entry.default_consequence] || '—'}
                             </td>
                             <td className="px-3 py-2 text-gray-600">
@@ -406,7 +406,7 @@ export default function MatrixEditorPage() {
                               <div className="flex items-center gap-1">
                                 <button
                                   onClick={() => handleEdit(entry)}
-                                  className="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                                  className="p-1 text-gray-400 hover:text-orange-600 rounded transition-colors"
                                   title="Edit"
                                 >
                                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -548,7 +548,7 @@ export default function MatrixEditorPage() {
                   key={opt.value}
                   className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
                     form.required_supports.includes(opt.value)
-                      ? 'bg-blue-50 border-blue-300'
+                      ? 'bg-orange-50 border-orange-300'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -556,7 +556,7 @@ export default function MatrixEditorPage() {
                     type="checkbox"
                     checked={form.required_supports.includes(opt.value)}
                     onChange={() => handleSupportToggle(opt.value)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <span className="text-sm text-gray-700">{opt.label}</span>
                 </label>

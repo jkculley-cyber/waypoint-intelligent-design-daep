@@ -87,7 +87,7 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
     const map = {
       active: { color: 'red', label: 'New' },
       acknowledged: { color: 'yellow', label: 'Acknowledged' },
-      in_progress: { color: 'blue', label: 'In Progress' },
+      in_progress: { color: 'orange', label: 'In Progress' },
       resolved: { color: 'green', label: 'Resolved' },
       dismissed: { color: 'gray', label: 'Dismissed' },
     }
@@ -131,7 +131,7 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
                 <div className="flex items-center gap-2 mt-1.5">
                   <Link
                     to={`/students/${alert.student?.id}`}
-                    className="text-sm text-blue-600 hover:underline font-medium"
+                    className="text-sm text-orange-600 hover:underline font-medium"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {formatStudentName(alert.student)}
@@ -201,7 +201,7 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Suggested Interventions</h4>
                 <div className="flex flex-wrap gap-2">
                   {alert.suggested_interventions.map((intervention, i) => (
-                    <Badge key={i} color="blue" size="md">{intervention}</Badge>
+                    <Badge key={i} color="orange" size="md">{intervention}</Badge>
                   ))}
                 </div>
               </div>

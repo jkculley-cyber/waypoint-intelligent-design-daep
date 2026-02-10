@@ -210,7 +210,7 @@ export default function ComplianceChecklist({ checklist, onUpdate }) {
                 className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                   isChecked
                     ? 'bg-green-500 border-green-500 text-white'
-                    : 'border-gray-300 hover:border-blue-500'
+                    : 'border-gray-300 hover:border-orange-500'
                 } ${isCompleted ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 {isChecked && (

@@ -1,7 +1,12 @@
 // Create admin user via Supabase Auth Admin API
 
-const SUPABASE_URL = 'https://bbmolhntcrtcwouqoyse.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibW9saG50Y3J0Y3dvdXFveXNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQzMTE3MCwiZXhwIjoyMDg2MDA3MTcwfQ.SEh9VDe4s_m1VL71CmLxLnempk12EDwwHSSpiFB7BF8';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://kvxecksvkimcgwhxxyhw.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SERVICE_ROLE_KEY) {
+  console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable.');
+  console.error('Set it via: $env:SUPABASE_SERVICE_ROLE_KEY="your-key"');
+  process.exit(1);
+}
 
 async function createAdmin() {
   console.log('Creating admin user...');

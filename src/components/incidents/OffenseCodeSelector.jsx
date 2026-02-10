@@ -39,7 +39,7 @@ export default function OffenseCodeSelector({ value, onChange }) {
 
       {/* Selected offense display */}
       {selectedCode && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">{selectedCode.title}</p>
@@ -84,12 +84,12 @@ export default function OffenseCodeSelector({ value, onChange }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search offense codes..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="">All Categories</option>
               {categories.map(cat => (

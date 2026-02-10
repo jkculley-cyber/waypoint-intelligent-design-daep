@@ -29,7 +29,7 @@ export default function ParentIncidentViewPage() {
         <Topbar title="Record Not Found" />
         <div className="p-6 text-center text-gray-500">
           <p>This record could not be found.</p>
-          <Link to="/parent" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+          <Link to="/parent" className="text-orange-600 hover:underline text-sm mt-2 inline-block">
             Back to Dashboard
           </Link>
         </div>
@@ -48,7 +48,7 @@ export default function ParentIncidentViewPage() {
         subtitle={`${formatStudentNameShort(student)} | ${formatDate(incident.incident_date)}`}
         actions={
           <Link to="/parent">
-            <button className="text-sm text-blue-600 hover:text-blue-700">
+            <button className="text-sm text-orange-600 hover:text-orange-700">
               Back to Dashboard
             </button>
           </Link>
@@ -113,7 +113,7 @@ export default function ParentIncidentViewPage() {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
-                  className="bg-blue-500 h-full rounded-full"
+                  className="bg-orange-500 h-full rounded-full"
                   style={{
                     width: `${Math.min(
                       100,
@@ -127,9 +127,9 @@ export default function ParentIncidentViewPage() {
         </Card>
 
         {/* Important Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-800">Your Rights</h3>
-          <p className="text-sm text-blue-700 mt-1">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-orange-800">Your Rights</h3>
+          <p className="text-sm text-orange-700 mt-1">
             You have the right to review your child's discipline records and appeal any decisions.
             Contact the school administration or your child's counselor if you have questions or
             wish to schedule a meeting.

@@ -63,7 +63,7 @@ export default function ConsequenceSuggestion({
       {suggestedEntry && (
         <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
-            <svg className="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-sm font-medium text-gray-700">
@@ -78,7 +78,7 @@ export default function ConsequenceSuggestion({
             </div>
             <div>
               <p className="text-xs text-gray-500">Recommended</p>
-              <p className="font-medium text-blue-600">{CONSEQUENCE_TYPE_LABELS[suggestedEntry.default_consequence] || suggestedEntry.default_consequence}</p>
+              <p className="font-medium text-orange-600">{CONSEQUENCE_TYPE_LABELS[suggestedEntry.default_consequence] || suggestedEntry.default_consequence}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Maximum</p>

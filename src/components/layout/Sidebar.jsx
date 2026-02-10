@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { cn } from '../../lib/utils'
-import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES } from '../../lib/constants'
+import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, DAEP_ROLES } from '../../lib/constants'
 import AlertBadge from '../alerts/AlertBadge'
 
 // Staff navigation items
@@ -44,6 +44,12 @@ const staffNavigation = [
     roles: null,
   },
   {
+    name: 'DAEP Dashboard',
+    path: '/daep',
+    icon: DaepIcon,
+    roles: DAEP_ROLES,
+  },
+  {
     name: 'Discipline Matrix',
     path: '/matrix',
     icon: MatrixIcon,
@@ -60,6 +66,19 @@ const staffNavigation = [
     path: '/settings',
     icon: SettingsIcon,
     roles: [ROLES.ADMIN],
+  },
+  {
+    name: 'Data Import',
+    path: '/settings/import-data',
+    icon: ImportIcon,
+    roles: [ROLES.ADMIN, ROLES.PRINCIPAL],
+  },
+  {
+    name: 'Student Kiosk',
+    path: '/kiosk',
+    icon: KioskIcon,
+    roles: [ROLES.ADMIN],
+    external: true, // opens in new tab
   },
 ]
 
@@ -91,40 +110,54 @@ export default function Sidebar() {
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Waypoint" className="h-9 w-9 object-contain" />
           <div>
-            <h1 className="text-lg font-bold text-blue-400 leading-tight">Waypoint</h1>
-            <p className="text-xs text-gray-400">Intelligent Design DAEP</p>
+            <h1 className="text-lg font-bold text-orange-400 leading-tight">Waypoint</h1>
+            <p className="text-xs text-gray-400">Behavioral Solutions</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {filteredNav.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )
-            }
-          >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            <span className="flex-1">{item.name}</span>
-            {item.path === '/alerts' && alertCount > 0 && (
-              <AlertBadge count={alertCount} />
-            )}
-          </NavLink>
-        ))}
+        {filteredNav.map((item) =>
+          item.external ? (
+            <a
+              key={item.path}
+              href={item.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-300 hover:bg-gray-800 hover:text-white"
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-1">{item.name}</span>
+              <ExternalLinkIcon className="h-3.5 w-3.5 text-gray-500" />
+            </a>
+          ) : (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-orange-500 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                )
+              }
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-1">{item.name}</span>
+              {item.path === '/alerts' && alertCount > 0 && (
+                <AlertBadge count={alertCount} />
+              )}
+            </NavLink>
+          )
+        )}
       </nav>
 
       {/* User Section */}
       <div className="px-3 py-4 border-t border-gray-800">
         <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium">
+          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-medium">
             {profile?.full_name?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
@@ -219,6 +252,38 @@ function SettingsIcon({ className }) {
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
+
+function KioskIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
+    </svg>
+  )
+}
+
+function DaepIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+    </svg>
+  )
+}
+
+function ExternalLinkIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+    </svg>
+  )
+}
+
+function ImportIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
     </svg>
   )
 }

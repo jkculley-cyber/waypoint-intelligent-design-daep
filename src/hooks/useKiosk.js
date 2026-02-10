@@ -98,14 +98,8 @@ export function useBehaviorActions() {
       .maybeSingle()
 
     if (existing) {
-      // Update check-in time
-      const { data, error } = await supabase
-        .from('daily_behavior_tracking')
-        .update({ check_in_time: now, status: 'checked_in' })
-        .eq('id', existing.id)
-        .select()
-        .single()
-      return { data, error }
+      // Already checked in today — do not re-stamp
+      return { data: existing, error: null, alreadyCheckedIn: true }
     } else {
       // Create new record
       const { data, error } = await supabase

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -9,13 +9,17 @@ import AlertCard from '../components/alerts/AlertCard'
 import { useAlerts } from '../hooks/useAlerts'
 import { useCampuses } from '../hooks/useCampuses'
 import { useNotifications } from '../contexts/NotificationContext'
+import { useAuth } from '../contexts/AuthContext'
 import { ALERT_TRIGGER_LABELS } from '../lib/constants'
+import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+import { formatStudentName, formatDate } from '../lib/utils'
 
 export default function AlertsPage() {
   const [levelFilter, setLevelFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [campusFilter, setCampusFilter] = useState('')
   const [triggerFilter, setTriggerFilter] = useState('')
+  const { profile } = useAuth()
 
   const filters = useMemo(() => {
     const f = {}
@@ -35,6 +39,30 @@ export default function AlertsPage() {
     refreshCounts()
   }
 
+  const exportHeaders = ['Student', 'Alert Level', 'Trigger', 'Status', 'Date']
+
+  const buildExportRows = useCallback(() => {
+    return alerts.map(a => [
+      a.student ? formatStudentName(a.student) : '—',
+      a.alert_level === 'red' ? 'Red' : 'Yellow',
+      ALERT_TRIGGER_LABELS[a.trigger_type] || a.trigger_type,
+      a.status,
+      formatDate(a.created_at),
+    ])
+  }, [alerts])
+
+  const handleExportPdf = useCallback(() => {
+    exportToPdf('Repeat Offender Alerts', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel('Repeat Offender Alerts', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
   // Stats
   const activeAlerts = alerts.filter(a => ['active', 'acknowledged', 'in_progress'].includes(a.status))
   const resolvedAlerts = alerts.filter(a => a.status === 'resolved' || a.status === 'dismissed')
@@ -46,6 +74,16 @@ export default function AlertsPage() {
       <Topbar
         title="Repeat Offender Alerts"
         subtitle={`${activeAlerts.length} active alert${activeAlerts.length !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex items-center gap-1.5">
+            <button onClick={handleExportPdf} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export PDF">
+              PDF
+            </button>
+            <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
+              Excel
+            </button>
+          </div>
+        }
       />
 
       <div className="p-6">
@@ -71,12 +109,12 @@ export default function AlertsPage() {
             <p className="text-2xl font-bold text-yellow-700 mt-1">{yellowCount}</p>
             <p className="text-xs text-yellow-600 mt-0.5">Same offense 3+ or 5+ referrals</p>
           </div>
-          <div className="p-4 rounded-xl border bg-blue-50 border-blue-200">
+          <div className="p-4 rounded-xl border bg-orange-50 border-orange-200">
             <p className="text-sm text-gray-600">In Progress</p>
-            <p className="text-2xl font-bold text-blue-700 mt-1">
+            <p className="text-2xl font-bold text-orange-700 mt-1">
               {alerts.filter(a => a.status === 'in_progress').length}
             </p>
-            <p className="text-xs text-blue-600 mt-0.5">Being reviewed by team</p>
+            <p className="text-xs text-orange-600 mt-0.5">Being reviewed by team</p>
           </div>
           <div className="p-4 rounded-xl border bg-green-50 border-green-200">
             <p className="text-sm text-gray-600">Resolved</p>

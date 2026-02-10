@@ -29,7 +29,7 @@ export default function ParentPlanViewPage() {
         <Topbar title="Plan Not Found" />
         <div className="p-6 text-center text-gray-500">
           <p>This plan could not be found.</p>
-          <Link to="/parent" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+          <Link to="/parent" className="text-orange-600 hover:underline text-sm mt-2 inline-block">
             Back to Dashboard
           </Link>
         </div>
@@ -51,7 +51,7 @@ export default function ParentPlanViewPage() {
         subtitle={PLAN_TYPE_LABELS[plan.plan_type]}
         actions={
           <Link to="/parent">
-            <button className="text-sm text-blue-600 hover:text-blue-700">
+            <button className="text-sm text-orange-600 hover:text-orange-700">
               Back to Dashboard
             </button>
           </Link>
@@ -113,7 +113,7 @@ export default function ParentPlanViewPage() {
         {plan.success_metrics && (
           <Card>
             <CardTitle>How We Measure Success</CardTitle>
-            <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap bg-blue-50 rounded-lg p-4">
+            <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap bg-orange-50 rounded-lg p-4">
               {plan.success_metrics}
             </div>
           </Card>
@@ -168,9 +168,9 @@ export default function ParentPlanViewPage() {
         <ReviewTimeline reviews={reviews} />
 
         {/* Contact Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-800">Questions?</h3>
-          <p className="text-sm text-blue-700 mt-1">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-orange-800">Questions?</h3>
+          <p className="text-sm text-orange-700 mt-1">
             Contact your child's counselor or campus administration if you have questions about
             this transition plan or would like to schedule a conference.
           </p>

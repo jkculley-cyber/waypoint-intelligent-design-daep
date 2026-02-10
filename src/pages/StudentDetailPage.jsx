@@ -7,24 +7,28 @@ import { PageLoader } from '../components/ui/LoadingSpinner'
 import StudentFlags from '../components/students/StudentFlags'
 import { useStudent } from '../hooks/useStudents'
 import { useIncidents } from '../hooks/useIncidents'
+import { useTransitionPlans } from '../hooks/useTransitionPlans'
 import {
   formatStudentName,
   formatStudentNameShort,
   formatGradeLevel,
   formatDate,
-  getColorClasses,
 } from '../lib/utils'
 import {
   SPED_ELIGIBILITY_CODES,
   INCIDENT_STATUS_LABELS,
   INCIDENT_STATUS_COLORS,
   CONSEQUENCE_TYPE_LABELS,
+  PLAN_TYPE_LABELS,
+  PLAN_STATUS_LABELS,
+  PLAN_STATUS_COLORS,
 } from '../lib/constants'
 
 export default function StudentDetailPage() {
   const { id } = useParams()
   const { student, loading } = useStudent(id)
   const { incidents, loading: incidentsLoading } = useIncidents({ student_id: id })
+  const { plans, loading: plansLoading } = useTransitionPlans({ student_id: id })
 
   if (loading) return <PageLoader message="Loading student record..." />
   if (!student) {
@@ -33,7 +37,7 @@ export default function StudentDetailPage() {
         <Topbar title="Student Not Found" />
         <div className="p-6 text-center text-gray-500">
           <p>This student record could not be found.</p>
-          <Link to="/students" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+          <Link to="/students" className="text-orange-600 hover:underline text-sm mt-2 inline-block">
             Back to Students
           </Link>
         </div>
@@ -139,13 +143,58 @@ export default function StudentDetailPage() {
           </Card>
         </div>
 
+        {/* Transition Plans */}
+        <Card padding={false}>
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <CardTitle>Transition Plans</CardTitle>
+          </div>
+          {plansLoading ? (
+            <div className="p-6 text-center text-sm text-gray-400">Loading plans...</div>
+          ) : plans.length === 0 ? (
+            <div className="p-6 text-center text-sm text-gray-400">No transition plans for this student.</div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {plans.map((plan) => {
+                const nextDate = plan.next_review_date || plan.review_30_date || plan.review_60_date || plan.review_90_date
+                const isOverdue = nextDate && new Date(nextDate) < new Date()
+                return (
+                  <Link
+                    key={plan.id}
+                    to={`/plans/${plan.id}`}
+                    className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge color={PLAN_STATUS_COLORS[plan.status] || 'gray'} size="sm">
+                          {PLAN_STATUS_LABELS[plan.status] || plan.status}
+                        </Badge>
+                        <span className="text-sm font-medium text-gray-900">
+                          {PLAN_TYPE_LABELS[plan.plan_type] || plan.plan_type}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {isOverdue && plan.status === 'active' && (
+                          <Badge color="red" size="sm">Review Overdue</Badge>
+                        )}
+                        <span className="text-xs text-gray-500">
+                          {formatDate(plan.start_date)} — {formatDate(plan.end_date)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </Card>
+
         {/* Incident History */}
         <Card padding={false}>
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <CardTitle>Incident History</CardTitle>
             <Link
               to={`/incidents/new?student=${student.id}`}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-orange-600 hover:text-orange-700 font-medium"
             >
               + New Incident
             </Link>

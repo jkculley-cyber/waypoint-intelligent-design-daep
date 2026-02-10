@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTransitionPlans } from '../hooks/useTransitionPlans'
 import { useCampuses } from '../hooks/useCampuses'
@@ -19,10 +19,11 @@ import {
   PLAN_TYPE_LABELS,
 } from '../lib/constants'
 import { formatStudentNameShort, formatDate, daysRemaining } from '../lib/utils'
+import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 
 export default function TransitionPlansPage() {
   const navigate = useNavigate()
-  const { hasRole } = useAuth()
+  const { hasRole, profile } = useAuth()
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
 
@@ -133,17 +134,53 @@ export default function TransitionPlansPage() {
     },
   ]
 
+  const exportHeaders = ['Student', 'Plan Type', 'Status', 'Start Date', 'End Date', 'Next Review']
+
+  const buildExportRows = useCallback(() => {
+    return plans.map(p => [
+      formatStudentNameShort(p.students),
+      PLAN_TYPE_LABELS[p.plan_type] || p.plan_type,
+      PLAN_STATUS_LABELS[p.status] || p.status,
+      formatDate(p.start_date),
+      formatDate(p.end_date),
+      p.next_review_date ? formatDate(p.next_review_date) : '—',
+    ])
+  }, [plans])
+
+  const handleExportPdf = useCallback(() => {
+    exportToPdf('Transition Plans', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+      landscape: true,
+    })
+  }, [buildExportRows, profile])
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel('Transition Plans', exportHeaders, buildExportRows(), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRows, profile])
+
   return (
     <div>
       <Topbar
         title="Transition Plans"
         subtitle="Student transition and re-entry plans"
         actions={
-          canCreate && (
-            <Button size="sm" onClick={() => navigate('/plans/new')}>
-              + New Plan
-            </Button>
-          )
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button onClick={handleExportPdf} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export PDF">
+                PDF
+              </button>
+              <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
+                Excel
+              </button>
+            </div>
+            {canCreate && (
+              <Button size="sm" onClick={() => navigate('/plans/new')}>
+                + New Plan
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -201,7 +238,7 @@ function MiniStat({ label, value, color = 'gray' }) {
     gray: 'text-gray-900',
     green: 'text-green-600',
     yellow: 'text-yellow-600',
-    blue: 'text-blue-600',
+    blue: 'text-orange-600',
     red: 'text-red-600',
   }
 

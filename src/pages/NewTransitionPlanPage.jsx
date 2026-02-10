@@ -218,7 +218,7 @@ export default function NewTransitionPlanPage() {
                     i < step
                       ? 'bg-green-500 text-white'
                       : i === step
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}
                 >
@@ -230,7 +230,7 @@ export default function NewTransitionPlanPage() {
                     i + 1
                   )}
                 </div>
-                <span className={`ml-2 text-sm hidden sm:block ${i === step ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                <span className={`ml-2 text-sm hidden sm:block ${i === step ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
                   {label}
                 </span>
               </div>
@@ -255,7 +255,7 @@ export default function NewTransitionPlanPage() {
                 selected={form.student}
               />
               {form.student && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">
                     {formatStudentNameShort(form.student)}
                   </p>
@@ -371,7 +371,7 @@ export default function NewTransitionPlanPage() {
                       key={intervention.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-blue-50 border-blue-300'
+                          ? 'bg-orange-50 border-orange-300'
                           : 'bg-white border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -379,7 +379,7 @@ export default function NewTransitionPlanPage() {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleInterventionToggle(intervention.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       <Badge color={TIER_COLORS[intervention.tier]} size="sm">
                         Tier {intervention.tier}

@@ -10,7 +10,7 @@ const sizes = {
 export default function LoadingSpinner({ size = 'md', className }) {
   return (
     <svg
-      className={cn('animate-spin text-blue-600', sizes[size], className)}
+      className={cn('animate-spin text-orange-600', sizes[size], className)}
       viewBox="0 0 24 24"
       fill="none"
     >

@@ -21,12 +21,14 @@ export function useStudents(filters = {}) {
         .from('students')
         .select(`
           *,
-          campus:campuses(id, name, campus_type)
+          campus:campuses(id, name, campus_type),
+          incidents(id, consequence_type, consequence_end, status)
         `)
         .eq('district_id', districtId)
         .eq('is_active', true)
         .order('last_name', { ascending: true })
 
+      if (filters._campusScope) query = query.in('campus_id', filters._campusScope)
       if (filters.campus_id) query = query.eq('campus_id', filters.campus_id)
       if (filters.grade_level !== undefined && filters.grade_level !== '') {
         query = query.eq('grade_level', filters.grade_level)
@@ -48,7 +50,7 @@ export function useStudents(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.campus_id, filters.grade_level, filters.is_sped, filters.is_504, filters.is_ell, filters.search])
+  }, [districtId, filters._campusScope, filters.campus_id, filters.grade_level, filters.is_sped, filters.is_504, filters.is_ell, filters.search])
 
   useEffect(() => {
     fetchStudents()

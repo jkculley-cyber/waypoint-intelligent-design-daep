@@ -9,7 +9,20 @@
       "Bash(export PATH=\"/c/Program Files/GitHub CLI:$PATH\")",
       "Bash(gh auth:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm ls:*)",
+      "Bash(node supabase/run_migrations.mjs:*)",
+      "Bash(node:*)",
+      "Bash(del \"C:\\\\Users\\\\jkcul\\\\waypoint-intelligent-design-daep-master\\\\supabase\\\\run_007.mjs\")",
+      "WebSearch",
+      "WebFetch(domain:core-docs.s3.us-east-1.amazonaws.com)",
+      "Bash(npx vite build:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

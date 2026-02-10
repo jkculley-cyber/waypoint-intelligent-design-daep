@@ -59,7 +59,7 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
       </label>
 
       {selectedStudent ? (
-        <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
           <div>
             <p className="text-sm font-medium text-gray-900">
               {formatStudentName(selectedStudent)}
@@ -88,7 +88,7 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
           {loading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">

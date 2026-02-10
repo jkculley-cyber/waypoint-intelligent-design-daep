@@ -44,8 +44,8 @@ export default function LoginPage() {
         {/* Logo / Header */}
         <div className="text-center mb-8">
           <img src="/logo.png" alt="Waypoint" className="h-24 w-24 mx-auto mb-4 object-contain" />
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">Waypoint</h1>
-          <p className="text-gray-500">Intelligent Design DAEP</p>
+          <h1 className="text-3xl font-bold text-orange-600 mb-2">Waypoint</h1>
+          <p className="text-gray-500">Behavioral Solutions</p>
         </div>
 
         {/* Login Card */}

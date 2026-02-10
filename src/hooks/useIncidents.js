@@ -23,13 +23,14 @@ export function useIncidents(filters = {}) {
           *,
           student:students(id, first_name, last_name, middle_name, grade_level, student_id_number, is_sped, is_504, is_ell, is_homeless, is_foster_care, sped_eligibility),
           offense:offense_codes(id, code, title, category, severity),
-          reporter:profiles!reported_by(id, full_name, role),
-          reviewer:profiles!reviewed_by(id, full_name),
-          compliance:compliance_checklists(id, status, placement_blocked)
+          reporter:profiles!incidents_reported_by_fkey(id, full_name, role),
+          reviewer:profiles!incidents_reviewed_by_fkey(id, full_name),
+          compliance:compliance_checklists!fk_incidents_compliance(id, status, placement_blocked)
         `)
         .eq('district_id', districtId)
         .order('incident_date', { ascending: false })
 
+      if (filters._campusScope) query = query.in('campus_id', filters._campusScope)
       if (filters.campus_id) query = query.eq('campus_id', filters.campus_id)
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.student_id) query = query.eq('student_id', filters.student_id)
@@ -48,7 +49,7 @@ export function useIncidents(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required])
+  }, [districtId, filters._campusScope, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required])
 
   useEffect(() => {
     fetchIncidents()
@@ -79,10 +80,10 @@ export function useIncident(incidentId) {
           *,
           student:students(*),
           offense:offense_codes(*),
-          reporter:profiles!reported_by(id, full_name, role, email),
-          reviewer:profiles!reviewed_by(id, full_name),
-          compliance:compliance_checklists(*),
-          transition_plan:transition_plans(id, status, plan_type)
+          reporter:profiles!incidents_reported_by_fkey(id, full_name, role, email),
+          reviewer:profiles!incidents_reviewed_by_fkey(id, full_name),
+          compliance:compliance_checklists!fk_incidents_compliance(*),
+          transition_plan:transition_plans!fk_incidents_transition_plan(id, status, plan_type)
         `)
         .eq('id', incidentId)
         .single()

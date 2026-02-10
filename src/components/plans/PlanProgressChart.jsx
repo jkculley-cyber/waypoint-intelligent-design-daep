@@ -24,7 +24,7 @@ const RATING_VALUES = {
 
 const RATING_COLORS = {
   4: '#22c55e',
-  3: '#3b82f6',
+  3: '#f97316',
   2: '#eab308',
   1: '#ef4444',
 }
@@ -65,8 +65,8 @@ export default function PlanProgressChart({ reviews }) {
           <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -92,10 +92,10 @@ export default function PlanProgressChart({ reviews }) {
             <Area
               type="monotone"
               dataKey="rating"
-              stroke="#3b82f6"
+              stroke="#f97316"
               strokeWidth={2}
               fill="url(#progressGradient)"
-              dot={{ fill: '#3b82f6', r: 5 }}
+              dot={{ fill: '#f97316', r: 5 }}
               activeDot={{ r: 7, fill: '#2563eb' }}
             />
           </AreaChart>

@@ -20,7 +20,7 @@ export function useTransitionPlans(filters = {}) {
         .select(`
           *,
           students (id, first_name, last_name, student_id_number, grade_level, is_sped, is_504, campus_id),
-          incidents (id, offense_code_id, consequence_type, consequence_days),
+          incidents!transition_plans_incident_id_fkey (id, offense_code_id, consequence_type, consequence_days),
           profiles!transition_plans_created_by_fkey (id, full_name)
         `)
         .eq('district_id', districtId)
@@ -75,7 +75,7 @@ export function useTransitionPlan(id) {
         .select(`
           *,
           students (id, first_name, last_name, student_id_number, grade_level, is_sped, is_504, is_ell, is_homeless, is_foster_care, campus_id),
-          incidents (id, offense_code_id, consequence_type, consequence_days, incident_date,
+          incidents!transition_plans_incident_id_fkey (id, offense_code_id, consequence_type, consequence_days, incident_date,
             offense_codes (id, name, code, category, severity)
           ),
           profiles!transition_plans_created_by_fkey (id, full_name)
@@ -91,7 +91,7 @@ export function useTransitionPlan(id) {
         .from('transition_plan_reviews')
         .select(`
           *,
-          profiles!transition_plan_reviews_reviewer_id_fkey (id, full_name)
+          profiles!fk_tpr_reviewer (id, full_name)
         `)
         .eq('plan_id', id)
         .order('review_date', { ascending: true })
@@ -236,13 +236,14 @@ export function useInterventions(filters = {}) {
  * Student intervention actions
  */
 export function useStudentInterventionActions() {
-  const { user } = useAuth()
+  const { user, districtId } = useAuth()
 
   const assignIntervention = async (data) => {
     const { data: result, error } = await supabase
       .from('student_interventions')
       .insert({
         ...data,
+        district_id: districtId,
         assigned_by: user.id,
         status: 'active',
       })

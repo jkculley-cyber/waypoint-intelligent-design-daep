@@ -20,8 +20,15 @@ import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { CONSEQUENCE_TYPE_LABELS, INTERVENTION_CATEGORY_LABELS } from '../lib/constants'
 import { getSchoolYearLabel } from '../lib/utils'
+import {
+  exportToPdf,
+  exportToExcel,
+  buildDisproportionalityExportData,
+  buildRecidivismExportData,
+  buildInterventionExportData,
+} from '../lib/exportUtils'
 
-const CHART_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
+const CHART_COLORS = ['#f97316', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 const CONSEQUENCE_COLORS = {
   warning: '#9ca3af', detention: '#f59e0b', iss: '#f97316',
   oss: '#ef4444', daep: '#dc2626', expulsion: '#7f1d1d', unassigned: '#d1d5db',
@@ -54,7 +61,7 @@ export default function ReportsPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 activeTab === tab.key
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-orange-500 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -80,12 +87,47 @@ function OverviewTab() {
   const { stats, loading: statsLoading } = useAnalyticsSummary()
   const { trends, loading: trendsLoading } = useIncidentTrends()
 
+  const handleExport = (format) => {
+    const headers = ['Metric', 'Value']
+    const rows = [
+      ['Total Incidents', stats?.totalIncidents ?? 0],
+      ['Active Incidents', stats?.activeIncidents ?? 0],
+      ['DAEP Placements', stats?.daepPlacements ?? 0],
+      ['Compliance Holds', stats?.complianceHolds ?? 0],
+      ['Active Alerts', stats?.activeAlerts ?? 0],
+      ['Active Plans', stats?.activePlans ?? 0],
+      ['Students with Incidents', stats?.uniqueStudents ?? 0],
+    ]
+
+    if (trends.length > 0) {
+      rows.push([])
+      rows.push(['Month', 'Total', 'ISS', 'OSS', 'DAEP', 'Other'])
+      trends.forEach(t => rows.push([t.label, t.total, t.iss, t.oss, t.daep, t.other]))
+    }
+
+    const title = 'Overview Report'
+    const subtitle = `${getSchoolYearLabel()} School Year`
+    try {
+      if (format === 'pdf') {
+        exportToPdf(title, headers, rows, { subtitle })
+      } else {
+        exportToExcel(title, headers, rows)
+      }
+      toast.success(`${format.toUpperCase()} exported`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    }
+  }
+
   if (statsLoading) {
     return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
   }
 
   return (
     <div className="space-y-6">
+      <ExportButtons onExport={handleExport} />
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <SummaryCard label="Total Incidents" value={stats?.totalIncidents} color="blue" />
@@ -110,8 +152,8 @@ function OverviewTab() {
               <AreaChart data={trends} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -119,7 +161,7 @@ function OverviewTab() {
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Area type="monotone" dataKey="total" name="Total" stroke="#3b82f6" fill="url(#totalGrad)" strokeWidth={2} />
+                <Area type="monotone" dataKey="total" name="Total" stroke="#f97316" fill="url(#totalGrad)" strokeWidth={2} />
                 <Line type="monotone" dataKey="iss" name="ISS" stroke="#f97316" strokeWidth={1.5} dot={false} />
                 <Line type="monotone" dataKey="oss" name="OSS" stroke="#ef4444" strokeWidth={1.5} dot={false} />
                 <Line type="monotone" dataKey="daep" name="DAEP" stroke="#dc2626" strokeWidth={1.5} dot={false} />
@@ -162,6 +204,23 @@ function OverviewTab() {
 function DisproportionalityTab() {
   const { data, loading } = useDisproportionalityData()
 
+  const handleExport = (format) => {
+    const { headers, rows } = buildDisproportionalityExportData(data)
+    const title = 'Disproportionality Report'
+    const subtitle = `${getSchoolYearLabel()} School Year | ${data.totalIncidents} incidents | ${data.totalStudents} students`
+    try {
+      if (format === 'pdf') {
+        exportToPdf(title, headers, rows, { subtitle, landscape: true })
+      } else {
+        exportToExcel(title, headers, rows)
+      }
+      toast.success(`${format.toUpperCase()} exported`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    }
+  }
+
   if (loading) {
     return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
   }
@@ -178,6 +237,8 @@ function DisproportionalityTab() {
 
   return (
     <div className="space-y-6">
+      <ExportButtons onExport={handleExport} />
+
       {/* Alert for significant disproportionality */}
       {data.bySped?.some((d) => d.riskRatio > 2.0) && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -293,6 +354,23 @@ function DisproportionalityChart({ title, data, description }) {
 function RecidivismTab() {
   const { data, loading } = useRecidivismData()
 
+  const handleExport = (format) => {
+    const { headers, rows } = buildRecidivismExportData(data)
+    const title = 'Recidivism Report'
+    const subtitle = `${getSchoolYearLabel()} School Year`
+    try {
+      if (format === 'pdf') {
+        exportToPdf(title, headers, rows, { subtitle })
+      } else {
+        exportToExcel(title, headers, rows)
+      }
+      toast.success(`${format.toUpperCase()} exported`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    }
+  }
+
   if (loading) {
     return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
   }
@@ -309,6 +387,8 @@ function RecidivismTab() {
 
   return (
     <div className="space-y-6">
+      <ExportButtons onExport={handleExport} />
+
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
@@ -351,7 +431,7 @@ function RecidivismTab() {
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} label={{ value: 'Students', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Bar dataKey="count" name="Students" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="count" name="Students" fill="#f97316" radius={[4, 4, 0, 0]}>
                   {data.distribution.map((_, index) => (
                     <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
@@ -391,6 +471,23 @@ function RecidivismTab() {
 function InterventionsTab() {
   const { data, loading } = useInterventionEffectiveness()
 
+  const handleExport = (format) => {
+    const { headers, rows } = buildInterventionExportData(data)
+    const title = 'Intervention Effectiveness'
+    const subtitle = `${getSchoolYearLabel()} School Year | ${data.length} interventions tracked`
+    try {
+      if (format === 'pdf') {
+        exportToPdf(title, headers, rows, { subtitle, landscape: true })
+      } else {
+        exportToExcel(title, headers, rows)
+      }
+      toast.success(`${format.toUpperCase()} exported`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    }
+  }
+
   if (loading) {
     return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
   }
@@ -409,6 +506,8 @@ function InterventionsTab() {
 
   return (
     <div className="space-y-6">
+      <ExportButtons onExport={handleExport} />
+
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <SummaryCard label="Total Assignments" value={data.reduce((s, d) => s + d.total, 0)} color="blue" />
@@ -433,7 +532,7 @@ function InterventionsTab() {
               <Tooltip contentStyle={{ fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="active" name="Active" fill="#22c55e" stackId="a" />
-              <Bar dataKey="completed" name="Completed" fill="#3b82f6" stackId="a" />
+              <Bar dataKey="completed" name="Completed" fill="#f97316" stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -499,6 +598,14 @@ function ExportTab() {
   const [exporting, setExporting] = useState(false)
   const [exportResult, setExportResult] = useState(null)
 
+  const peimsHeaders = [
+    'STUDENT-ID', 'STUDENT-NAME', 'GRADE-LEVEL', 'INCIDENT-DATE', 'INCIDENT-TIME',
+    'LOCATION', 'OFFENSE-CODE', 'OFFENSE-DESCRIPTION', 'TEC-REFERENCE', 'SEVERITY',
+    'CONSEQUENCE-TYPE', 'CONSEQUENCE-DAYS', 'CONSEQUENCE-START', 'CONSEQUENCE-END',
+    'PEIMS-ACTION-CODE', 'RACE', 'GENDER', 'SPED', '504', 'ELL',
+    'MANDATORY-DAEP', 'MANDATORY-EXPULSION', 'STATUS',
+  ]
+
   const handleExport = async () => {
     setExporting(true)
     try {
@@ -520,6 +627,49 @@ function ExportTab() {
       URL.revokeObjectURL(url)
 
       toast.success(`Exported ${result.recordCount} records`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleExportFormat = async (format) => {
+    setExporting(true)
+    try {
+      const result = await generateExport()
+      if (!result) {
+        toast.error('No data available for export')
+        setExporting(false)
+        return
+      }
+
+      // Parse CSV rows back into arrays for PDF/Excel export
+      const csvLines = result.csv.split('\n')
+      const rows = csvLines.slice(1).map(line => {
+        const cells = []
+        let current = ''
+        let inQuotes = false
+        for (let i = 0; i < line.length; i++) {
+          if (line[i] === '"') { inQuotes = !inQuotes }
+          else if (line[i] === ',' && !inQuotes) { cells.push(current); current = '' }
+          else { current += line[i] }
+        }
+        cells.push(current)
+        return cells
+      })
+
+      const title = 'PEIMS Discipline Export'
+      const subtitle = `${getSchoolYearLabel()} School Year | ${result.recordCount} records`
+
+      if (format === 'pdf') {
+        exportToPdf(title, peimsHeaders, rows, { subtitle, landscape: true })
+      } else {
+        exportToExcel(title, peimsHeaders, rows)
+      }
+
+      toast.success(`${format.toUpperCase()} exported`)
     } catch (err) {
       toast.error('Export failed')
       console.error(err)
@@ -580,24 +730,41 @@ function ExportTab() {
             </ul>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-1">Data Period</h4>
-            <p className="text-sm text-blue-700">
+          <div className="bg-orange-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-orange-800 mb-1">Data Period</h4>
+            <p className="text-sm text-orange-700">
               {getSchoolYearLabel()} School Year — All approved, active, and completed incidents
             </p>
           </div>
 
-          <Button
-            size="lg"
-            onClick={handleExport}
-            loading={exporting}
-            className="w-full sm:w-auto"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            Generate & Download PEIMS Export
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              size="lg"
+              onClick={handleExport}
+              loading={exporting}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download CSV
+            </Button>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => handleExportFormat('pdf')}
+              loading={exporting}
+            >
+              Download PDF
+            </Button>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => handleExportFormat('excel')}
+              loading={exporting}
+            >
+              Download Excel
+            </Button>
+          </div>
 
           {exportResult && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -653,7 +820,7 @@ function ExportTab() {
 
 function SummaryCard({ label, value, color }) {
   const textColors = {
-    blue: 'text-blue-600', red: 'text-red-600', green: 'text-green-600',
+    blue: 'text-orange-600', red: 'text-red-600', green: 'text-green-600',
     yellow: 'text-yellow-600', orange: 'text-orange-600', purple: 'text-purple-600',
     indigo: 'text-indigo-600',
   }
@@ -673,12 +840,12 @@ function MetricCard({ label, value, sublabel, color }) {
     red: 'bg-red-50 border-red-200',
     yellow: 'bg-yellow-50 border-yellow-200',
     green: 'bg-green-50 border-green-200',
-    blue: 'bg-blue-50 border-blue-200',
+    blue: 'bg-orange-50 border-orange-200',
     purple: 'bg-purple-50 border-purple-200',
   }
   const textColors = {
     red: 'text-red-700', yellow: 'text-yellow-700', green: 'text-green-700',
-    blue: 'text-blue-700', purple: 'text-purple-700',
+    blue: 'text-orange-700', purple: 'text-purple-700',
   }
 
   return (
@@ -686,6 +853,32 @@ function MetricCard({ label, value, sublabel, color }) {
       <p className="text-xs text-gray-500">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${textColors[color] || 'text-gray-900'}`}>{value}</p>
       {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
+    </div>
+  )
+}
+
+function ExportButtons({ onExport }) {
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <span className="text-xs text-gray-400 mr-1">Export:</span>
+      <button
+        onClick={() => onExport('pdf')}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
+        PDF
+      </button>
+      <button
+        onClick={() => onExport('excel')}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125" />
+        </svg>
+        Excel
+      </button>
     </div>
   )
 }
