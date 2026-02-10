@@ -34,6 +34,8 @@ const migrations = [
   { file: '007_demo_seed_data.sql', name: '007: Demo Seed Data' },
   { file: '008_daep_days_absent.sql', name: '008: DAEP Days Absent Column' },
   { file: '009_transition_plan_reviews_enhance.sql', name: '009: Transition Plan Reviews Enhancement' },
+  { file: '010_import_system.sql', name: '010: Import System' },
+  { file: '011_phone_bag_number.sql', name: '011: Phone Bag Number' },
 ];
 
 async function run() {

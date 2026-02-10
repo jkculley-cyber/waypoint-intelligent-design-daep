@@ -137,7 +137,6 @@ export default function KioskPage() {
     setPlacement(null)
     setPlacementLoaded(false)
     setConfirmationData(null)
-    autoCheckedIn.current = false
     setView('login')
   }
 
