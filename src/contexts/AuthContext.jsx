@@ -84,6 +84,7 @@ export function AuthProvider({ children }) {
   }, [session, resetInactivityTimer])
 
   async function fetchProfile(userId) {
+    setLoading(true)
     try {
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
