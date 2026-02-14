@@ -5,10 +5,13 @@ import { useKioskAuth, useDailyBehavior, useBehaviorActions } from '../hooks/use
 import Button from '../components/ui/Button'
 import { format } from 'date-fns'
 import { supabase } from '../lib/supabase'
-import { getInstructionalDaysRemaining, getInstructionalDaysElapsed, getInstructionalDaysTotal } from '../lib/instructionalCalendar'
 
-// Hardcoded campus ID for demo - in production this would be configured per kiosk device
-const DEMO_CAMPUS_ID = null
+// Kiosk campus can be set via URL param: /kiosk?campus=UUID
+// This determines which campus check-ins are recorded against
+function getKioskCampusId() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('campus') || null
+}
 
 // Auto-return delay (seconds) after check-in confirmation
 const AUTO_RETURN_SECONDS = 8
@@ -16,6 +19,7 @@ const AUTO_RETURN_SECONDS = 8
 const LOGIN_IDLE_SECONDS = 60
 
 export default function KioskPage() {
+  const kioskCampusId = getKioskCampusId()
   const { student, loading: authLoading, error: authError, authenticateStudent, logout } = useKioskAuth()
   const [studentIdInput, setStudentIdInput] = useState('')
   const [view, setView] = useState('login') // login | confirm_identity | confirmation
@@ -36,8 +40,9 @@ export default function KioskPage() {
   // Fetch active DAEP placement for this student (for days remaining)
   const [placement, setPlacement] = useState(null)
   const [placementLoaded, setPlacementLoaded] = useState(false)
+  const [daysServed, setDaysServed] = useState(0)
   useEffect(() => {
-    if (!student?.id) { setPlacement(null); setPlacementLoaded(false); return }
+    if (!student?.id) { setPlacement(null); setPlacementLoaded(false); setDaysServed(0); return }
     setPlacementLoaded(false)
     const fetchPlacement = async () => {
       const { data } = await supabase
@@ -50,20 +55,30 @@ export default function KioskPage() {
         .limit(1)
         .maybeSingle()
       setPlacement(data)
+
+      // Count actual check-in days within the placement period
+      if (data?.consequence_start) {
+        let query = supabase
+          .from('daily_behavior_tracking')
+          .select('id', { count: 'exact', head: true })
+          .eq('student_id', student.id)
+          .gte('tracking_date', data.consequence_start)
+        if (data.consequence_end) {
+          query = query.lte('tracking_date', data.consequence_end)
+        }
+        const { count } = await query
+        setDaysServed(count || 0)
+      } else {
+        setDaysServed(0)
+      }
+
       setPlacementLoaded(true)
     }
     fetchPlacement()
   }, [student?.id])
 
-  const remaining = placement
-    ? getInstructionalDaysRemaining(placement.consequence_end, student?.district_id)
-    : null
-  const elapsed = placement
-    ? getInstructionalDaysElapsed(placement.consequence_start, student?.district_id)
-    : null
-  const totalInstructional = placement
-    ? getInstructionalDaysTotal(placement.consequence_start, placement.consequence_end, student?.district_id)
-    : null
+  const totalAssigned = placement?.consequence_days || 0
+  const remaining = totalAssigned > 0 ? Math.max(0, totalAssigned - daysServed) : null
 
   // Once student authenticates and data loads, show identity confirmation step
   useEffect(() => {
@@ -102,8 +117,8 @@ export default function KioskPage() {
         studentIdNumber: student.student_id_number,
         phoneBagNumber: record?.phone_bag_number || null,
         remaining,
-        totalInstructional,
-        elapsed,
+        totalAssigned,
+        elapsed: daysServed,
         placement,
         alreadyCheckedIn: true,
       })
@@ -143,13 +158,13 @@ export default function KioskPage() {
   const handleLogin = (e) => {
     e.preventDefault()
     if (!studentIdInput.trim()) return
-    authenticateStudent(studentIdInput.trim(), DEMO_CAMPUS_ID)
+    authenticateStudent(studentIdInput.trim(), null) // don't filter by campus - any student can check in
   }
 
   const performCheckIn = async () => {
     if (actionLoading) return
     setActionLoading(true)
-    const { error } = await checkIn(student.id, student.campus_id, student.district_id, {
+    const { error } = await checkIn(student.id, kioskCampusId || student.campus_id, student.district_id, {
       phoneBagNumber: phoneBagNumber.trim() || null,
     })
     if (error) {
@@ -158,16 +173,32 @@ export default function KioskPage() {
       return
     }
     await refetchBehavior()
-    // Snapshot data for confirmation screen
+
+    // Re-query actual check-in count from DB so kiosk matches admin pages exactly
+    let newDaysServed = daysServed
+    if (placement?.consequence_start) {
+      let countQuery = supabase
+        .from('daily_behavior_tracking')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_id', student.id)
+        .gte('tracking_date', placement.consequence_start)
+      if (placement.consequence_end) {
+        countQuery = countQuery.lte('tracking_date', placement.consequence_end)
+      }
+      const { count } = await countQuery
+      newDaysServed = count || 0
+    }
+
+    const newRemaining = totalAssigned > 0 ? Math.max(0, totalAssigned - newDaysServed) : null
     setConfirmationData({
       firstName: student.first_name,
       lastName: student.last_name,
       gradeLevel: student.grade_level,
       studentIdNumber: student.student_id_number,
       phoneBagNumber: phoneBagNumber.trim() || null,
-      remaining,
-      totalInstructional,
-      elapsed,
+      remaining: newRemaining,
+      totalAssigned,
+      elapsed: newDaysServed,
       placement,
       alreadyCheckedIn: false,
     })
@@ -330,14 +361,14 @@ export default function KioskPage() {
             )}
 
             {/* DAEP Placement Tracker */}
-            {confirmationData.placement && confirmationData.remaining !== null && (
+            {confirmationData.placement && confirmationData.totalAssigned > 0 && (
               <DaepTracker
                 remaining={confirmationData.remaining}
                 elapsed={confirmationData.elapsed || 0}
-                total={confirmationData.totalInstructional || confirmationData.placement.consequence_days}
+                total={confirmationData.totalAssigned}
                 startDate={confirmationData.placement.consequence_start}
                 endDate={confirmationData.placement.consequence_end}
-                daysAssigned={confirmationData.placement.consequence_days}
+                daysAssigned={confirmationData.totalAssigned}
               />
             )}
 
@@ -355,6 +386,13 @@ export default function KioskPage() {
           </div>
         </div>
       )}
+
+      {/* LLC Attribution */}
+      <div className="fixed bottom-0 left-0 right-0 py-2 text-center">
+        <p className="text-[10px] text-gray-600">
+          &copy; {new Date().getFullYear()} Clear Path Education Group, LLC. All rights reserved.
+        </p>
+      </div>
     </div>
   )
 }
@@ -365,6 +403,7 @@ export default function KioskPage() {
  */
 function DaepTracker({ remaining, elapsed, total, startDate, endDate, daysAssigned }) {
   const progress = total > 0 ? Math.min((elapsed / total) * 100, 100) : 0
+  const isCompleted = remaining === 0
 
   // Build milestone stages
   const milestones = [
@@ -389,17 +428,20 @@ function DaepTracker({ remaining, elapsed, total, startDate, endDate, daysAssign
       {/* Header row */}
       <div className="flex items-center justify-between mb-1">
         <p className="text-sm font-semibold text-gray-300 uppercase tracking-wide">DAEP Placement Tracker</p>
-        <span className={`text-3xl font-bold ${progressColor.text}`}>
-          {remaining} <span className="text-base font-normal text-gray-400">days left</span>
-        </span>
+        {isCompleted ? (
+          <span className="text-2xl font-bold text-green-400">Placement Complete!</span>
+        ) : (
+          <span className={`text-3xl font-bold ${progressColor.text}`}>
+            {remaining} <span className="text-base font-normal text-gray-400">days left</span>
+          </span>
+        )}
       </div>
 
       {/* Meta info */}
       <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500 mb-6">
         <span>Started {format(new Date(startDate), 'MMM d, yyyy')}</span>
         <span>Ends {format(new Date(endDate), 'MMM d, yyyy')}</span>
-        <span>{daysAssigned} calendar days assigned</span>
-        <span>{total} instructional days</span>
+        <span>{daysAssigned} days assigned</span>
       </div>
 
       {/* ---- Tracker Rail ---- */}

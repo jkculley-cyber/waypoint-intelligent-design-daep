@@ -97,6 +97,9 @@ export default function LoginPage() {
         <p className="text-center text-sm text-gray-500 mt-6">
           Contact your district administrator for account access.
         </p>
+        <p className="text-center text-xs text-gray-400 mt-4">
+          &copy; {new Date().getFullYear()} Clear Path Education Group, LLC. All rights reserved.
+        </p>
       </div>
     </div>
   )

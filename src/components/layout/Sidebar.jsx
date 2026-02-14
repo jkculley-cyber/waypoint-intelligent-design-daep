@@ -183,6 +183,14 @@ export default function Sidebar() {
           Sign Out
         </button>
       </div>
+
+      {/* LLC Attribution */}
+      <div className="px-4 py-3 border-t border-gray-800">
+        <p className="text-[10px] text-gray-500 text-center leading-tight">
+          A product of Clear Path Education Group, LLC.
+          All rights reserved.
+        </p>
+      </div>
     </aside>
   )
 }
