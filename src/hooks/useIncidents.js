@@ -25,13 +25,16 @@ export function useIncidents(filters = {}) {
           offense:offense_codes(id, code, title, category, severity),
           reporter:profiles!incidents_reported_by_fkey(id, full_name, role),
           reviewer:profiles!incidents_reviewed_by_fkey(id, full_name),
-          compliance:compliance_checklists!fk_incidents_compliance(id, status, placement_blocked)
+          compliance:compliance_checklists!fk_incidents_compliance(id, status, placement_blocked),
+          approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, chain_status, current_step)
         `)
         .eq('district_id', districtId)
         .order('incident_date', { ascending: false })
 
       if (filters._campusScope) query = query.in('campus_id', filters._campusScope)
       if (filters.campus_id) query = query.eq('campus_id', filters.campus_id)
+      // SPED-only scope: only show incidents for SPED/504 students
+      if (filters._spedOnly) query = query.eq('sped_compliance_required', true)
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.student_id) query = query.eq('student_id', filters.student_id)
       if (filters.consequence_type) query = query.eq('consequence_type', filters.consequence_type)
@@ -49,7 +52,7 @@ export function useIncidents(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters._campusScope, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required])
+  }, [districtId, filters._campusScope, filters._spedOnly, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required])
 
   useEffect(() => {
     fetchIncidents()

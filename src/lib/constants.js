@@ -6,6 +6,9 @@ export const ROLES = {
   COUNSELOR: 'counselor',
   SPED_COORDINATOR: 'sped_coordinator',
   TEACHER: 'teacher',
+  CBC: 'cbc',
+  SSS: 'sss',
+  SECTION_504_COORDINATOR: 'section_504_coordinator',
   PARENT: 'parent',
   STUDENT: 'student',
 }
@@ -17,6 +20,9 @@ export const ROLE_LABELS = {
   [ROLES.COUNSELOR]: 'Counselor',
   [ROLES.SPED_COORDINATOR]: 'SPED Coordinator',
   [ROLES.TEACHER]: 'Teacher',
+  [ROLES.CBC]: 'Campus Behavior Coordinator',
+  [ROLES.SSS]: 'Student Support Specialist',
+  [ROLES.SECTION_504_COORDINATOR]: '504 Coordinator',
   [ROLES.PARENT]: 'Parent',
   [ROLES.STUDENT]: 'Student',
 }
@@ -29,6 +35,9 @@ export const STAFF_ROLES = [
   ROLES.COUNSELOR,
   ROLES.SPED_COORDINATOR,
   ROLES.TEACHER,
+  ROLES.CBC,
+  ROLES.SSS,
+  ROLES.SECTION_504_COORDINATOR,
 ]
 
 // Roles that can access the DAEP Dashboard
@@ -39,6 +48,9 @@ export const DAEP_ROLES = [
   ROLES.COUNSELOR,
   ROLES.SPED_COORDINATOR,
   ROLES.TEACHER,
+  ROLES.CBC,
+  ROLES.SSS,
+  ROLES.SECTION_504_COORDINATOR,
 ]
 
 // Roles that can manage compliance
@@ -69,6 +81,9 @@ export const INCIDENT_STATUS = {
   COMPLETED: 'completed',
   APPEALED: 'appealed',
   OVERTURNED: 'overturned',
+  PENDING_APPROVAL: 'pending_approval',
+  DENIED: 'denied',
+  RETURNED: 'returned',
 }
 
 export const INCIDENT_STATUS_LABELS = {
@@ -81,6 +96,9 @@ export const INCIDENT_STATUS_LABELS = {
   [INCIDENT_STATUS.COMPLETED]: 'Completed',
   [INCIDENT_STATUS.APPEALED]: 'Appealed',
   [INCIDENT_STATUS.OVERTURNED]: 'Overturned',
+  [INCIDENT_STATUS.PENDING_APPROVAL]: 'Pending Approval',
+  [INCIDENT_STATUS.DENIED]: 'Denied',
+  [INCIDENT_STATUS.RETURNED]: 'Returned',
 }
 
 export const INCIDENT_STATUS_COLORS = {
@@ -93,6 +111,9 @@ export const INCIDENT_STATUS_COLORS = {
   [INCIDENT_STATUS.COMPLETED]: 'green',
   [INCIDENT_STATUS.APPEALED]: 'orange',
   [INCIDENT_STATUS.OVERTURNED]: 'gray',
+  [INCIDENT_STATUS.PENDING_APPROVAL]: 'yellow',
+  [INCIDENT_STATUS.DENIED]: 'red',
+  [INCIDENT_STATUS.RETURNED]: 'orange',
 }
 
 // Consequence types
@@ -443,3 +464,21 @@ export const IMPORT_STATUS_CONFIG = {
   failed: { label: 'Failed', color: 'red' },
   partial: { label: 'Partial', color: 'yellow' },
 }
+
+// DAEP Approval Chain
+export const APPROVAL_STEP_STATUS = {
+  PENDING: 'pending',
+  WAITING: 'waiting',
+  APPROVED: 'approved',
+  DENIED: 'denied',
+  RETURNED: 'returned',
+  SKIPPED: 'skipped',
+}
+
+export const APPROVAL_CHAIN_STEPS = [
+  { role: 'cbc', label: 'Campus Behavior Coordinator', order: 1 },
+  { role: 'counselor', label: 'Counselor', order: 2 },
+  { role: 'sped_coordinator', label: 'Special Education', order: 3, conditional: 'is_sped' },
+  { role: 'section_504_coordinator', label: 'Section 504', order: 4, conditional: 'has_504' },
+  { role: 'sss', label: 'Student Support Specialist', order: 5 },
+]

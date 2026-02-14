@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Topbar from '../components/layout/Topbar'
@@ -10,15 +11,16 @@ import StudentFlags from '../components/students/StudentFlags'
 import ComplianceBlockBanner from '../components/compliance/ComplianceBlockBanner'
 import ComplianceChecklist from '../components/compliance/ComplianceChecklist'
 import PolicyMismatchBanner from '../components/incidents/PolicyMismatchBanner'
+import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
 import { useIncident, useIncidentActions } from '../hooks/useIncidents'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import {
   formatStudentName,
   formatStudentNameShort,
   formatDate,
   formatDateTime,
   formatGradeLevel,
-  daysRemaining,
 } from '../lib/utils'
 import {
   INCIDENT_STATUS_LABELS,
@@ -34,6 +36,25 @@ export default function IncidentDetailPage() {
   const { incident, loading, refetch } = useIncident(id)
   const { approveIncident, activateIncident, completeIncident } = useIncidentActions()
   const { hasRole } = useAuth()
+
+  // Fetch check-in count for this placement — hooks must be before any early return
+  const [daysServed, setDaysServed] = useState(0)
+  useEffect(() => {
+    if (!incident?.student?.id || !incident.consequence_start) return
+    const fetchCount = async () => {
+      let query = supabase
+        .from('daily_behavior_tracking')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_id', incident.student.id)
+        .gte('tracking_date', incident.consequence_start)
+      if (incident.consequence_end) {
+        query = query.lte('tracking_date', incident.consequence_end)
+      }
+      const { count } = await query
+      setDaysServed(count || 0)
+    }
+    fetchCount()
+  }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
 
   if (loading) return <PageLoader message="Loading incident..." />
   if (!incident) {
@@ -55,10 +76,12 @@ export default function IncidentDetailPage() {
   const compliance = incident.compliance
   const isComplianceHold = incident.status === 'compliance_hold'
   const isDaep = incident.consequence_type === 'daep'
+  const hasDaepChain = isDaep && incident.approval_chain_id
   const mdrRequired = incident.sped_compliance_required && isDaep
   const mdrCleared = incident.compliance_cleared
   const mdrBlocked = mdrRequired && !mdrCleared
-  const canApprove = hasRole(['admin', 'principal', 'ap']) && incident.status === 'submitted'
+  // For DAEP incidents with approval chain, don't show the single approve button — the chain handles it
+  const canApprove = hasRole(['admin', 'principal', 'ap']) && incident.status === 'submitted' && !hasDaepChain
   const canActivate = hasRole(['admin', 'principal', 'ap']) && incident.status === 'approved' && !mdrBlocked
   const canComplete = hasRole(['admin', 'principal', 'ap']) && incident.status === 'active'
 
@@ -221,11 +244,16 @@ export default function IncidentDetailPage() {
                 />
                 <DetailRow label="Start Date" value={formatDate(incident.consequence_start)} />
                 <DetailRow label="End Date" value={formatDate(incident.consequence_end)} />
-                {incident.consequence_end && incident.status === 'active' && (
-                  <DetailRow
-                    label="Days Remaining"
-                    value={`${daysRemaining(incident.consequence_end)} days`}
-                  />
+                {incident.consequence_days && ['active', 'approved'].includes(incident.status) && (
+                  (() => {
+                    const remaining = Math.max(0, incident.consequence_days - daysServed)
+                    return (
+                      <DetailRow
+                        label="Days Remaining"
+                        value={remaining === 0 ? 'Completed' : `${remaining} days (${daysServed}/${incident.consequence_days} served)`}
+                      />
+                    )
+                  })()
                 )}
               </dl>
             </Card>
@@ -241,6 +269,11 @@ export default function IncidentDetailPage() {
 
           {/* Sidebar - Right 1/3 */}
           <div className="space-y-6">
+            {/* DAEP Approval Chain */}
+            {hasDaepChain && (
+              <ApprovalChainTracker incidentId={incident.id} onUpdate={refetch} />
+            )}
+
             {/* Student Card */}
             <Card>
               <CardTitle>Student</CardTitle>
@@ -282,6 +315,30 @@ export default function IncidentDetailPage() {
                   <TimelineItem
                     label="Compliance Hold"
                     value="Awaiting SPED compliance"
+                    active
+                    variant="warning"
+                  />
+                )}
+                {incident.status === 'pending_approval' && (
+                  <TimelineItem
+                    label="Pending Approval"
+                    value="DAEP approval chain in progress"
+                    active
+                    variant="warning"
+                  />
+                )}
+                {incident.status === 'denied' && (
+                  <TimelineItem
+                    label="Denied"
+                    value="DAEP placement denied"
+                    active
+                    variant="danger"
+                  />
+                )}
+                {incident.status === 'returned' && (
+                  <TimelineItem
+                    label="Returned"
+                    value="Returned for revision"
                     active
                     variant="warning"
                   />
@@ -351,6 +408,7 @@ function TimelineItem({ label, value, active, variant = 'default' }) {
     warning: 'bg-yellow-500',
     info: 'bg-orange-500',
     success: 'bg-green-500',
+    danger: 'bg-red-500',
   }
 
   return (

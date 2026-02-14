@@ -16,6 +16,7 @@ import {
   INCIDENT_STATUS_COLORS,
   CONSEQUENCE_TYPE_LABELS,
   INCIDENT_STATUS,
+  ROLE_LABELS,
 } from '../lib/constants'
 import { useAccessScope } from '../hooks/useAccessScope'
 import { canImport, getImportTier } from '../lib/importPermissions'
@@ -27,6 +28,7 @@ export default function IncidentsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [campusFilter, setCampusFilter] = useState('')
   const [consequenceFilter, setConsequenceFilter] = useState('')
+  const [myApprovalsOnly, setMyApprovalsOnly] = useState(false)
   const { scope } = useAccessScope()
   const { profile } = useAuth()
 
@@ -35,6 +37,7 @@ export default function IncidentsPage() {
     if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
       f._campusScope = scope.scopedCampusIds
     }
+    if (scope.spedOnly) f._spedOnly = true
     if (statusFilter) f.status = statusFilter
     if (campusFilter) f.campus_id = campusFilter
     if (consequenceFilter) f.consequence_type = consequenceFilter
@@ -44,17 +47,30 @@ export default function IncidentsPage() {
   const { incidents: rawIncidents, loading } = useIncidents(filters)
   const { campuses } = useCampuses()
 
-  // Client-side search across student name and offense
+  // Client-side search and "My Pending Approvals" filter
   const incidents = useMemo(() => {
-    if (!search.trim()) return rawIncidents
-    const q = search.toLowerCase()
-    return rawIncidents.filter(inc => {
-      const studentName = inc.student ? `${inc.student.first_name} ${inc.student.last_name}`.toLowerCase() : ''
-      const offenseTitle = inc.offense?.title?.toLowerCase() || ''
-      const studentId = inc.student?.student_id_number?.toLowerCase() || ''
-      return studentName.includes(q) || offenseTitle.includes(q) || studentId.includes(q)
-    })
-  }, [rawIncidents, search])
+    let filtered = rawIncidents
+
+    // My Pending Approvals filter — show incidents where the approval chain current_step matches user's role
+    if (myApprovalsOnly && profile?.role) {
+      filtered = filtered.filter(inc =>
+        inc.approval_chain?.current_step === profile.role &&
+        inc.status === 'pending_approval'
+      )
+    }
+
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      filtered = filtered.filter(inc => {
+        const studentName = inc.student ? `${inc.student.first_name} ${inc.student.last_name}`.toLowerCase() : ''
+        const offenseTitle = inc.offense?.title?.toLowerCase() || ''
+        const studentId = inc.student?.student_id_number?.toLowerCase() || ''
+        return studentName.includes(q) || offenseTitle.includes(q) || studentId.includes(q)
+      })
+    }
+
+    return filtered
+  }, [rawIncidents, search, myApprovalsOnly, profile?.role])
 
   const columns = [
     {
@@ -103,12 +119,19 @@ export default function IncidentsPage() {
       key: 'status',
       header: 'Status',
       render: (val, row) => (
-        <div className="flex items-center gap-1">
-          <Badge color={INCIDENT_STATUS_COLORS[val] || 'gray'} size="sm" dot>
-            {INCIDENT_STATUS_LABELS[val] || val}
-          </Badge>
-          {row.sped_compliance_required && !row.compliance_cleared && (
-            <Badge color="red" size="sm">SPED</Badge>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1">
+            <Badge color={INCIDENT_STATUS_COLORS[val] || 'gray'} size="sm" dot>
+              {INCIDENT_STATUS_LABELS[val] || val}
+            </Badge>
+            {row.sped_compliance_required && !row.compliance_cleared && (
+              <Badge color="red" size="sm">SPED</Badge>
+            )}
+          </div>
+          {val === 'pending_approval' && row.approval_chain?.current_step && (
+            <span className="text-xs text-orange-600">
+              Awaiting {ROLE_LABELS[row.approval_chain.current_step] || row.approval_chain.current_step}
+            </span>
           )}
         </div>
       ),
@@ -213,8 +236,12 @@ export default function IncidentsPage() {
               name="campus"
               value={campusFilter}
               onChange={(e) => setCampusFilter(e.target.value)}
-              options={campuses.map(c => ({ value: c.id, label: c.name }))}
-              placeholder="All Campuses"
+              options={
+                scope.isDistrictWide
+                  ? campuses.map(c => ({ value: c.id, label: c.name }))
+                  : campuses.filter(c => scope.scopedCampusIds?.includes(c.id)).map(c => ({ value: c.id, label: c.name }))
+              }
+              placeholder={scope.isDistrictWide ? 'All Campuses' : 'My Campus'}
             />
             <SelectField
               label="Consequence"
@@ -225,6 +252,24 @@ export default function IncidentsPage() {
               placeholder="All Consequences"
             />
           </div>
+          {/* Quick filter for approval-chain roles */}
+          {['cbc', 'counselor', 'sped_coordinator', 'section_504_coordinator', 'sss'].includes(profile?.role) && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <button
+                onClick={() => setMyApprovalsOnly(!myApprovalsOnly)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                  myApprovalsOnly
+                    ? 'bg-orange-50 border-orange-300 text-orange-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                My Pending Approvals
+              </button>
+            </div>
+          )}
         </Card>
 
         {/* Incidents Table */}
