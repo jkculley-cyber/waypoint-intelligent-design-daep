@@ -83,26 +83,26 @@ export default function StudentsPage() {
           i => i.consequence_type === 'daep' &&
             ['active', 'approved', 'completed', 'submitted', 'under_review', 'compliance_hold'].includes(i.status)
         )
-        if (!daepIncident) return <span className="text-gray-300 text-sm">—</span>
+        if (!daepIncident) return <div className="text-center"><span className="text-gray-300 text-sm">—</span></div>
 
         // Pending placements
         if (['submitted', 'under_review', 'compliance_hold'].includes(daepIncident.status)) {
-          return <Badge color="purple" size="sm">Pending</Badge>
+          return <div className="text-center"><Badge color="purple" size="sm">Pending</Badge></div>
         }
 
         // Completed placements
         if (daepIncident.status === 'completed') {
-          return <Badge color="green" size="sm">Completed</Badge>
+          return <div className="text-center"><Badge color="green" size="sm">Completed</Badge></div>
         }
 
         // Approved but not started
         if (daepIncident.status === 'approved') {
-          return <Badge color="blue" size="sm">Approved</Badge>
+          return <div className="text-center"><Badge color="blue" size="sm">Approved</Badge></div>
         }
 
         // Active — calculate days remaining from check-ins
         const totalAssigned = daepIncident.consequence_days
-        if (!totalAssigned) return <span className="text-gray-400 text-sm">N/A</span>
+        if (!totalAssigned) return <div className="text-center"><span className="text-gray-400 text-sm">N/A</span></div>
 
         const checkIns = (row.daily_behavior_tracking || []).filter(d => {
           if (!daepIncident.consequence_start) return true
@@ -113,7 +113,7 @@ export default function StudentsPage() {
         const daysRemaining = Math.max(0, totalAssigned - daysServed)
 
         if (daysRemaining === 0) {
-          return <Badge color="green" size="sm">Completed</Badge>
+          return <div className="text-center"><Badge color="green" size="sm">Completed</Badge></div>
         }
         const color = daysRemaining <= 5 ? 'red' : daysRemaining <= 15 ? 'yellow' : 'green'
         return (
