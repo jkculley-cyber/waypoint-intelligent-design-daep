@@ -13,7 +13,6 @@ export default function ConsequenceSuggestion({
   offenseCode,
   studentIncidentCount = 0,
   selectedConsequence,
-  onSelectConsequence,
   onMatrixLoaded,
   isOverride,
   overrideJustification,
