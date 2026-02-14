@@ -84,17 +84,23 @@ export default function NewIncidentPage() {
       ? `${now.getFullYear()}-08-01`
       : `${now.getFullYear() - 1}-08-01`
 
-    supabase
-      .from('incidents')
-      .select('consequence_days')
-      .eq('student_id', formData.student.id)
-      .in('consequence_type', ['iss', 'oss', 'daep'])
-      .gte('incident_date', yearStart)
-      .not('status', 'in', '("overturned","draft")')
-      .then(({ data }) => {
-        const sum = (data || []).reduce((acc, r) => acc + (r.consequence_days || 0), 0)
-        setCumulativeDays(sum)
-      })
+    const fetchCumulativeDays = async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('consequence_days')
+        .eq('student_id', formData.student.id)
+        .in('consequence_type', ['iss', 'oss', 'daep'])
+        .gte('incident_date', yearStart)
+        .not('status', 'in', '("overturned","draft")')
+
+      if (error) {
+        console.error('Error fetching cumulative days:', error)
+        return
+      }
+      const sum = (data || []).reduce((acc, r) => acc + (r.consequence_days || 0), 0)
+      setCumulativeDays(sum)
+    }
+    fetchCumulativeDays()
   }, [formData.student?.id, spedRequired, isRemovalConsequence]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const enteredDays = parseInt(formData.consequence_days) || 0
