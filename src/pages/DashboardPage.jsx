@@ -1,15 +1,65 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
+import { useAccessScope } from '../hooks/useAccessScope'
+import { applyCampusScope } from '../lib/accessControl'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import { ROLE_LABELS, ROLES } from '../lib/constants'
 import { getSchoolYearLabel } from '../lib/utils'
 
 export default function DashboardPage() {
-  const { profile, hasRole } = useAuth()
+  const { profile, hasRole, districtId } = useAuth()
   const { redCount, yellowCount, alertCount } = useNotifications()
+  const { scope, loading: scopeLoading } = useAccessScope()
   const isAdmin = hasRole([ROLES.ADMIN])
+
+  // Fetch live dashboard counts, scoped by campus
+  const [stats, setStats] = useState({ incidents: null, holds: null, plans: null, daepApproved: null })
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+    const fetchStats = async () => {
+      let incQuery = supabase
+        .from('incidents')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .in('status', ['submitted', 'under_review', 'compliance_hold', 'approved', 'active'])
+      incQuery = applyCampusScope(incQuery, scope)
+
+      let holdQuery = supabase
+        .from('incidents')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .eq('status', 'compliance_hold')
+      holdQuery = applyCampusScope(holdQuery, scope)
+
+      let planQuery = supabase
+        .from('transition_plans')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .in('status', ['active', 'under_review'])
+      // transition_plans don't have campus_id, so no server-side scope here
+
+      let daepApprovedQuery = supabase
+        .from('incidents')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .eq('consequence_type', 'daep')
+        .eq('status', 'approved')
+      daepApprovedQuery = applyCampusScope(daepApprovedQuery, scope)
+
+      const [incRes, holdRes, planRes, daepRes] = await Promise.all([incQuery, holdQuery, planQuery, daepApprovedQuery])
+      setStats({
+        incidents: incRes.count ?? 0,
+        holds: holdRes.count ?? 0,
+        plans: planRes.count ?? 0,
+        daepApproved: daepRes.count ?? 0,
+      })
+    }
+    fetchStats()
+  }, [districtId, scopeLoading, scope])
 
   return (
     <div>
@@ -20,10 +70,10 @@ export default function DashboardPage() {
 
       <div className="p-6">
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
             title="Active Incidents"
-            value="--"
+            value={stats.incidents ?? '--'}
             description="Pending review"
             color="blue"
             href="/incidents"
@@ -35,13 +85,25 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Compliance Holds"
-            value="--"
+            value={stats.holds ?? '--'}
             description="Awaiting completion"
             color="red"
             href="/compliance"
             icon={
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="DAEP Approved"
+            value={stats.daepApproved ?? '--'}
+            description="Awaiting placement start"
+            color="blue"
+            href="/daep"
+            icon={
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
               </svg>
             }
           />
@@ -59,7 +121,7 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Active Plans"
-            value="--"
+            value={stats.plans ?? '--'}
             description="Transition plans"
             color="green"
             href="/plans"
@@ -145,25 +207,37 @@ function StatCard({ title, value, description, color, icon, href }) {
 }
 
 function QuickAction({ label, description, href, external }) {
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-colors group"
+      >
+        <div>
+          <p className="text-sm font-medium text-gray-900 group-hover:text-orange-600">{label}</p>
+          <p className="text-xs text-gray-500">{description}</p>
+        </div>
+        <svg className="h-4 w-4 text-gray-400 group-hover:text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+        </svg>
+      </a>
+    )
+  }
+
   return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    <Link
+      to={href}
       className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-colors group"
     >
       <div>
         <p className="text-sm font-medium text-gray-900 group-hover:text-orange-600">{label}</p>
         <p className="text-xs text-gray-500">{description}</p>
       </div>
-      {external ? (
-        <svg className="h-4 w-4 text-gray-400 group-hover:text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-        </svg>
-      ) : (
-        <svg className="h-4 w-4 text-gray-400 group-hover:text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      )}
-    </a>
+      <svg className="h-4 w-4 text-gray-400 group-hover:text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </Link>
   )
 }

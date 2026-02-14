@@ -4,11 +4,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAccessScope } from './useAccessScope'
 import { applyCampusScope } from '../lib/accessControl'
 import { getSchoolYearStart } from '../lib/utils'
-import {
-  getInstructionalDaysRemaining,
-  getInstructionalDaysElapsed,
-  getInstructionalDaysTotal,
-} from '../lib/instructionalCalendar'
+
+/**
+ * Helper: check if a student is SPED or 504.
+ */
+function isSpedStudent(student) {
+  return student?.is_sped || student?.is_504
+}
 
 /**
  * Summary stat counts for DAEP dashboard top cards.
@@ -27,53 +29,70 @@ export function useDaepSummaryStats() {
       const schoolYearStart = getSchoolYearStart().toISOString()
 
       try {
-        // Active enrollments
-        let activeQuery = supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('consequence_type', 'daep')
-          .in('status', ['active', 'approved'])
-        activeQuery = applyCampusScope(activeQuery, scope)
-        const { count: activeEnrollments } = await activeQuery
+        if (scope.spedOnly) {
+          // SPED coordinator: fetch rows with student data, filter client-side
+          let query = supabase
+            .from('incidents')
+            .select('id, status, incident_date, student:students(id, is_sped, is_504)')
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+          query = applyCampusScope(query, scope)
+          const { data, error } = await query
+          if (error) throw error
 
-        // Pending placements
-        let pendingQuery = supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('consequence_type', 'daep')
-          .in('status', ['submitted', 'under_review', 'compliance_hold'])
-        pendingQuery = applyCampusScope(pendingQuery, scope)
-        const { count: pendingPlacements } = await pendingQuery
+          const rows = (data || []).filter(r => isSpedStudent(r.student))
+          setStats({
+            activeEnrollments: rows.filter(r => ['active', 'approved'].includes(r.status)).length,
+            pendingPlacements: rows.filter(r => ['submitted', 'under_review', 'compliance_hold'].includes(r.status)).length,
+            completedYtd: rows.filter(r => r.status === 'completed' && r.incident_date >= schoolYearStart).length,
+            complianceHolds: rows.filter(r => r.status === 'compliance_hold').length,
+          })
+        } else {
+          // Standard count queries
+          let activeQuery = supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .in('status', ['active', 'approved'])
+          activeQuery = applyCampusScope(activeQuery, scope)
+          const { count: activeEnrollments } = await activeQuery
 
-        // Completed YTD
-        let completedQuery = supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('consequence_type', 'daep')
-          .eq('status', 'completed')
-          .gte('incident_date', schoolYearStart)
-        completedQuery = applyCampusScope(completedQuery, scope)
-        const { count: completedYtd } = await completedQuery
+          let pendingQuery = supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .in('status', ['submitted', 'under_review', 'compliance_hold'])
+          pendingQuery = applyCampusScope(pendingQuery, scope)
+          const { count: pendingPlacements } = await pendingQuery
 
-        // Compliance holds
-        let holdsQuery = supabase
-          .from('incidents')
-          .select('*', { count: 'exact', head: true })
-          .eq('district_id', districtId)
-          .eq('consequence_type', 'daep')
-          .eq('status', 'compliance_hold')
-        holdsQuery = applyCampusScope(holdsQuery, scope)
-        const { count: complianceHolds } = await holdsQuery
+          let completedQuery = supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .eq('status', 'completed')
+            .gte('incident_date', schoolYearStart)
+          completedQuery = applyCampusScope(completedQuery, scope)
+          const { count: completedYtd } = await completedQuery
 
-        setStats({
-          activeEnrollments: activeEnrollments || 0,
-          pendingPlacements: pendingPlacements || 0,
-          completedYtd: completedYtd || 0,
-          complianceHolds: complianceHolds || 0,
-        })
+          let holdsQuery = supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .eq('status', 'compliance_hold')
+          holdsQuery = applyCampusScope(holdsQuery, scope)
+          const { count: complianceHolds } = await holdsQuery
+
+          setStats({
+            activeEnrollments: activeEnrollments || 0,
+            pendingPlacements: pendingPlacements || 0,
+            completedYtd: completedYtd || 0,
+            complianceHolds: complianceHolds || 0,
+          })
+        }
       } catch (err) {
         console.error('Error fetching DAEP summary stats:', err)
       } finally {
@@ -111,22 +130,42 @@ export function useActiveDaepEnrollments() {
         `)
         .eq('district_id', districtId)
         .eq('consequence_type', 'daep')
-        .in('status', ['active', 'approved'])
+        .in('status', ['active', 'approved', 'completed'])
 
       query = applyCampusScope(query, scope)
       const { data, error } = await query
 
       if (error) throw error
 
-      const enriched = (data || []).map(row => {
-        const daysRemaining = getInstructionalDaysRemaining(row.consequence_end, districtId)
-        const daysElapsed = getInstructionalDaysElapsed(row.consequence_start, districtId)
-        const daysTotal = getInstructionalDaysTotal(row.consequence_start, row.consequence_end, districtId)
-        return { ...row, daysRemaining, daysElapsed, daysTotal }
-      })
+      // Fetch check-in counts for each enrollment to calculate days served
+      const enriched = await Promise.all((data || []).map(async (row) => {
+        let daysServed = 0
+        if (row.consequence_start && row.student?.id) {
+          let countQuery = supabase
+            .from('daily_behavior_tracking')
+            .select('id', { count: 'exact', head: true })
+            .eq('student_id', row.student.id)
+            .gte('tracking_date', row.consequence_start)
+          if (row.consequence_end) {
+            countQuery = countQuery.lte('tracking_date', row.consequence_end)
+          }
+          const { count } = await countQuery
+          daysServed = count || 0
+        }
 
-      enriched.sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999))
-      setEnrollments(enriched)
+        const totalAssigned = row.consequence_days || 0
+        const daysRemaining = totalAssigned > 0 ? Math.max(0, totalAssigned - daysServed) : null
+        const daysElapsed = daysServed
+        const daysTotal = totalAssigned
+
+        return { ...row, daysRemaining, daysElapsed, daysTotal, daysServed }
+      }))
+
+      const filtered = scope.spedOnly
+        ? enriched.filter(r => isSpedStudent(r.student))
+        : enriched
+      filtered.sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999))
+      setEnrollments(filtered)
     } catch (err) {
       console.error('Error fetching active DAEP enrollments:', err)
     } finally {
@@ -175,7 +214,10 @@ export function usePendingDaepEnrollments() {
         const { data, error } = await query
 
         if (error) throw error
-        setEnrollments(data || [])
+        const filtered = scope.spedOnly
+          ? (data || []).filter(r => isSpedStudent(r.student))
+          : (data || [])
+        setEnrollments(filtered)
       } catch (err) {
         console.error('Error fetching pending DAEP enrollments:', err)
       } finally {
@@ -220,7 +262,10 @@ export function useDaepSubPopulations() {
         const { data: incidents, error } = await query
 
         if (error) throw error
-        if (!incidents?.length) {
+        const filteredIncidents = scope.spedOnly
+          ? (incidents || []).filter(i => isSpedStudent(i.student))
+          : (incidents || [])
+        if (!filteredIncidents.length) {
           setData({
             byRace: [], byGender: [], bySped: [], byGrade: [],
             homeless: 0, fosterCare: 0, total: 0,
@@ -231,7 +276,7 @@ export function useDaepSubPopulations() {
 
         // Group by Race/Ethnicity
         const raceGroups = {}
-        incidents.forEach(i => {
+        filteredIncidents.forEach(i => {
           const key = i.student?.race || 'Unknown'
           raceGroups[key] = (raceGroups[key] || 0) + 1
         })
@@ -241,7 +286,7 @@ export function useDaepSubPopulations() {
 
         // Group by Gender
         const genderGroups = {}
-        incidents.forEach(i => {
+        filteredIncidents.forEach(i => {
           const key = i.student?.gender || 'Unknown'
           genderGroups[key] = (genderGroups[key] || 0) + 1
         })
@@ -251,7 +296,7 @@ export function useDaepSubPopulations() {
 
         // Group by SPED/504/Gen Ed
         const spedCounts = { SPED: 0, '504': 0, 'Gen Ed': 0 }
-        incidents.forEach(i => {
+        filteredIncidents.forEach(i => {
           if (i.student?.is_sped) spedCounts.SPED++
           else if (i.student?.is_504) spedCounts['504']++
           else spedCounts['Gen Ed']++
@@ -260,7 +305,7 @@ export function useDaepSubPopulations() {
 
         // Group by Grade Level
         const gradeGroups = {}
-        incidents.forEach(i => {
+        filteredIncidents.forEach(i => {
           const grade = i.student?.grade_level
           const key = grade === -1 ? 'Pre-K' : grade === 0 ? 'K' : grade != null ? `${grade}` : 'Unknown'
           gradeGroups[key] = (gradeGroups[key] || 0) + 1
@@ -274,13 +319,13 @@ export function useDaepSubPopulations() {
           })
 
         // Count homeless & foster care
-        const homeless = incidents.filter(i => i.student?.is_homeless).length
-        const fosterCare = incidents.filter(i => i.student?.is_foster_care).length
+        const homeless = filteredIncidents.filter(i => i.student?.is_homeless).length
+        const fosterCare = filteredIncidents.filter(i => i.student?.is_foster_care).length
 
         setData({
           byRace, byGender, bySped, byGrade,
           homeless, fosterCare,
-          total: incidents.length,
+          total: filteredIncidents.length,
         })
       } catch (err) {
         console.error('Error fetching DAEP sub-populations:', err)

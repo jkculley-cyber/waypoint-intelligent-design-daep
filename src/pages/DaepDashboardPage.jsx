@@ -51,9 +51,9 @@ function SummaryCards() {
   }
 
   const cards = [
-    { label: 'Active Enrolled', value: stats?.activeEnrollments, color: 'text-orange-600', href: '/incidents?status=daep_active' },
-    { label: 'Pending Placement', value: stats?.pendingPlacements, color: 'text-orange-600', href: '/incidents?status=pending_placement' },
-    { label: 'Completed YTD', value: stats?.completedYtd, color: 'text-green-600', href: '/incidents?status=completed' },
+    { label: 'Active Enrolled', value: stats?.activeEnrollments, color: 'text-orange-600', href: null },
+    { label: 'Pending Placement', value: stats?.pendingPlacements, color: 'text-orange-600', href: null },
+    { label: 'Completed YTD', value: stats?.completedYtd, color: 'text-green-600', href: null },
     { label: 'Compliance Holds', value: stats?.complianceHolds, color: 'text-red-600', href: '/compliance' },
   ]
 
@@ -89,7 +89,7 @@ function ActiveEnrollmentsTable() {
 
   return (
     <Card>
-      <CardTitle>Active Enrollments</CardTitle>
+      <CardTitle>DAEP Enrollments</CardTitle>
       {loading ? (
         <div className="flex justify-center py-8"><LoadingSpinner /></div>
       ) : enrollments.length === 0 ? (
@@ -103,8 +103,9 @@ function ActiveEnrollmentsTable() {
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">Grade</th>
                 <th className="px-3 py-2">Home Campus</th>
+                <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Days Assigned</th>
-                <th className="px-3 py-2">Days Absent</th>
+                <th className="px-3 py-2">Days Served</th>
                 <th className="px-3 py-2">Days Remaining</th>
                 <th className="px-3 py-2">Progress</th>
                 <th className="px-3 py-2">Flags</th>
@@ -131,14 +132,23 @@ function ActiveEnrollmentsTable() {
                     <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
                       {row.campus?.name || '—'}
                     </td>
+                    <td className="px-3 py-2">
+                      <Badge
+                        color={row.status === 'approved' ? 'blue' : row.status === 'completed' ? 'green' : 'indigo'}
+                        size="sm"
+                        dot
+                      >
+                        {row.status === 'approved' ? 'Approved' : row.status === 'completed' ? 'Completed' : 'Active'}
+                      </Badge>
+                    </td>
                     <td className="px-3 py-2 text-gray-600 font-medium">
                       {row.consequence_days ?? '—'}
                     </td>
-                    <td className="px-3 py-2">
-                      <DaysAbsentBadge days={row.days_absent} />
+                    <td className="px-3 py-2 text-gray-600 font-medium">
+                      {row.daysServed ?? 0}
                     </td>
                     <td className="px-3 py-2">
-                      <DaysRemainingBadge days={row.daysRemaining} />
+                      <DaysRemainingBadge days={row.daysRemaining} status={row.status} />
                     </td>
                     <td className="px-3 py-2" style={{ minWidth: 120 }}>
                       <ProgressBar pct={progressPct} />
@@ -188,10 +198,13 @@ function DaysAbsentBadge({ days }) {
   return <Badge color={color} size="sm">{count}</Badge>
 }
 
-function DaysRemainingBadge({ days }) {
+function DaysRemainingBadge({ days, status }) {
+  if (status === 'approved') return <Badge color="blue" size="sm">Approved for Placement</Badge>
+  if (status === 'completed') return <Badge color="green" size="sm">Completed Placement</Badge>
   if (days == null) return <span className="text-gray-400 text-xs">N/A</span>
+  if (days === 0) return <Badge color="green" size="sm">Completed Placement</Badge>
   const color = days <= 5 ? 'red' : days <= 15 ? 'yellow' : 'green'
-  return <Badge color={color} size="sm">{days}d</Badge>
+  return <Badge color={color} size="sm">{days}d remaining</Badge>
 }
 
 function ProgressBar({ pct }) {
