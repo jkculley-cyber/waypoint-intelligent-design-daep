@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useDisciplineMatrix } from '../../hooks/useOffenseCodes'
 import { useAuth } from '../../contexts/AuthContext'
 import Card from '../ui/Card'
@@ -6,12 +6,19 @@ import Badge from '../ui/Badge'
 import AlertBanner from '../ui/AlertBanner'
 import { CONSEQUENCE_TYPE_LABELS } from '../../lib/constants'
 
+const CONSEQUENCE_ORDER = ['warning', 'detention', 'iss', 'oss', 'daep', 'expulsion']
+
 export default function ConsequenceSuggestion({
   offenseCodeId,
   offenseCode,
   studentIncidentCount = 0,
   selectedConsequence,
   onSelectConsequence,
+  onMatrixLoaded,
+  isOverride,
+  overrideJustification,
+  onOverrideJustificationChange,
+  cumulativeDays,
 }) {
   const { districtId } = useAuth()
   const { matrixEntries, loading } = useDisciplineMatrix(offenseCodeId, districtId)
@@ -28,16 +35,20 @@ export default function ConsequenceSuggestion({
     return sorted[0]
   }, [matrixEntries, studentIncidentCount])
 
+  // Notify parent when matrix entry is determined
+  useEffect(() => {
+    onMatrixLoaded?.(suggestedEntry)
+  }, [suggestedEntry]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Check if selected consequence falls outside the suggested range
   const isMismatch = useMemo(() => {
-    if (!suggestedEntry || !selectedConsequence) return false
-    const consequenceOrder = ['warning', 'detention', 'iss', 'oss', 'daep', 'expulsion']
-    const selectedIdx = consequenceOrder.indexOf(selectedConsequence)
-    const minIdx = consequenceOrder.indexOf(suggestedEntry.min_consequence)
-    const maxIdx = consequenceOrder.indexOf(suggestedEntry.max_consequence)
+    if (!suggestedEntry || !selectedConsequence || isOverride) return false
+    const selectedIdx = CONSEQUENCE_ORDER.indexOf(selectedConsequence)
+    const minIdx = CONSEQUENCE_ORDER.indexOf(suggestedEntry.min_consequence)
+    const maxIdx = CONSEQUENCE_ORDER.indexOf(suggestedEntry.max_consequence)
     if (selectedIdx === -1 || minIdx === -1 || maxIdx === -1) return false
     return selectedIdx < minIdx || selectedIdx > maxIdx
-  }, [suggestedEntry, selectedConsequence])
+  }, [suggestedEntry, selectedConsequence, isOverride])
 
   // Handle mandatory placements from offense code
   const isMandatory = offenseCode?.is_mandatory_daep || offenseCode?.is_mandatory_expulsion
@@ -107,8 +118,42 @@ export default function ConsequenceSuggestion({
         </div>
       )}
 
-      {/* Mismatch warning */}
-      {isMismatch && (
+      {/* Override warning with required justification */}
+      {isOverride && (
+        <div className="border-2 border-red-300 bg-red-50 rounded-lg p-4">
+          <div className="flex items-start gap-2 mb-3">
+            <svg className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-red-800">Policy Override Warning</p>
+              <p className="text-sm text-red-700 mt-1">
+                You are selecting a consequence outside the district discipline matrix range.
+                A written justification is <strong>required</strong> to proceed.
+              </p>
+            </div>
+          </div>
+          <label className="block">
+            <span className="text-sm font-medium text-red-800">
+              Override Justification <span className="text-red-600">*</span>
+            </span>
+            <textarea
+              className="mt-1 block w-full rounded-md border-red-300 bg-white shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
+              rows={3}
+              placeholder="Explain why a consequence outside the matrix range is warranted..."
+              value={overrideJustification || ''}
+              onChange={(e) => onOverrideJustificationChange?.(e.target.value)}
+              required
+            />
+          </label>
+          {overrideJustification?.trim() === '' || !overrideJustification ? (
+            <p className="text-xs text-red-600 mt-1">Justification is required to continue.</p>
+          ) : null}
+        </div>
+      )}
+
+      {/* Mismatch warning (non-override, just a soft warning) */}
+      {isMismatch && !isOverride && (
         <AlertBanner variant="warning" title="Policy Mismatch">
           The selected consequence falls outside the district matrix range for this offense.
           Document the reason for deviation in the notes field.
@@ -124,6 +169,13 @@ export default function ConsequenceSuggestion({
       {!loading && offenseCodeId && matrixEntries.length === 0 && (
         <p className="text-xs text-gray-400">
           No discipline matrix entry found for this offense code. Admin can configure this in Settings.
+        </p>
+      )}
+
+      {/* SPED/504 cumulative removal days info */}
+      {cumulativeDays != null && (
+        <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          Current school year removal days: <strong>{cumulativeDays}</strong>
         </p>
       )}
     </div>

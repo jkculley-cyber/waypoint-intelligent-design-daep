@@ -203,6 +203,8 @@ export const ALERT_TRIGGERS = {
   ISS_FREQUENCY: 'iss_frequency',
   OFFENSE_REPEAT: 'offense_repeat',
   REFERRAL_FREQUENCY: 'referral_frequency',
+  SPED_CUMULATIVE_WARNING: 'sped_cumulative_warning',
+  SPED_CUMULATIVE_MDR: 'sped_cumulative_mdr',
 }
 
 export const ALERT_TRIGGER_LABELS = {
@@ -210,6 +212,8 @@ export const ALERT_TRIGGER_LABELS = {
   [ALERT_TRIGGERS.ISS_FREQUENCY]: '3+ ISS in 30 Days',
   [ALERT_TRIGGERS.OFFENSE_REPEAT]: 'Same Offense 3+ Times',
   [ALERT_TRIGGERS.REFERRAL_FREQUENCY]: '5+ Referrals in 30 Days',
+  [ALERT_TRIGGERS.SPED_CUMULATIVE_WARNING]: 'SPED/504 Cumulative Removal Days Warning (5+)',
+  [ALERT_TRIGGERS.SPED_CUMULATIVE_MDR]: 'SPED/504 MDR Required (10+ Cumulative Days)',
 }
 
 // Alert statuses
