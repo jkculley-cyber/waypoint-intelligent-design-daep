@@ -10,6 +10,7 @@ import { useAlerts } from '../hooks/useAlerts'
 import { useCampuses } from '../hooks/useCampuses'
 import { useNotifications } from '../contexts/NotificationContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useAccessScope } from '../hooks/useAccessScope'
 import { ALERT_TRIGGER_LABELS } from '../lib/constants'
 import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 import { formatStudentName, formatDate } from '../lib/utils'
@@ -20,15 +21,20 @@ export default function AlertsPage() {
   const [campusFilter, setCampusFilter] = useState('')
   const [triggerFilter, setTriggerFilter] = useState('')
   const { profile } = useAuth()
+  const { scope } = useAccessScope()
 
   const filters = useMemo(() => {
     const f = {}
+    if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+      f._campusScope = scope.scopedCampusIds
+    }
+    if (scope.spedOnly) f._spedOnly = true
     if (levelFilter) f.alert_level = levelFilter
     if (statusFilter) f.status = statusFilter
     if (campusFilter) f.campus_id = campusFilter
     if (triggerFilter) f.trigger_type = triggerFilter
     return f
-  }, [levelFilter, statusFilter, campusFilter, triggerFilter])
+  }, [levelFilter, statusFilter, campusFilter, triggerFilter, scope])
 
   const { alerts, loading, refetch } = useAlerts(filters)
   const { campuses } = useCampuses()
@@ -156,8 +162,12 @@ export default function AlertsPage() {
               name="campus"
               value={campusFilter}
               onChange={(e) => setCampusFilter(e.target.value)}
-              options={campuses.map(c => ({ value: c.id, label: c.name }))}
-              placeholder="All Campuses"
+              options={
+                scope.isDistrictWide
+                  ? campuses.map(c => ({ value: c.id, label: c.name }))
+                  : campuses.filter(c => scope.scopedCampusIds?.includes(c.id)).map(c => ({ value: c.id, label: c.name }))
+              }
+              placeholder={scope.isDistrictWide ? 'All Campuses' : 'My Campus'}
             />
             <SelectField
               label="Trigger Type"

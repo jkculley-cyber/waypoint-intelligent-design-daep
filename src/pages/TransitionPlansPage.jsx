@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTransitionPlans } from '../hooks/useTransitionPlans'
 import { useCampuses } from '../hooks/useCampuses'
 import { useAuth } from '../contexts/AuthContext'
+import { useAccessScope } from '../hooks/useAccessScope'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -24,13 +25,22 @@ import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 export default function TransitionPlansPage() {
   const navigate = useNavigate()
   const { hasRole, profile } = useAuth()
+  const { scope } = useAccessScope()
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
 
-  const { plans, loading } = useTransitionPlans({
-    status: statusFilter || undefined,
-    plan_type: typeFilter || undefined,
-  })
+  const filters = useMemo(() => {
+    const f = {}
+    if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+      f._campusScope = scope.scopedCampusIds
+    }
+    if (scope.spedOnly) f._spedOnly = true
+    if (statusFilter) f.status = statusFilter
+    if (typeFilter) f.plan_type = typeFilter
+    return f
+  }, [statusFilter, typeFilter, scope])
+
+  const { plans, loading } = useTransitionPlans(filters)
   const { campuses } = useCampuses()
 
   const canCreate = hasRole(['admin', 'principal', 'ap', 'counselor'])

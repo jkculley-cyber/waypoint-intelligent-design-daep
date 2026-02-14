@@ -22,7 +22,8 @@ export function useStudents(filters = {}) {
         .select(`
           *,
           campus:campuses(id, name, campus_type),
-          incidents(id, consequence_type, consequence_end, status)
+          incidents(id, consequence_type, consequence_days, consequence_start, consequence_end, status),
+          daily_behavior_tracking(id, tracking_date)
         `)
         .eq('district_id', districtId)
         .eq('is_active', true)
@@ -33,6 +34,8 @@ export function useStudents(filters = {}) {
       if (filters.grade_level !== undefined && filters.grade_level !== '') {
         query = query.eq('grade_level', filters.grade_level)
       }
+      // SPED-only scope: only show SPED or 504 students
+      if (filters._spedOnly) query = query.or('is_sped.eq.true,is_504.eq.true')
       if (filters.is_sped) query = query.eq('is_sped', true)
       if (filters.is_504) query = query.eq('is_504', true)
       if (filters.is_ell) query = query.eq('is_ell', true)
@@ -50,7 +53,7 @@ export function useStudents(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters._campusScope, filters.campus_id, filters.grade_level, filters.is_sped, filters.is_504, filters.is_ell, filters.search])
+  }, [districtId, filters._campusScope, filters._spedOnly, filters.campus_id, filters.grade_level, filters.is_sped, filters.is_504, filters.is_ell, filters.search])
 
   useEffect(() => {
     fetchStudents()

@@ -14,8 +14,10 @@ import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 export default function PhoneReturnPage() {
   const { profile, campusIds } = useAuth()
   const { campuses } = useCampuses()
-  const [selectedCampus, setSelectedCampus] = useState(campusIds?.[0] || '')
-  const { records, loading, refetch } = useTodayCheckIns(selectedCampus)
+  // Always default to 'all' — DAEP admins need to see check-ins from all campuses
+  // because students may be checked in under their home campus
+  const [selectedCampus, setSelectedCampus] = useState('all')
+  const { records, loading, refetch } = useTodayCheckIns(selectedCampus || 'all')
   const [search, setSearch] = useState('')
 
   const today = format(new Date(), 'EEEE, MMMM d, yyyy')
@@ -60,9 +62,12 @@ export default function PhoneReturnPage() {
     })
   }
 
-  const campusOptions = campuses
-    .filter(c => campusIds?.length ? campusIds.includes(c.id) : true)
-    .map(c => ({ value: c.id, label: c.name }))
+  const campusOptions = [
+    { value: 'all', label: 'All Campuses' },
+    ...campuses
+      .filter(c => campusIds?.length ? campusIds.includes(c.id) : true)
+      .map(c => ({ value: c.id, label: c.name })),
+  ]
 
   return (
     <div>
@@ -94,16 +99,13 @@ export default function PhoneReturnPage() {
         {/* Filters */}
         <Card className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {campusOptions.length > 1 && (
               <SelectField
                 label="Campus"
                 name="campus"
                 value={selectedCampus}
                 onChange={(e) => setSelectedCampus(e.target.value)}
                 options={campusOptions}
-                placeholder="Select Campus"
               />
-            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
               <input
@@ -146,8 +148,6 @@ export default function PhoneReturnPage() {
 
           {loading ? (
             <div className="flex justify-center py-12"><LoadingSpinner /></div>
-          ) : !selectedCampus ? (
-            <p className="text-sm text-gray-400 text-center py-12">Select a campus to view check-ins.</p>
           ) : filtered.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-12">No check-ins found for today.</p>
           ) : (

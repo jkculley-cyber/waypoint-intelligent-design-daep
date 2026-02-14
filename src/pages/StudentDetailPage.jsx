@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -26,6 +26,7 @@ import {
 
 export default function StudentDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { student, loading } = useStudent(id)
   const { incidents, loading: incidentsLoading } = useIncidents({ student_id: id })
   const { plans, loading: plansLoading } = useTransitionPlans({ student_id: id })
@@ -203,7 +204,7 @@ export default function StudentDetailPage() {
             columns={incidentColumns}
             data={incidents}
             loading={incidentsLoading}
-            onRowClick={(incident) => window.location.href = `/incidents/${incident.id}`}
+            onRowClick={(incident) => navigate(`/incidents/${incident.id}`)}
             emptyMessage="No discipline incidents on record."
           />
         </Card>

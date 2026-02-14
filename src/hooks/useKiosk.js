@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 /**
@@ -203,6 +203,7 @@ export function useBehaviorActions() {
 export function useTodayCheckIns(campusId) {
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
+  const channelRef = useRef(null)
 
   const fetchRecords = useCallback(async () => {
     if (!campusId) {
@@ -213,12 +214,18 @@ export function useTodayCheckIns(campusId) {
 
     setLoading(true)
     const today = new Date().toISOString().split('T')[0]
-    const { data } = await supabase
+    let query = supabase
       .from('daily_behavior_tracking')
-      .select('id, student_id, check_in_time, check_out_time, status, phone_bag_number, students(id, first_name, last_name, student_id_number, grade_level)')
-      .eq('campus_id', campusId)
+      .select('id, student_id, check_in_time, check_out_time, status, phone_bag_number, campus_id, students(id, first_name, last_name, student_id_number, grade_level)')
       .eq('tracking_date', today)
       .order('check_in_time', { ascending: true })
+
+    // Filter by campus unless 'all' is passed
+    if (campusId !== 'all') {
+      query = query.eq('campus_id', campusId)
+    }
+
+    const { data } = await query
 
     setRecords(data || [])
     setLoading(false)
@@ -227,6 +234,39 @@ export function useTodayCheckIns(campusId) {
   useEffect(() => {
     fetchRecords()
   }, [fetchRecords])
+
+  // Realtime subscription - auto-refetch when check-ins change
+  useEffect(() => {
+    if (!campusId) return
+
+    // Clean up previous channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+    }
+
+    const channelConfig = {
+      event: '*',
+      schema: 'public',
+      table: 'daily_behavior_tracking',
+    }
+    // Only filter by campus if not showing all
+    if (campusId !== 'all') {
+      channelConfig.filter = `campus_id=eq.${campusId}`
+    }
+
+    const channel = supabase
+      .channel(`phone-return-${campusId}`)
+      .on('postgres_changes', channelConfig, () => {
+        fetchRecords()
+      })
+      .subscribe()
+
+    channelRef.current = channel
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [campusId, fetchRecords])
 
   return { records, loading, refetch: fetchRecords }
 }

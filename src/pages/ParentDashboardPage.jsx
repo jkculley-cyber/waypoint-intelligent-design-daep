@@ -60,7 +60,25 @@ export default function ParentDashboardPage() {
           .order('incident_date', { ascending: false })
           .limit(10)
 
-        setIncidents(incidentData || [])
+        // For active DAEP placements, fetch check-in counts
+        const activeIncidents = (incidentData || []).filter(
+          i => i.consequence_type === 'daep' && ['active', 'approved'].includes(i.status) && i.consequence_start
+        )
+        const enrichedIncidents = await Promise.all((incidentData || []).map(async (incident) => {
+          if (!activeIncidents.includes(incident)) return incident
+          let countQuery = supabase
+            .from('daily_behavior_tracking')
+            .select('id', { count: 'exact', head: true })
+            .eq('student_id', incident.students?.id)
+            .gte('tracking_date', incident.consequence_start)
+          if (incident.consequence_end) {
+            countQuery = countQuery.lte('tracking_date', incident.consequence_end)
+          }
+          const { count } = await countQuery
+          return { ...incident, days_served: count || 0 }
+        }))
+
+        setIncidents(enrichedIncidents)
 
         // Fetch active plans
         const { data: planData } = await supabase
@@ -175,10 +193,19 @@ export default function ParentDashboardPage() {
                             {incident.consequence_days && (
                               <span>({incident.consequence_days} days)</span>
                             )}
-                            {incident.consequence_end && incident.status === 'active' && (
-                              <Badge color="yellow" size="sm">
-                                {daysRemaining(incident.consequence_end)} days left
-                              </Badge>
+                            {incident.consequence_days && ['active', 'approved'].includes(incident.status) && (
+                              (() => {
+                                const served = incident.days_served || 0
+                                const remaining = Math.max(0, incident.consequence_days - served)
+                                if (remaining === 0) {
+                                  return <Badge color="green" size="sm">Completed</Badge>
+                                }
+                                return (
+                                  <Badge color="yellow" size="sm">
+                                    {remaining} days left ({served}/{incident.consequence_days} served)
+                                  </Badge>
+                                )
+                              })()
                             )}
                           </div>
                         )}

@@ -11,7 +11,6 @@ import { useCampuses } from '../hooks/useCampuses'
 import { formatStudentName, formatGradeLevel } from '../lib/utils'
 import { GRADE_LEVELS } from '../lib/constants'
 import { useAccessScope } from '../hooks/useAccessScope'
-import { getInstructionalDaysRemaining } from '../lib/instructionalCalendar'
 import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { canImport, getImportTier } from '../lib/importPermissions'
@@ -31,6 +30,7 @@ export default function StudentsPage() {
     if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
       f._campusScope = scope.scopedCampusIds
     }
+    if (scope.spedOnly) f._spedOnly = true
     if (search) f.search = search
     if (campusFilter) f.campus_id = campusFilter
     if (gradeFilter !== '') f.grade_level = parseInt(gradeFilter)
@@ -79,14 +79,49 @@ export default function StudentsPage() {
       key: 'days_remaining',
       header: 'Days Remaining',
       render: (_, row) => {
-        const activeDaep = row.incidents?.find(
-          i => i.consequence_type === 'daep' && ['active', 'approved'].includes(i.status)
+        const daepIncident = row.incidents?.find(
+          i => i.consequence_type === 'daep' &&
+            ['active', 'approved', 'completed', 'submitted', 'under_review', 'compliance_hold'].includes(i.status)
         )
-        if (!activeDaep) return <span className="text-gray-300 text-sm">—</span>
-        const days = getInstructionalDaysRemaining(activeDaep.consequence_end, districtId)
-        if (days == null) return <span className="text-gray-400 text-sm">N/A</span>
-        const color = days <= 5 ? 'red' : days <= 15 ? 'yellow' : 'green'
-        return <Badge color={color} size="sm">{days}d</Badge>
+        if (!daepIncident) return <span className="text-gray-300 text-sm">—</span>
+
+        // Pending placements
+        if (['submitted', 'under_review', 'compliance_hold'].includes(daepIncident.status)) {
+          return <Badge color="purple" size="sm">Pending</Badge>
+        }
+
+        // Completed placements
+        if (daepIncident.status === 'completed') {
+          return <Badge color="green" size="sm">Completed</Badge>
+        }
+
+        // Approved but not started
+        if (daepIncident.status === 'approved') {
+          return <Badge color="blue" size="sm">Approved</Badge>
+        }
+
+        // Active — calculate days remaining from check-ins
+        const totalAssigned = daepIncident.consequence_days
+        if (!totalAssigned) return <span className="text-gray-400 text-sm">N/A</span>
+
+        const checkIns = (row.daily_behavior_tracking || []).filter(d => {
+          if (!daepIncident.consequence_start) return true
+          return d.tracking_date >= daepIncident.consequence_start &&
+            (!daepIncident.consequence_end || d.tracking_date <= daepIncident.consequence_end)
+        })
+        const daysServed = checkIns.length
+        const daysRemaining = Math.max(0, totalAssigned - daysServed)
+
+        if (daysRemaining === 0) {
+          return <Badge color="green" size="sm">Completed</Badge>
+        }
+        const color = daysRemaining <= 5 ? 'red' : daysRemaining <= 15 ? 'yellow' : 'green'
+        return (
+          <div className="text-center">
+            <Badge color={color} size="sm">{daysRemaining}d</Badge>
+            <p className="text-[10px] text-gray-400 mt-0.5">{daysServed}/{totalAssigned} served</p>
+          </div>
+        )
       },
       sortable: false,
     },
@@ -168,8 +203,12 @@ export default function StudentsPage() {
               name="campus"
               value={campusFilter}
               onChange={(e) => setCampusFilter(e.target.value)}
-              options={campuses.map(c => ({ value: c.id, label: c.name }))}
-              placeholder="All Campuses"
+              options={
+                scope.isDistrictWide
+                  ? campuses.map(c => ({ value: c.id, label: c.name }))
+                  : campuses.filter(c => scope.scopedCampusIds?.includes(c.id)).map(c => ({ value: c.id, label: c.name }))
+              }
+              placeholder={scope.isDistrictWide ? 'All Campuses' : 'My Campus'}
             />
             <SelectField
               label="Grade"

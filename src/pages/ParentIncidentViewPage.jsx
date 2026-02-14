@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useIncident } from '../hooks/useIncidents'
+import { supabase } from '../lib/supabase'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -15,12 +17,30 @@ import {
 import {
   formatStudentNameShort,
   formatDate,
-  daysRemaining,
 } from '../lib/utils'
 
 export default function ParentIncidentViewPage() {
   const { id } = useParams()
   const { incident, loading } = useIncident(id)
+
+  // Fetch check-in count for this placement
+  const [daysServed, setDaysServed] = useState(0)
+  useEffect(() => {
+    if (!incident?.student?.id || !incident.consequence_start) return
+    const fetchCount = async () => {
+      let query = supabase
+        .from('daily_behavior_tracking')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_id', incident.student.id)
+        .gte('tracking_date', incident.consequence_start)
+      if (incident.consequence_end) {
+        query = query.lte('tracking_date', incident.consequence_end)
+      }
+      const { count } = await query
+      setDaysServed(count || 0)
+    }
+    fetchCount()
+  }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
 
   if (loading) return <PageLoader message="Loading record..." />
   if (!incident) {
@@ -39,7 +59,9 @@ export default function ParentIncidentViewPage() {
 
   const student = incident.student
   const offense = incident.offense
-  const remaining = daysRemaining(incident.consequence_end)
+  const totalAssigned = incident.consequence_days || 0
+  const remaining = totalAssigned > 0 ? Math.max(0, totalAssigned - daysServed) : null
+  const isCompleted = remaining === 0 && totalAssigned > 0
 
   return (
     <div>
@@ -61,8 +83,10 @@ export default function ParentIncidentViewPage() {
           <Badge color={INCIDENT_STATUS_COLORS[incident.status]} dot size="lg">
             {INCIDENT_STATUS_LABELS[incident.status]}
           </Badge>
-          {remaining !== null && incident.status === 'active' && (
-            <span className="text-sm text-gray-500">{remaining} days remaining</span>
+          {remaining !== null && ['active', 'approved'].includes(incident.status) && (
+            <span className="text-sm text-gray-500">
+              {isCompleted ? 'Placement completed' : `${remaining} days remaining (${daysServed}/${totalAssigned} served)`}
+            </span>
           )}
         </div>
 
@@ -98,27 +122,24 @@ export default function ParentIncidentViewPage() {
             />
             <DetailRow
               label="Duration"
-              value={incident.consequence_days ? `${incident.consequence_days} days` : '—'}
+              value={totalAssigned ? `${totalAssigned} days` : '—'}
             />
             <DetailRow label="Start Date" value={formatDate(incident.consequence_start)} />
             <DetailRow label="End Date" value={formatDate(incident.consequence_end)} />
           </dl>
 
           {/* Progress bar for active consequences */}
-          {incident.status === 'active' && incident.consequence_start && incident.consequence_end && (
+          {['active', 'approved'].includes(incident.status) && totalAssigned > 0 && (
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                <span>Progress</span>
-                <span>{remaining} days remaining</span>
+                <span>{daysServed}/{totalAssigned} days served</span>
+                <span>{isCompleted ? 'Completed' : `${remaining} days remaining`}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
-                  className="bg-orange-500 h-full rounded-full"
+                  className={`h-full rounded-full ${isCompleted ? 'bg-green-500' : 'bg-orange-500'}`}
                   style={{
-                    width: `${Math.min(
-                      100,
-                      ((incident.consequence_days - remaining) / incident.consequence_days) * 100
-                    )}%`,
+                    width: `${Math.min(100, (daysServed / totalAssigned) * 100)}%`,
                   }}
                 />
               </div>

@@ -216,6 +216,37 @@ export function useFullDisciplineMatrix(filters = {}) {
 }
 
 /**
+ * Count prior incidents for a student with a specific offense code
+ */
+export function useStudentOffenseCount(studentId, offenseCodeId) {
+  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!studentId || !offenseCodeId) {
+      setCount(0)
+      return
+    }
+
+    const fetchCount = async () => {
+      setLoading(true)
+      const { count: total, error } = await supabase
+        .from('incidents')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_id', studentId)
+        .eq('offense_code_id', offenseCodeId)
+
+      if (!error) setCount(total || 0)
+      setLoading(false)
+    }
+
+    fetchCount()
+  }, [studentId, offenseCodeId])
+
+  return { count, loading }
+}
+
+/**
  * Discipline matrix CRUD actions
  */
 export function useMatrixActions() {

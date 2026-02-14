@@ -21,7 +21,7 @@ export function useComplianceChecklists(filters = {}) {
         .from('compliance_checklists')
         .select(`
           *,
-          student:students(id, first_name, last_name, student_id_number, grade_level, is_sped, is_504, sped_eligibility),
+          student:students(id, first_name, last_name, student_id_number, grade_level, is_sped, is_504, sped_eligibility, campus_id),
           incident:incidents!incident_id(id, incident_date, offense_code_id, consequence_type, status,
             offense:offense_codes(id, code, title, category)
           )
@@ -37,14 +37,19 @@ export function useComplianceChecklists(filters = {}) {
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
-      setChecklists(data || [])
+      let results = data || []
+      // Client-side campus scoping (compliance_checklists has no direct campus_id)
+      if (filters._campusScope?.length) {
+        results = results.filter(c => c.student?.campus_id && filters._campusScope.includes(c.student.campus_id))
+      }
+      setChecklists(results)
     } catch (err) {
       console.error('Error fetching compliance checklists:', err)
       setError(err)
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.status, filters.placement_blocked])
+  }, [districtId, filters.status, filters.placement_blocked, filters._campusScope])
 
   useEffect(() => {
     fetchChecklists()

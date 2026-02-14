@@ -8,6 +8,7 @@ import { SelectField } from '../components/ui/FormField'
 import { StudentFlagsSummary } from '../components/students/StudentFlags'
 import { useComplianceChecklists } from '../hooks/useCompliance'
 import { useAuth } from '../contexts/AuthContext'
+import { useAccessScope } from '../hooks/useAccessScope'
 import { formatStudentName, formatDate, formatDateTime } from '../lib/utils'
 import { CONSEQUENCE_TYPE_LABELS } from '../lib/constants'
 import { exportToPdf, exportToExcel } from '../lib/exportUtils'
@@ -16,12 +17,16 @@ export default function CompliancePage() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState('')
   const { profile } = useAuth()
+  const { scope } = useAccessScope()
 
   const filters = useMemo(() => {
     const f = {}
+    if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+      f._campusScope = scope.scopedCampusIds
+    }
     if (statusFilter) f.status = statusFilter
     return f
-  }, [statusFilter])
+  }, [statusFilter, scope])
 
   const { checklists, loading } = useComplianceChecklists(filters)
 

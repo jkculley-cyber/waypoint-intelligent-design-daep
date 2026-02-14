@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -9,11 +9,14 @@ export function useAlerts(filters = {}) {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const initialLoadDone = useRef(false)
   const { districtId } = useAuth()
 
   const fetchAlerts = useCallback(async () => {
     if (!districtId) return
-    setLoading(true)
+    if (!initialLoadDone.current) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -28,6 +31,7 @@ export function useAlerts(filters = {}) {
         .eq('district_id', districtId)
         .order('created_at', { ascending: false })
 
+      if (filters._campusScope) query = query.in('campus_id', filters._campusScope)
       if (filters.alert_level) query = query.eq('alert_level', filters.alert_level)
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.campus_id) query = query.eq('campus_id', filters.campus_id)
@@ -37,14 +41,20 @@ export function useAlerts(filters = {}) {
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
-      setAlerts(data || [])
+      let results = data || []
+      // SPED-only scope: only show alerts for SPED/504 students
+      if (filters._spedOnly) {
+        results = results.filter(a => a.student?.is_sped || a.student?.is_504)
+      }
+      setAlerts(results)
     } catch (err) {
       console.error('Error fetching alerts:', err)
       setError(err)
     } finally {
       setLoading(false)
+      initialLoadDone.current = true
     }
-  }, [districtId, filters.alert_level, filters.status, filters.campus_id, filters.student_id, filters.trigger_type])
+  }, [districtId, filters._campusScope, filters._spedOnly, filters.alert_level, filters.status, filters.campus_id, filters.student_id, filters.trigger_type])
 
   useEffect(() => {
     fetchAlerts()

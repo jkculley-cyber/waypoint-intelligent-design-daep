@@ -34,14 +34,23 @@ export function useTransitionPlans(filters = {}) {
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
-      setPlans(data || [])
+      let results = data || []
+      // Client-side campus scoping (transition_plans has no direct campus_id)
+      if (filters._campusScope?.length) {
+        results = results.filter(p => p.students?.campus_id && filters._campusScope.includes(p.students.campus_id))
+      }
+      // SPED-only scope: only show plans for SPED/504 students
+      if (filters._spedOnly) {
+        results = results.filter(p => p.students?.is_sped || p.students?.is_504)
+      }
+      setPlans(results)
     } catch (err) {
       console.error('Error fetching transition plans:', err)
       setError(err)
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.status, filters.plan_type, filters.student_id, filters.campus_id])
+  }, [districtId, filters.status, filters.plan_type, filters.student_id, filters.campus_id, filters._campusScope, filters._spedOnly])
 
   useEffect(() => {
     fetchPlans()
