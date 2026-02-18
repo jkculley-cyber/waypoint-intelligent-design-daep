@@ -30,7 +30,7 @@ export default function IncidentsPage() {
   const [consequenceFilter, setConsequenceFilter] = useState('')
   const [myApprovalsOnly, setMyApprovalsOnly] = useState(false)
   const { scope } = useAccessScope()
-  const { profile } = useAuth()
+  const { profile, hasRole } = useAuth()
 
   const filters = useMemo(() => {
     const f = {}
@@ -92,6 +92,14 @@ export default function IncidentsPage() {
             </div>
           )}
         </div>
+      ),
+      sortable: false,
+    },
+    {
+      key: 'campus',
+      header: 'Campus',
+      render: (_, row) => (
+        <span className="text-sm text-gray-600 whitespace-nowrap">{row.campus?.name || '—'}</span>
       ),
       sortable: false,
     },
@@ -201,9 +209,11 @@ export default function IncidentsPage() {
                 Import
               </Link>
             )}
-            <Link to="/incidents/new">
-              <Button size="sm">+ New Incident</Button>
-            </Link>
+            {!hasRole(['teacher']) && (
+              <Link to="/incidents/new">
+                <Button size="sm">+ New Incident</Button>
+              </Link>
+            )}
           </div>
         }
       />

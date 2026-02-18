@@ -22,7 +22,7 @@ export function useStudents(filters = {}) {
         .select(`
           *,
           campus:campuses(id, name, campus_type),
-          incidents(id, consequence_type, consequence_days, consequence_start, consequence_end, status),
+          incidents(id, consequence_type, consequence_days, consequence_start, consequence_end, status, sped_compliance_required, compliance_cleared),
           daily_behavior_tracking(id, tracking_date)
         `)
         .eq('district_id', districtId)

@@ -12,6 +12,7 @@ import ComplianceBlockBanner from '../components/compliance/ComplianceBlockBanne
 import ComplianceChecklist from '../components/compliance/ComplianceChecklist'
 import PolicyMismatchBanner from '../components/incidents/PolicyMismatchBanner'
 import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
+import PlacementScheduler from '../components/daep/PlacementScheduler'
 import { useIncident, useIncidentActions } from '../hooks/useIncidents'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -29,6 +30,7 @@ import {
   SEVERITY_LABELS,
   SEVERITY_COLORS,
   OFFENSE_CATEGORY_LABELS,
+  DAEP_DOCUMENT_LABELS,
 } from '../lib/constants'
 
 export default function IncidentDetailPage() {
@@ -274,6 +276,16 @@ export default function IncidentDetailPage() {
               <ApprovalChainTracker incidentId={incident.id} onUpdate={refetch} />
             )}
 
+            {/* Referral Documents */}
+            {incident.attachments?.length > 0 && (
+              <ReferralDocuments attachments={incident.attachments} />
+            )}
+
+            {/* Placement Scheduling */}
+            {incident.status === 'approved' && isDaep && (
+              <PlacementScheduler incidentId={incident.id} incident={incident} student={student} />
+            )}
+
             {/* Student Card */}
             <Card>
               <CardTitle>Student</CardTitle>
@@ -422,5 +434,46 @@ function TimelineItem({ label, value, active, variant = 'default' }) {
         <p className="text-xs text-gray-500">{value}</p>
       </div>
     </div>
+  )
+}
+
+function ReferralDocuments({ attachments }) {
+  const handleView = async (storagePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('daep-documents')
+        .createSignedUrl(storagePath, 300)
+      if (error) throw error
+      window.open(data.signedUrl, '_blank')
+    } catch (err) {
+      console.error('Error creating signed URL:', err)
+    }
+  }
+
+  return (
+    <Card>
+      <CardTitle>Referral Documents</CardTitle>
+      <div className="mt-3 space-y-2">
+        {attachments.map((doc, i) => (
+          <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <div>
+                <p className="text-sm text-gray-900">{DAEP_DOCUMENT_LABELS[doc.type] || doc.type}</p>
+                <p className="text-xs text-gray-500">{doc.filename}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleView(doc.storage_path)}
+              className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+            >
+              View
+            </button>
+          </div>
+        ))}
+      </div>
+    </Card>
   )
 }

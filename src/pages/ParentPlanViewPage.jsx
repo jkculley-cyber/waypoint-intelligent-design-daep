@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTransitionPlan } from '../hooks/useTransitionPlans'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -20,10 +23,25 @@ const TIER_COLORS = { 1: 'green', 2: 'yellow', 3: 'red' }
 
 export default function ParentPlanViewPage() {
   const { id } = useParams()
+  const { user } = useAuth()
   const { plan, reviews, interventions, loading } = useTransitionPlan(id)
 
-  if (loading) return <PageLoader message="Loading plan..." />
-  if (!plan) {
+  // FERPA ownership check: verify this plan belongs to one of the parent's children
+  const [authorized, setAuthorized] = useState(null) // null=checking, true=ok, false=denied
+  useEffect(() => {
+    if (!plan || !user?.id) return
+    const studentId = plan.students?.id
+    if (!studentId) { setAuthorized(false); return }
+    supabase
+      .from('students')
+      .select('id', { count: 'exact', head: true })
+      .eq('id', studentId)
+      .eq('parent_user_id', user.id)
+      .then(({ count }) => setAuthorized((count || 0) > 0))
+  }, [plan, user?.id])
+
+  if (loading || (plan && authorized === null)) return <PageLoader message="Loading plan..." />
+  if (!plan || authorized === false) {
     return (
       <div>
         <Topbar title="Plan Not Found" />

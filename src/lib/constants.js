@@ -1,3 +1,22 @@
+// Subscription tiers
+export const TIERS = {
+  ESSENTIAL: 'essential',
+  PROFESSIONAL: 'professional',
+  ENTERPRISE: 'enterprise',
+}
+
+export const TIER_LABELS = {
+  [TIERS.ESSENTIAL]: 'Essential',
+  [TIERS.PROFESSIONAL]: 'Professional',
+  [TIERS.ENTERPRISE]: 'Enterprise',
+}
+
+export const TIER_LEVELS = {
+  [TIERS.ESSENTIAL]: 1,
+  [TIERS.PROFESSIONAL]: 2,
+  [TIERS.ENTERPRISE]: 3,
+}
+
 // User roles
 export const ROLES = {
   ADMIN: 'admin',
@@ -9,6 +28,7 @@ export const ROLES = {
   CBC: 'cbc',
   SSS: 'sss',
   SECTION_504_COORDINATOR: 'section_504_coordinator',
+  DIRECTOR_STUDENT_AFFAIRS: 'director_student_affairs',
   PARENT: 'parent',
   STUDENT: 'student',
 }
@@ -23,6 +43,7 @@ export const ROLE_LABELS = {
   [ROLES.CBC]: 'Campus Behavior Coordinator',
   [ROLES.SSS]: 'Student Support Specialist',
   [ROLES.SECTION_504_COORDINATOR]: '504 Coordinator',
+  [ROLES.DIRECTOR_STUDENT_AFFAIRS]: 'Director of Student Affairs',
   [ROLES.PARENT]: 'Parent',
   [ROLES.STUDENT]: 'Student',
 }
@@ -38,6 +59,7 @@ export const STAFF_ROLES = [
   ROLES.CBC,
   ROLES.SSS,
   ROLES.SECTION_504_COORDINATOR,
+  ROLES.DIRECTOR_STUDENT_AFFAIRS,
 ]
 
 // Roles that can access the DAEP Dashboard
@@ -51,6 +73,7 @@ export const DAEP_ROLES = [
   ROLES.CBC,
   ROLES.SSS,
   ROLES.SECTION_504_COORDINATOR,
+  ROLES.DIRECTOR_STUDENT_AFFAIRS,
 ]
 
 // Roles that can manage compliance
@@ -485,4 +508,41 @@ export const APPROVAL_CHAIN_STEPS = [
   { role: 'sped_coordinator', label: 'Special Education', order: 3, conditional: 'is_sped' },
   { role: 'section_504_coordinator', label: 'Section 504', order: 4, conditional: 'has_504' },
   { role: 'sss', label: 'Student Support Specialist', order: 5 },
+  { role: 'director_student_affairs', label: 'Director of Student Affairs', order: 6 },
 ]
+
+// DAEP Document Types
+export const DAEP_DOCUMENT_TYPES = {
+  TRANSCRIPT: 'transcript',
+  SCHEDULE: 'schedule',
+  MDR: 'mdr',
+}
+
+export const DAEP_DOCUMENT_LABELS = {
+  [DAEP_DOCUMENT_TYPES.TRANSCRIPT]: 'Transcript',
+  [DAEP_DOCUMENT_TYPES.SCHEDULE]: 'Current Schedule',
+  [DAEP_DOCUMENT_TYPES.MDR]: 'Manifestation Determination Review (MDR)',
+}
+
+// Placement Scheduling Statuses
+export const SCHEDULING_STATUS = {
+  PENDING: 'pending',
+  SCHEDULED: 'scheduled',
+  COMPLETED: 'completed',
+}
+
+export const SCHEDULING_STATUS_LABELS = {
+  [SCHEDULING_STATUS.PENDING]: 'Pending',
+  [SCHEDULING_STATUS.SCHEDULED]: 'Scheduled',
+  [SCHEDULING_STATUS.COMPLETED]: 'Completed',
+}
+
+export const SCHEDULING_STATUS_COLORS = {
+  [SCHEDULING_STATUS.PENDING]: 'yellow',
+  [SCHEDULING_STATUS.SCHEDULED]: 'blue',
+  [SCHEDULING_STATUS.COMPLETED]: 'green',
+}
+
+// Days of the week
+export const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+export const DAYS_OF_WEEK_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

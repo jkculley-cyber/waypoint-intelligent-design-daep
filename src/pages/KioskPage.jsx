@@ -80,6 +80,27 @@ export default function KioskPage() {
   const totalAssigned = placement?.consequence_days || 0
   const remaining = totalAssigned > 0 ? Math.max(0, totalAssigned - daysServed) : null
 
+  // Fetch orientation behavior plan goals to show as daily reminders
+  const [behaviorGoals, setBehaviorGoals] = useState(null)
+  useEffect(() => {
+    if (!student?.id) { setBehaviorGoals(null); return }
+    supabase
+      .from('daep_placement_scheduling')
+      .select('orientation_form_data')
+      .eq('student_id', student.id)
+      .eq('orientation_status', 'completed')
+      .not('orientation_form_data', 'is', null)
+      .order('orientation_completed_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.orientation_form_data?.behavior_plan) {
+          const goals = data.orientation_form_data.behavior_plan.filter(g => g.behavior?.trim())
+          setBehaviorGoals(goals.length > 0 ? goals : null)
+        }
+      })
+  }, [student?.id])
+
   // Once student authenticates and data loads, show identity confirmation step
   useEffect(() => {
     if (!student || !placementLoaded || recordLoading) return
@@ -109,23 +130,10 @@ export default function KioskPage() {
   }, [view])
 
   const handleConfirmIdentity = () => {
-    if (hasCheckedInToday) {
-      setConfirmationData({
-        firstName: student.first_name,
-        lastName: student.last_name,
-        gradeLevel: student.grade_level,
-        studentIdNumber: student.student_id_number,
-        phoneBagNumber: record?.phone_bag_number || null,
-        remaining,
-        totalAssigned,
-        elapsed: daysServed,
-        placement,
-        alreadyCheckedIn: true,
-      })
-      setView('confirmation')
-    } else {
-      performCheckIn()
-    }
+    // Always go through performCheckIn — it does a DB-level pre-check so it
+    // correctly handles both "first check-in" and "already checked in today"
+    // regardless of whether the local `record` state has loaded yet.
+    performCheckIn()
   }
 
   // Auto-return countdown on confirmation screen
@@ -152,19 +160,20 @@ export default function KioskPage() {
     setPlacement(null)
     setPlacementLoaded(false)
     setConfirmationData(null)
+    setBehaviorGoals(null)
     setView('login')
   }
 
   const handleLogin = (e) => {
     e.preventDefault()
     if (!studentIdInput.trim()) return
-    authenticateStudent(studentIdInput.trim(), null) // don't filter by campus - any student can check in
+    authenticateStudent(studentIdInput.trim(), kioskCampusId) // filter by campus if ?campus= param is set
   }
 
   const performCheckIn = async () => {
     if (actionLoading) return
     setActionLoading(true)
-    const { error } = await checkIn(student.id, kioskCampusId || student.campus_id, student.district_id, {
+    const { error, alreadyCheckedIn: wasAlreadyIn } = await checkIn(student.id, kioskCampusId || student.campus_id, student.district_id, {
       phoneBagNumber: phoneBagNumber.trim() || null,
     })
     if (error) {
@@ -200,7 +209,7 @@ export default function KioskPage() {
       totalAssigned,
       elapsed: newDaysServed,
       placement,
-      alreadyCheckedIn: false,
+      alreadyCheckedIn: !!wasAlreadyIn,
     })
     setActionLoading(false)
     setView('confirmation')
@@ -355,9 +364,16 @@ export default function KioskPage() {
             )}
 
             {confirmationData.alreadyCheckedIn && (
-              <p className="text-sm text-yellow-400 mt-3">
-                You have already checked in today. Only one check-in per day is recorded.
-              </p>
+              <div className="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-xl px-5 py-3 text-left space-y-1">
+                <p className="text-sm font-semibold text-yellow-300">Already Checked In</p>
+                <p className="text-sm text-yellow-200">
+                  You already checked in today — only one check-in per school day is recorded.
+                </p>
+                <p className="text-xs text-yellow-400 mt-1">
+                  Phone bag / locker numbers can only be assigned during your first check-in of the day.
+                  See your teacher if you need to update your bag number.
+                </p>
+              </div>
             )}
 
             {/* DAEP Placement Tracker */}
@@ -370,6 +386,44 @@ export default function KioskPage() {
                 endDate={confirmationData.placement.consequence_end}
                 daysAssigned={confirmationData.totalAssigned}
               />
+            )}
+
+            {/* No active DAEP placement notice */}
+            {!confirmationData.placement && !confirmationData.alreadyCheckedIn && (
+              <div className="mt-6 bg-gray-800 rounded-xl px-5 py-4 text-sm text-gray-400">
+                No active DAEP placement found for your account. Your attendance has been recorded.
+                See your campus administrator if you believe this is an error.
+              </div>
+            )}
+
+            {/* Today's Goals — from orientation behavior plan (read from live state, not snapshot) */}
+            {behaviorGoals && behaviorGoals.length > 0 && (
+              <div className="mt-6 bg-gray-800 rounded-xl p-5 text-left">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-300 uppercase tracking-wide">My Daily Goals</p>
+                </div>
+                <div className="space-y-3">
+                  {behaviorGoals.map((goal, idx) => (
+                    <div key={idx} className="bg-gray-700/60 rounded-lg p-3">
+                      <p className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide mb-1">Goal {idx + 1}</p>
+                      <p className="text-sm font-medium text-white">{goal.behavior}</p>
+                      {goal.supports?.trim() && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          <span className="text-gray-500">Supports: </span>{goal.supports}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-600 mt-3 text-center">
+                  These goals were set during your DAEP orientation. Keep working toward them every day.
+                </p>
+              </div>
             )}
 
             {/* Auto-return notice */}

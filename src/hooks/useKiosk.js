@@ -13,24 +13,17 @@ export function useKioskAuth() {
     setLoading(true)
     setError(null)
     try {
-      let query = supabase
-        .from('students')
-        .select('id, first_name, last_name, student_id_number, grade_level, campus_id, district_id, is_sped, is_504')
-        .eq('student_id_number', studentIdNumber)
-        .eq('is_active', true)
+      // SECURITY DEFINER RPC — anon role never queries the students table directly
+      const { data, error: fetchError } = await supabase.rpc('lookup_student_for_kiosk', {
+        p_student_id_number: studentIdNumber,
+        p_campus_id: campusId || null,
+      })
 
-      // Only filter by campus if a campus ID is provided
-      if (campusId) {
-        query = query.eq('campus_id', campusId)
-      }
-
-      const { data, error: fetchError } = await query.single()
-
-      if (fetchError) {
+      if (fetchError || !data || data.length === 0) {
         setError('Student not found. Please check your ID and try again.')
         setStudent(null)
       } else {
-        setStudent(data)
+        setStudent(data[0])
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -90,7 +83,7 @@ export function useBehaviorActions() {
     const now = new Date().toISOString()
     const { phoneBagNumber } = options
 
-    // Check if record exists for today
+    // First check: look up any existing record for today (fast path, avoids write on most re-visits)
     const { data: existing } = await supabase
       .from('daily_behavior_tracking')
       .select('id')
@@ -99,54 +92,59 @@ export function useBehaviorActions() {
       .maybeSingle()
 
     if (existing) {
-      // Already checked in today — update bag number if provided (ignore error if column missing)
+      // Already checked in — update bag number if provided
       if (phoneBagNumber) {
         await supabase
           .from('daily_behavior_tracking')
           .update({ phone_bag_number: phoneBagNumber })
           .eq('id', existing.id)
-        // Ignore errors — column may not exist if migration 011 hasn't run
       }
       return { data: existing, error: null, alreadyCheckedIn: true }
-    } else {
-      // Create new record
-      const baseData = {
-        student_id: studentId,
-        campus_id: campusId,
-        district_id: districtId,
-        tracking_date: today,
-        check_in_time: now,
-        status: 'checked_in',
-        period_scores: {},
-      }
+    }
 
-      if (phoneBagNumber) {
-        // Try with bag number first; fall back without if column doesn't exist yet
-        const { data, error } = await supabase
-          .from('daily_behavior_tracking')
-          .insert({ ...baseData, phone_bag_number: phoneBagNumber })
-          .select()
-          .single()
+    // Attempt insert. The DB unique constraint on (student_id, tracking_date)
+    // guarantees only one record per day even under concurrent requests.
+    const baseData = {
+      student_id: studentId,
+      campus_id: campusId,
+      district_id: districtId,
+      tracking_date: today,
+      check_in_time: now,
+      status: 'checked_in',
+      period_scores: {},
+      ...(phoneBagNumber ? { phone_bag_number: phoneBagNumber } : {}),
+    }
 
-        if (error) {
-          // Retry without phone_bag_number in case migration 011 hasn't been applied
-          const retry = await supabase
-            .from('daily_behavior_tracking')
-            .insert(baseData)
-            .select()
-            .single()
-          return retry
-        }
-        return { data, error }
-      }
+    const { data, error } = await supabase
+      .from('daily_behavior_tracking')
+      .insert(baseData)
+      .select()
+      .single()
 
-      const { data, error } = await supabase
+    // code 23505 = unique_violation — another request beat us to it (race condition)
+    // Treat as "already checked in" rather than an error.
+    if (error?.code === '23505') {
+      const { data: raceRecord } = await supabase
         .from('daily_behavior_tracking')
-        .insert(baseData)
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('tracking_date', today)
+        .maybeSingle()
+      return { data: raceRecord, error: null, alreadyCheckedIn: true }
+    }
+
+    // If insert failed for another reason (e.g. phone_bag_number column missing),
+    // retry without it — migration 011 may not have been applied yet.
+    if (error && phoneBagNumber) {
+      const { data: retry, error: retryErr } = await supabase
+        .from('daily_behavior_tracking')
+        .insert({ ...baseData, phone_bag_number: undefined })
         .select()
         .single()
-      return { data, error }
+      return { data: retry, error: retryErr }
     }
+
+    return { data, error }
   }
 
   const checkOut = async (recordId) => {

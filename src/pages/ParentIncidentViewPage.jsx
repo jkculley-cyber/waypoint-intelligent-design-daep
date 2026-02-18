@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useIncident } from '../hooks/useIncidents'
+import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
@@ -21,7 +22,22 @@ import {
 
 export default function ParentIncidentViewPage() {
   const { id } = useParams()
+  const { user } = useAuth()
   const { incident, loading } = useIncident(id)
+
+  // FERPA ownership check: verify this incident belongs to one of the parent's children
+  const [authorized, setAuthorized] = useState(null) // null=checking, true=ok, false=denied
+  useEffect(() => {
+    if (!incident || !user?.id) return
+    const studentId = incident.student?.id
+    if (!studentId) { setAuthorized(false); return }
+    supabase
+      .from('students')
+      .select('id', { count: 'exact', head: true })
+      .eq('id', studentId)
+      .eq('parent_user_id', user.id)
+      .then(({ count }) => setAuthorized((count || 0) > 0))
+  }, [incident, user?.id])
 
   // Fetch check-in count for this placement
   const [daysServed, setDaysServed] = useState(0)
@@ -42,8 +58,8 @@ export default function ParentIncidentViewPage() {
     fetchCount()
   }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
 
-  if (loading) return <PageLoader message="Loading record..." />
-  if (!incident) {
+  if (loading || (incident && authorized === null)) return <PageLoader message="Loading record..." />
+  if (!incident || authorized === false) {
     return (
       <div>
         <Topbar title="Record Not Found" />
@@ -78,6 +94,19 @@ export default function ParentIncidentViewPage() {
       />
 
       <div className="p-6 max-w-3xl mx-auto space-y-6">
+        {/* Compliance Hold Explanation */}
+        {incident.status === 'compliance_hold' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-amber-800">Placement on Hold — Compliance Review in Progress</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Your child's placement is currently on hold while the school completes a required compliance review.
+              This review ensures that all legal requirements for students with disabilities are met before any
+              placement decision is finalized. You will be notified once the review is complete. If you have
+              questions, please contact the campus SPED Coordinator.
+            </p>
+          </div>
+        )}
+
         {/* Status */}
         <div className="flex items-center gap-3">
           <Badge color={INCIDENT_STATUS_COLORS[incident.status]} dot size="lg">

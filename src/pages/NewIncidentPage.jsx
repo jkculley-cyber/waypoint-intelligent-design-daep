@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Topbar from '../components/layout/Topbar'
@@ -11,6 +11,7 @@ import StudentFlags from '../components/students/StudentFlags'
 import OffenseCodeSelector from '../components/incidents/OffenseCodeSelector'
 import ConsequenceSuggestion from '../components/incidents/ConsequenceSuggestion'
 import RestorativeAlternatives from '../components/incidents/RestorativeAlternatives'
+import DocumentUpload from '../components/documents/DocumentUpload'
 import { useIncidentActions } from '../hooks/useIncidents'
 import { useOffenseCodes, useStudentOffenseCount } from '../hooks/useOffenseCodes'
 import { useInterventions } from '../hooks/useTransitionPlans'
@@ -21,6 +22,7 @@ import {
   CONSEQUENCE_TYPE_LABELS,
   CONSEQUENCE_TYPES,
   INCIDENT_LOCATIONS,
+  DAEP_DOCUMENT_TYPES,
 } from '../lib/constants'
 
 const STEPS = ['Student', 'Offense', 'Consequence', 'Details', 'Review']
@@ -39,6 +41,7 @@ export default function NewIncidentPage() {
   const [submitting, setSubmitting] = useState(false)
   const [matrixEntry, setMatrixEntry] = useState(null)
   const [isMatrixOverride, setIsMatrixOverride] = useState(false)
+  const tempIncidentId = useRef(crypto.randomUUID()).current
   const [formData, setFormData] = useState({
     student: null,
     campus_id: campusIds?.[0] || '',
@@ -54,6 +57,7 @@ export default function NewIncidentPage() {
     notes: '',
     override_justification: '',
     restorative_ids: [],
+    documents: { transcript: null, schedule: null, mdr: null },
   })
 
   const selectedOffenseCode = useMemo(() => {
@@ -170,6 +174,12 @@ export default function NewIncidentPage() {
     })
   }
 
+  // Date ordering validation (used in canProceed and JSX error display)
+  const datesInvalid =
+    formData.consequence_start &&
+    formData.consequence_end &&
+    formData.consequence_end < formData.consequence_start
+
   const canProceed = () => {
     switch (step) {
       case 0: return !!formData.student
@@ -184,9 +194,25 @@ export default function NewIncidentPage() {
           if (matrixEntry.consequence_days_min && days < matrixEntry.consequence_days_min) return false
           if (matrixEntry.consequence_days_max && days > matrixEntry.consequence_days_max) return false
         }
+        // DAEP document requirements
+        if (formData.consequence_type === 'daep') {
+          if (!formData.documents.transcript) return false
+          if (!formData.documents.schedule) return false
+          if (formData.student?.is_sped && !formData.documents.mdr) return false
+        }
+        // Consequence date ordering: end must be on or after start
+        if (datesInvalid) return false
+        // IDEA §300.536 hard block: 10+ cumulative removal days for SPED/504 students
+        // requires Manifestation Determination Review BEFORE proceeding.
+        // For DAEP, the MDR document upload above already enforces this.
+        // For ISS/OSS, there is no MDR upload step — hard block here.
+        if (spedRequired && isRemovalConsequence && projectedTotal >= 10 &&
+            !['daep', 'expulsion'].includes(formData.consequence_type)) {
+          return false
+        }
         return true
       }
-      case 3: return !!formData.description && !!formData.incident_date
+      case 3: return !!formData.description && !!formData.incident_date && !!formData.location
       case 4: return true
       default: return false
     }
@@ -219,6 +245,7 @@ export default function NewIncidentPage() {
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
+      const attachments = Object.values(formData.documents).filter(Boolean)
       const { data, error } = await createIncident({
         campus_id: formData.student.campus_id || formData.campus_id,
         student_id: formData.student.id,
@@ -232,6 +259,7 @@ export default function NewIncidentPage() {
         consequence_start: formData.consequence_start || null,
         consequence_end: formData.consequence_end || null,
         notes: buildFinalNotes(),
+        ...(attachments.length > 0 ? { attachments } : {}),
       })
 
       if (error) throw error
@@ -420,6 +448,11 @@ export default function NewIncidentPage() {
                       onChange={(e) => updateField('consequence_end', e.target.value)}
                     />
                   </div>
+                  {datesInvalid && (
+                    <p className="text-xs text-red-600 mt-1">
+                      End date cannot be before start date.
+                    </p>
+                  )}
                   {!isOverride && matrixEntry && formData.consequence_days && (() => {
                     const days = parseInt(formData.consequence_days)
                     const outOfRange =
@@ -436,9 +469,13 @@ export default function NewIncidentPage() {
 
               {/* SPED/504 Cumulative Removal Day Warnings */}
               {spedRequired && isRemovalConsequence && projectedTotal >= 10 && (
-                <AlertBanner variant="error" title="MDR Required — IDEA Compliance">
-                  This placement will bring cumulative removal days to <strong>{projectedTotal}</strong>.
-                  A Manifestation Determination Review (MDR) is required under IDEA before proceeding.
+                <AlertBanner variant="error" title="Cannot Proceed — MDR Required (IDEA §300.536)">
+                  This consequence brings cumulative removal days to <strong>{projectedTotal}</strong> this school year.
+                  A Manifestation Determination Review (MDR) is legally required before any additional removal
+                  of a student with a disability beyond 10 cumulative days.{' '}
+                  {['daep', 'expulsion'].includes(formData.consequence_type)
+                    ? 'Upload a completed MDR document above to continue.'
+                    : 'Contact the SPED Coordinator to complete an MDR before submitting this consequence.'}
                 </AlertBanner>
               )}
               {spedRequired && isRemovalConsequence && projectedTotal >= 5 && projectedTotal < 10 && (
@@ -453,6 +490,45 @@ export default function NewIncidentPage() {
                 selectedIds={formData.restorative_ids}
                 onToggle={handleRestorativeToggle}
               />
+
+              {/* DAEP Required Documents */}
+              {formData.consequence_type === 'daep' && (
+                <div className="space-y-3 pt-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">Required Documents for DAEP Referral</h4>
+                    <p className="text-xs text-gray-500 mb-3">Upload all required documents before submitting.</p>
+                  </div>
+                  <DocumentUpload
+                    documentType={DAEP_DOCUMENT_TYPES.TRANSCRIPT}
+                    label="Transcript"
+                    required
+                    existingDocument={formData.documents.transcript}
+                    onUploadComplete={(meta) => updateField('documents', { ...formData.documents, transcript: meta })}
+                    onRemove={() => updateField('documents', { ...formData.documents, transcript: null })}
+                    incidentId={tempIncidentId}
+                  />
+                  <DocumentUpload
+                    documentType={DAEP_DOCUMENT_TYPES.SCHEDULE}
+                    label="Current Schedule"
+                    required
+                    existingDocument={formData.documents.schedule}
+                    onUploadComplete={(meta) => updateField('documents', { ...formData.documents, schedule: meta })}
+                    onRemove={() => updateField('documents', { ...formData.documents, schedule: null })}
+                    incidentId={tempIncidentId}
+                  />
+                  {formData.student?.is_sped && (
+                    <DocumentUpload
+                      documentType={DAEP_DOCUMENT_TYPES.MDR}
+                      label="Manifestation Determination Review (MDR)"
+                      required
+                      existingDocument={formData.documents.mdr}
+                      onUploadComplete={(meta) => updateField('documents', { ...formData.documents, mdr: meta })}
+                      onRemove={() => updateField('documents', { ...formData.documents, mdr: null })}
+                      incidentId={tempIncidentId}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -485,6 +561,7 @@ export default function NewIncidentPage() {
                 value={formData.location}
                 onChange={(e) => updateField('location', e.target.value)}
                 options={INCIDENT_LOCATIONS.map(l => ({ value: l, label: l }))}
+                required
               />
 
               <FormField

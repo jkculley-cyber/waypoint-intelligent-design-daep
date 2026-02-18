@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, BarChart, Bar,
@@ -9,8 +9,11 @@ import {
   useDaepSummaryStats,
   useActiveDaepEnrollments,
   usePendingDaepEnrollments,
+  useApprovedDaepPlacements,
+  useScheduledOrientations,
   useDaepSubPopulations,
   useDaepDaysActions,
+  usePendingApprovals,
 } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
@@ -20,7 +23,8 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { formatStudentName, formatDate, formatGradeLevel, getSchoolYearLabel } from '../lib/utils'
-import { INCIDENT_STATUS_LABELS, INCIDENT_STATUS_COLORS } from '../lib/constants'
+import { INCIDENT_STATUS_LABELS, INCIDENT_STATUS_COLORS, SCHEDULING_STATUS_LABELS, SCHEDULING_STATUS_COLORS, ROLE_LABELS } from '../lib/constants'
+import { formatTime12h } from '../lib/orientationUtils'
 
 const CHART_COLORS = ['#f97316', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 
@@ -34,6 +38,9 @@ export default function DaepDashboardPage() {
       <div className="p-6 space-y-6">
         <SummaryCards />
         <ActiveEnrollmentsTable />
+        <ApprovalFlowTable />
+        <ScheduledOrientationsTable />
+        <ApprovedPlacementsTable />
         <PendingPlacementsTable />
         <SubPopulationCharts />
       </div>
@@ -238,6 +245,250 @@ function StudentFlags({ student }) {
         <Badge key={f.label} color={f.color} size="sm">{f.label}</Badge>
       ))}
     </div>
+  )
+}
+
+// =================== APPROVAL FLOW TABLE ===================
+
+const APPROVAL_CHAIN_ROLES = ['cbc', 'counselor', 'sped_coordinator', 'section_504_coordinator', 'sss', 'director_student_affairs']
+
+function ApprovalFlowTable() {
+  const { approvals, loading } = usePendingApprovals()
+  const { profile } = useAuth()
+  const navigate = useNavigate()
+  const [myOnly, setMyOnly] = useState(false)
+
+  const showToggle = APPROVAL_CHAIN_ROLES.includes(profile?.role)
+
+  const filtered = useMemo(() => {
+    if (!myOnly || !profile?.role) return approvals
+    return approvals.filter(a => a.current_step === profile.role)
+  }, [approvals, myOnly, profile?.role])
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <CardTitle>Approval Flow</CardTitle>
+        {showToggle && (
+          <button
+            onClick={() => setMyOnly(!myOnly)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+              myOnly
+                ? 'bg-orange-50 border-orange-300 text-orange-700'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {myOnly ? 'My Approvals' : 'All Approvals'}
+          </button>
+        )}
+      </div>
+      {loading ? (
+        <div className="flex justify-center py-8"><LoadingSpinner /></div>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-8">No pending approval chains.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100">
+                <th className="px-3 py-2">Student</th>
+                <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">Offense</th>
+                <th className="px-3 py-2">Current Step</th>
+                <th className="px-3 py-2">Submitted</th>
+                <th className="px-3 py-2">Progress</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filtered.map(chain => {
+                const incident = Array.isArray(chain.incident) ? chain.incident[0] : chain.incident
+                const student = incident?.student
+                const offense = incident?.offense
+                const steps = (chain.steps || []).sort((a, b) => a.step_order - b.step_order)
+
+                return (
+                  <tr
+                    key={chain.id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => incident?.id && navigate(`/incidents/${incident.id}`)}
+                  >
+                    <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">
+                      {student ? formatStudentName(student) : '—'}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                      {student?.student_id_number || '—'}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {offense?.title || '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      <Badge color="orange" size="sm">
+                        {ROLE_LABELS[chain.current_step] || chain.current_step}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                      {formatDate(chain.created_at)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1">
+                        {steps.map(step => {
+                          const color = step.status === 'approved' ? 'bg-green-500'
+                            : step.status === 'denied' ? 'bg-red-500'
+                            : step.status === 'returned' ? 'bg-orange-500'
+                            : step.status === 'pending' ? 'bg-yellow-400'
+                            : 'bg-gray-300'
+                          return (
+                            <div
+                              key={step.id}
+                              className={`w-3 h-3 rounded-full ${color}`}
+                              title={`${ROLE_LABELS[step.step_role] || step.step_role}: ${step.status}`}
+                            />
+                          )
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// =================== SCHEDULED ORIENTATIONS TABLE ===================
+
+function ScheduledOrientationsTable() {
+  const { orientations, loading } = useScheduledOrientations()
+
+  return (
+    <Card>
+      <CardTitle>Scheduled Orientations</CardTitle>
+      {loading ? (
+        <div className="flex justify-center py-8"><LoadingSpinner /></div>
+      ) : orientations.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-8">No upcoming orientation sessions.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100">
+                <th className="px-3 py-2">Student</th>
+                <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">Date</th>
+                <th className="px-3 py-2">Time</th>
+                <th className="px-3 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {orientations.map(row => (
+                <tr key={row.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">
+                    {row.student ? formatStudentName(row.student) : '—'}
+                  </td>
+                  <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                    {row.student?.student_id_number || '—'}
+                  </td>
+                  <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                    {row.orientation_scheduled_date
+                      ? new Date(row.orientation_scheduled_date + 'T00:00:00').toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : '—'}
+                  </td>
+                  <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                    {row.orientation_scheduled_time
+                      ? formatTime12h(row.orientation_scheduled_time)
+                      : '—'}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Badge color={SCHEDULING_STATUS_COLORS[row.orientation_status] || 'blue'} size="sm">
+                      {SCHEDULING_STATUS_LABELS[row.orientation_status] || row.orientation_status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// =================== APPROVED PLACEMENTS TABLE ===================
+
+function ApprovedPlacementsTable() {
+  const navigate = useNavigate()
+  const { placements, loading } = useApprovedDaepPlacements()
+
+  return (
+    <Card>
+      <CardTitle>Approved Placements</CardTitle>
+      {loading ? (
+        <div className="flex justify-center py-8"><LoadingSpinner /></div>
+      ) : placements.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-8">No approved DAEP placements awaiting scheduling.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100">
+                <th className="px-3 py-2">Student</th>
+                <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">Offense</th>
+                <th className="px-3 py-2">Assigned Days</th>
+                <th className="px-3 py-2">ARD Status</th>
+                <th className="px-3 py-2">Orientation Status</th>
+                <th className="px-3 py-2">Flags</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {placements.map(row => {
+                const sched = Array.isArray(row.scheduling) ? row.scheduling[0] : row.scheduling
+                return (
+                  <tr key={row.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/incidents/${row.id}`)}>
+                    <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">
+                      {row.student ? formatStudentName(row.student) : '—'}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                      {row.student?.student_id_number || '—'}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {row.offense?.title || '—'}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {row.consequence_days || '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      {sched?.ard_required ? (
+                        <Badge color={SCHEDULING_STATUS_COLORS[sched.ard_status] || 'gray'} size="sm">
+                          {SCHEDULING_STATUS_LABELS[sched.ard_status] || 'Pending'}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-gray-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <Badge color={SCHEDULING_STATUS_COLORS[sched?.orientation_status] || 'yellow'} size="sm">
+                        {SCHEDULING_STATUS_LABELS[sched?.orientation_status] || 'Pending'}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2">
+                      <StudentFlags student={row.student} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   )
 }
 

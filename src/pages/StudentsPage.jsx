@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { canImport, getImportTier } from '../lib/importPermissions'
 import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+import { useStudentsRecidivismBatch } from '../hooks/useRecidivism'
 
 export default function StudentsPage() {
   const navigate = useNavigate()
@@ -42,6 +43,7 @@ export default function StudentsPage() {
 
   const { students, loading } = useStudents(filters)
   const { campuses } = useCampuses()
+  const { assessments: riskAssessments } = useStudentsRecidivismBatch(students)
 
   const columns = [
     {
@@ -76,6 +78,22 @@ export default function StudentsPage() {
       sortable: false,
     },
     {
+      key: 'risk',
+      header: 'Risk',
+      render: (_, row) => {
+        const risk = riskAssessments.get(row.id)
+        if (!risk) return <div className="text-center"><span className="text-gray-300 text-sm">—</span></div>
+        const color = risk.riskLevel === 'High' ? 'red' : risk.riskLevel === 'Medium' ? 'yellow' : 'green'
+        const label = risk.riskLevel === 'Medium' ? 'Med' : risk.riskLevel
+        return (
+          <div className="text-center">
+            <Badge color={color} size="sm">{label}</Badge>
+          </div>
+        )
+      },
+      sortable: false,
+    },
+    {
       key: 'days_remaining',
       header: 'Days Remaining',
       render: (_, row) => {
@@ -85,8 +103,24 @@ export default function StudentsPage() {
         )
         if (!daepIncident) return <div className="text-center"><span className="text-gray-300 text-sm">—</span></div>
 
-        // Pending placements
-        if (['submitted', 'under_review', 'compliance_hold'].includes(daepIncident.status)) {
+        // Compliance hold
+        if (daepIncident.status === 'compliance_hold') {
+          return <div className="text-center"><Badge color="red" size="sm">Compliance Hold</Badge></div>
+        }
+
+        // SPED compliance blocked
+        if (daepIncident.sped_compliance_required && !daepIncident.compliance_cleared &&
+            ['submitted', 'under_review'].includes(daepIncident.status)) {
+          return (
+            <div className="text-center">
+              <Badge color="red" size="sm">Blocked</Badge>
+              <p className="text-[10px] text-red-400 mt-0.5">SPED Compliance</p>
+            </div>
+          )
+        }
+
+        // Other pending placements
+        if (['submitted', 'under_review'].includes(daepIncident.status)) {
           return <div className="text-center"><Badge color="purple" size="sm">Pending</Badge></div>
         }
 
@@ -127,7 +161,7 @@ export default function StudentsPage() {
     },
   ]
 
-  const exportHeaders = ['Name', 'Student ID', 'Grade', 'Campus', 'SPED', '504', 'ELL']
+  const exportHeaders = ['Name', 'Student ID', 'Grade', 'Campus', 'SPED', '504', 'ELL', 'Risk Level']
 
   const buildExportRows = useCallback(() => {
     return students.map(s => [
@@ -138,8 +172,9 @@ export default function StudentsPage() {
       s.is_sped ? 'Yes' : 'No',
       s.is_504 ? 'Yes' : 'No',
       s.is_ell ? 'Yes' : 'No',
+      riskAssessments.get(s.id)?.riskLevel || '—',
     ])
-  }, [students])
+  }, [students, riskAssessments])
 
   const handleExportPdf = useCallback(() => {
     exportToPdf('Students', exportHeaders, buildExportRows(), {

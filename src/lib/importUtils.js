@@ -2,47 +2,348 @@ import * as XLSX from 'xlsx'
 import { supabase } from './supabase'
 
 /**
- * Column alias mappings for auto-detecting SIS export formats
+ * Column alias mappings for auto-detecting SIS export formats.
+ *
+ * Covers the most common Texas district SIS platforms:
+ *   - Skyward (SMS 2.0 / Qmlativ) — widely used in Texas
+ *   - PowerSchool — common nationally
+ *   - Frontline / PEIMS / TSDS — Texas state reporting names
+ *   - Infinite Campus — growing Texas presence
+ *   - eSchoolPlus / Aeries — used in some TX districts
+ *   - Generic / legacy formats
+ *
+ * All alias values are lower-cased; matching is case-insensitive.
  */
 const COLUMN_ALIASES = {
-  // Student fields
-  student_id_number: ['student id', 'student_id', 'studentid', 'student number', 'student_number', 'studentnumber', 'student-id', 'id number', 'local id', 'local_id'],
-  first_name: ['first name', 'first_name', 'firstname', 'first-nm', 'fname', 'given name'],
-  last_name: ['last name', 'last_name', 'lastname', 'last-nm', 'lname', 'surname', 'family name'],
-  date_of_birth: ['date of birth', 'date_of_birth', 'dob', 'birthdate', 'birth_date', 'birthday', 'birth date'],
-  grade_level: ['grade level', 'grade_level', 'gradelevel', 'grade', 'grd', 'grd-lvl'],
-  campus_name: ['campus name', 'campus_name', 'school', 'school name', 'campus', 'building', 'school_name'],
-  gender: ['gender', 'sex', 'gndr'],
-  race: ['race', 'race_ethnicity', 'race/ethnicity', 'ethnicity'],
-  is_sped: ['is sped', 'is_sped', 'sped', 'special ed', 'special_ed', 'special education'],
-  sped_eligibility: ['sped eligibility', 'sped_eligibility', 'eligibility', 'disability', 'sped code', 'sped_code'],
-  is_504: ['is 504', 'is_504', '504', 'section 504', 'section_504'],
-  is_ell: ['is ell', 'is_ell', 'ell', 'lep', 'english learner', 'el'],
-  is_homeless: ['is homeless', 'is_homeless', 'homeless', 'mckinney-vento'],
-  is_foster: ['is foster', 'is_foster', 'foster', 'foster care'],
-  is_migrant: ['is migrant', 'is_migrant', 'migrant'],
+  // ── Student ID ──────────────────────────────────────────────────
+  student_id_number: [
+    // Generic
+    'student id', 'student_id', 'studentid', 'student number', 'student_number',
+    'studentnumber', 'student-id', 'id number', 'local id', 'local_id', 'stu id',
+    // Skyward
+    'student id number', 'student_id_number', 'name id', 'stud id',
+    // PowerSchool
+    'student_number', 'dcid', 'local student number',
+    // Frontline / PEIMS / TSDS
+    'student-id-local', 'stu-id', 'student local id',
+    // Infinite Campus
+    'studentnumber', 'state id',
+    // eSchoolPlus / Aeries
+    'perm id', 'permid', 'sis id',
+  ],
 
-  // Campus fields
-  name: ['name', 'campus name', 'campus_name', 'school name', 'school_name'],
-  tea_campus_id: ['tea campus id', 'tea_campus_id', 'campus id', 'campus_id', 'tea id', 'tea_id', 'cdc'],
-  campus_type: ['campus type', 'campus_type', 'type', 'school type', 'school_type', 'level'],
-  address: ['address', 'street address', 'street_address', 'addr'],
-  phone: ['phone', 'phone number', 'phone_number', 'tel', 'telephone'],
+  // ── First Name ──────────────────────────────────────────────────
+  first_name: [
+    'first name', 'first_name', 'firstname', 'first-nm', 'fname', 'given name',
+    // Skyward
+    'name first', 'name_first', 'legal first', 'preferred first',
+    // PowerSchool
+    'first_name', 'preferred_name',
+    // PEIMS
+    'student first name', 'first-name',
+    // Infinite Campus
+    'firstname', 'legal first name',
+  ],
 
-  // Staff fields
-  email: ['email', 'email address', 'email_address', 'e-mail', 'mail'],
-  full_name: ['full name', 'full_name', 'fullname', 'name', 'staff name', 'employee name'],
-  role: ['role', 'position', 'title', 'job title', 'job_title'],
-  campus_names: ['campus names', 'campus_names', 'campuses', 'campus assignments', 'schools', 'campus'],
+  // ── Last Name ───────────────────────────────────────────────────
+  last_name: [
+    'last name', 'last_name', 'lastname', 'last-nm', 'lname', 'surname', 'family name',
+    // Skyward
+    'name last', 'name_last', 'legal last',
+    // PowerSchool
+    'last_name',
+    // PEIMS
+    'student last name', 'last-name',
+    // Infinite Campus
+    'lastname', 'legal last name',
+  ],
 
-  // Incident fields
-  incident_date: ['incident date', 'incident_date', 'date', 'event date', 'event_date', 'occurrence date'],
-  offense_code: ['offense code', 'offense_code', 'code', 'violation code', 'violation_code', 'offense'],
-  description: ['description', 'desc', 'details', 'narrative', 'comments', 'notes', 'incident description'],
-  consequence_type: ['consequence type', 'consequence_type', 'consequence', 'action', 'discipline action', 'action taken'],
-  consequence_days: ['consequence days', 'consequence_days', 'days', 'duration', 'number of days', 'num days'],
-  location: ['location', 'loc', 'place', 'incident location', 'where'],
-  reported_by_email: ['reported by email', 'reported_by_email', 'reported by', 'reporter', 'referring staff', 'staff email'],
+  // ── Date of Birth ───────────────────────────────────────────────
+  date_of_birth: [
+    'date of birth', 'date_of_birth', 'dob', 'birthdate', 'birth_date', 'birthday', 'birth date',
+    // Skyward
+    'birth date',
+    // PowerSchool
+    'dob', 'dateofbirth',
+    // PEIMS
+    'birth-date', 'date of birth',
+    // Infinite Campus
+    'birthdate',
+  ],
+
+  // ── Grade Level ─────────────────────────────────────────────────
+  grade_level: [
+    'grade level', 'grade_level', 'gradelevel', 'grade', 'grd', 'grd-lvl',
+    // Skyward
+    'student grade', 'grade level', 'enrolled grade',
+    // PowerSchool
+    'grade_level', 'enroll_grade',
+    // PEIMS
+    'grade-level-indicator', 'grd-lvl-ind',
+    // Infinite Campus
+    'grade', 'gradename',
+    // eSchoolPlus
+    'current grade', 'currentgrade',
+  ],
+
+  // ── Campus / School ─────────────────────────────────────────────
+  campus_name: [
+    'campus name', 'campus_name', 'school', 'school name', 'campus', 'building', 'school_name',
+    // Skyward
+    'school name', 'building name', 'enrolled school',
+    // PowerSchool
+    'school_name', 'schoolname',
+    // PEIMS
+    'campus-id-of-enrollment', 'campus name',
+    // Infinite Campus
+    'school', 'calendarname',
+    // eSchoolPlus
+    'school building', 'building',
+  ],
+
+  // ── Gender ──────────────────────────────────────────────────────
+  gender: [
+    'gender', 'sex', 'gndr',
+    // Skyward
+    'gender', 'sex',
+    // PowerSchool
+    'gender',
+    // PEIMS
+    'sex-code',
+    // Infinite Campus
+    'gender',
+  ],
+
+  // ── Race / Ethnicity ────────────────────────────────────────────
+  race: [
+    'race', 'race_ethnicity', 'race/ethnicity', 'ethnicity',
+    // Skyward
+    'race/ethnicity', 'ethnic group', 'ethnicgroup',
+    // PowerSchool
+    'ethnicity', 'fedethnicity',
+    // PEIMS
+    'hispanic-indicator', 'race-indicator',
+    // Infinite Campus
+    'race', 'raceethnicitycd',
+  ],
+
+  // ── SPED ────────────────────────────────────────────────────────
+  is_sped: [
+    'is sped', 'is_sped', 'sped', 'special ed', 'special_ed', 'special education',
+    // Skyward
+    'special ed', 'special education', 'sped indicator',
+    // PowerSchool
+    'specialed', 'sped', 'specialedflag',
+    // PEIMS
+    'special-education-indicator',
+    // Infinite Campus
+    'sped', 'specialeducation',
+  ],
+
+  // ── SPED Eligibility Code ───────────────────────────────────────
+  sped_eligibility: [
+    'sped eligibility', 'sped_eligibility', 'eligibility', 'disability', 'sped code', 'sped_code',
+    // Skyward
+    'primary exceptionality', 'eligibility code', 'primary disability',
+    // PowerSchool
+    'specialedcode', 'primary_disability',
+    // PEIMS
+    'primary-disability-code', 'disability code',
+    // Infinite Campus
+    'primary exceptionality', 'primaryexceptionality',
+  ],
+
+  // ── Section 504 ─────────────────────────────────────────────────
+  is_504: [
+    'is 504', 'is_504', '504', 'section 504', 'section_504',
+    // Skyward
+    '504 plan', '504plan', '504 indicator',
+    // PowerSchool
+    '504', 'section504',
+    // PEIMS
+    '504-indicator',
+    // Infinite Campus
+    'section504', '504',
+  ],
+
+  // ── ELL ─────────────────────────────────────────────────────────
+  is_ell: [
+    'is ell', 'is_ell', 'ell', 'lep', 'english learner', 'el',
+    // Skyward
+    'ell', 'esl', 'bilingual', 'lep indicator',
+    // PowerSchool
+    'lep', 'el',
+    // PEIMS
+    'lep-indicator', 'bilingual-esl-indicator',
+    // Infinite Campus
+    'ell', 'esl',
+  ],
+
+  // ── Homeless ────────────────────────────────────────────────────
+  is_homeless: [
+    'is homeless', 'is_homeless', 'homeless', 'mckinney-vento',
+    // Skyward / PowerSchool / Infinite Campus
+    'homeless indicator', 'homeless', 'homelessindicator', 'mckinney vento',
+  ],
+
+  // ── Foster ──────────────────────────────────────────────────────
+  is_foster: [
+    'is foster', 'is_foster', 'foster', 'foster care',
+    // Common variants
+    'foster care indicator', 'foster care', 'fostercare',
+  ],
+
+  // ── Migrant ─────────────────────────────────────────────────────
+  is_migrant: [
+    'is migrant', 'is_migrant', 'migrant',
+    // Skyward / PEIMS
+    'migrant indicator', 'migrant', 'migrantindicator',
+  ],
+
+  // ── Campus Name (for campuses import) ──────────────────────────
+  name: [
+    'name', 'campus name', 'campus_name', 'school name', 'school_name', 'building name',
+  ],
+
+  // ── TEA Campus ID ───────────────────────────────────────────────
+  tea_campus_id: [
+    'tea campus id', 'tea_campus_id', 'campus id', 'campus_id', 'tea id', 'tea_id', 'cdc',
+    // PEIMS / TSDS
+    'county-district-campus', 'campus number', 'cdc number', 'tea number',
+    'campus-id', 'teacampusid',
+  ],
+
+  // ── Campus Type ─────────────────────────────────────────────────
+  campus_type: [
+    'campus type', 'campus_type', 'type', 'school type', 'school_type', 'level',
+    'school level', 'grade span',
+  ],
+
+  // ── Address ─────────────────────────────────────────────────────
+  address: [
+    'address', 'street address', 'street_address', 'addr', 'mailing address',
+    'physical address',
+  ],
+
+  // ── Phone ───────────────────────────────────────────────────────
+  phone: [
+    'phone', 'phone number', 'phone_number', 'tel', 'telephone',
+    'main phone', 'office phone',
+  ],
+
+  // ── Staff Email ─────────────────────────────────────────────────
+  email: [
+    'email', 'email address', 'email_address', 'e-mail', 'mail',
+    // Skyward
+    'staff email', 'district email',
+    // PowerSchool
+    'email_addr', 'teacheremail',
+    // Infinite Campus
+    'email', 'emailaddress',
+  ],
+
+  // ── Staff Full Name ─────────────────────────────────────────────
+  full_name: [
+    'full name', 'full_name', 'fullname', 'name', 'staff name', 'employee name',
+    // Skyward
+    'employee name', 'name display',
+    // PowerSchool
+    'teachername', 'staff name',
+    // Infinite Campus
+    'staffname', 'employeename',
+  ],
+
+  // ── Staff Role ──────────────────────────────────────────────────
+  role: [
+    'role', 'position', 'title', 'job title', 'job_title',
+    // Common
+    'staff role', 'employee type', 'job code',
+  ],
+
+  // ── Staff Campus Assignments ────────────────────────────────────
+  campus_names: [
+    'campus names', 'campus_names', 'campuses', 'campus assignments', 'schools', 'campus',
+    'assigned schools', 'school assignments',
+  ],
+
+  // ── Incident Date ───────────────────────────────────────────────
+  incident_date: [
+    'incident date', 'incident_date', 'date', 'event date', 'event_date', 'occurrence date',
+    // Frontline / PEIMS
+    'date of incident', 'infraction date', 'action date',
+    // Generic
+    'discipline date', 'incident-date',
+  ],
+
+  // ── Offense Code ────────────────────────────────────────────────
+  offense_code: [
+    'offense code', 'offense_code', 'code', 'violation code', 'violation_code', 'offense',
+    // Frontline / PEIMS
+    'infraction code', 'behavior code', 'conduct code', 'tec code',
+    // Skyward
+    'offense/violation', 'behavior type code',
+  ],
+
+  // ── Incident Description ────────────────────────────────────────
+  description: [
+    'description', 'desc', 'details', 'narrative', 'comments', 'notes', 'incident description',
+    // Frontline / Skyward
+    'incident narrative', 'behavior description', 'incident details',
+  ],
+
+  // ── Consequence Type ────────────────────────────────────────────
+  consequence_type: [
+    'consequence type', 'consequence_type', 'consequence', 'action', 'discipline action', 'action taken',
+    // Frontline / PEIMS
+    'disciplinary action', 'action code', 'response', 'sanction',
+    // Skyward
+    'action/consequence', 'disciplinary consequence',
+  ],
+
+  // ── Consequence Days ────────────────────────────────────────────
+  consequence_days: [
+    'consequence days', 'consequence_days', 'days', 'duration', 'number of days', 'num days',
+    // Frontline / PEIMS
+    'days assigned', 'days removed', 'length of action', 'days of action',
+    // Skyward
+    'action days', 'removal days',
+  ],
+
+  // ── Incident Location ───────────────────────────────────────────
+  location: [
+    'location', 'loc', 'place', 'incident location', 'where',
+    // Frontline / Skyward
+    'location of incident', 'incident site', 'area', 'campus area',
+  ],
+
+  // ── Reported By ─────────────────────────────────────────────────
+  reported_by_email: [
+    'reported by email', 'reported_by_email', 'reported by', 'reporter', 'referring staff', 'staff email',
+    // Frontline / Skyward
+    'reporting staff email', 'entered by email', 'staff reporter email', 'referral staff email',
+  ],
+}
+
+/**
+ * Detect the match confidence for each mapped field.
+ * Returns 'exact' | 'alias' | 'none' for each target field.
+ */
+export function detectMappingConfidence(fileHeaders, targetFields, mapping) {
+  const confidence = {}
+  for (const field of targetFields) {
+    const source = mapping[field]
+    if (!source) {
+      confidence[field] = 'none'
+      continue
+    }
+    // Check exact match
+    if (fileHeaders.some(h => h.toLowerCase().trim() === field.toLowerCase())) {
+      confidence[field] = 'exact'
+    } else {
+      confidence[field] = 'alias'
+    }
+  }
+  return confidence
 }
 
 /**

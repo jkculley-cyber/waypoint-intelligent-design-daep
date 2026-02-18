@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { NotificationProvider } from '../../contexts/NotificationContext'
 import { Toaster } from 'react-hot-toast'
+import ChatBubble from '../chat/ChatBubble'
 
 export default function AppShell() {
   return (
@@ -25,6 +26,7 @@ export default function AppShell() {
             },
           }}
         />
+        <ChatBubble />
       </div>
     </NotificationProvider>
   )

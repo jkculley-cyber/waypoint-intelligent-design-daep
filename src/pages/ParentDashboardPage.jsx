@@ -121,6 +121,18 @@ export default function ParentDashboardPage() {
       />
 
       <div className="p-6">
+        {/* FERPA Notice */}
+        <div className="mb-5 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-3">
+          <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+          <p className="text-xs text-blue-800">
+            <strong>FERPA Notice:</strong> Your child's education records are protected under the Family Educational Rights and Privacy Act (FERPA).
+            The information displayed here is accessible only to authorized parents and guardians.
+            Contact the school if you believe your child's records are incorrect or to request a formal review.
+          </p>
+        </div>
+
         {children.length === 0 ? (
           <Card>
             <div className="text-center py-8">

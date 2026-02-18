@@ -7,6 +7,7 @@ export const IMPORT_TEMPLATES = {
   campuses: {
     label: 'Campuses',
     headers: ['name', 'tea_campus_id', 'campus_type', 'address', 'phone'],
+    requiredFields: ['name', 'tea_campus_id', 'campus_type'],
     sampleRows: [
       ['Lincoln Elementary', '101901001', 'elementary', '100 Main St, Austin TX 78701', '512-555-0100'],
       ['Washington Middle School', '101901002', 'middle', '200 Oak Ave, Austin TX 78702', '512-555-0200'],
@@ -26,6 +27,7 @@ export const IMPORT_TEMPLATES = {
       'campus_name', 'gender', 'race', 'is_sped', 'sped_eligibility',
       'is_504', 'is_ell', 'is_homeless', 'is_foster', 'is_migrant',
     ],
+    requiredFields: ['student_id_number', 'first_name', 'last_name', 'date_of_birth', 'grade_level'],
     sampleRows: [
       ['STU001', 'Maria', 'Garcia', '2010-03-15', '8', 'Lincoln Middle School', 'F', 'Hispanic/Latino', 'FALSE', '', 'FALSE', 'TRUE', 'FALSE', 'FALSE', 'FALSE'],
       ['STU002', 'James', 'Johnson', '2012-09-22', '5', 'Washington Elementary', 'M', 'Black', 'TRUE', 'LD', 'FALSE', 'FALSE', 'FALSE', 'FALSE', 'FALSE'],
@@ -51,6 +53,7 @@ export const IMPORT_TEMPLATES = {
   profiles: {
     label: 'Staff',
     headers: ['email', 'full_name', 'role', 'campus_names', 'phone'],
+    requiredFields: ['email', 'full_name', 'role'],
     sampleRows: [
       ['jane.smith@district.edu', 'Jane Smith', 'teacher', 'Lincoln Elementary; Washington Middle', '512-555-0300'],
       ['bob.jones@district.edu', 'Bob Jones', 'principal', 'Lincoln Elementary', '512-555-0400'],
@@ -69,6 +72,7 @@ export const IMPORT_TEMPLATES = {
       'student_id_number', 'incident_date', 'offense_code', 'description',
       'consequence_type', 'consequence_days', 'location', 'reported_by_email',
     ],
+    requiredFields: ['student_id_number', 'incident_date', 'offense_code', 'description', 'consequence_type', 'reported_by_email'],
     sampleRows: [
       ['STU001', '2025-01-15', 'FIG01', 'Physical altercation in hallway', 'iss', '3', 'Hallway', 'jane.smith@district.edu'],
       ['STU002', '2025-01-20', 'TRU01', 'Unexcused absence from class', 'detention', '1', 'Classroom', 'bob.jones@district.edu'],

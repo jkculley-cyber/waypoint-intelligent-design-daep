@@ -341,6 +341,190 @@ export function useDaepSubPopulations() {
 }
 
 /**
+ * Approved DAEP placements with scheduling status (approved but not yet active).
+ */
+export function useApprovedDaepPlacements() {
+  const [placements, setPlacements] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+
+    const fetchApproved = async () => {
+      setLoading(true)
+      try {
+        let query = supabase
+          .from('incidents')
+          .select(`
+            id, incident_date, consequence_days, status,
+            student:students(id, first_name, last_name, middle_name, grade_level, student_id_number,
+              is_sped, is_504, is_ell, is_homeless, is_foster_care),
+            offense:offense_codes(id, code, title),
+            scheduling:daep_placement_scheduling(id, ard_required, ard_status, orientation_status)
+          `)
+          .eq('district_id', districtId)
+          .eq('consequence_type', 'daep')
+          .eq('status', 'approved')
+          .order('incident_date', { ascending: false })
+
+        query = applyCampusScope(query, scope)
+        const { data, error } = await query
+
+        if (error) throw error
+        const filtered = scope.spedOnly
+          ? (data || []).filter(r => isSpedStudent(r.student))
+          : (data || [])
+        setPlacements(filtered)
+      } catch (err) {
+        console.error('Error fetching approved DAEP placements:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchApproved()
+  }, [districtId, scopeLoading, scope])
+
+  return { placements, loading }
+}
+
+/**
+ * Scheduled orientations (orientation_status = 'scheduled', date >= today).
+ */
+export function useScheduledOrientations() {
+  const [orientations, setOrientations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+
+  useEffect(() => {
+    if (!districtId) return
+
+    const fetchOrientations = async () => {
+      setLoading(true)
+      const today = new Date().toISOString().split('T')[0]
+      try {
+        const { data, error } = await supabase
+          .from('daep_placement_scheduling')
+          .select(`
+            id, orientation_scheduled_date, orientation_status,
+            student:students(id, first_name, last_name, middle_name, student_id_number, grade_level)
+          `)
+          .eq('district_id', districtId)
+          .eq('orientation_status', 'scheduled')
+          .gte('orientation_scheduled_date', today)
+          .order('orientation_scheduled_date', { ascending: true })
+
+        if (error) throw error
+        setOrientations(data || [])
+      } catch (err) {
+        console.error('Error fetching scheduled orientations:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrientations()
+  }, [districtId])
+
+  return { orientations, loading }
+}
+
+/**
+ * Pending approval chains (in_progress) with incident/student/offense data and step details.
+ */
+export function usePendingApprovals() {
+  const [approvals, setApprovals] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+
+  useEffect(() => {
+    if (!districtId) return
+
+    const fetchApprovals = async () => {
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('daep_approval_chains')
+          .select(`
+            id, chain_status, current_step, created_at,
+            incident:incidents!fk_incidents_approval_chain(
+              id, incident_date, status,
+              student:students(id, first_name, last_name, middle_name, student_id_number),
+              offense:offense_codes(id, code, title)
+            ),
+            steps:daep_approval_steps(id, step_role, step_order, status)
+          `)
+          .eq('district_id', districtId)
+          .eq('chain_status', 'in_progress')
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+        setApprovals(data || [])
+      } catch (err) {
+        console.error('Error fetching pending approvals:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchApprovals()
+  }, [districtId])
+
+  return { approvals, loading }
+}
+
+/**
+ * Orientation schedule — all orientations with filtering.
+ */
+export function useOrientationSchedule(showPast = false) {
+  const [orientations, setOrientations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+
+  const fetchOrientations = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    const today = new Date().toISOString().split('T')[0]
+    try {
+      let query = supabase
+        .from('daep_placement_scheduling')
+        .select(`
+          id, orientation_scheduled_date, orientation_scheduled_time, orientation_status,
+          orientation_completed_date, orientation_form_data,
+          student:students(id, first_name, last_name, middle_name, student_id_number, grade_level, campus_id),
+          incident:incidents(id, campus_id, campus:campuses!campus_id(id, name))
+        `)
+        .eq('district_id', districtId)
+        .order('orientation_scheduled_date', { ascending: true })
+
+      if (!showPast) {
+        // Show pending, all scheduled (including past for missed detection), and completed (last 30 days)
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+        query = query.or(`orientation_status.in.(pending,scheduled),and(orientation_status.eq.completed,orientation_completed_date.gte.${thirtyDaysAgoStr})`)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+      setOrientations(data || [])
+    } catch (err) {
+      console.error('Error fetching orientation schedule:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, showPast])
+
+  useEffect(() => {
+    fetchOrientations()
+  }, [fetchOrientations])
+
+  return { orientations, loading, refetch: fetchOrientations }
+}
+
+/**
  * Actions for updating DAEP placement days (consequence_days, consequence_end, days_absent).
  */
 export function useDaepDaysActions() {

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { hasFeatureAccess } from '../lib/tierConfig'
 
 const AuthContext = createContext(null)
 
@@ -9,6 +10,7 @@ const WARNING_BEFORE_MS = 5 * 60 * 1000 // Show warning 5 minutes before logout
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [district, setDistrict] = useState(null)
   const [campusIds, setCampusIds] = useState([])
   const [loading, setLoading] = useState(true)
   const [sessionWarning, setSessionWarning] = useState(false)
@@ -34,6 +36,7 @@ export function AuthProvider({ children }) {
         fetchProfile(session.user.id)
       } else {
         setProfile(null)
+        setDistrict(null)
         setCampusIds([])
         setLoading(false)
       }
@@ -96,6 +99,16 @@ export function AuthProvider({ children }) {
       if (profileError) throw profileError
       setProfile(profileData)
 
+      // Fetch district record for tier gating
+      if (profileData.district_id) {
+        const { data: districtData } = await supabase
+          .from('districts')
+          .select('*')
+          .eq('id', profileData.district_id)
+          .single()
+        setDistrict(districtData)
+      }
+
       // Fetch campus assignments
       const { data: assignments, error: assignError } = await supabase
         .from('profile_campus_assignments')
@@ -107,6 +120,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Error fetching profile:', error)
       setProfile(null)
+      setDistrict(null)
       setCampusIds([])
     } finally {
       setLoading(false)
@@ -121,11 +135,22 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
+  async function refreshDistrict() {
+    if (!profile?.district_id) return
+    const { data } = await supabase
+      .from('districts')
+      .select('*')
+      .eq('id', profile.district_id)
+      .single()
+    if (data) setDistrict(data)
+  }
+
   async function signOut() {
     const { error } = await supabase.auth.signOut()
     if (!error) {
       setSession(null)
       setProfile(null)
+      setDistrict(null)
       setCampusIds([])
     }
     return { error }
@@ -144,24 +169,34 @@ export function AuthProvider({ children }) {
   }
 
   function isStaff() {
-    const staffRoles = ['admin', 'principal', 'ap', 'counselor', 'sped_coordinator', 'teacher']
+    const staffRoles = ['admin', 'principal', 'ap', 'counselor', 'sped_coordinator', 'teacher', 'cbc', 'sss', 'section_504_coordinator', 'director_student_affairs']
     return staffRoles.includes(profile?.role)
+  }
+
+  const tier = district?.settings?.subscription_tier || 'enterprise'
+
+  function hasFeature(featureName) {
+    return hasFeatureAccess(tier, featureName)
   }
 
   const value = {
     session,
     user: session?.user || null,
     profile,
+    district,
+    tier,
     campusIds,
     loading,
     signIn,
     signOut,
     hasRole,
+    hasFeature,
     isAdmin,
     isStaff,
     districtId: profile?.district_id || null,
     sessionWarning,
     extendSession: resetInactivityTimer,
+    refreshDistrict,
   }
 
   return (

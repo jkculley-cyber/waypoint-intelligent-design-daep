@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import AppShell from './components/layout/AppShell'
 import RequireAuth from './components/auth/RequireAuth'
 import RequireRole from './components/auth/RequireRole'
+import RequireTier from './components/auth/RequireTier'
 
 // Public pages
 import LandingPage from './pages/LandingPage'
@@ -34,7 +35,10 @@ import ParentPlanViewPage from './pages/ParentPlanViewPage'
 import ReportsPage from './pages/ReportsPage'
 import DaepDashboardPage from './pages/DaepDashboardPage'
 import ImportDataPage from './pages/ImportDataPage'
+import OrientationSettingsPage from './pages/OrientationSettingsPage'
 import PhoneReturnPage from './pages/PhoneReturnPage'
+import OrientationSchedulePage from './pages/OrientationSchedulePage'
+import OrientationKioskPage from './pages/OrientationKioskPage'
 
 // Constants
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES, DAEP_ROLES } from './lib/constants'
@@ -66,7 +70,9 @@ function App() {
               path="/compliance"
               element={
                 <RequireRole roles={COMPLIANCE_ROLES}>
-                  <CompliancePage />
+                  <RequireTier feature="compliance">
+                    <CompliancePage />
+                  </RequireTier>
                 </RequireRole>
               }
             />
@@ -76,19 +82,22 @@ function App() {
               path="/alerts"
               element={
                 <RequireRole roles={ALERT_ROLES}>
-                  <AlertsPage />
+                  <RequireTier feature="alerts">
+                    <AlertsPage />
+                  </RequireTier>
                 </RequireRole>
               }
             />
 
             {/* Transition Plans */}
-            <Route path="/plans" element={<RequireRole roles={STAFF_ROLES}><TransitionPlansPage /></RequireRole>} />
-            <Route path="/plans/new" element={<RequireRole roles={STAFF_ROLES}><NewTransitionPlanPage /></RequireRole>} />
-            <Route path="/plans/:id" element={<RequireRole roles={STAFF_ROLES}><TransitionPlanDetailPage /></RequireRole>} />
+            <Route path="/plans" element={<RequireRole roles={STAFF_ROLES}><RequireTier feature="transition_plans"><TransitionPlansPage /></RequireTier></RequireRole>} />
+            <Route path="/plans/new" element={<RequireRole roles={STAFF_ROLES}><RequireTier feature="transition_plans"><NewTransitionPlanPage /></RequireTier></RequireRole>} />
+            <Route path="/plans/:id" element={<RequireRole roles={STAFF_ROLES}><RequireTier feature="transition_plans"><TransitionPlanDetailPage /></RequireTier></RequireRole>} />
 
             {/* DAEP Dashboard */}
-            <Route path="/daep" element={<RequireRole roles={DAEP_ROLES}><DaepDashboardPage /></RequireRole>} />
-            <Route path="/daep/phone-return" element={<RequireRole roles={DAEP_ROLES}><PhoneReturnPage /></RequireRole>} />
+            <Route path="/daep" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="daep_dashboard"><DaepDashboardPage /></RequireTier></RequireRole>} />
+            <Route path="/daep/phone-return" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="phone_return"><PhoneReturnPage /></RequireTier></RequireRole>} />
+            <Route path="/daep/orientations" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="daep_dashboard"><OrientationSchedulePage /></RequireTier></RequireRole>} />
 
             {/* Discipline Matrix */}
             <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />
@@ -96,7 +105,9 @@ function App() {
               path="/matrix/editor"
               element={
                 <RequireRole roles={[ROLES.ADMIN]}>
-                  <MatrixEditorPage />
+                  <RequireTier feature="matrix_editor">
+                    <MatrixEditorPage />
+                  </RequireTier>
                 </RequireRole>
               }
             />
@@ -106,7 +117,9 @@ function App() {
               path="/reports"
               element={
                 <RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}>
-                  <ReportsPage />
+                  <RequireTier feature="reports">
+                    <ReportsPage />
+                  </RequireTier>
                 </RequireRole>
               }
             />
@@ -129,23 +142,34 @@ function App() {
               }
             />
             <Route
+              path="/settings/orientation"
+              element={
+                <RequireRole roles={[ROLES.ADMIN]}>
+                  <OrientationSettingsPage />
+                </RequireRole>
+              }
+            />
+            <Route
               path="/settings/import-data"
               element={
                 <RequireRole roles={STAFF_ROLES}>
-                  <ImportDataPage />
+                  <RequireTier feature="data_import">
+                    <ImportDataPage />
+                  </RequireTier>
                 </RequireRole>
               }
             />
           </Route>
 
           {/* Kiosk - standalone full-screen layout (no AppShell) */}
-          <Route path="/kiosk" element={<KioskPage />} />
+          <Route path="/kiosk" element={<RequireTier feature="kiosk"><KioskPage /></RequireTier>} />
+          <Route path="/orientation-kiosk" element={<RequireTier feature="orientation_kiosk"><OrientationKioskPage /></RequireTier>} />
 
           {/* Parent Portal - uses AppShell layout, parent role only */}
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>
-            <Route path="/parent" element={<RequireRole roles={[ROLES.PARENT]}><ParentDashboardPage /></RequireRole>} />
-            <Route path="/parent/incidents/:id" element={<RequireRole roles={[ROLES.PARENT]}><ParentIncidentViewPage /></RequireRole>} />
-            <Route path="/parent/plans/:id" element={<RequireRole roles={[ROLES.PARENT]}><ParentPlanViewPage /></RequireRole>} />
+            <Route path="/parent" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentDashboardPage /></RequireTier></RequireRole>} />
+            <Route path="/parent/incidents/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentIncidentViewPage /></RequireTier></RequireRole>} />
+            <Route path="/parent/plans/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentPlanViewPage /></RequireTier></RequireRole>} />
           </Route>
 
           {/* 404 */}

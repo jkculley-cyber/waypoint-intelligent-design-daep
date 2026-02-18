@@ -23,6 +23,7 @@ export function useIncidents(filters = {}) {
           *,
           student:students(id, first_name, last_name, middle_name, grade_level, student_id_number, is_sped, is_504, is_ell, is_homeless, is_foster_care, sped_eligibility),
           offense:offense_codes(id, code, title, category, severity),
+          campus:campuses!campus_id(id, name),
           reporter:profiles!incidents_reported_by_fkey(id, full_name, role),
           reviewer:profiles!incidents_reviewed_by_fkey(id, full_name),
           compliance:compliance_checklists!fk_incidents_compliance(id, status, placement_blocked),
