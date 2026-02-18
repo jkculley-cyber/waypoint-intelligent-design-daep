@@ -48,7 +48,7 @@ RETURNS TABLE (
   grade_level             TEXT,
   scheduling_id           UUID,
   orientation_scheduled_date  DATE,
-  orientation_scheduled_time  TIME,
+  orientation_scheduled_time  TEXT,
   orientation_status      TEXT,
   orientation_completed_date  DATE,
   orientation_form_data   JSONB
@@ -62,7 +62,7 @@ BEGIN
     s.first_name,
     s.last_name,
     s.student_id_number,
-    s.grade_level,
+    s.grade_level::TEXT,
     ps.id,
     ps.orientation_scheduled_date,
     ps.orientation_scheduled_time,
