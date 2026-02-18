@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
-import { useKioskAuth } from '../hooks/useKiosk'
 import { supabase } from '../lib/supabase'
 import Button from '../components/ui/Button'
 import { format } from 'date-fns'
@@ -12,12 +11,14 @@ const LOGIN_IDLE_SECONDS = 60
 const EMPTY_GOAL = { behavior: '', supports: '', interventions: '' }
 
 export default function OrientationKioskPage() {
-  const { student, loading: authLoading, error: authError, authenticateStudent, logout } = useKioskAuth()
   const [studentIdInput, setStudentIdInput] = useState('')
   const [view, setView] = useState('login') // login | confirm | reflection_form | no_orientation | already_completed | success
+  const [student, setStudent] = useState(null)
   const [orientation, setOrientation] = useState(null)
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupError, setLookupError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
-  const isSubmittingRef = useRef(false) // sync guard against rapid double-tap
+  const isSubmittingRef = useRef(false)
   const [countdown, setCountdown] = useState(AUTO_RETURN_SECONDS)
   const loginIdleRef = useRef(null)
 
@@ -29,40 +30,7 @@ export default function OrientationKioskPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
-  // When student authenticates, look up their orientation
-  useEffect(() => {
-    if (!student) return
-    if (view !== 'login') return
-
-    const fetchOrientation = async () => {
-      const { data } = await supabase
-        .from('daep_placement_scheduling')
-        .select('id, orientation_scheduled_date, orientation_scheduled_time, orientation_status, orientation_completed_date, orientation_form_data, student_id')
-        .eq('student_id', student.id)
-        .in('orientation_status', ['scheduled', 'completed', 'pending'])
-        .order('orientation_scheduled_date', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-
-      if (!data) {
-        setView('no_orientation')
-        return
-      }
-
-      if (data.orientation_status === 'completed') {
-        setOrientation(data)
-        setView('already_completed')
-        return
-      }
-
-      setOrientation(data)
-      setView('confirm')
-    }
-
-    fetchOrientation()
-  }, [student, view])
-
-  // Login idle timeout
+  // Login idle timeout — clears input after 60s of inactivity
   useEffect(() => {
     if (view !== 'login') {
       if (loginIdleRef.current) clearTimeout(loginIdleRef.current)
@@ -101,24 +69,64 @@ export default function OrientationKioskPage() {
   }, [view])
 
   const resetToLogin = () => {
-    logout()
-    setStudentIdInput('')
+    setStudent(null)
     setOrientation(null)
+    setStudentIdInput('')
+    setLookupError(null)
     setReflection('')
     setBehaviorPlan([{ ...EMPTY_GOAL }, { ...EMPTY_GOAL }, { ...EMPTY_GOAL }])
     setView('login')
   }
 
-  const handleLogin = (e) => {
+  // Single combined RPC: finds student + their orientation record
+  const handleLogin = async (e) => {
     e.preventDefault()
-    if (!studentIdInput.trim()) return
-    authenticateStudent(studentIdInput.trim(), null)
+    if (!studentIdInput.trim() || lookupLoading) return
+
+    setLookupLoading(true)
+    setLookupError(null)
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc('lookup_orientation_for_kiosk', {
+        p_student_id_number: studentIdInput.trim(),
+      })
+
+      if (rpcError || !data || data.length === 0) {
+        setLookupError('No orientation record found for this student ID. Please see a staff member.')
+        setLookupLoading(false)
+        return
+      }
+
+      const row = data[0]
+      setStudent({
+        id: row.student_id,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        student_id_number: row.student_id_number,
+        grade_level: row.grade_level,
+      })
+      setOrientation({
+        id: row.scheduling_id,
+        orientation_scheduled_date: row.orientation_scheduled_date,
+        orientation_scheduled_time: row.orientation_scheduled_time,
+        orientation_status: row.orientation_status,
+        orientation_completed_date: row.orientation_completed_date,
+        orientation_form_data: row.orientation_form_data,
+      })
+
+      if (row.orientation_status === 'completed') {
+        setView('already_completed')
+      } else {
+        setView('confirm')
+      }
+    } catch {
+      setLookupError('An error occurred. Please try again.')
+    } finally {
+      setLookupLoading(false)
+    }
   }
 
-  // After confirming identity, move to reflection form
-  const handleConfirm = () => {
-    setView('reflection_form')
-  }
+  const handleConfirm = () => setView('reflection_form')
 
   const setGoal = (idx, field, val) => {
     setBehaviorPlan(prev => {
@@ -128,11 +136,10 @@ export default function OrientationKioskPage() {
     })
   }
 
-  // Save form + complete orientation in one step
+  // Save form + complete orientation via SECURITY DEFINER RPC
   const handleSubmitAndComplete = async (skipForm = false) => {
     if (!orientation || actionLoading || isSubmittingRef.current) return
 
-    // Require at least one behavior goal (unless skipping the form)
     if (!skipForm) {
       const hasGoal = behaviorPlan.some(g => g.behavior?.trim())
       if (!hasGoal) {
@@ -150,29 +157,24 @@ export default function OrientationKioskPage() {
       completed_at: today,
     }
 
-    const updates = {
-      orientation_status: 'completed',
-      orientation_completed_date: today,
-    }
-    if (formData) {
-      updates.orientation_form_data = formData
-    }
+    try {
+      const { data: success, error } = await supabase.rpc('complete_orientation_for_kiosk', {
+        p_scheduling_id: orientation.id,
+        p_form_data: formData || null,
+      })
 
-    const { error } = await supabase
-      .from('daep_placement_scheduling')
-      .update(updates)
-      .eq('id', orientation.id)
+      if (error || success === false) {
+        toast.error('Failed to complete orientation. Please see a staff member.')
+        return
+      }
 
-    if (error) {
-      toast.error('Failed to complete orientation. Please try again.')
+      setView('success')
+    } catch {
+      toast.error('An error occurred. Please try again.')
+    } finally {
       isSubmittingRef.current = false
       setActionLoading(false)
-      return
     }
-
-    isSubmittingRef.current = false
-    setActionLoading(false)
-    setView('success')
   }
 
   return (
@@ -194,7 +196,7 @@ export default function OrientationKioskPage() {
       </header>
 
       {/* Login Screen */}
-      {view === 'login' && !authLoading && (
+      {view === 'login' && !lookupLoading && (
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="w-full max-w-md px-6">
             <div className="text-center mb-8">
@@ -216,15 +218,10 @@ export default function OrientationKioskPage() {
                 className="w-full px-6 py-4 bg-gray-800 border-2 border-gray-700 rounded-xl text-2xl text-center font-mono text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
                 autoFocus
               />
-              {authError && (
-                <p className="text-red-400 text-sm text-center mt-3">{authError}</p>
+              {lookupError && (
+                <p className="text-red-400 text-sm text-center mt-3">{lookupError}</p>
               )}
-              <Button
-                type="submit"
-                className="w-full mt-4"
-                size="xl"
-                loading={authLoading}
-              >
+              <Button type="submit" className="w-full mt-4" size="xl" loading={lookupLoading}>
                 Look Up Orientation
               </Button>
             </form>
@@ -233,11 +230,11 @@ export default function OrientationKioskPage() {
       )}
 
       {/* Loading */}
-      {view === 'login' && authLoading && (
+      {view === 'login' && lookupLoading && (
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-400">Looking up student...</p>
+            <p className="text-gray-400">Looking up orientation...</p>
           </div>
         </div>
       )}
@@ -255,6 +252,13 @@ export default function OrientationKioskPage() {
             <h2 className="text-2xl font-bold text-white mb-1">Is this you?</h2>
             <p className="text-xl text-gray-300">{student.first_name} {student.last_name}</p>
             <p className="text-sm text-gray-500 mt-1">Grade {student.grade_level} | ID: {student.student_id_number}</p>
+
+            {orientation.orientation_status === 'missed' && (
+              <div className="mt-4 bg-yellow-900/40 border border-yellow-700/50 rounded-xl px-4 py-3">
+                <p className="text-sm font-semibold text-yellow-300">Orientation was previously missed</p>
+                <p className="text-xs text-yellow-400 mt-1">You can still complete your orientation now.</p>
+              </div>
+            )}
 
             <div className="mt-6 bg-gray-800 rounded-xl p-6 text-left space-y-3">
               <div className="flex justify-between">
@@ -298,7 +302,6 @@ export default function OrientationKioskPage() {
       {/* Reflection & Behavior Plan Form */}
       {view === 'reflection_form' && student && (
         <div className="min-h-[80vh] px-6 py-8 max-w-3xl mx-auto">
-          {/* Progress indicator */}
           <div className="flex items-center gap-3 mb-8">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-sm font-bold">✓</div>
@@ -321,7 +324,6 @@ export default function OrientationKioskPage() {
             <p className="text-gray-400 mt-1">{student.first_name} {student.last_name}</p>
           </div>
 
-          {/* Section 1: Reflection */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-orange-400 mb-2">Reflect on Your Incident</h3>
             <p className="text-sm text-gray-400 mb-3">
@@ -336,7 +338,6 @@ export default function OrientationKioskPage() {
             />
           </div>
 
-          {/* Section 2: Behavior Plan Goals */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-orange-400 mb-2">My Behavior Plan</h3>
             <p className="text-sm text-gray-400 mb-5">
@@ -381,7 +382,6 @@ export default function OrientationKioskPage() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-4">
             <button
               onClick={() => handleSubmitAndComplete(true)}
@@ -415,8 +415,8 @@ export default function OrientationKioskPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-400 mb-2">No Orientation Scheduled</h2>
-            <p className="text-gray-500">There is no orientation scheduled for this student.</p>
+            <h2 className="text-2xl font-bold text-gray-400 mb-2">No Orientation Found</h2>
+            <p className="text-gray-500">No orientation record was found for that student ID.</p>
             <p className="text-gray-600 text-sm mt-1">Please see a staff member for assistance.</p>
 
             <p className="text-sm text-gray-500 mt-8">
@@ -439,9 +439,7 @@ export default function OrientationKioskPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-orange-400 mb-2">Orientation Already Completed</h2>
-            <p className="text-gray-300">
-              {student?.first_name} {student?.last_name}
-            </p>
+            <p className="text-gray-300">{student?.first_name} {student?.last_name}</p>
             <p className="text-gray-500 text-sm mt-1">
               Completed on {orientation?.orientation_completed_date
                 ? new Date(orientation.orientation_completed_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -470,9 +468,7 @@ export default function OrientationKioskPage() {
               </svg>
             </div>
             <h2 className="text-3xl font-bold text-green-400 mb-2">Orientation Complete!</h2>
-            <p className="text-xl text-gray-300">
-              {student?.first_name} {student?.last_name}
-            </p>
+            <p className="text-xl text-gray-300">{student?.first_name} {student?.last_name}</p>
             <p className="text-sm text-gray-500 mt-1">
               Grade {student?.grade_level} | ID: {student?.student_id_number}
             </p>

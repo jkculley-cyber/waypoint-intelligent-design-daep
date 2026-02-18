@@ -509,7 +509,30 @@ export function useOrientationSchedule(showPast = false) {
 
       const { data, error } = await query
       if (error) throw error
-      setOrientations(data || [])
+
+      // Auto-mark past-dated scheduled orientations as 'missed' in the DB.
+      // Only marks orientations whose date is strictly before today (not today itself,
+      // so students who are late today can still complete on the kiosk).
+      const overdue = (data || []).filter(o =>
+        o.orientation_status === 'scheduled' &&
+        o.orientation_scheduled_date &&
+        o.orientation_scheduled_date < today
+      )
+      if (overdue.length > 0) {
+        const overdueIds = overdue.map(o => o.id)
+        // Fire-and-forget update — update local state immediately
+        supabase
+          .from('daep_placement_scheduling')
+          .update({ orientation_status: 'missed' })
+          .in('id', overdueIds)
+          .then() // ignore result; non-critical
+        // Reflect the status change locally without a second fetch
+        setOrientations((data || []).map(o =>
+          overdueIds.includes(o.id) ? { ...o, orientation_status: 'missed' } : o
+        ))
+      } else {
+        setOrientations(data || [])
+      }
     } catch (err) {
       console.error('Error fetching orientation schedule:', err)
     } finally {
