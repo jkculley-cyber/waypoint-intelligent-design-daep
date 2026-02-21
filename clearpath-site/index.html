@@ -455,6 +455,27 @@
   }
   .audience-card p { font-size:0.85rem; color:var(--text-muted); line-height:1.7; }
 
+  /* PRESENTATION */
+  .presentation-section {
+    background: linear-gradient(135deg, #140820, #1a0a2e);
+    border-top: 1px solid var(--border-purple);
+    border-bottom: 1px solid var(--border-purple);
+    padding: 100px 5%;
+    position: relative; z-index: 1;
+  }
+  .slides-wrapper {
+    position: relative; width: 100%; max-width: 900px;
+    margin: 0 auto;
+    border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--glow-purple), 0 40px 80px rgba(0,0,0,0.5);
+    aspect-ratio: 16 / 9;
+  }
+  .slides-wrapper iframe {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; border: none;
+  }
+
   /* CTA */
   .cta-banner {
     background:linear-gradient(135deg, #1a0535, #0e0618);
@@ -563,6 +584,7 @@
     <li><a href="#pathways">Pathways</a></li>
     <li><a href="#compass">Compass</a></li>
     <li><a href="#about">About</a></li>
+    <li><a href="#presentation">Presentation</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <a href="#contact" class="nav-cta">Connect With Us</a>
@@ -750,6 +772,20 @@
       <h3>Teachers &amp; Instructional Staff</h3>
       <p>Educators access research-backed professional development and classroom strategies that translate directly into better student experiences.</p>
     </div>
+  </div>
+</section>
+
+<!-- PRESENTATION -->
+<section class="presentation-section fade-up" id="presentation">
+  <p class="section-label">See It In Action</p>
+  <h2 class="section-title">Waypoint — Texas DAEP Compliance</h2>
+  <div class="divider"></div>
+  <p class="section-subtitle">A complete overview of how Waypoint helps Texas districts manage DAEP placements, maintain compliance, and support every student's path forward.</p>
+  <div class="slides-wrapper">
+    <iframe src="https://docs.google.com/presentation/d/1nQHIEbh-nBX7SUVkxiCV8HHO0rOzaQEm/embed?start=false&loop=false&delayms=5000"
+      allowfullscreen
+      title="Waypoint — Texas DAEP Compliance Presentation">
+    </iframe>
   </div>
 </section>
 
