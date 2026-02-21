@@ -135,6 +135,16 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
+  async function signInWithOAuth(provider) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+    return { data, error }
+  }
+
   async function refreshDistrict() {
     if (!profile?.district_id) return
     const { data } = await supabase
@@ -188,6 +198,7 @@ export function AuthProvider({ children }) {
     campusIds,
     loading,
     signIn,
+    signInWithOAuth,
     signOut,
     hasRole,
     hasFeature,
