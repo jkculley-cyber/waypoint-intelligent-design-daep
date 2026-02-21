@@ -7,7 +7,8 @@
 
 - **Development phase:** Pre-pilot — product feature-complete, ready for first district pitch
 - **Waypoint app URL:** `https://waypoint.clearpathedgroup.com` (also `app.clearpathedgroup.com`)
-- **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML)
+- **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML in `clearpath-site/`)
+- **Marketing site features:** Waypoint links → waypoint.clearpathedgroup.com, Google Slides embed (DAEP deck) inside Waypoint product card, SEO meta/sitemap/robots.txt
 - **Hosting:** Cloudflare Pages — `waypoint` project (app), `clearpath-site` project (marketing site)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
 - **Migrations applied:** 001–036
