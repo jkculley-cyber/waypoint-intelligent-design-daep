@@ -400,6 +400,16 @@
     max-width:640px; margin-bottom:44px;
   }
   .products-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .product-card.full-width { grid-column: 1 / -1; }
+  .product-card.full-width .slides-embed {
+    position: relative; width: 100%;
+    aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+    margin-top: 16px;
+    border: 1px solid rgba(232,134,42,0.15);
+  }
+  .product-card.full-width .slides-embed iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+  }
   .product-card {
     background:rgba(14,6,24,0.7); border:1px solid var(--border-purple);
     border-radius:14px; padding:30px;
@@ -454,27 +464,6 @@
     color:var(--text); margin-bottom:10px;
   }
   .audience-card p { font-size:0.85rem; color:var(--text-muted); line-height:1.7; }
-
-  /* PRESENTATION */
-  .presentation-section {
-    background: linear-gradient(135deg, #140820, #1a0a2e);
-    border-top: 1px solid var(--border-purple);
-    border-bottom: 1px solid var(--border-purple);
-    padding: 100px 5%;
-    position: relative; z-index: 1;
-  }
-  .slides-wrapper {
-    position: relative; width: 100%; max-width: 900px;
-    margin: 0 auto;
-    border-radius: 14px; overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: var(--glow-purple), 0 40px 80px rgba(0,0,0,0.5);
-    aspect-ratio: 16 / 9;
-  }
-  .slides-wrapper iframe {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%; border: none;
-  }
 
   /* CTA */
   .cta-banner {
@@ -584,7 +573,6 @@
     <li><a href="#pathways">Pathways</a></li>
     <li><a href="#compass">Compass</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="#presentation">Presentation</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <a href="#contact" class="nav-cta">Connect With Us</a>
@@ -724,16 +712,16 @@
     </div>
     <p class="spotlight-desc">Our flagship pathway provides campuses and districts with proven tools to manage, document, and improve student behavior outcomes — while maintaining full compliance with state and federal requirements. Two powerful products. One clear direction.</p>
     <div class="products-grid">
-      <div class="product-card">
+      <div class="product-card full-width">
         <div class="product-card-icon">📍</div>
         <h3><a href="https://waypoint.clearpathedgroup.com" class="waypoint-link" target="_blank" rel="noopener noreferrer">Waypoint</a></h3>
-        <p>A structured check-in and monitoring system that tracks student behavior patterns, sets measurable goals, and celebrates progress at every milestone.</p>
-        <ul class="feature-list">
-          <li>Behavior check-in/check-out frameworks</li>
-          <li>Progress monitoring &amp; data dashboards</li>
-          <li>Intervention documentation tools</li>
-          <li>Family communication templates</li>
-        </ul>
+        <p>Texas DAEP compliance management — from incident documentation and approval chains to SPED compliance blocking, parent portals, and transition plans. See it in action below.</p>
+        <div class="slides-embed">
+          <iframe src="https://docs.google.com/presentation/d/1nQHIEbh-nBX7SUVkxiCV8HHO0rOzaQEm/embed?start=false&loop=false&delayms=5000"
+            allowfullscreen
+            title="Waypoint — Texas DAEP Compliance Presentation">
+          </iframe>
+        </div>
       </div>
       <div class="product-card">
         <div class="product-card-icon">⭐</div>
@@ -772,20 +760,6 @@
       <h3>Teachers &amp; Instructional Staff</h3>
       <p>Educators access research-backed professional development and classroom strategies that translate directly into better student experiences.</p>
     </div>
-  </div>
-</section>
-
-<!-- PRESENTATION -->
-<section class="presentation-section fade-up" id="presentation">
-  <p class="section-label">See It In Action</p>
-  <h2 class="section-title">Waypoint — Texas DAEP Compliance</h2>
-  <div class="divider"></div>
-  <p class="section-subtitle">A complete overview of how Waypoint helps Texas districts manage DAEP placements, maintain compliance, and support every student's path forward.</p>
-  <div class="slides-wrapper">
-    <iframe src="https://docs.google.com/presentation/d/1nQHIEbh-nBX7SUVkxiCV8HHO0rOzaQEm/embed?start=false&loop=false&delayms=5000"
-      allowfullscreen
-      title="Waypoint — Texas DAEP Compliance Presentation">
-    </iframe>
   </div>
 </section>
 
