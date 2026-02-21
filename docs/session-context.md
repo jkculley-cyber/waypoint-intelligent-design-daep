@@ -6,7 +6,9 @@
 ## Active State
 
 - **Development phase:** Pre-pilot — product feature-complete, ready for first district pitch
-- **Netlify URL:** Not yet assigned — test locally at `http://localhost:5173`
+- **Waypoint app URL:** `https://waypoint.clearpathedgroup.com` (also `app.clearpathedgroup.com`)
+- **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML)
+- **Hosting:** Cloudflare Pages — `waypoint` project (app), `clearpath-site` project (marketing site)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
 - **Migrations applied:** 001–036
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -62,8 +64,7 @@
 
 1. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
 2. **Supabase auth SMTP** — default has 3/hr rate limit. Configure custom SMTP before pilot go-live.
-3. **Netlify env vars** — `VITE_SUPABASE_SERVICE_ROLE_KEY` needs to be added in Netlify dashboard.
-4. **Supabase redirect URLs** — add `https://[domain]/reset-password` once Netlify URL assigned.
+3. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
 5. **SSO** — requested but not implemented.
 6. **Pricing** — tiers defined, dollar amounts not set. See market analysis: $6K / $10K / $18K / custom tiers recommended.
 7. **First pilot district** — not yet contracted. Product is sales-ready.
