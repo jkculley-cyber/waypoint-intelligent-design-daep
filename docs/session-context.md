@@ -61,11 +61,16 @@
 
 ---
 
+## GitHub Actions — CRITICAL NOTE
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` were blank in GitHub secrets since the Cloudflare migration (2026-02-21), causing blank app screens. Fixed by setting them via `gh secret set`. **Always verify both secrets are set after any repo migration.**
+- Current bundle: `index-CYWzYBgf.js` (built with correct Supabase URL confirmed)
+
 ## Pending / Not Done
 
 1. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
 2. **Supabase auth SMTP** — default has 3/hr rate limit. Configure custom SMTP before pilot go-live.
 3. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
+4. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
 5. **SSO** — requested but not implemented.
 6. **Pricing** — tiers defined, dollar amounts not set. See market analysis: $6K / $10K / $18K / custom tiers recommended.
 7. **First pilot district** — not yet contracted. Product is sales-ready.
