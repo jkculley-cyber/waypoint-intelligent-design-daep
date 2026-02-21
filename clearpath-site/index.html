@@ -515,6 +515,14 @@
   .footer-bottom p { font-size:0.78rem; color:rgba(240,230,211,0.25); }
   .footer-note { font-size:0.72rem; color:var(--amber); font-weight:600; letter-spacing:0.06em; }
 
+  /* Waypoint app links */
+  a.waypoint-link {
+    color: inherit; text-decoration: none;
+    border-bottom: 1px solid rgba(232,134,42,0.5);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  a.waypoint-link:hover { color: var(--amber-light); border-color: var(--amber-light); }
+
   /* ANIMATIONS */
   .fade-up {
     opacity:0; transform:translateY(32px);
@@ -586,7 +594,7 @@
           <div class="node-info">
             <h4>Compass Pathway</h4>
             <p>Behavior &amp; Compliance Support</p>
-            <span class="node-badge badge-active">Waypoint · Meridian</span>
+            <span class="node-badge badge-active"><a href="https://app.clearpathedgroup.com" class="waypoint-link" target="_blank" rel="noopener noreferrer">Waypoint</a> · Meridian</span>
           </div>
         </div>
         <div class="path-node">
@@ -654,7 +662,7 @@
       <h3>Compass Pathway</h3>
       <p>Helping campuses navigate student behavior, discipline compliance, and intervention frameworks — so every student can find their direction.</p>
       <div class="pathway-products">
-        <span class="product-chip">Waypoint</span>
+        <a href="https://app.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span class="product-chip">Waypoint</span></a>
         <span class="product-chip">Meridian</span>
       </div>
     </div>
@@ -696,7 +704,7 @@
     <div class="products-grid">
       <div class="product-card">
         <div class="product-card-icon">📍</div>
-        <h3>Waypoint</h3>
+        <h3><a href="https://app.clearpathedgroup.com" class="waypoint-link" target="_blank" rel="noopener noreferrer">Waypoint</a></h3>
         <p>A structured check-in and monitoring system that tracks student behavior patterns, sets measurable goals, and celebrates progress at every milestone.</p>
         <ul class="feature-list">
           <li>Behavior check-in/check-out frameworks</li>
