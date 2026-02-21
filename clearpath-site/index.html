@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clear Path Education Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple: #1a0a2e;
+    --dark-bg: #0e0618;
+    --mid-purple: #2d1054;
+    --purple: #6b2fa0;
+    --purple-light: #9b5fd4;
+    --amber: #e8862a;
+    --amber-light: #f5b050;
+    --amber-glow: #ffcc66;
+    --orange: #d4541a;
+    --text: #f0e6d3;
+    --text-muted: rgba(240,230,211,0.6);
+    --border: rgba(232,134,42,0.2);
+    --border-purple: rgba(107,47,160,0.35);
+    --card-bg: rgba(26,10,46,0.7);
+    --glow-amber: 0 0 30px rgba(232,134,42,0.3);
+    --glow-purple: 0 0 30px rgba(107,47,160,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--dark-bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(107,47,160,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(212,84,26,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(26,10,46,1) 0%, #0e0618 100%);
+    pointer-events: none;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 200;
+    background: rgba(14,6,24,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 70px;
+  }
+  .nav-logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
+  .nav-logo img { height:44px; width:44px; object-fit:contain; border-radius:8px; }
+  .nav-logo-text .name {
+    font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700;
+    background: linear-gradient(90deg, var(--amber-light), var(--amber-glow));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.2; display: block;
+  }
+  .nav-logo-text .sub {
+    font-size: 0.6rem; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 0.12em; text-transform: uppercase; display: block;
+  }
+  .nav-links { display:flex; gap:30px; list-style:none; }
+  .nav-links a {
+    font-size: 0.82rem; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--amber-light); }
+  .nav-cta {
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    color: white; padding: 10px 22px; border-radius: 6px;
+    font-weight: 700; font-size: 0.78rem; text-decoration: none;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--glow-amber);
+  }
+  .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(232,134,42,0.5); }
+
+  /* HERO */
+  .hero {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    padding: 70px 5% 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 60px;
+    overflow: hidden;
+  }
+  .hero-bg-ring {
+    position: absolute; right: -80px; top: 50%;
+    transform: translateY(-50%);
+    width: 680px; height: 680px;
+    border: 1px solid rgba(232,134,42,0.06);
+    border-radius: 50%;
+    animation: slowSpin 80s linear infinite;
+    pointer-events: none;
+  }
+  .hero-bg-ring::before {
+    content:''; position:absolute; inset:40px;
+    border: 1px solid rgba(107,47,160,0.08);
+    border-radius: 50%;
+  }
+  .hero-bg-ring::after {
+    content:''; position:absolute; inset:80px;
+    border: 1px solid rgba(232,134,42,0.05);
+    border-radius: 50%;
+  }
+  @keyframes slowSpin { to { transform: translateY(-50%) rotate(360deg); } }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(232,134,42,0.1); border: 1px solid rgba(232,134,42,0.3);
+    color: var(--amber-light); padding: 6px 16px; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero-eyebrow span { width:5px; height:5px; background:var(--amber); border-radius:50%; box-shadow: 0 0 8px var(--amber); }
+  .hero h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2.2rem, 4vw, 3.5rem); font-weight: 900;
+    line-height: 1.15; margin-bottom: 24px;
+    background: linear-gradient(160deg, var(--amber-glow) 0%, var(--amber-light) 50%, var(--text) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero p {
+    font-size: 1.05rem; line-height: 1.8; color: var(--text-muted);
+    max-width: 500px; margin-bottom: 40px;
+  }
+  .hero-buttons { display:flex; gap:16px; flex-wrap:wrap; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    color: white; padding: 14px 30px; border-radius: 6px;
+    font-weight: 700; font-size: 0.88rem; text-decoration: none;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--glow-amber);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 50px rgba(232,134,42,0.5); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    padding: 14px 30px; border-radius: 6px;
+    font-weight: 600; font-size: 0.88rem; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 1px solid var(--border-purple);
+    transition: border-color 0.2s, transform 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-ghost:hover { border-color: var(--amber); color: var(--amber-light); transform: translateY(-3px); }
+
+  /* Hero path card */
+  .hero-visual { display:flex; justify-content:center; }
+  .path-card {
+    background: rgba(26,10,46,0.85);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 36px 32px;
+    width: 100%; max-width: 420px;
+    box-shadow: var(--glow-purple), 0 40px 80px rgba(0,0,0,0.5);
+    position: relative; backdrop-filter: blur(10px);
+  }
+  .path-card::before {
+    content: 'PATHWAY MAP';
+    position: absolute; top: -12px; left: 28px;
+    background: linear-gradient(90deg, var(--amber), var(--orange));
+    color: white; font-size: 0.62rem; font-weight: 700;
+    padding: 3px 12px; border-radius: 3px; letter-spacing: 0.1em;
+  }
+  .path-card-title {
+    font-family: 'Cinzel', serif; font-size: 0.95rem;
+    color: var(--amber-light); margin-bottom: 28px; letter-spacing: 0.05em;
+  }
+  .path-nodes { display:flex; flex-direction:column; }
+  .path-node { display:flex; align-items:flex-start; gap:16px; }
+  .node-track { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+  .node-dot {
+    width: 38px; height: 38px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 1.1rem; flex-shrink:0;
+    border: 1px solid var(--border); background: var(--mid-purple);
+  }
+  .node-dot.active {
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    border-color: var(--amber-light);
+    box-shadow: 0 0 20px rgba(232,134,42,0.5);
+  }
+  .node-line {
+    width: 2px; height: 30px;
+    background: linear-gradient(to bottom, var(--amber), var(--border-purple));
+    opacity: 0.4;
+  }
+  .node-info { padding-top: 6px; padding-bottom: 26px; }
+  .node-info h4 { font-family:'Cinzel',serif; font-size:0.88rem; color:var(--text); margin-bottom:2px; }
+  .node-info p { font-size:0.76rem; color:var(--text-muted); }
+  .node-badge {
+    display:inline-block; font-size:0.63rem; font-weight:700;
+    padding: 2px 8px; border-radius: 3px; margin-top: 5px;
+    letter-spacing: 0.07em; text-transform: uppercase;
+  }
+  .badge-active { background:rgba(232,134,42,0.15); border:1px solid rgba(232,134,42,0.4); color:var(--amber-light); }
+  .badge-soon { background:rgba(107,47,160,0.2); border:1px solid rgba(107,47,160,0.4); color:var(--purple-light); }
+
+  /* SHARED SECTION */
+  section { padding: 100px 5%; position: relative; z-index: 1; }
+  .section-label {
+    text-align:center; font-size:0.7rem; font-weight:700;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:12px;
+  }
+  .section-title {
+    font-family:'Cinzel',serif; font-size:clamp(1.6rem, 3vw, 2.4rem);
+    font-weight:700; text-align:center; margin-bottom:16px;
+    background: linear-gradient(135deg, var(--amber-glow), var(--amber-light));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .section-subtitle {
+    text-align:center; color:var(--text-muted); font-size:1rem;
+    line-height:1.75; max-width:580px; margin:0 auto 60px;
+  }
+  .divider {
+    width:60px; height:3px;
+    background: linear-gradient(90deg, var(--amber), var(--orange));
+    border-radius:2px; margin:0 auto 48px;
+    box-shadow: 0 0 12px rgba(232,134,42,0.5);
+  }
+
+  /* ABOUT */
+  .about-strip {
+    background: linear-gradient(135deg, #140820, #1f0d38);
+    border-top: 1px solid var(--border-purple);
+    border-bottom: 1px solid var(--border-purple);
+    padding: 80px 5%;
+    display: grid; grid-template-columns: 1.3fr 1fr;
+    gap: 70px; align-items: center;
+    position: relative; z-index:1; overflow:hidden;
+  }
+  .about-strip::after {
+    content:''; position:absolute; right:-100px; top:50%;
+    transform:translateY(-50%); width:400px; height:400px;
+    background:radial-gradient(circle, rgba(107,47,160,0.12) 0%, transparent 70%);
+    border-radius:50%; pointer-events:none;
+  }
+  .about-strip h2 {
+    font-family:'Cinzel',serif; font-size:clamp(1.6rem,2.5vw,2.2rem);
+    font-weight:700; color:var(--text); margin-bottom:20px;
+  }
+  .about-strip h2 em {
+    font-style:normal;
+    background:linear-gradient(90deg,var(--amber),var(--amber-light));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .about-strip p { color:var(--text-muted); line-height:1.8; font-size:0.95rem; margin-bottom:14px; }
+  .about-stats { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .stat-card {
+    background:rgba(26,10,46,0.6); border:1px solid var(--border);
+    border-radius:12px; padding:24px; text-align:center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .stat-card:hover { border-color:var(--amber); box-shadow:var(--glow-amber); }
+  .stat-num {
+    font-family:'Cinzel',serif; font-size:2rem; font-weight:700;
+    background:linear-gradient(135deg,var(--amber-glow),var(--amber));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .stat-label { font-size:0.78rem; color:var(--text-muted); margin-top:6px; letter-spacing:0.04em; }
+
+  /* PATHWAYS */
+  .pathways { background: transparent; }
+  .pathways-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:24px;
+  }
+  .pathway-card {
+    background:var(--card-bg); border:1px solid var(--border-purple);
+    border-radius:16px; padding:36px 28px;
+    position:relative; overflow:hidden;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    backdrop-filter:blur(8px); cursor:pointer;
+  }
+  .pathway-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .pathway-card:hover { transform: translateY(-8px); }
+  .pathway-card.compass::before { background:linear-gradient(90deg,var(--amber),var(--amber-light)); }
+  .pathway-card.compass:hover { border-color:var(--amber); box-shadow:var(--glow-amber); }
+  .pathway-card.cornerstone::before { background:linear-gradient(90deg,var(--purple),var(--purple-light)); }
+  .pathway-card.cornerstone:hover { border-color:var(--purple-light); box-shadow:var(--glow-purple); }
+  .pathway-card.horizon::before { background:linear-gradient(90deg,var(--orange),var(--amber)); }
+  .pathway-card.horizon:hover { border-color:var(--orange); box-shadow:0 0 30px rgba(212,84,26,0.3); }
+  .pathway-card.summit::before { background:linear-gradient(90deg,var(--purple-light),var(--amber)); }
+  .pathway-card.summit:hover { border-color:var(--purple-light); box-shadow:var(--glow-purple); }
+
+  .pathway-icon-wrap {
+    width:58px; height:58px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; margin-bottom:20px;
+  }
+  .compass .pathway-icon-wrap { background:rgba(232,134,42,0.12); border:1px solid rgba(232,134,42,0.25); }
+  .cornerstone .pathway-icon-wrap { background:rgba(107,47,160,0.15); border:1px solid rgba(107,47,160,0.3); }
+  .horizon .pathway-icon-wrap { background:rgba(212,84,26,0.12); border:1px solid rgba(212,84,26,0.25); }
+  .summit .pathway-icon-wrap { background:rgba(155,95,212,0.12); border:1px solid rgba(155,95,212,0.3); }
+
+  .pathway-tag {
+    font-size:0.68rem; font-weight:700; letter-spacing:0.1em;
+    text-transform:uppercase; margin-bottom:10px; display:block;
+  }
+  .compass .pathway-tag { color:var(--amber); }
+  .cornerstone .pathway-tag { color:var(--purple-light); }
+  .horizon .pathway-tag { color:var(--orange); }
+  .summit .pathway-tag { color:var(--purple-light); }
+
+  .pathway-card h3 {
+    font-family:'Cinzel',serif; font-size:1.2rem; font-weight:700;
+    color:var(--text); margin-bottom:12px;
+  }
+  .pathway-card p {
+    font-size:0.88rem; color:var(--text-muted); line-height:1.7; margin-bottom:22px;
+  }
+  .pathway-products { display:flex; flex-wrap:wrap; gap:8px; }
+  .product-chip {
+    font-size:0.75rem; font-weight:600; padding:4px 12px; border-radius:4px;
+    border:1px solid rgba(232,134,42,0.3); color:var(--amber-light);
+    background:rgba(232,134,42,0.08);
+  }
+  .coming-soon-chip {
+    font-size:0.72rem; font-weight:600; padding:4px 12px; border-radius:4px;
+    border:1px dashed rgba(107,47,160,0.4); color:var(--purple-light);
+    background:rgba(107,47,160,0.08);
+  }
+
+  /* COMPASS SPOTLIGHT */
+  .compass-spotlight {
+    background:linear-gradient(135deg, #140820, #1a0a2e);
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  }
+  .spotlight-container {
+    background:rgba(26,10,46,0.6); border:1px solid var(--border);
+    border-radius:20px; padding:56px; backdrop-filter:blur(10px);
+    position:relative; overflow:hidden;
+  }
+  .spotlight-container::after {
+    content:''; position:absolute; right:-80px; top:50%;
+    transform:translateY(-50%); width:350px; height:350px;
+    background:radial-gradient(circle, rgba(232,134,42,0.06) 0%, transparent 70%);
+    border-radius:50%;
+  }
+  .spotlight-header { display:flex; align-items:center; gap:28px; margin-bottom:20px; }
+  .spotlight-logo {
+    width:90px; height:90px; object-fit:contain; border-radius:12px;
+    box-shadow:0 0 40px rgba(232,134,42,0.3); flex-shrink:0;
+  }
+  .spotlight-header-text h2 {
+    font-family:'Cinzel',serif; font-size:1.9rem; font-weight:700;
+    background:linear-gradient(135deg,var(--amber-glow),var(--amber));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:4px;
+  }
+  .spotlight-header-text p {
+    font-size:0.78rem; font-weight:600; color:var(--amber);
+    text-transform:uppercase; letter-spacing:0.1em;
+  }
+  .spotlight-desc {
+    color:var(--text-muted); font-size:1rem; line-height:1.8;
+    max-width:640px; margin-bottom:44px;
+  }
+  .products-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .product-card {
+    background:rgba(14,6,24,0.7); border:1px solid var(--border-purple);
+    border-radius:14px; padding:30px;
+    transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    position:relative; overflow:hidden;
+  }
+  .product-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--amber),var(--orange));
+  }
+  .product-card:hover { transform:translateY(-5px); border-color:var(--amber); box-shadow:var(--glow-amber); }
+  .product-card-icon {
+    width:46px; height:46px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; margin-bottom:16px;
+    background:rgba(232,134,42,0.1); border:1px solid rgba(232,134,42,0.2);
+  }
+  .product-card h3 {
+    font-family:'Cinzel',serif; font-size:1.15rem; font-weight:700;
+    color:var(--amber-light); margin-bottom:8px;
+  }
+  .product-card p {
+    font-size:0.87rem; color:var(--text-muted); line-height:1.7; margin-bottom:18px;
+  }
+  .feature-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .feature-list li {
+    font-size:0.82rem; color:var(--text-muted);
+    display:flex; align-items:flex-start; gap:10px;
+  }
+  .feature-list li::before {
+    content:'◆'; color:var(--amber); font-size:0.5rem; margin-top:4px; flex-shrink:0;
+  }
+
+  /* AUDIENCE */
+  .audience-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  .audience-card {
+    background:var(--card-bg); border:1px solid var(--border-purple);
+    border-radius:14px; padding:32px; text-align:center;
+    transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    backdrop-filter:blur(8px);
+  }
+  .audience-card:hover { transform:translateY(-6px); border-color:var(--amber); box-shadow:var(--glow-amber); }
+  .audience-icon {
+    width:64px; height:64px; border-radius:50%;
+    background:linear-gradient(135deg,var(--amber),var(--orange));
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; margin:0 auto 18px;
+    box-shadow:0 0 24px rgba(232,134,42,0.35);
+  }
+  .audience-card h3 {
+    font-family:'Cinzel',serif; font-size:0.95rem; font-weight:700;
+    color:var(--text); margin-bottom:10px;
+  }
+  .audience-card p { font-size:0.85rem; color:var(--text-muted); line-height:1.7; }
+
+  /* CTA */
+  .cta-banner {
+    background:linear-gradient(135deg, #1a0535, #0e0618);
+    border-top:1px solid var(--border);
+    padding:100px 5%; text-align:center;
+    position:relative; overflow:hidden; z-index:1;
+  }
+  .cta-banner::before {
+    content:''; position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:600px; height:600px;
+    background:radial-gradient(circle, rgba(107,47,160,0.15) 0%, transparent 65%);
+    border-radius:50%; pointer-events:none;
+  }
+  .cta-banner h2 {
+    font-family:'Cinzel',serif;
+    font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:700;
+    margin-bottom:16px;
+    background:linear-gradient(135deg,var(--amber-glow),var(--amber-light));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .cta-banner p {
+    color:var(--text-muted); font-size:1.05rem; line-height:1.75;
+    max-width:520px; margin:0 auto 40px;
+  }
+
+  /* FOOTER */
+  footer {
+    background:#060310; border-top:1px solid var(--border-purple);
+    padding:60px 5% 30px; position:relative; z-index:1;
+  }
+  .footer-top {
+    display:flex; justify-content:space-between; gap:40px;
+    margin-bottom:50px; flex-wrap:wrap; align-items:flex-start;
+  }
+  .footer-brand .fname {
+    font-family:'Cinzel',serif; font-size:1.05rem; font-weight:700;
+    background:linear-gradient(90deg,var(--amber-light),var(--amber-glow));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:8px; display:block;
+  }
+  .footer-brand p { font-size:0.83rem; color:var(--text-muted); max-width:240px; line-height:1.65; }
+  .footer-logo { height:60px; width:60px; object-fit:contain; margin-bottom:12px; border-radius:8px; display:block; }
+  .footer-links h4 {
+    font-size:0.68rem; font-weight:700; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--amber); margin-bottom:16px;
+  }
+  .footer-links ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .footer-links a {
+    font-size:0.85rem; color:var(--text-muted); text-decoration:none; transition:color 0.2s;
+  }
+  .footer-links a:hover { color:var(--amber-light); }
+  .footer-bottom {
+    border-top:1px solid rgba(255,255,255,0.06); padding-top:24px;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:12px;
+  }
+  .footer-bottom p { font-size:0.78rem; color:rgba(240,230,211,0.25); }
+  .footer-note { font-size:0.72rem; color:var(--amber); font-weight:600; letter-spacing:0.06em; }
+
+  /* ANIMATIONS */
+  .fade-up {
+    opacity:0; transform:translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible { opacity:1; transform:translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns:1fr; padding-top:110px; }
+    .hero-visual { display:none; }
+    .about-strip { grid-template-columns:1fr; }
+    .products-grid { grid-template-columns:1fr; }
+    .audience-grid { grid-template-columns:1fr 1fr; }
+    .nav-links { display:none; }
+    .spotlight-container { padding:32px 24px; }
+    .spotlight-header { flex-direction:column; align-items:flex-start; gap:16px; }
+  }
+  @media (max-width: 600px) {
+    .audience-grid { grid-template-columns:1fr; }
+    .about-stats { grid-template-columns:1fr 1fr; }
+    .pathways-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Waypoint" />
+    <div class="nav-logo-text">
+      <span class="name">Clear Path Education Group</span>
+      <span class="sub">Pathways to Student Success</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#pathways">Pathways</a></li>
+    <li><a href="#compass">Compass</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Connect With Us</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-ring"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span></span> Texas-Based Education Consulting</div>
+    <h1>Every District Deserves a Clear Path Forward</h1>
+    <p>We partner with school districts and campuses across Texas to provide purposeful, research-aligned pathways — from behavior solutions to instructional excellence and beyond.</p>
+    <div class="hero-buttons">
+      <a href="#pathways" class="btn-primary">Explore Our Pathways &#8594;</a>
+      <a href="#contact" class="btn-ghost">Talk to Our Team</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="path-card">
+      <div class="path-card-title">Navigate Your Journey</div>
+      <div class="path-nodes">
+        <div class="path-node">
+          <div class="node-track">
+            <div class="node-dot active">🧭</div>
+            <div class="node-line"></div>
+          </div>
+          <div class="node-info">
+            <h4>Compass Pathway</h4>
+            <p>Behavior &amp; Compliance Support</p>
+            <span class="node-badge badge-active">Waypoint · Meridian</span>
+          </div>
+        </div>
+        <div class="path-node">
+          <div class="node-track">
+            <div class="node-dot">🧱</div>
+            <div class="node-line"></div>
+          </div>
+          <div class="node-info">
+            <h4>Cornerstone Pathway</h4>
+            <p>Instructional Support</p>
+            <span class="node-badge badge-soon">Coming Soon</span>
+          </div>
+        </div>
+        <div class="path-node">
+          <div class="node-track">
+            <div class="node-dot">🌅</div>
+            <div class="node-line"></div>
+          </div>
+          <div class="node-info">
+            <h4>Horizon Pathway</h4>
+            <p>Professional Development &amp; Coaching</p>
+            <span class="node-badge badge-soon">Coming Soon</span>
+          </div>
+        </div>
+        <div class="path-node">
+          <div class="node-track">
+            <div class="node-dot">🏔️</div>
+          </div>
+          <div class="node-info" style="padding-bottom:0">
+            <h4>Summit Pathway</h4>
+            <p>Leadership Development</p>
+            <span class="node-badge badge-soon">Coming Soon</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<div class="about-strip" id="about">
+  <div>
+    <h2>Built by Educators,<br><em>For Educators</em></h2>
+    <p>Clear Path Education Group was founded with a single belief: that every campus — regardless of size or zip code — deserves access to expert guidance, practical tools, and compassionate support.</p>
+    <p>Our team brings decades of on-the-ground experience in Texas schools to every partnership — showing up not as consultants from a distance, but as guides who walk the path alongside you.</p>
+  </div>
+  <div class="about-stats">
+    <div class="stat-card fade-up"><div class="stat-num">100%</div><div class="stat-label">Texas-Focused</div></div>
+    <div class="stat-card fade-up"><div class="stat-num">4+</div><div class="stat-label">Support Pathways</div></div>
+    <div class="stat-card fade-up"><div class="stat-num">K–12</div><div class="stat-label">All Grade Levels</div></div>
+    <div class="stat-card fade-up"><div class="stat-num">∞</div><div class="stat-label">Dedicated to Students</div></div>
+  </div>
+</div>
+
+<!-- PATHWAYS -->
+<section class="pathways" id="pathways">
+  <p class="section-label">Our Pathways</p>
+  <h2 class="section-title">Solutions Designed Around Your Campus</h2>
+  <div class="divider"></div>
+  <p class="section-subtitle">Each Pathway is a complete suite of solutions — purposefully named, intentionally designed, and rooted in what actually works in Texas schools.</p>
+  <div class="pathways-grid">
+    <div class="pathway-card compass fade-up">
+      <div class="pathway-icon-wrap">🧭</div>
+      <span class="pathway-tag">Behavior &amp; Compliance</span>
+      <h3>Compass Pathway</h3>
+      <p>Helping campuses navigate student behavior, discipline compliance, and intervention frameworks — so every student can find their direction.</p>
+      <div class="pathway-products">
+        <span class="product-chip">Waypoint</span>
+        <span class="product-chip">Meridian</span>
+      </div>
+    </div>
+    <div class="pathway-card cornerstone fade-up">
+      <div class="pathway-icon-wrap">🧱</div>
+      <span class="pathway-tag">Instructional Support</span>
+      <h3>Cornerstone Pathway</h3>
+      <p>Strengthening the foundation of classroom instruction through targeted support, curriculum alignment, and campus-specific coaching.</p>
+      <div class="pathway-products"><span class="coming-soon-chip">Products Coming Soon</span></div>
+    </div>
+    <div class="pathway-card horizon fade-up">
+      <div class="pathway-icon-wrap">🌅</div>
+      <span class="pathway-tag">Professional Development</span>
+      <h3>Horizon Pathway</h3>
+      <p>Expanding what's possible through meaningful professional development, instructional coaching, and learning experiences that inspire growth.</p>
+      <div class="pathway-products"><span class="coming-soon-chip">Products Coming Soon</span></div>
+    </div>
+    <div class="pathway-card summit fade-up">
+      <div class="pathway-icon-wrap">🏔️</div>
+      <span class="pathway-tag">Leadership Development</span>
+      <h3>Summit Pathway</h3>
+      <p>Elevating campus and district leaders through executive coaching, strategic planning, and leadership academies for Texas educators.</p>
+      <div class="pathway-products"><span class="coming-soon-chip">Products Coming Soon</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPASS SPOTLIGHT -->
+<section class="compass-spotlight" id="compass">
+  <div class="spotlight-container">
+    <div class="spotlight-header">
+      <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Waypoint Logo" class="spotlight-logo" />
+      <div class="spotlight-header-text">
+        <h2>The Compass Pathway</h2>
+        <p>Behavior &amp; Compliance Solutions</p>
+      </div>
+    </div>
+    <p class="spotlight-desc">Our flagship pathway provides campuses and districts with proven tools to manage, document, and improve student behavior outcomes — while maintaining full compliance with state and federal requirements. Two powerful products. One clear direction.</p>
+    <div class="products-grid">
+      <div class="product-card">
+        <div class="product-card-icon">📍</div>
+        <h3>Waypoint</h3>
+        <p>A structured check-in and monitoring system that tracks student behavior patterns, sets measurable goals, and celebrates progress at every milestone.</p>
+        <ul class="feature-list">
+          <li>Behavior check-in/check-out frameworks</li>
+          <li>Progress monitoring &amp; data dashboards</li>
+          <li>Intervention documentation tools</li>
+          <li>Family communication templates</li>
+        </ul>
+      </div>
+      <div class="product-card">
+        <div class="product-card-icon">⭐</div>
+        <h3>Meridian</h3>
+        <p>A comprehensive compliance and systems alignment solution to help campuses reach peak performance — ensuring every policy, plan, and practice is aligned.</p>
+        <ul class="feature-list">
+          <li>PBIS &amp; MTSS framework alignment</li>
+          <li>FBA/BIP development &amp; review support</li>
+          <li>Disciplinary compliance auditing</li>
+          <li>Campus systems coaching</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO WE SERVE -->
+<section class="fade-up">
+  <p class="section-label">Who We Serve</p>
+  <h2 class="section-title">Partnerships at Every Level</h2>
+  <div class="divider"></div>
+  <p class="section-subtitle">Whether you're a classroom teacher, campus administrator, or district leader, Clear Path has a pathway built for your role and your goals.</p>
+  <div class="audience-grid">
+    <div class="audience-card fade-up">
+      <div class="audience-icon">🏫</div>
+      <h3>Campus Administrators</h3>
+      <p>Principals and assistant principals gain tools, frameworks, and coaching to lead with confidence and manage campus culture proactively.</p>
+    </div>
+    <div class="audience-card fade-up">
+      <div class="audience-icon">🏢</div>
+      <h3>District Leaders</h3>
+      <p>Superintendents and central office leaders receive strategic partnership to align systems, support campuses, and drive district-wide outcomes.</p>
+    </div>
+    <div class="audience-card fade-up">
+      <div class="audience-icon">🧑‍🏫</div>
+      <h3>Teachers &amp; Instructional Staff</h3>
+      <p>Educators access research-backed professional development and classroom strategies that translate directly into better student experiences.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-banner fade-up" id="contact">
+  <h2>Ready to Find Your Clear Path?</h2>
+  <p>We'd love to learn about your campus or district and explore which pathways align with your goals. Reach out to start the conversation.</p>
+  <a href="mailto:info@clearpatheducationgroup.com" class="btn-primary" style="font-size:0.95rem;padding:16px 36px;">
+    &#128236; Get In Touch
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Waypoint" class="footer-logo" />
+      <span class="fname">Clear Path Education Group, LLC</span>
+      <p>Purposeful pathways for districts and campuses across Texas. Pending state approval.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Pathways</h4>
+      <ul>
+        <li><a href="#compass">🧭 Compass — Behavior &amp; Compliance</a></li>
+        <li><a href="#pathways">🧱 Cornerstone — Instructional Support</a></li>
+        <li><a href="#pathways">🌅 Horizon — PD &amp; Coaching</a></li>
+        <li><a href="#pathways">🏔️ Summit — Leadership</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#about">About Us</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Clear Path Education Group, LLC. All rights reserved.</p>
+    <span class="footer-note">Texas LLC — Approval Pending</span>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) { el.target.classList.add('visible'); observer.unobserve(el.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) t.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+  });
+</script>
+</body>
+</html>
