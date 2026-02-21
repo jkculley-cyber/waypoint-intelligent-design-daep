@@ -7,8 +7,10 @@ import { useAccessScope } from '../hooks/useAccessScope'
 import { applyCampusScope } from '../lib/accessControl'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
-import { ROLE_LABELS, ROLES } from '../lib/constants'
-import { getSchoolYearLabel } from '../lib/utils'
+import { ROLE_LABELS, ROLES, APPROVAL_CHAIN_STEPS } from '../lib/constants'
+import { getSchoolYearLabel, formatDate } from '../lib/utils'
+
+const APPROVAL_ROLES = APPROVAL_CHAIN_STEPS.map(s => s.role)
 
 export default function DashboardPage() {
   const { profile, hasRole, districtId } = useAuth()
@@ -60,6 +62,34 @@ export default function DashboardPage() {
     }
     fetchStats()
   }, [districtId, scopeLoading, scope])
+
+  // Fetch pending approvals for roles in the approval chain
+  const [pendingApprovals, setPendingApprovals] = useState([])
+  const [pendingLoading, setPendingLoading] = useState(false)
+  const isApprovalRole = profile?.role && APPROVAL_ROLES.includes(profile.role)
+  useEffect(() => {
+    if (!districtId || !isApprovalRole || !profile?.role) return
+    const fetchPending = async () => {
+      setPendingLoading(true)
+      let q = supabase
+        .from('incidents')
+        .select(`
+          id, incident_date,
+          student:students(id, first_name, last_name),
+          approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, current_step, chain_status)
+        `)
+        .eq('district_id', districtId)
+        .eq('status', 'pending_approval')
+        .order('incident_date', { ascending: false })
+        .limit(5)
+      q = applyCampusScope(q, scope)
+      const { data } = await q
+      const mine = (data || []).filter(inc => inc.approval_chain?.current_step === profile.role)
+      setPendingApprovals(mine)
+      setPendingLoading(false)
+    }
+    fetchPending()
+  }, [districtId, profile?.role, isApprovalRole, scope])
 
   return (
     <div>
@@ -132,6 +162,51 @@ export default function DashboardPage() {
             }
           />
         </div>
+
+        {/* Pending Approvals Widget — only shown for approval-chain roles */}
+        {isApprovalRole && (
+          <div className="mb-6">
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <CardTitle>Pending Your Approval</CardTitle>
+                {pendingApprovals.length > 0 && (
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold">
+                    {pendingApprovals.length}
+                  </span>
+                )}
+              </div>
+              {pendingLoading ? (
+                <p className="text-sm text-gray-400 py-2">Loading...</p>
+              ) : pendingApprovals.length === 0 ? (
+                <p className="text-sm text-gray-400 py-2">No items awaiting your approval.</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingApprovals.map(inc => (
+                    <Link
+                      key={inc.id}
+                      to={`/incidents/${inc.id}`}
+                      className="flex items-center justify-between p-3 rounded-lg border border-orange-100 bg-orange-50 hover:bg-orange-100 transition-colors group"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 group-hover:text-orange-700">
+                          {inc.student ? `${inc.student.first_name} ${inc.student.last_name}` : 'Unknown Student'}
+                        </p>
+                        <p className="text-xs text-gray-500">{formatDate(inc.incident_date)}</p>
+                      </div>
+                      <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded-full">Review</span>
+                    </Link>
+                  ))}
+                  <Link
+                    to="/incidents"
+                    className="block text-center text-xs text-orange-600 hover:text-orange-800 pt-1"
+                  >
+                    View all pending →
+                  </Link>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

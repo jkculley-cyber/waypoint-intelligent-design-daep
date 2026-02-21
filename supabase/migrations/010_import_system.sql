@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS import_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   district_id UUID NOT NULL REFERENCES districts(id),
   imported_by UUID NOT NULL REFERENCES profiles(id),
-  import_type TEXT NOT NULL CHECK (import_type IN ('campuses','students','profiles','incidents')),
+  import_type TEXT NOT NULL CHECK (import_type IN ('campuses','students','profiles','incidents','laserfiche_daep')),
   file_name TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('processing','completed','failed','partial')),
   total_rows INTEGER NOT NULL,

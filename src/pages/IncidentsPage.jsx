@@ -29,6 +29,7 @@ export default function IncidentsPage() {
   const [campusFilter, setCampusFilter] = useState('')
   const [consequenceFilter, setConsequenceFilter] = useState('')
   const [myApprovalsOnly, setMyApprovalsOnly] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
   const { scope } = useAccessScope()
   const { profile, hasRole } = useAuth()
 
@@ -72,7 +73,71 @@ export default function IncidentsPage() {
     return filtered
   }, [rawIncidents, search, myApprovalsOnly, profile?.role])
 
+  const allSelected = incidents.length > 0 && incidents.every(i => selectedIds.has(i.id))
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(incidents.map(i => i.id)))
+    }
+  }
+  const toggleOne = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const selectedIncidents = incidents.filter(i => selectedIds.has(i.id))
+
+  const buildExportRowsForSelection = useCallback((subset) => {
+    const campusMap = Object.fromEntries(campuses.map(c => [c.id, c.name]))
+    return subset.map(inc => [
+      inc.student ? formatStudentName(inc.student) : '—',
+      formatDate(inc.incident_date),
+      inc.offense?.title || '—',
+      CONSEQUENCE_TYPE_LABELS[inc.consequence_type] || inc.consequence_type || '—',
+      INCIDENT_STATUS_LABELS[inc.status] || inc.status,
+      campusMap[inc.campus_id] || '—',
+    ])
+  }, [campuses])
+
+  const handleBulkExportPdf = useCallback(() => {
+    exportToPdf('Incidents (Selected)', exportHeaders, buildExportRowsForSelection(selectedIncidents), {
+      generatedBy: profile?.full_name, landscape: true,
+    })
+  }, [buildExportRowsForSelection, selectedIncidents, profile])
+
+  const handleBulkExportExcel = useCallback(() => {
+    exportToExcel('Incidents (Selected)', exportHeaders, buildExportRowsForSelection(selectedIncidents), {
+      generatedBy: profile?.full_name,
+    })
+  }, [buildExportRowsForSelection, selectedIncidents, profile])
+
   const columns = [
+    {
+      key: '__checkbox',
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={toggleAll}
+          className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+          title="Select all"
+        />
+      ),
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(row.id)}
+          onChange={() => toggleOne(row.id)}
+          onClick={e => e.stopPropagation()}
+          className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+        />
+      ),
+      sortable: false,
+    },
     {
       key: 'incident_date',
       header: 'Date',
@@ -293,6 +358,34 @@ export default function IncidentsPage() {
           />
         </Card>
       </div>
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+          <div className="flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-gray-700">
+            <span className="text-sm font-medium">{selectedIds.size} selected</span>
+            <div className="w-px h-5 bg-gray-600" />
+            <button
+              onClick={handleBulkExportPdf}
+              className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Export PDF
+            </button>
+            <button
+              onClick={handleBulkExportExcel}
+              className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Export Excel
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-sm text-gray-400 hover:text-white transition-colors ml-1"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

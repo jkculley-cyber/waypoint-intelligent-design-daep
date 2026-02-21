@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
+import Button from '../components/ui/Button'
+import Modal from '../components/ui/Modal'
 import DataTable from '../components/ui/DataTable'
 import { PageLoader } from '../components/ui/LoadingSpinner'
 import StudentFlags from '../components/students/StudentFlags'
@@ -32,7 +35,7 @@ export default function StudentDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { student, loading } = useStudent(id)
-  const { hasFeature } = useAuth()
+  const { hasFeature, districtId } = useAuth()
   const { incidents, loading: incidentsLoading } = useIncidents({ student_id: id })
   const { plans, loading: plansLoading } = useTransitionPlans({ student_id: id })
   const showRecidivism = hasFeature('recidivism')
@@ -52,6 +55,57 @@ export default function StudentDetailPage() {
       .maybeSingle()
       .then(({ data }) => setOrientationForm(data))
   }, [id])
+
+  // Guardians
+  const [guardians, setGuardians] = useState([])
+  const [loadingGuardians, setLoadingGuardians] = useState(false)
+  const [showAddGuardian, setShowAddGuardian] = useState(false)
+  const [guardianForm, setGuardianForm] = useState({
+    guardian_name: '', relationship: 'guardian', email: '', phone: '', is_primary: false,
+  })
+  const [savingGuardian, setSavingGuardian] = useState(false)
+
+  const fetchGuardians = async () => {
+    setLoadingGuardians(true)
+    const { data } = await supabase
+      .from('student_guardians')
+      .select('id, guardian_name, relationship, email, phone, is_primary')
+      .eq('student_id', id)
+      .order('is_primary', { ascending: false })
+    setGuardians(data || [])
+    setLoadingGuardians(false)
+  }
+
+  useEffect(() => {
+    if (id) fetchGuardians()
+  }, [id])
+
+  const handleAddGuardian = async () => {
+    if (!guardianForm.guardian_name.trim()) return
+    setSavingGuardian(true)
+    const { error } = await supabase.from('student_guardians').insert({
+      student_id: id,
+      district_id: districtId,
+      guardian_name: guardianForm.guardian_name.trim(),
+      relationship: guardianForm.relationship,
+      email: guardianForm.email.trim() || null,
+      phone: guardianForm.phone.trim() || null,
+      is_primary: guardianForm.is_primary,
+    })
+    setSavingGuardian(false)
+    if (error) { toast.error('Failed to add guardian'); return }
+    toast.success('Guardian added')
+    setShowAddGuardian(false)
+    setGuardianForm({ guardian_name: '', relationship: 'guardian', email: '', phone: '', is_primary: false })
+    fetchGuardians()
+  }
+
+  const handleDeleteGuardian = async (guardianId) => {
+    const { error } = await supabase.from('student_guardians').delete().eq('id', guardianId)
+    if (error) { toast.error('Failed to remove guardian'); return }
+    setGuardians(prev => prev.filter(g => g.id !== guardianId))
+    toast.success('Guardian removed')
+  }
 
   if (loading) return <PageLoader message="Loading student record..." />
   if (!student) {
@@ -297,6 +351,144 @@ export default function StudentDetailPage() {
             </div>
           )}
         </Card>
+
+        {/* Guardians & Contacts */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>Guardians &amp; Contacts</CardTitle>
+            <button
+              onClick={() => setShowAddGuardian(true)}
+              className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+            >
+              + Add Guardian
+            </button>
+          </div>
+
+          {loadingGuardians ? (
+            <p className="text-sm text-gray-400">Loading...</p>
+          ) : guardians.length === 0 ? (
+            <p className="text-sm text-gray-400">No guardians on file.</p>
+          ) : (
+            <div className="space-y-2">
+              {guardians.map(g => (
+                <div key={g.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-gray-900">{g.guardian_name}</span>
+                      {g.is_primary && <Badge color="orange" size="sm">Primary</Badge>}
+                      <span className="text-xs text-gray-400 capitalize">
+                        {g.relationship.replace('_', ' ')}
+                      </span>
+                    </div>
+                    {(g.email || g.phone) && (
+                      <div className="flex gap-3 mt-0.5">
+                        {g.email && <span className="text-xs text-gray-500">{g.email}</span>}
+                        {g.phone && <span className="text-xs text-gray-500">{g.phone}</span>}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteGuardian(g.id)}
+                    className="ml-4 text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Add Guardian Modal */}
+        <Modal
+          isOpen={showAddGuardian}
+          onClose={() => setShowAddGuardian(false)}
+          title="Add Guardian / Contact"
+          size="sm"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowAddGuardian(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddGuardian}
+                loading={savingGuardian}
+                disabled={!guardianForm.guardian_name.trim()}
+              >
+                Save Guardian
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={guardianForm.guardian_name}
+                onChange={e => setGuardianForm(prev => ({ ...prev, guardian_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Full name"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={guardianForm.relationship}
+                onChange={e => setGuardianForm(prev => ({ ...prev, relationship: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="mother">Mother</option>
+                <option value="father">Father</option>
+                <option value="grandparent">Grandparent</option>
+                <option value="guardian">Guardian</option>
+                <option value="step_parent">Step Parent</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={guardianForm.email}
+                onChange={e => setGuardianForm(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="email@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="tel"
+                value={guardianForm.phone}
+                onChange={e => setGuardianForm(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="(555) 555-5555"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_primary"
+                checked={guardianForm.is_primary}
+                onChange={e => setGuardianForm(prev => ({ ...prev, is_primary: e.target.checked }))}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="is_primary" className="text-sm text-gray-700">
+                Primary contact
+              </label>
+            </div>
+          </div>
+        </Modal>
 
         {/* Orientation Reflection & Behavior Plan */}
         {orientationForm?.orientation_form_data && (

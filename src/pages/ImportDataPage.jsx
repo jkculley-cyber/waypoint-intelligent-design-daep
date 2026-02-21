@@ -3,8 +3,10 @@ import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import ImportWizard from '../components/import/ImportWizard'
 import ImportHistoryTable from '../components/import/ImportHistoryTable'
+import LaserficheImportPanel from '../components/import/LaserficheImportPanel'
 import { useAuth } from '../contexts/AuthContext'
 import { getImportableTypes, getImportTier } from '../lib/importPermissions'
+import { ROLES } from '../lib/constants'
 
 export default function ImportDataPage() {
   const [activeTab, setActiveTab] = useState('import')
@@ -12,9 +14,11 @@ export default function ImportDataPage() {
 
   const tier = getImportTier(profile?.district?.settings)
   const allowedTypes = getImportableTypes({ role: profile?.role, tier })
+  const isAdmin = profile?.role === ROLES.ADMIN
 
   const tabs = [
     { id: 'import', label: 'New Import' },
+    { id: 'laserfiche', label: 'Laserfiche Sync', adminOnly: true },
     { id: 'history', label: 'Import History' },
   ]
 
@@ -29,7 +33,7 @@ export default function ImportDataPage() {
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex gap-6">
-            {tabs.map((tab) => (
+            {tabs.filter(tab => !tab.adminOnly || isAdmin).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -60,6 +64,12 @@ export default function ImportDataPage() {
                 </p>
               </div>
             )}
+          </Card>
+        )}
+
+        {activeTab === 'laserfiche' && isAdmin && (
+          <Card>
+            <LaserficheImportPanel />
           </Card>
         )}
 

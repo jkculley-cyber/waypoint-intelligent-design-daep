@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { IMPORT_TYPES, DUPLICATE_STRATEGIES } from '../../lib/constants'
 import TemplateDownloadButton from './TemplateDownloadButton'
 
-export default function ImportStepUpload({ onNext, allowedTypes }) {
+export default function ImportStepUpload({ onNext, onCancel, allowedTypes }) {
   const [importType, setImportType] = useState('')
   const [duplicateStrategy, setDuplicateStrategy] = useState('skip')
   const [file, setFile] = useState(null)
@@ -149,7 +149,16 @@ export default function ImportStepUpload({ onNext, allowedTypes }) {
       </div>
 
       {/* Next Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+        ) : <span />}
         <button
           type="button"
           disabled={!canProceed}

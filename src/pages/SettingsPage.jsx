@@ -1,4 +1,8 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 
@@ -29,14 +33,14 @@ const SETTINGS_SECTIONS = [
     description: 'Manage staff accounts, role assignments, and campus assignments.',
     href: '/settings/users',
     icon: UsersIcon,
-    ready: false,
+    ready: true,
   },
   {
     title: 'Notifications',
     description: 'Configure email notification rules, alert thresholds, and delivery preferences.',
     href: '/settings/notifications',
     icon: NotificationIcon,
-    ready: false,
+    ready: true,
   },
   {
     title: 'Interventions Catalog',
@@ -75,6 +79,111 @@ export default function SettingsPage() {
             <SettingsCard key={section.title} {...section} />
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Notification Preferences Page (used at /settings/notifications) ──────────
+
+export function NotificationPreferencesPage() {
+  const { user, districtId } = useAuth()
+  const [prefs, setPrefs] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('notification_preferences')
+      .select('*')
+      .eq('profile_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPrefs(data || {
+          incident_submitted: true,
+          incident_approved: true,
+          incident_denied: true,
+          placement_reminders: true,
+          review_due_alerts: true,
+        })
+        setLoading(false)
+      })
+  }, [user?.id])
+
+  const handleToggle = (key) => {
+    setPrefs(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    const { error } = await supabase
+      .from('notification_preferences')
+      .upsert({
+        profile_id: user.id,
+        district_id: districtId,
+        ...prefs,
+        updated_at: new Date().toISOString(),
+      })
+    setSaving(false)
+    if (error) {
+      toast.error('Failed to save preferences')
+    } else {
+      toast.success('Notification preferences saved')
+    }
+  }
+
+  const PREF_LABELS = [
+    { key: 'incident_submitted', label: 'New incident submitted', desc: 'When a new discipline incident is submitted in your district' },
+    { key: 'incident_approved', label: 'Incident approved', desc: 'When an incident you submitted is approved' },
+    { key: 'incident_denied', label: 'Incident denied', desc: 'When an incident you submitted is denied' },
+    { key: 'placement_reminders', label: 'Placement reminders', desc: 'When a DAEP placement is starting or ending soon' },
+    { key: 'review_due_alerts', label: 'Review due alerts', desc: 'When a 30/60/90-day review is coming due' },
+  ]
+
+  return (
+    <div>
+      <Topbar
+        title="Notification Preferences"
+        subtitle="Control which emails you receive from Waypoint"
+        actions={<Link to="/settings" className="text-sm text-gray-500 hover:text-gray-700">← Settings</Link>}
+      />
+      <div className="p-6 max-w-lg">
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading preferences...</p>
+        ) : (
+          <Card>
+            <div className="space-y-4">
+              {PREF_LABELS.map(({ key, label, desc }) => (
+                <div key={key} className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                  </div>
+                  <button
+                    onClick={() => handleToggle(key)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                      prefs?.[key] ? 'bg-orange-500' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${
+                      prefs?.[key] ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Preferences'}
+              </button>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   )

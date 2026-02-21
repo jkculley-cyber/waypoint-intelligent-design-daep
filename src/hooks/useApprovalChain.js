@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { sendNotification } from '../lib/notifications'
 
 /**
  * Fetch the DAEP approval chain and steps for an incident
@@ -72,17 +73,31 @@ export function useApprovalChain(incidentId) {
 export function useApprovalChainActions() {
   const [loading, setLoading] = useState(false)
 
-  const approveStep = async (stepId, comments = null) => {
+  const approveStep = async (stepId, comments = null, notifyData = null) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase.rpc('process_approval_step', {
         p_step_id: stepId,
         p_action: 'approve',
-        p_user_id: user.id,
         p_comments: comments,
       })
       if (error) throw error
+
+      // Fire-and-forget notification to incident reporter
+      if (notifyData?.reporterEmail) {
+        sendNotification({
+          to: notifyData.reporterEmail,
+          subject: `Incident Approved — ${notifyData.studentName || 'Student'}`,
+          template: 'incident_approved',
+          data: {
+            studentName: notifyData.studentName,
+            approvedBy: notifyData.approvedBy,
+            incidentUrl: notifyData.incidentUrl,
+            recipientProfileId: notifyData.reporterProfileId,
+          },
+        })
+      }
+
       return { data, error: null }
     } catch (err) {
       console.error('Error approving step:', err)
@@ -92,17 +107,32 @@ export function useApprovalChainActions() {
     }
   }
 
-  const denyStep = async (stepId, reason) => {
+  const denyStep = async (stepId, reason, notifyData = null) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase.rpc('process_approval_step', {
         p_step_id: stepId,
         p_action: 'deny',
-        p_user_id: user.id,
         p_comments: reason,
       })
       if (error) throw error
+
+      // Fire-and-forget notification to incident reporter
+      if (notifyData?.reporterEmail) {
+        sendNotification({
+          to: notifyData.reporterEmail,
+          subject: `Incident Denied — ${notifyData.studentName || 'Student'}`,
+          template: 'incident_denied',
+          data: {
+            studentName: notifyData.studentName,
+            deniedBy: notifyData.deniedBy,
+            reason,
+            incidentUrl: notifyData.incidentUrl,
+            recipientProfileId: notifyData.reporterProfileId,
+          },
+        })
+      }
+
       return { data, error: null }
     } catch (err) {
       console.error('Error denying step:', err)
@@ -115,11 +145,9 @@ export function useApprovalChainActions() {
   const returnStep = async (stepId, reason) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase.rpc('process_approval_step', {
         p_step_id: stepId,
         p_action: 'return',
-        p_user_id: user.id,
         p_comments: reason,
       })
       if (error) throw error
@@ -135,10 +163,8 @@ export function useApprovalChainActions() {
   const resubmitChain = async (chainId) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase.rpc('resubmit_approval_chain', {
         p_chain_id: chainId,
-        p_user_id: user.id,
       })
       if (error) throw error
       return { data, error: null }

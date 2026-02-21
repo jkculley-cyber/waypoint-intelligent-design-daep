@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useAccessScope } from './useAccessScope'
+import { applyCampusScope } from '../lib/accessControl'
 
 /**
  * Fetch incidents with optional filters
@@ -63,22 +65,25 @@ export function useIncidents(filters = {}) {
 }
 
 /**
- * Fetch a single incident by ID with full details
+ * Fetch a single incident by ID with full details.
+ * Scoped to the user's district and campus to prevent cross-campus URL tampering.
  */
 export function useIncident(incidentId) {
   const [incident, setIncident] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { districtId } = useAuth()
+  const { scope } = useAccessScope()
 
   const fetchIncident = useCallback(async () => {
-    if (!incidentId) {
+    if (!incidentId || !districtId) {
       setLoading(false)
       return
     }
 
     setLoading(true)
     try {
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('incidents')
         .select(`
           *,
@@ -90,7 +95,11 @@ export function useIncident(incidentId) {
           transition_plan:transition_plans!fk_incidents_transition_plan(id, status, plan_type)
         `)
         .eq('id', incidentId)
-        .single()
+        .eq('district_id', districtId)
+
+      query = applyCampusScope(query, scope)
+
+      const { data, error: fetchError } = await query.maybeSingle()
 
       if (fetchError) throw fetchError
       setIncident(data)
@@ -100,7 +109,7 @@ export function useIncident(incidentId) {
     } finally {
       setLoading(false)
     }
-  }, [incidentId])
+  }, [incidentId, districtId, scope])
 
   useEffect(() => {
     fetchIncident()

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Toaster } from 'react-hot-toast'
 import { useKioskAuth, useDailyBehavior, useBehaviorActions } from '../hooks/useKiosk'
@@ -18,11 +18,20 @@ const AUTO_RETURN_SECONDS = 8
 // Idle timeout on login screen (seconds) - FERPA: clear any partial input
 const LOGIN_IDLE_SECONDS = 60
 
+// Check district settings for require_kiosk_pin via URL param or localStorage
+// Districts can set ?require_pin=1 in their kiosk URL to enable PIN requirement
+function getRequirePin() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('require_pin') === '1'
+}
+
 export default function KioskPage() {
   const kioskCampusId = getKioskCampusId()
+  const requirePin = getRequirePin()
   const { student, loading: authLoading, error: authError, authenticateStudent, logout } = useKioskAuth()
   const [studentIdInput, setStudentIdInput] = useState('')
-  const [view, setView] = useState('login') // login | confirm_identity | confirmation
+  const [pinInput, setPinInput] = useState('')
+  const [view, setView] = useState('login') // login | pin_entry | confirm_identity | confirmation
   const loginIdleRef = useRef(null)
   const [phoneBagNumber, setPhoneBagNumber] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -32,74 +41,43 @@ export default function KioskPage() {
   const [confirmationData, setConfirmationData] = useState(null)
 
   const today = format(new Date(), 'yyyy-MM-dd')
-  const { record, loading: recordLoading, refetch: refetchBehavior } = useDailyBehavior(student?.id, today)
+  const kioskOrStudentCampusId = kioskCampusId || student?.campus_id || null
+  const { record, loading: recordLoading, refetch: refetchBehavior } = useDailyBehavior(student?.id, today, kioskOrStudentCampusId)
   const { checkIn } = useBehaviorActions()
 
   const hasCheckedInToday = !!record // any record exists for today
 
-  // Fetch active DAEP placement for this student (for days remaining)
-  const [placement, setPlacement] = useState(null)
+  // Fetch placement, days served, today's record, and behavior goals in one RPC call.
+  // get_kiosk_student_status is SECURITY DEFINER — anon has no direct table access.
+  const [studentStatus, setStudentStatus] = useState(null)
   const [placementLoaded, setPlacementLoaded] = useState(false)
-  const [daysServed, setDaysServed] = useState(0)
+
+  const fetchStudentStatus = useCallback(async (studentId, campusId) => {
+    const { data } = await supabase.rpc('get_kiosk_student_status', {
+      p_student_id: studentId,
+      p_campus_id:  campusId,
+    })
+    setStudentStatus(data || null)
+    setPlacementLoaded(true)
+  }, [])
+
   useEffect(() => {
-    if (!student?.id) { setPlacement(null); setPlacementLoaded(false); setDaysServed(0); return }
+    if (!student?.id) { setStudentStatus(null); setPlacementLoaded(false); return }
     setPlacementLoaded(false)
-    const fetchPlacement = async () => {
-      const { data } = await supabase
-        .from('incidents')
-        .select('id, consequence_type, consequence_days, consequence_start, consequence_end, status')
-        .eq('student_id', student.id)
-        .in('status', ['active', 'approved', 'compliance_hold'])
-        .in('consequence_type', ['daep', 'expulsion'])
-        .order('consequence_start', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      setPlacement(data)
+    fetchStudentStatus(student.id, kioskCampusId || student.campus_id)
+  }, [student?.id, fetchStudentStatus])
 
-      // Count actual check-in days within the placement period
-      if (data?.consequence_start) {
-        let query = supabase
-          .from('daily_behavior_tracking')
-          .select('id', { count: 'exact', head: true })
-          .eq('student_id', student.id)
-          .gte('tracking_date', data.consequence_start)
-        if (data.consequence_end) {
-          query = query.lte('tracking_date', data.consequence_end)
-        }
-        const { count } = await query
-        setDaysServed(count || 0)
-      } else {
-        setDaysServed(0)
-      }
-
-      setPlacementLoaded(true)
-    }
-    fetchPlacement()
-  }, [student?.id])
+  const placement = studentStatus?.placement || null
+  const daysServed = studentStatus?.days_served || 0
+  const behaviorGoals = (() => {
+    const goals = studentStatus?.behavior_goals
+    if (!Array.isArray(goals)) return null
+    const filtered = goals.filter(g => g.behavior?.trim())
+    return filtered.length > 0 ? filtered : null
+  })()
 
   const totalAssigned = placement?.consequence_days || 0
   const remaining = totalAssigned > 0 ? Math.max(0, totalAssigned - daysServed) : null
-
-  // Fetch orientation behavior plan goals to show as daily reminders
-  const [behaviorGoals, setBehaviorGoals] = useState(null)
-  useEffect(() => {
-    if (!student?.id) { setBehaviorGoals(null); return }
-    supabase
-      .from('daep_placement_scheduling')
-      .select('orientation_form_data')
-      .eq('student_id', student.id)
-      .eq('orientation_status', 'completed')
-      .not('orientation_form_data', 'is', null)
-      .order('orientation_completed_date', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.orientation_form_data?.behavior_plan) {
-          const goals = data.orientation_form_data.behavior_plan.filter(g => g.behavior?.trim())
-          setBehaviorGoals(goals.length > 0 ? goals : null)
-        }
-      })
-  }, [student?.id])
 
   // Once student authenticates and data loads, show identity confirmation step
   useEffect(() => {
@@ -156,24 +134,36 @@ export default function KioskPage() {
   const resetToLogin = () => {
     logout()
     setStudentIdInput('')
+    setPinInput('')
     setPhoneBagNumber('')
-    setPlacement(null)
+    setStudentStatus(null)
     setPlacementLoaded(false)
     setConfirmationData(null)
-    setBehaviorGoals(null)
     setView('login')
   }
 
   const handleLogin = (e) => {
     e.preventDefault()
     if (!studentIdInput.trim()) return
-    authenticateStudent(studentIdInput.trim(), kioskCampusId) // filter by campus if ?campus= param is set
+    if (requirePin) {
+      // PIN required: show PIN entry before looking up student
+      setView('pin_entry')
+    } else {
+      authenticateStudent(studentIdInput.trim(), kioskCampusId)
+    }
+  }
+
+  const handlePinSubmit = (e) => {
+    e.preventDefault()
+    if (!pinInput.trim()) return
+    authenticateStudent(studentIdInput.trim(), kioskCampusId, { pin: pinInput.trim() })
+    setView('login') // reset view; student state update will move us forward
   }
 
   const performCheckIn = async () => {
     if (actionLoading) return
     setActionLoading(true)
-    const { error, alreadyCheckedIn: wasAlreadyIn } = await checkIn(student.id, kioskCampusId || student.campus_id, student.district_id, {
+    const { error, alreadyCheckedIn: wasAlreadyIn } = await checkIn(student.id, kioskCampusId || student.campus_id, {
       phoneBagNumber: phoneBagNumber.trim() || null,
     })
     if (error) {
@@ -183,21 +173,14 @@ export default function KioskPage() {
     }
     await refetchBehavior()
 
-    // Re-query actual check-in count from DB so kiosk matches admin pages exactly
-    let newDaysServed = daysServed
-    if (placement?.consequence_start) {
-      let countQuery = supabase
-        .from('daily_behavior_tracking')
-        .select('id', { count: 'exact', head: true })
-        .eq('student_id', student.id)
-        .gte('tracking_date', placement.consequence_start)
-      if (placement.consequence_end) {
-        countQuery = countQuery.lte('tracking_date', placement.consequence_end)
-      }
-      const { count } = await countQuery
-      newDaysServed = count || 0
-    }
+    // Re-fetch status via RPC to get accurate post-check-in counts
+    const { data: freshStatus } = await supabase.rpc('get_kiosk_student_status', {
+      p_student_id: student.id,
+      p_campus_id:  kioskCampusId || student.campus_id,
+    })
+    if (freshStatus) setStudentStatus(freshStatus)
 
+    const newDaysServed = freshStatus?.days_served || daysServed
     const newRemaining = totalAssigned > 0 ? Math.max(0, totalAssigned - newDaysServed) : null
     setConfirmationData({
       firstName: student.first_name,
@@ -278,6 +261,57 @@ export default function KioskPage() {
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-400">{authLoading ? 'Looking up student...' : 'Checking in...'}</p>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Entry Screen */}
+      {view === 'pin_entry' && (
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="w-full max-w-md px-6">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold">Enter Your PIN</h2>
+              <p className="text-gray-400 mt-1">Enter your 4–6 digit PIN to continue</p>
+            </div>
+
+            <form onSubmit={handlePinSubmit}>
+              <input
+                type="password"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                placeholder="PIN"
+                className="w-full px-6 py-4 bg-gray-800 border-2 border-gray-700 rounded-xl text-2xl text-center font-mono text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                autoFocus
+                maxLength={8}
+                inputMode="numeric"
+                pattern="[0-9]*"
+              />
+              {authError && (
+                <p className="text-red-400 text-sm text-center mt-3">{authError}</p>
+              )}
+              <div className="flex gap-3 mt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => { setView('login'); setPinInput('') }}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  loading={authLoading}
+                >
+                  Verify
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

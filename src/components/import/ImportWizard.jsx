@@ -28,6 +28,7 @@ export default function ImportWizard({ allowedTypes, defaultType }) {
       {wizard.step === 0 && (
         <ImportStepUpload
           onNext={wizard.handleFileUpload}
+          onCancel={wizard.reset}
           allowedTypes={allowedTypes}
           defaultType={defaultType}
         />
@@ -41,6 +42,7 @@ export default function ImportWizard({ allowedTypes, defaultType }) {
           rawRows={wizard.rawRows}
           onConfirm={wizard.handleMappingConfirm}
           onBack={wizard.goBack}
+          onCancel={wizard.reset}
           validating={wizard.validating}
         />
       )}
@@ -51,6 +53,7 @@ export default function ImportWizard({ allowedTypes, defaultType }) {
           validationResults={wizard.validationResults}
           onConfirm={wizard.handleImportConfirm}
           onBack={wizard.goBack}
+          onCancel={wizard.reset}
         />
       )}
 

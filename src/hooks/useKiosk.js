@@ -9,7 +9,8 @@ export function useKioskAuth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const authenticateStudent = async (studentIdNumber, campusId) => {
+  const authenticateStudent = async (studentIdNumber, campusId, options = {}) => {
+    const { pin } = options
     setLoading(true)
     setError(null)
     try {
@@ -17,6 +18,7 @@ export function useKioskAuth() {
       const { data, error: fetchError } = await supabase.rpc('lookup_student_for_kiosk', {
         p_student_id_number: studentIdNumber,
         p_campus_id: campusId || null,
+        p_pin: pin || null,
       })
 
       if (fetchError || !data || data.length === 0) {
@@ -42,30 +44,30 @@ export function useKioskAuth() {
 }
 
 /**
- * Daily behavior tracking for a student
+ * Daily behavior tracking for a student — uses SECURITY DEFINER RPC
+ * (anon role has no direct SELECT on daily_behavior_tracking)
  */
-export function useDailyBehavior(studentId, date) {
+export function useDailyBehavior(studentId, date, campusId) {
   const [record, setRecord] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const fetchRecord = useCallback(async () => {
-    if (!studentId || !date) {
+    if (!studentId || !date || !campusId) {
       setRecord(null)
       setLoading(false)
       return
     }
 
     setLoading(true)
-    const { data } = await supabase
-      .from('daily_behavior_tracking')
-      .select('*')
-      .eq('student_id', studentId)
-      .eq('tracking_date', date)
-      .maybeSingle()
+    const { data } = await supabase.rpc('get_kiosk_daily_behavior', {
+      p_student_id: studentId,
+      p_date: date,
+      p_campus_id: campusId,
+    })
 
-    setRecord(data)
+    setRecord(data || null)
     setLoading(false)
-  }, [studentId, date])
+  }, [studentId, date, campusId])
 
   useEffect(() => {
     fetchRecord()
@@ -78,73 +80,18 @@ export function useDailyBehavior(studentId, date) {
  * Daily behavior CRUD actions
  */
 export function useBehaviorActions() {
-  const checkIn = async (studentId, campusId, districtId, options = {}) => {
-    const today = new Date().toISOString().split('T')[0]
-    const now = new Date().toISOString()
+  // kiosk_check_in is a SECURITY DEFINER RPC — anon role has no direct
+  // INSERT/UPDATE access to daily_behavior_tracking.
+  // district_id is now fetched from DB inside the RPC (not caller-supplied).
+  const checkIn = async (studentId, campusId, options = {}) => {
     const { phoneBagNumber } = options
-
-    // First check: look up any existing record for today (fast path, avoids write on most re-visits)
-    const { data: existing } = await supabase
-      .from('daily_behavior_tracking')
-      .select('id')
-      .eq('student_id', studentId)
-      .eq('tracking_date', today)
-      .maybeSingle()
-
-    if (existing) {
-      // Already checked in — update bag number if provided
-      if (phoneBagNumber) {
-        await supabase
-          .from('daily_behavior_tracking')
-          .update({ phone_bag_number: phoneBagNumber })
-          .eq('id', existing.id)
-      }
-      return { data: existing, error: null, alreadyCheckedIn: true }
-    }
-
-    // Attempt insert. The DB unique constraint on (student_id, tracking_date)
-    // guarantees only one record per day even under concurrent requests.
-    const baseData = {
-      student_id: studentId,
-      campus_id: campusId,
-      district_id: districtId,
-      tracking_date: today,
-      check_in_time: now,
-      status: 'checked_in',
-      period_scores: {},
-      ...(phoneBagNumber ? { phone_bag_number: phoneBagNumber } : {}),
-    }
-
-    const { data, error } = await supabase
-      .from('daily_behavior_tracking')
-      .insert(baseData)
-      .select()
-      .single()
-
-    // code 23505 = unique_violation — another request beat us to it (race condition)
-    // Treat as "already checked in" rather than an error.
-    if (error?.code === '23505') {
-      const { data: raceRecord } = await supabase
-        .from('daily_behavior_tracking')
-        .select('id')
-        .eq('student_id', studentId)
-        .eq('tracking_date', today)
-        .maybeSingle()
-      return { data: raceRecord, error: null, alreadyCheckedIn: true }
-    }
-
-    // If insert failed for another reason (e.g. phone_bag_number column missing),
-    // retry without it — migration 011 may not have been applied yet.
-    if (error && phoneBagNumber) {
-      const { data: retry, error: retryErr } = await supabase
-        .from('daily_behavior_tracking')
-        .insert({ ...baseData, phone_bag_number: undefined })
-        .select()
-        .single()
-      return { data: retry, error: retryErr }
-    }
-
-    return { data, error }
+    const { data, error } = await supabase.rpc('kiosk_check_in', {
+      p_student_id:       studentId,
+      p_campus_id:        campusId,
+      p_phone_bag_number: phoneBagNumber || null,
+    })
+    if (error) return { data: null, error, alreadyCheckedIn: false }
+    return { data, error: null, alreadyCheckedIn: data?.already_checked_in ?? false }
   }
 
   const checkOut = async (recordId) => {

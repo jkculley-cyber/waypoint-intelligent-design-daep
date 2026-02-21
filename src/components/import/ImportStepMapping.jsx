@@ -43,6 +43,7 @@ export default function ImportStepMapping({
   rawRows,
   onConfirm,
   onBack,
+  onCancel,
   validating,
 }) {
   const { districtId } = useAuth()
@@ -447,13 +448,24 @@ export default function ImportStepMapping({
 
       {/* ── Actions ───────────────────────────────────────────────── */}
       <div className="flex justify-between items-center pt-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          Back
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back
+          </button>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
           {unmappedRequired.length > 0 && (

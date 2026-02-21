@@ -24,7 +24,7 @@ import AlertsPage from './pages/AlertsPage'
 import DisciplineMatrixPage from './pages/DisciplineMatrixPage'
 import MatrixEditorPage from './pages/MatrixEditorPage'
 import OffenseCodeManagerPage from './pages/OffenseCodeManagerPage'
-import SettingsPage from './pages/SettingsPage'
+import SettingsPage, { NotificationPreferencesPage } from './pages/SettingsPage'
 import TransitionPlansPage from './pages/TransitionPlansPage'
 import TransitionPlanDetailPage from './pages/TransitionPlanDetailPage'
 import NewTransitionPlanPage from './pages/NewTransitionPlanPage'
@@ -39,6 +39,12 @@ import OrientationSettingsPage from './pages/OrientationSettingsPage'
 import PhoneReturnPage from './pages/PhoneReturnPage'
 import OrientationSchedulePage from './pages/OrientationSchedulePage'
 import OrientationKioskPage from './pages/OrientationKioskPage'
+import WaypointAdminPage from './pages/WaypointAdminPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import TeacherReferralPage from './pages/TeacherReferralPage'
+import DaepScoringPage from './pages/DaepScoringPage'
+import CalendarPage from './pages/CalendarPage'
+import UserManagementPage from './pages/UserManagementPage'
 
 // Constants
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES, DAEP_ROLES } from './lib/constants'
@@ -51,6 +57,7 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Authenticated routes - Staff only (AppShell layout with sidebar) */}
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>
@@ -98,6 +105,13 @@ function App() {
             <Route path="/daep" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="daep_dashboard"><DaepDashboardPage /></RequireTier></RequireRole>} />
             <Route path="/daep/phone-return" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="phone_return"><PhoneReturnPage /></RequireTier></RequireRole>} />
             <Route path="/daep/orientations" element={<RequireRole roles={DAEP_ROLES}><RequireTier feature="daep_dashboard"><OrientationSchedulePage /></RequireTier></RequireRole>} />
+            <Route path="/daep/scoring" element={<RequireRole roles={STAFF_ROLES}><RequireTier feature="daep_dashboard"><DaepScoringPage /></RequireTier></RequireRole>} />
+
+            {/* Teacher Referral */}
+            <Route path="/referral" element={<RequireRole roles={STAFF_ROLES}><TeacherReferralPage /></RequireRole>} />
+
+            {/* Calendar */}
+            <Route path="/calendar" element={<RequireRole roles={STAFF_ROLES}><CalendarPage /></RequireRole>} />
 
             {/* Discipline Matrix */}
             <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />
@@ -159,11 +173,32 @@ function App() {
                 </RequireRole>
               }
             />
+            <Route
+              path="/settings/users"
+              element={
+                <RequireRole roles={[ROLES.ADMIN]}>
+                  <UserManagementPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/settings/notifications"
+              element={
+                <RequireRole roles={STAFF_ROLES}>
+                  <NotificationPreferencesPage />
+                </RequireRole>
+              }
+            />
           </Route>
 
           {/* Kiosk - standalone full-screen layout (no AppShell) */}
           <Route path="/kiosk" element={<RequireTier feature="kiosk"><KioskPage /></RequireTier>} />
           <Route path="/orientation-kiosk" element={<RequireTier feature="orientation_kiosk"><OrientationKioskPage /></RequireTier>} />
+
+          {/* Waypoint Internal Admin - standalone, requires waypoint_admin role */}
+          <Route path="/waypoint-admin" element={
+            <RequireAuth><RequireRole roles={[ROLES.WAYPOINT_ADMIN]}><WaypointAdminPage /></RequireRole></RequireAuth>
+          } />
 
           {/* Parent Portal - uses AppShell layout, parent role only */}
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>

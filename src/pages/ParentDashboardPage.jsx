@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
@@ -16,6 +17,7 @@ import {
   CONSEQUENCE_TYPE_LABELS,
 } from '../lib/constants'
 import { formatStudentNameShort, formatDate, daysRemaining, getSchoolYearLabel } from '../lib/utils'
+import { format } from 'date-fns'
 
 export default function ParentDashboardPage() {
   const { profile, user } = useAuth()
@@ -23,6 +25,24 @@ export default function ParentDashboardPage() {
   const [incidents, setIncidents] = useState([])
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [acknowledging, setAcknowledging] = useState(null)
+
+  const handleAcknowledge = async (incidentId) => {
+    setAcknowledging(incidentId)
+    const { error } = await supabase
+      .from('incidents')
+      .update({ parent_acknowledged_at: new Date().toISOString() })
+      .eq('id', incidentId)
+    if (error) {
+      toast.error('Failed to acknowledge. Please try again.')
+    } else {
+      setIncidents(prev => prev.map(i =>
+        i.id === incidentId ? { ...i, parent_acknowledged_at: new Date().toISOString() } : i
+      ))
+      toast.success('Receipt acknowledged')
+    }
+    setAcknowledging(null)
+  }
 
   useEffect(() => {
     const fetchParentData = async () => {
@@ -53,6 +73,7 @@ export default function ParentDashboardPage() {
           .select(`
             id, status, incident_date, consequence_type, consequence_days,
             consequence_start, consequence_end, description,
+            parent_acknowledged_at,
             students (id, first_name, last_name),
             offense_codes (id, name)
           `)
@@ -168,7 +189,49 @@ export default function ParentDashboardPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* DAEP Countdown Banners */}
+            {incidents
+              .filter(i => i.consequence_type === 'daep' && ['active', 'approved'].includes(i.status) && i.consequence_end)
+              .map(incident => {
+                const served = incident.days_served || 0
+                const total = incident.consequence_days || 0
+                const remaining = Math.max(0, total - served)
+                const isCompleted = remaining === 0
+                const bannerColor = isCompleted
+                  ? 'bg-green-50 border-green-300 text-green-800'
+                  : remaining <= 5
+                  ? 'bg-green-50 border-green-300 text-green-800'
+                  : 'bg-yellow-50 border-yellow-300 text-yellow-800'
+
+                return (
+                  <div key={`countdown-${incident.id}`} className={`mb-4 p-4 rounded-xl border-2 ${bannerColor}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          DAEP Placement — {formatStudentNameShort(incident.students)}
+                        </p>
+                        <p className="text-lg font-bold mt-1">
+                          {isCompleted
+                            ? 'Placement Complete!'
+                            : `${remaining} of ${total} days remaining`}
+                        </p>
+                        <p className="text-xs mt-0.5 opacity-75">
+                          Ends {formatDate(incident.consequence_end)}
+                          {!isCompleted && ` · ${served} days served`}
+                        </p>
+                      </div>
+                      {!isCompleted && (
+                        <div className="text-right">
+                          <div className="text-3xl font-bold">{remaining}</div>
+                          <div className="text-xs opacity-75">days left</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Incidents */}
               <Card>
                 <CardTitle>Recent Discipline Records</CardTitle>
@@ -179,49 +242,67 @@ export default function ParentDashboardPage() {
                 ) : (
                   <div className="mt-4 space-y-3">
                     {incidents.map((incident) => (
-                      <Link
-                        key={incident.id}
-                        to={`/parent/incidents/${incident.id}`}
-                        className="block p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {incident.offense_codes?.name || 'Incident'}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {formatStudentNameShort(incident.students)} | {formatDate(incident.incident_date)}
-                            </p>
+                      <div key={incident.id} className="border border-gray-100 rounded-lg">
+                        <Link
+                          to={`/parent/incidents/${incident.id}`}
+                          className="block p-3 hover:bg-gray-50 transition-colors rounded-t-lg"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {incident.offense_codes?.name || 'Incident'}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {formatStudentNameShort(incident.students)} | {formatDate(incident.incident_date)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge color={INCIDENT_STATUS_COLORS[incident.status]} size="sm">
+                                {INCIDENT_STATUS_LABELS[incident.status]}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge color={INCIDENT_STATUS_COLORS[incident.status]} size="sm">
-                              {INCIDENT_STATUS_LABELS[incident.status]}
-                            </Badge>
-                          </div>
+                          {incident.consequence_type && (
+                            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                              <span>Consequence: {CONSEQUENCE_TYPE_LABELS[incident.consequence_type]}</span>
+                              {incident.consequence_days && (
+                                <span>({incident.consequence_days} days)</span>
+                              )}
+                              {incident.consequence_days && ['active', 'approved'].includes(incident.status) && (
+                                (() => {
+                                  const served = incident.days_served || 0
+                                  const remaining = Math.max(0, incident.consequence_days - served)
+                                  if (remaining === 0) {
+                                    return <Badge color="green" size="sm">Completed</Badge>
+                                  }
+                                  return (
+                                    <Badge color="yellow" size="sm">
+                                      {remaining} days left ({served}/{incident.consequence_days} served)
+                                    </Badge>
+                                  )
+                                })()
+                              )}
+                            </div>
+                          )}
+                        </Link>
+                        {/* Acknowledgment */}
+                        <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 rounded-b-lg flex items-center justify-between">
+                          {incident.parent_acknowledged_at ? (
+                            <span className="text-xs text-green-700 flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                              Acknowledged {format(new Date(incident.parent_acknowledged_at), 'MMM d, yyyy')}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleAcknowledge(incident.id)}
+                              disabled={acknowledging === incident.id}
+                              className="text-xs text-orange-600 hover:text-orange-800 font-medium disabled:opacity-50"
+                            >
+                              {acknowledging === incident.id ? 'Saving...' : 'Acknowledge Receipt'}
+                            </button>
+                          )}
                         </div>
-                        {incident.consequence_type && (
-                          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                            <span>Consequence: {CONSEQUENCE_TYPE_LABELS[incident.consequence_type]}</span>
-                            {incident.consequence_days && (
-                              <span>({incident.consequence_days} days)</span>
-                            )}
-                            {incident.consequence_days && ['active', 'approved'].includes(incident.status) && (
-                              (() => {
-                                const served = incident.days_served || 0
-                                const remaining = Math.max(0, incident.consequence_days - served)
-                                if (remaining === 0) {
-                                  return <Badge color="green" size="sm">Completed</Badge>
-                                }
-                                return (
-                                  <Badge color="yellow" size="sm">
-                                    {remaining} days left ({served}/{incident.consequence_days} served)
-                                  </Badge>
-                                )
-                              })()
-                            )}
-                          </div>
-                        )}
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 )}

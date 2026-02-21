@@ -1,0 +1,35 @@
+{
+  "name": "Waypoint DAEP",
+  "short_name": "Waypoint",
+  "description": "Texas DAEP discipline management",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Open dashboard"
+    },
+    {
+      "name": "New Incident",
+      "url": "/incidents/new",
+      "description": "Create a new incident"
+    },
+    {
+      "name": "Students",
+      "url": "/students",
+      "description": "Student roster"
+    }
+  ]
+}

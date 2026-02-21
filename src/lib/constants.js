@@ -31,6 +31,7 @@ export const ROLES = {
   DIRECTOR_STUDENT_AFFAIRS: 'director_student_affairs',
   PARENT: 'parent',
   STUDENT: 'student',
+  WAYPOINT_ADMIN: 'waypoint_admin',
 }
 
 export const ROLE_LABELS = {
@@ -46,6 +47,7 @@ export const ROLE_LABELS = {
   [ROLES.DIRECTOR_STUDENT_AFFAIRS]: 'Director of Student Affairs',
   [ROLES.PARENT]: 'Parent',
   [ROLES.STUDENT]: 'Student',
+  [ROLES.WAYPOINT_ADMIN]: 'Waypoint Admin',
 }
 
 // Staff roles (can access the main app shell)
