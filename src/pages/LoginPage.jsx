@@ -12,27 +12,32 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOauthLoading] = useState(null)
 
-  const { signIn, signInWithOAuth, profile, hasProduct } = useAuth()
+  const { signIn, signInWithOAuth, profile, loading: authLoading, hasProduct } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || null
 
-  // After profile loads, redirect based on role and licensed products
+  // After profile AND district data finish loading, redirect based on role and licensed products.
+  // Must wait for !authLoading — district loads async after profile, and hasProduct() returns true
+  // for everything when district is null (waypoint_admin shortcut), causing wrong redirects.
   useEffect(() => {
-    if (profile) {
+    if (profile && !authLoading) {
       if (profile.role === 'waypoint_admin') {
         navigate('/waypoint-admin', { replace: true })
       } else if (profile.role === 'parent') {
         const safe = from && !from.startsWith('/waypoint-admin') ? from : '/parent'
         navigate(safe, { replace: true })
       } else {
-        // Smart default: prefer /dashboard (Waypoint) unless district only has Navigator
-        const defaultPath = hasProduct('waypoint') ? '/dashboard' : '/navigator'
+        // Smart default: first licensed product wins
+        let defaultPath = '/dashboard'
+        if (hasProduct('waypoint'))        defaultPath = '/dashboard'
+        else if (hasProduct('navigator')) defaultPath = '/navigator'
+        else if (hasProduct('meridian'))  defaultPath = '/meridian'
         const safe = from && !from.startsWith('/waypoint-admin') ? from : defaultPath
         navigate(safe, { replace: true })
       }
     }
-  }, [profile, from, navigate, hasProduct])
+  }, [profile, authLoading, from, navigate, hasProduct])
 
   const handleOAuth = async (provider) => {
     setError('')
