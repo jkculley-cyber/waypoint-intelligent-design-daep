@@ -398,6 +398,18 @@ ALTER TABLE meridian_cap_tasks             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meridian_integration_sources   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meridian_import_logs           ENABLE ROW LEVEL SECURITY;
 
+-- Drop policies first so this migration is safely re-runnable
+DROP POLICY IF EXISTS "meridian_students_district"             ON meridian_students;
+DROP POLICY IF EXISTS "meridian_referrals_district"            ON meridian_referrals;
+DROP POLICY IF EXISTS "meridian_ieps_district"                 ON meridian_ieps;
+DROP POLICY IF EXISTS "meridian_iep_progress_district"         ON meridian_iep_progress_reports;
+DROP POLICY IF EXISTS "meridian_plans_504_district"            ON meridian_plans_504;
+DROP POLICY IF EXISTS "meridian_plan_504_progress_district"    ON meridian_plan_504_progress_reports;
+DROP POLICY IF EXISTS "meridian_cap_findings_district"         ON meridian_cap_findings;
+DROP POLICY IF EXISTS "meridian_cap_tasks_district"            ON meridian_cap_tasks;
+DROP POLICY IF EXISTS "meridian_integration_sources_district"  ON meridian_integration_sources;
+DROP POLICY IF EXISTS "meridian_import_logs_district"          ON meridian_import_logs;
+
 -- District staff can read/write their own district's data
 CREATE POLICY "meridian_students_district"             ON meridian_students             FOR ALL USING (district_id = user_district_id() OR is_waypoint_admin());
 CREATE POLICY "meridian_referrals_district"            ON meridian_referrals            FOR ALL USING (district_id = user_district_id() OR is_waypoint_admin());
