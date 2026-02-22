@@ -169,6 +169,23 @@ export default function Sidebar() {
                 <span className="flex-1">{item.name}</span>
               </NavLink>
             ))}
+            {/* Discipline Matrix — only show here if Waypoint isn't active (avoids duplication) */}
+            {!showWaypoint && (
+              <NavLink
+                to="/matrix"
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  )
+                }
+              >
+                <MatrixIcon className="h-5 w-5 flex-shrink-0" />
+                <span className="flex-1">Discipline Matrix</span>
+              </NavLink>
+            )}
           </>
         )}
 

@@ -107,9 +107,6 @@ function App() {
               <Route path="/referral" element={<RequireRole roles={STAFF_ROLES}><TeacherReferralPage /></RequireRole>} />
               <Route path="/calendar" element={<RequireRole roles={STAFF_ROLES}><CalendarPage /></RequireRole>} />
 
-              <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />
-              <Route path="/matrix/editor" element={<RequireRole roles={[ROLES.ADMIN]}><RequireTier feature="matrix_editor"><MatrixEditorPage /></RequireTier></RequireRole>} />
-
               <Route path="/reports" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><RequireTier feature="reports"><ReportsPage /></RequireTier></RequireRole>} />
 
               <Route path="/settings/offense-codes" element={<RequireRole roles={[ROLES.ADMIN]}><OffenseCodeManagerPage /></RequireRole>} />
@@ -138,6 +135,10 @@ function App() {
               <Route path="/meridian/waypoint-sync" element={<RequireRole roles={STAFF_ROLES}><MeridianWaypointSyncPage /></RequireRole>} />
               <Route path="/meridian/integration" element={<RequireRole roles={STAFF_ROLES}><MeridianIntegrationPage /></RequireRole>} />
             </Route>
+
+            {/* ── Discipline Matrix — shared district config, accessible with any product ── */}
+            <Route path="/matrix" element={<RequireRole roles={STAFF_ROLES}><DisciplineMatrixPage /></RequireRole>} />
+            <Route path="/matrix/editor" element={<RequireRole roles={[ROLES.ADMIN]}><RequireTier feature="matrix_editor"><MatrixEditorPage /></RequireTier></RequireRole>} />
 
             {/* ── Settings — always accessible to admin regardless of product ── */}
             <Route path="/settings" element={<RequireRole roles={[ROLES.ADMIN]}><SettingsPage /></RequireRole>} />
