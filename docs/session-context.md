@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-21 (Session E — Navigator + Product Suite)
+> Last updated: 2026-02-22 (Session F — Meridian SPED Module)
 
 ---
 
@@ -11,25 +11,26 @@
 - **Marketing site features:** All 3 products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. Pricing tags visible. Google Slides embed (DAEP deck) in Waypoint card. SEO meta/sitemap/robots.txt.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app), `clearpath-site` project (marketing site)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–036 (production). **037 written, NOT YET applied — run via SQL Editor before testing Navigator.**
+- **Migrations applied:** 001–039 (production). **040 written, NOT YET applied — run via SQL Editor before testing Meridian.**
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
 - **Email notifications:** Live via Resend (`onboarding@resend.dev` sandbox sender) — Edge Function deployed
 
 ---
 
-## Product Suite (New — Session E)
+## Product Suite
 
 | Product | Status | Gate |
 |---------|--------|------|
 | Waypoint (DAEP) | Live | Default, all districts |
-| Navigator (ISS/OSS) | Built, needs migration 037 applied | `hasProduct('navigator')` |
-| Meridian (SPED) | Follow-up session — migrate from separate codebase | `hasProduct('meridian')` |
+| Navigator (ISS/OSS) | Built — migrations 037–039 applied | `hasProduct('navigator')` |
+| Meridian (SPED) | Built (Session F) — **migration 040 NOT yet applied** | `hasProduct('meridian')` |
 
 - Product provisioning: WaypointAdminPage Step 1 has product checkboxes; Manage drawer has product toggle
-- `districts.settings.products` stores the array (JSONB, no migration needed for existing districts — they default to `["waypoint"]`)
-- Navigator sidebar section uses **blue** active state (vs orange for Waypoint)
+- `districts.settings.products` stores the array (JSONB)
+- Navigator sidebar: **blue** active state; Meridian sidebar: **purple** active state; Waypoint: **orange**
 - `RequireProduct` component at `src/components/auth/RequireProduct.jsx`
+- `activeProductCount > 1` triggers product section headers in sidebar
 
 ## What's Working
 
@@ -55,10 +56,12 @@
 - **PWA** — `manifest.json` + service worker + Apple meta tags; installable on iOS/Android/Chrome desktop
 - Teacher referral page (`/referral`), DAEP scoring page (`/daep/scoring`)
 - Bulk incident export (select checkboxes → Export PDF/Excel)
+- **Navigator module** — referrals, placements, supports, student detail, reports (gated by `hasProduct('navigator')`)
+- **Meridian module (code complete)** — SPED overview dashboard, ARD timelines, student detail, dyslexia/HB3928 tracker, folder readiness, CAP tracker, Waypoint sync, data integration (gated by `hasProduct('meridian')`, pending migration 040)
 
 ---
 
-## Security Hardening (Done — Migrations 028–036)
+## Security Hardening (Done — Migrations 028–039)
 
 | Migration | What It Fixed |
 |-----------|--------------|
@@ -71,6 +74,9 @@
 | 034 | `student_guardians` table with RLS |
 | 035 | `audit_log` table with RLS |
 | 036 | `notification_preferences` table with RLS |
+| 037 | `navigator_referrals`, `navigator_placements`, `navigator_supports`; updated `provision_new_district` RPC |
+| 038 | waypoint_admin RLS self-read policy on profiles |
+| 039 | waypoint_admin RLS on districts/campuses/profiles; `set_district_tier` + `set_district_products` RPCs |
 
 ---
 
@@ -80,9 +86,9 @@
 
 ## Pending / Not Done
 
-1. **Apply migration 037** — Navigator tables not live yet. Run `supabase/migrations/037_navigator_schema.sql` via SQL Editor before testing Navigator. URL: https://supabase.com/dashboard/project/kvxecksvkimcgwhxxyhw/sql/new
-2. **Add Navigator product to demo district** — After 037 applied, update Lone Star ISD in `/waypoint-admin` → Manage → Licensed Products → check Navigator. This enables the sidebar section for testing.
-3. **Meridian migration** — Port Meridian (from `C:\Users\jkcul\Downloads\meridian`) into Waypoint: migrations 038+, pages at `src/pages/meridian/`, gated by `hasProduct('meridian')`.
+1. **Apply migration 040** — Meridian tables not live yet. Run `supabase/migrations/040_meridian_schema.sql` via SQL Editor: https://supabase.com/dashboard/project/kvxecksvkimcgwhxxyhw/sql/new
+2. **Enable Meridian for demo district** — After 040 applied, go to `/waypoint-admin` → Manage Lone Star ISD → Licensed Products → check Meridian → Save Products.
+3. **Meridian seed data** — No test SPED students exist yet. Need to INSERT demo `meridian_students` rows for Lone Star ISD to test the UI meaningfully.
 4. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
 5. **Supabase auth SMTP** — default has 3/hr rate limit. Configure custom SMTP before pilot go-live.
 6. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
@@ -105,11 +111,13 @@
 - Storage paths: always `{district_id}/incidents/{incident_id}/...`
 - PWA: service worker lives at `public/sw.js`, skips all `supabase.co` fetch requests
 - `vite.config.js` includes `optimizeDeps.include: ['react-is']` — required for recharts to build
+- Meridian tables: all prefixed `meridian_` to avoid collision with Waypoint tables
+- Sidebar active state colors: Waypoint=orange, Navigator=blue, Meridian=purple
 
 ---
 
 ## Don't Touch Right Now
 
-- `supabase/migrations/` — migrations 001–036 applied to production; 037 written but NOT applied yet; don't re-run earlier ones
+- `supabase/migrations/` — migrations 001–039 applied to production; 040 written but NOT applied yet; don't re-run earlier ones
 - `.env.local` — credentials live here; do not commit
 - Demo seed data (Lone Star ISD) — keep intact for demos
