@@ -7,8 +7,11 @@ export default function LandingPage() {
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Waypoint" className="h-10 w-10 object-contain" />
-            <h1 className="text-2xl font-bold text-orange-600">Waypoint</h1>
+            <img src="/logo.png" alt="Compass Pathways" className="h-10 w-10 object-contain" />
+            <h1 className="text-2xl font-bold">
+              <span className="text-orange-600">Compass</span>
+              <span className="text-gray-900"> Pathways</span>
+            </h1>
           </div>
           <nav className="flex items-center gap-6">
             <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm">Features</a>
@@ -22,9 +25,10 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <img src="/logo.png" alt="Waypoint Behavioral Solutions" className="h-40 w-40 mx-auto mb-6 object-contain" />
-        <h2 className="text-5xl font-bold text-gray-900 mb-4">
-          Waypoint Behavioral Solutions
+        <img src="/logo.png" alt="Compass Pathways" className="h-40 w-40 mx-auto mb-6 object-contain" />
+        <h2 className="text-5xl font-bold mb-4">
+          <span className="text-orange-600">Compass</span>
+          <span className="text-gray-900"> Pathways</span>
         </h2>
         <p className="text-xl text-gray-500 italic mb-2">
           Compliance-Driven, Data-Informed, Equity-Focused
@@ -46,7 +50,7 @@ export default function LandingPage() {
       <section id="features" className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Schools Choose Waypoint
+            Why Schools Choose Compass Pathways
           </h3>
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
@@ -71,7 +75,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Waypoint Behavioral Solutions. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Compass Pathways. All rights reserved.</p>
           <p className="text-xs text-gray-500 mt-2">A product of Clear Path Education Group, LLC.</p>
         </div>
       </footer>
