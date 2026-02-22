@@ -15,6 +15,7 @@ import NavigatorPlacementsPage from './pages/navigator/NavigatorPlacementsPage'
 import NavigatorSupportsPage from './pages/navigator/NavigatorSupportsPage'
 import NavigatorStudentPage from './pages/navigator/NavigatorStudentPage'
 import NavigatorReportsPage from './pages/navigator/NavigatorReportsPage'
+import NavigatorGoalsPage from './pages/navigator/NavigatorGoalsPage'
 
 // Meridian pages
 import MeridianDashboardPage from './pages/meridian/MeridianDashboardPage'
@@ -122,6 +123,7 @@ function App() {
               <Route path="/navigator/supports" element={<RequireRole roles={STAFF_ROLES}><NavigatorSupportsPage /></RequireRole>} />
               <Route path="/navigator/students/:id" element={<RequireRole roles={STAFF_ROLES}><NavigatorStudentPage /></RequireRole>} />
               <Route path="/navigator/reports" element={<RequireRole roles={STAFF_ROLES}><NavigatorReportsPage /></RequireRole>} />
+              <Route path="/navigator/goals" element={<RequireRole roles={STAFF_ROLES}><NavigatorGoalsPage /></RequireRole>} />
             </Route>
 
             {/* ── Meridian product routes ── */}

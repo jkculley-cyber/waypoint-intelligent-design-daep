@@ -279,3 +279,138 @@ export function useNavigatorStudentHistory(studentId) {
 
   return { student, referrals, placements, supports, riskScore, loading, refetch: fetch }
 }
+
+// ─── School Year Helpers ────────────────────────────────────────────────────────
+
+export function currentSchoolYear() {
+  const now = new Date()
+  const month = now.getMonth() // 0-indexed
+  const y = now.getFullYear()
+  // Aug (7) – Dec (11) = start of year; Jan (0) – Jul (6) = end of year
+  if (month >= 7) {
+    return `${y}-${String(y + 1).slice(-2)}`
+  }
+  return `${y - 1}-${String(y).slice(-2)}`
+}
+
+export function getSchoolYearBounds(schoolYear) {
+  // '2025-26' → { start: '2025-08-01', end: '2026-07-31' }
+  const [startY] = schoolYear.split('-')
+  const endY = parseInt(startY) + 1
+  return { start: `${startY}-08-01`, end: `${endY}-07-31` }
+}
+
+// ─── Goals ─────────────────────────────────────────────────────────────────────
+
+export function useNavigatorGoals(schoolYear) {
+  const { districtId } = useAuth()
+  const [goals, setGoals] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, error: err } = await supabase
+        .from('navigator_campus_goals')
+        .select(`*, campuses(id, name, tea_campus_id)`)
+        .eq('district_id', districtId)
+        .eq('school_year', schoolYear)
+        .order('created_at', { ascending: true })
+
+      if (err) throw err
+      setGoals(data || [])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, schoolYear])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { goals, loading, error, refetch: fetch }
+}
+
+export async function saveNavigatorGoal(goalData) {
+  const { error } = await supabase
+    .from('navigator_campus_goals')
+    .upsert(goalData, { onConflict: 'campus_id,school_year' })
+  return { error }
+}
+
+// ─── Year-Over-Year Data ────────────────────────────────────────────────────────
+
+export function useNavigatorYOYData(schoolYear) {
+  const { districtId } = useAuth()
+  const [currentYear, setCurrentYear] = useState([])
+  const [priorYear, setPriorYear] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!districtId) return
+    loadYOYData()
+  }, [districtId, schoolYear])
+
+  async function loadYOYData() {
+    setLoading(true)
+
+    const { start: curStart, end: curEnd } = getSchoolYearBounds(schoolYear)
+    // Prior year: same bounds shifted back 1 year
+    const [startY] = schoolYear.split('-')
+    const priorSY = `${parseInt(startY) - 1}-${startY.slice(-2)}`
+    const { start: priorStart, end: priorEnd } = getSchoolYearBounds(priorSY)
+
+    const [curRes, priorRes] = await Promise.all([
+      supabase
+        .from('navigator_placements')
+        .select('placement_type, start_date')
+        .eq('district_id', districtId)
+        .gte('start_date', curStart)
+        .lte('start_date', curEnd),
+      supabase
+        .from('navigator_placements')
+        .select('placement_type, start_date')
+        .eq('district_id', districtId)
+        .gte('start_date', priorStart)
+        .lte('start_date', priorEnd),
+    ])
+
+    setCurrentYear(aggregateByMonth(curRes.data || [], curStart))
+    setPriorYear(aggregateByMonth(priorRes.data || [], priorStart))
+    setLoading(false)
+  }
+
+  return { currentYear, priorYear, loading }
+}
+
+// Groups placements by month offset from school year start (Aug = 0)
+const MONTH_LABELS = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
+
+function aggregateByMonth(placements, startDate) {
+  const yearStart = new Date(startDate)
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    month: i,
+    label: MONTH_LABELS[i],
+    iss: 0,
+    oss: 0,
+    total: 0,
+  }))
+
+  for (const p of placements) {
+    const d = new Date(p.start_date)
+    // Month offset from Aug 1 of start year
+    const monthOffset =
+      (d.getFullYear() - yearStart.getFullYear()) * 12 +
+      (d.getMonth() - yearStart.getMonth())
+    if (monthOffset >= 0 && monthOffset < 12) {
+      if (p.placement_type === 'iss') months[monthOffset].iss++
+      else if (p.placement_type === 'oss') months[monthOffset].oss++
+      months[monthOffset].total++
+    }
+  }
+
+  return months
+}

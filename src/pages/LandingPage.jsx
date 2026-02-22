@@ -7,7 +7,7 @@ export default function LandingPage() {
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Compass Pathways" className="h-10 w-10 object-contain" />
+            <img src="/logo.png" alt="Compass Pathway" className="h-10 w-10 object-contain" />
             <h1 className="text-2xl font-bold">
               <span className="text-orange-600">Compass</span>
               <span className="text-purple-600"> Pathways</span>
@@ -25,7 +25,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <img src="/logo.png" alt="Compass Pathways" className="h-40 w-40 mx-auto mb-6 object-contain" />
+        <img src="/logo.png" alt="Compass Pathway" className="h-40 w-40 mx-auto mb-6 object-contain" />
         <h2 className="text-5xl font-bold mb-4">
           <span className="text-orange-600">Compass</span>
           <span className="text-purple-600"> Pathways</span>
@@ -50,7 +50,7 @@ export default function LandingPage() {
       <section id="features" className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Schools Choose Compass Pathways
+            Why Schools Choose Compass Pathway
           </h3>
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
@@ -75,8 +75,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Compass Pathways. All rights reserved.</p>
-          <p className="text-xs text-gray-500 mt-2">A product of Clear Path Education Group, LLC.</p>
+          <p>&copy; {new Date().getFullYear()} Compass Pathway. All rights reserved.</p>
+          <p className="text-xs text-gray-500 mt-2">&copy; 2026 Clear Path Education Group, LLC. All rights reserved.</p>
         </div>
       </footer>
     </div>

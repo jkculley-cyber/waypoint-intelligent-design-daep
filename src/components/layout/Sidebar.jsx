@@ -11,6 +11,7 @@ const navigatorNavigation = [
   { name: 'Placements', path: '/navigator/placements', icon: PlacementIcon },
   { name: 'Supports', path: '/navigator/supports', icon: SupportsIcon },
   { name: 'Reports', path: '/navigator/reports', icon: ReportsIcon },
+  { name: 'Goals & Progress', path: '/navigator/goals', icon: GoalsIcon },
 ]
 
 const meridianNavigation = [
@@ -123,7 +124,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Compass Pathways" className="h-9 w-9 object-contain" />
+          <img src="/logo.png" alt="Compass Pathway" className="h-9 w-9 object-contain" />
           <div>
             <h1 className="text-sm font-bold leading-tight">
               <span className="text-orange-400">Compass</span>
@@ -257,8 +258,7 @@ export default function Sidebar() {
       {/* LLC Attribution */}
       <div className="px-4 py-3 border-t border-gray-800">
         <p className="text-[10px] text-gray-500 text-center leading-tight">
-          A product of Clear Path Education Group, LLC.
-          All rights reserved.
+          &copy; 2026 Clear Path Education Group, LLC. All rights reserved.
         </p>
       </div>
     </aside>
@@ -443,6 +443,16 @@ function PlacementIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+    </svg>
+  )
+}
+
+function GoalsIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2M3 12h2m14 0h2" />
     </svg>
   )
 }
