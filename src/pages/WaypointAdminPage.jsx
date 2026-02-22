@@ -193,10 +193,10 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
 
   const handleSaveTier = async () => {
     setSavingTier(true)
-    const { error } = await supabase
-      .from('districts')
-      .update({ settings: { ...district.settings, subscription_tier: tier } })
-      .eq('id', district.id)
+    const { error } = await supabase.rpc('set_district_tier', {
+      p_district_id: district.id,
+      p_tier: tier,
+    })
     setSavingTier(false)
     if (error) {
       alert('Failed to save tier: ' + error.message)
@@ -211,10 +211,10 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
       return
     }
     setSavingProducts(true)
-    const { error } = await supabase
-      .from('districts')
-      .update({ settings: { ...district.settings, products } })
-      .eq('id', district.id)
+    const { error } = await supabase.rpc('set_district_products', {
+      p_district_id: district.id,
+      p_products: products,
+    })
     setSavingProducts(false)
     if (error) {
       alert('Failed to save products: ' + error.message)
