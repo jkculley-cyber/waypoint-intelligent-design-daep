@@ -322,6 +322,53 @@ const COLUMN_ALIASES = {
     // Frontline / Skyward
     'reporting staff email', 'entered by email', 'staff reporter email', 'referral staff email',
   ],
+
+  // ── Navigator: Referral Date ────────────────────────────────────
+  referral_date: [
+    'referral date', 'referral_date', 'date', 'incident date', 'offense date',
+    'date of incident', 'infraction date', 'action date',
+  ],
+
+  // ── Navigator: Placement Type ───────────────────────────────────
+  placement_type: [
+    'placement type', 'placement_type', 'type', 'iss/oss', 'action type',
+    'suspension type', 'action', 'discipline type', 'consequence type', 'disciplinary action',
+  ],
+
+  // ── Navigator: Start Date ───────────────────────────────────────
+  start_date: [
+    'start date', 'start_date', 'begin date', 'suspension start', 'placement start',
+    'removal start', 'action start date',
+  ],
+
+  // ── Navigator: End Date ─────────────────────────────────────────
+  end_date: [
+    'end date', 'end_date', 'return date', 'suspension end', 'return to school',
+    'return to school date', 'removal end', 'action end date',
+  ],
+
+  // ── Navigator: Support Type ─────────────────────────────────────
+  support_type: [
+    'support type', 'support_type', 'intervention type', 'support', 'intervention', 'support category',
+  ],
+
+  // ── Navigator: Assigned By ──────────────────────────────────────
+  assigned_by_email: [
+    'assigned by email', 'assigned_by_email', 'assigned by', 'assigner email',
+    'teacher email', 'administrator email', 'admin email', 'discipline administrator email',
+  ],
+
+  // ── Navigator: Assigned To ──────────────────────────────────────
+  assigned_to_email: [
+    'assigned to email', 'assigned_to_email', 'assigned to', 'provider email',
+    'counselor email', 'interventionist email',
+  ],
+
+  // ── Navigator: Days ─────────────────────────────────────────────
+  days: [
+    'days', 'duration', 'suspension days', 'number of days', 'total days',
+    'days assigned', 'length of removal', 'action days',
+  ],
 }
 
 /**
@@ -464,7 +511,7 @@ export async function fetchValidationContext(importType, districtId) {
     context.existingEmails = new Set(profiles?.map(p => p.email) || [])
   }
 
-  if (importType === 'incidents') {
+  if (['incidents', 'navigator_referrals', 'navigator_placements', 'navigator_supports'].includes(importType)) {
     // Fetch students for ID lookup
     const { data: students } = await supabase
       .from('students')
@@ -560,6 +607,9 @@ async function insertBatch(importType, rows, districtId, duplicateStrategy) {
     students: insertStudentsBatch,
     profiles: insertProfilesBatch,
     incidents: insertIncidentsBatch,
+    navigator_referrals:  insertNavigatorReferralsBatch,
+    navigator_placements: insertNavigatorPlacementsBatch,
+    navigator_supports:   insertNavigatorSupportsBatch,
   }
 
   const inserter = inserters[importType]
@@ -680,6 +730,111 @@ async function insertIncidentsBatch(rows, districtId, duplicateStrategy) {
 
   if (error) throw error
 
+  return { successCount: data?.length || records.length, skippedCount: 0, errors: [] }
+}
+
+async function insertNavigatorReferralsBatch(rows, districtId, duplicateStrategy) {
+  if (duplicateStrategy === 'skip') {
+    const { data: existing } = await supabase
+      .from('navigator_referrals')
+      .select('student_id, referral_date, description')
+      .eq('district_id', districtId)
+
+    const skipSet = new Set(
+      (existing || []).map(r => `${r.student_id}|${r.referral_date}|${(r.description || '').slice(0, 50)}`)
+    )
+
+    let skippedCount = 0
+    const toInsert = []
+    for (const row of rows) {
+      const key = `${row.parsed.student_id}|${row.parsed.referral_date}|${(row.parsed.description || '').slice(0, 50)}`
+      if (skipSet.has(key)) {
+        skippedCount++
+      } else {
+        toInsert.push({ ...row.parsed, district_id: districtId })
+      }
+    }
+
+    if (toInsert.length === 0) return { successCount: 0, skippedCount, errors: [] }
+
+    const { data, error } = await supabase.from('navigator_referrals').insert(toInsert).select('id')
+    if (error) throw error
+    return { successCount: data?.length || toInsert.length, skippedCount, errors: [] }
+  }
+
+  const records = rows.map(r => ({ ...r.parsed, district_id: districtId }))
+  const { data, error } = await supabase.from('navigator_referrals').insert(records).select('id')
+  if (error) throw error
+  return { successCount: data?.length || records.length, skippedCount: 0, errors: [] }
+}
+
+async function insertNavigatorPlacementsBatch(rows, districtId, duplicateStrategy) {
+  if (duplicateStrategy === 'skip') {
+    const { data: existing } = await supabase
+      .from('navigator_placements')
+      .select('student_id, placement_type, start_date')
+      .eq('district_id', districtId)
+
+    const skipSet = new Set(
+      (existing || []).map(r => `${r.student_id}|${r.placement_type}|${r.start_date}`)
+    )
+
+    let skippedCount = 0
+    const toInsert = []
+    for (const row of rows) {
+      const key = `${row.parsed.student_id}|${row.parsed.placement_type}|${row.parsed.start_date}`
+      if (skipSet.has(key)) {
+        skippedCount++
+      } else {
+        toInsert.push({ ...row.parsed, district_id: districtId })
+      }
+    }
+
+    if (toInsert.length === 0) return { successCount: 0, skippedCount, errors: [] }
+
+    const { data, error } = await supabase.from('navigator_placements').insert(toInsert).select('id')
+    if (error) throw error
+    return { successCount: data?.length || toInsert.length, skippedCount, errors: [] }
+  }
+
+  const records = rows.map(r => ({ ...r.parsed, district_id: districtId }))
+  const { data, error } = await supabase.from('navigator_placements').insert(records).select('id')
+  if (error) throw error
+  return { successCount: data?.length || records.length, skippedCount: 0, errors: [] }
+}
+
+async function insertNavigatorSupportsBatch(rows, districtId, duplicateStrategy) {
+  if (duplicateStrategy === 'skip') {
+    const { data: existing } = await supabase
+      .from('navigator_supports')
+      .select('student_id, support_type, start_date')
+      .eq('district_id', districtId)
+
+    const skipSet = new Set(
+      (existing || []).map(r => `${r.student_id}|${r.support_type}|${r.start_date}`)
+    )
+
+    let skippedCount = 0
+    const toInsert = []
+    for (const row of rows) {
+      const key = `${row.parsed.student_id}|${row.parsed.support_type}|${row.parsed.start_date}`
+      if (skipSet.has(key)) {
+        skippedCount++
+      } else {
+        toInsert.push({ ...row.parsed, district_id: districtId })
+      }
+    }
+
+    if (toInsert.length === 0) return { successCount: 0, skippedCount, errors: [] }
+
+    const { data, error } = await supabase.from('navigator_supports').insert(toInsert).select('id')
+    if (error) throw error
+    return { successCount: data?.length || toInsert.length, skippedCount, errors: [] }
+  }
+
+  const records = rows.map(r => ({ ...r.parsed, district_id: districtId }))
+  const { data, error } = await supabase.from('navigator_supports').insert(records).select('id')
+  if (error) throw error
   return { successCount: data?.length || records.length, skippedCount: 0, errors: [] }
 }
 

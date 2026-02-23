@@ -473,6 +473,9 @@ export const IMPORT_TYPES = [
   { value: 'students', label: 'Students', description: 'Student roster data' },
   { value: 'profiles', label: 'Staff', description: 'Staff accounts and roles' },
   { value: 'incidents', label: 'Incidents', description: 'Discipline incidents' },
+  { value: 'navigator_referrals',  label: 'Referrals',            description: 'Behavioral referrals' },
+  { value: 'navigator_placements', label: 'Placements (ISS/OSS)', description: 'ISS and OSS placement records' },
+  { value: 'navigator_supports',   label: 'Student Supports',     description: 'Proactive support records' },
 ]
 
 export const IMPORT_TYPE_LABELS = {
@@ -480,6 +483,9 @@ export const IMPORT_TYPE_LABELS = {
   students: 'Students',
   profiles: 'Staff',
   incidents: 'Incidents',
+  navigator_referrals:  'Referrals',
+  navigator_placements: 'Placements (ISS/OSS)',
+  navigator_supports:   'Student Supports',
 }
 
 export const DUPLICATE_STRATEGIES = [

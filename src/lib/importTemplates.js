@@ -88,6 +88,74 @@ export const IMPORT_TEMPLATES = {
       { field: 'reported_by_email', description: 'Email of reporting staff member (required, must match existing staff)', example: 'jane.smith@district.edu' },
     ],
   },
+  navigator_referrals: {
+    label: 'Referrals',
+    headers: [
+      'student_id_number', 'referral_date', 'description', 'reported_by_email',
+      'campus_name', 'status', 'offense_code', 'location',
+    ],
+    requiredFields: ['student_id_number', 'referral_date', 'description', 'reported_by_email', 'campus_name'],
+    sampleRows: [
+      ['STU001', '2025-09-15', 'Student disrupted class repeatedly', 'jane.smith@district.edu', 'Lincoln Middle School', 'pending', 'DIS01', 'Classroom'],
+      ['STU002', '2025-10-03', 'Verbal altercation with another student', 'bob.jones@district.edu', 'Washington High School', 'reviewed', 'FIG01', 'Hallway'],
+    ],
+    instructions: [
+      { field: 'student_id_number', description: 'District student ID (required, must match existing student)', example: 'STU001' },
+      { field: 'referral_date', description: 'Date of referral in YYYY-MM-DD format (required, cannot be future)', example: '2025-09-15' },
+      { field: 'description', description: 'Description of the behavior (required)', example: 'Student disrupted class repeatedly' },
+      { field: 'reported_by_email', description: 'Email of reporting staff member (required, must match existing staff)', example: 'jane.smith@district.edu' },
+      { field: 'campus_name', description: 'Campus name (required, must match existing campus)', example: 'Lincoln Middle School' },
+      { field: 'status', description: 'Referral status (optional, default: pending). Valid: pending, reviewed, closed, escalated_to_daep', example: 'pending' },
+      { field: 'offense_code', description: 'Offense code (optional, must match existing code if provided)', example: 'DIS01' },
+      { field: 'location', description: 'Location where behavior occurred (optional)', example: 'Classroom' },
+    ],
+  },
+  navigator_placements: {
+    label: 'Placements (ISS/OSS)',
+    headers: [
+      'student_id_number', 'placement_type', 'start_date', 'assigned_by_email',
+      'campus_name', 'end_date', 'days', 'location', 'reason',
+    ],
+    requiredFields: ['student_id_number', 'placement_type', 'start_date', 'assigned_by_email', 'campus_name'],
+    sampleRows: [
+      ['STU001', 'iss', '2025-09-16', 'bob.jones@district.edu', 'Lincoln Middle School', '2025-09-18', '3', 'Room 101', 'Disruptive behavior'],
+      ['STU002', 'oss', '2025-10-04', 'bob.jones@district.edu', 'Washington High School', '2025-10-06', '3', '', 'Fighting'],
+    ],
+    instructions: [
+      { field: 'student_id_number', description: 'District student ID (required, must match existing student)', example: 'STU001' },
+      { field: 'placement_type', description: 'Placement type (required). Valid values: iss, oss', example: 'iss' },
+      { field: 'start_date', description: 'Start date in YYYY-MM-DD format (required)', example: '2025-09-16' },
+      { field: 'assigned_by_email', description: 'Email of assigning staff member (required, must match existing staff)', example: 'bob.jones@district.edu' },
+      { field: 'campus_name', description: 'Campus name (required, must match existing campus)', example: 'Lincoln Middle School' },
+      { field: 'end_date', description: 'End date in YYYY-MM-DD format (optional, must be >= start_date)', example: '2025-09-18' },
+      { field: 'days', description: 'Number of placement days (optional, positive integer)', example: '3' },
+      { field: 'location', description: 'Room or location for ISS (optional)', example: 'Room 101' },
+      { field: 'reason', description: 'Reason for placement (optional)', example: 'Disruptive behavior' },
+    ],
+  },
+  navigator_supports: {
+    label: 'Student Supports',
+    headers: [
+      'student_id_number', 'support_type', 'start_date', 'assigned_by_email',
+      'campus_name', 'status', 'assigned_to_email', 'end_date', 'notes',
+    ],
+    requiredFields: ['student_id_number', 'support_type', 'start_date', 'assigned_by_email', 'campus_name'],
+    sampleRows: [
+      ['STU001', 'cico', '2025-09-20', 'bob.jones@district.edu', 'Lincoln Middle School', 'active', 'jane.smith@district.edu', '', 'Check-in/check-out with counselor daily'],
+      ['STU002', 'counseling_referral', '2025-10-05', 'bob.jones@district.edu', 'Washington High School', 'completed', '', '2025-11-05', 'Completed 4-session counseling cycle'],
+    ],
+    instructions: [
+      { field: 'student_id_number', description: 'District student ID (required, must match existing student)', example: 'STU001' },
+      { field: 'support_type', description: 'Support type (required). Valid: cico, behavior_contract, counseling_referral, parent_contact, mentoring, other', example: 'cico' },
+      { field: 'start_date', description: 'Start date in YYYY-MM-DD format (required)', example: '2025-09-20' },
+      { field: 'assigned_by_email', description: 'Email of staff who assigned the support (required, must match existing staff)', example: 'bob.jones@district.edu' },
+      { field: 'campus_name', description: 'Campus name (required, must match existing campus)', example: 'Lincoln Middle School' },
+      { field: 'status', description: 'Support status (optional, default: active). Valid: active, completed, discontinued', example: 'active' },
+      { field: 'assigned_to_email', description: 'Email of staff delivering support (optional)', example: 'jane.smith@district.edu' },
+      { field: 'end_date', description: 'End date in YYYY-MM-DD format (optional)', example: '2025-11-05' },
+      { field: 'notes', description: 'Additional notes (optional)', example: 'Check-in/check-out with counselor daily' },
+    ],
+  },
 }
 
 /**

@@ -72,7 +72,7 @@ export default function LoginPage() {
           <img src="/logo.png" alt="Compass Pathway" className="h-44 w-44 mx-auto mb-4 object-contain" />
           <h1 className="text-3xl font-bold mb-1">
             <span className="text-orange-600">Compass</span>
-            <span className="text-purple-600"> Pathways</span>
+            <span className="text-purple-600"> Pathway</span>
           </h1>
           <p className="text-gray-500">Behavioral Solutions</p>
         </div>

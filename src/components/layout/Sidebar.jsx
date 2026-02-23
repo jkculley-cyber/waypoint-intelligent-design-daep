@@ -12,6 +12,7 @@ const navigatorNavigation = [
   { name: 'Supports', path: '/navigator/supports', icon: SupportsIcon },
   { name: 'Reports', path: '/navigator/reports', icon: ReportsIcon },
   { name: 'Goals & Progress', path: '/navigator/goals', icon: GoalsIcon },
+  { name: 'Data Import', path: '/navigator/import', icon: ImportIcon },
 ]
 
 const meridianNavigation = [
@@ -128,7 +129,7 @@ export default function Sidebar() {
           <div>
             <h1 className="text-sm font-bold leading-tight">
               <span className="text-orange-400">Compass</span>
-              <span className="text-purple-400"> Pathways</span>
+              <span className="text-purple-400"> Pathway</span>
             </h1>
             <p className="text-xs text-gray-400">Behavioral Solutions</p>
           </div>

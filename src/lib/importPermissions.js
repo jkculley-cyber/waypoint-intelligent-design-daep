@@ -13,18 +13,27 @@ const TIER_RULES = {
     students: [ROLES.ADMIN],
     profiles: [ROLES.ADMIN],
     incidents: [ROLES.ADMIN],
+    navigator_referrals:  [ROLES.ADMIN],
+    navigator_placements: [ROLES.ADMIN],
+    navigator_supports:   [ROLES.ADMIN],
   },
   2: {
     campuses: [ROLES.ADMIN],
     students: [ROLES.ADMIN, ROLES.PRINCIPAL],
     profiles: [ROLES.ADMIN],
     incidents: [ROLES.ADMIN, ROLES.PRINCIPAL],
+    navigator_referrals:  [ROLES.ADMIN, ROLES.PRINCIPAL],
+    navigator_placements: [ROLES.ADMIN, ROLES.PRINCIPAL],
+    navigator_supports:   [ROLES.ADMIN, ROLES.PRINCIPAL],
   },
   3: {
     campuses: [ROLES.ADMIN],
     students: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.AP, ROLES.COUNSELOR, ROLES.SPED_COORDINATOR, ROLES.TEACHER],
     profiles: [ROLES.ADMIN],
     incidents: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.AP, ROLES.COUNSELOR, ROLES.SPED_COORDINATOR, ROLES.TEACHER],
+    navigator_referrals:  [ROLES.ADMIN, ROLES.PRINCIPAL],
+    navigator_placements: [ROLES.ADMIN, ROLES.PRINCIPAL],
+    navigator_supports:   [ROLES.ADMIN, ROLES.PRINCIPAL],
   },
 }
 

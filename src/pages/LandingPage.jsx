@@ -10,7 +10,7 @@ export default function LandingPage() {
             <img src="/logo.png" alt="Compass Pathway" className="h-10 w-10 object-contain" />
             <h1 className="text-2xl font-bold">
               <span className="text-orange-600">Compass</span>
-              <span className="text-purple-600"> Pathways</span>
+              <span className="text-purple-600"> Pathway</span>
             </h1>
           </div>
           <nav className="flex items-center gap-6">
@@ -28,7 +28,7 @@ export default function LandingPage() {
         <img src="/logo.png" alt="Compass Pathway" className="h-40 w-40 mx-auto mb-6 object-contain" />
         <h2 className="text-5xl font-bold mb-4">
           <span className="text-orange-600">Compass</span>
-          <span className="text-purple-600"> Pathways</span>
+          <span className="text-purple-600"> Pathway</span>
         </h2>
         <p className="text-xl text-gray-500 italic mb-2">
           Compliance-Driven, Data-Informed, Equity-Focused

@@ -5,6 +5,10 @@ const VALID_CONSEQUENCE_TYPES = Object.values(CONSEQUENCE_TYPES)
 const VALID_ROLES = [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.AP, ROLES.COUNSELOR, ROLES.SPED_COORDINATOR, ROLES.TEACHER]
 const VALID_SPED_CODES = Object.keys(SPED_ELIGIBILITY_CODES)
 const VALID_GENDERS = ['M', 'F', 'X']
+const VALID_REFERRAL_STATUSES = ['pending', 'reviewed', 'closed', 'escalated_to_daep']
+const VALID_PLACEMENT_TYPES   = ['iss', 'oss']
+const VALID_SUPPORT_TYPES     = ['cico', 'behavior_contract', 'counseling_referral', 'parent_contact', 'mentoring', 'other']
+const VALID_SUPPORT_STATUSES  = ['active', 'completed', 'discontinued']
 
 function isValidDate(str) {
   if (!str) return false
@@ -39,6 +43,9 @@ export function validateRow(importType, row, context = {}) {
     students: validateStudentRow,
     profiles: validateProfileRow,
     incidents: validateIncidentRow,
+    navigator_referrals:  validateNavigatorReferralRow,
+    navigator_placements: validateNavigatorPlacementRow,
+    navigator_supports:   validateNavigatorSupportRow,
   }
 
   const validator = validators[importType]
@@ -270,6 +277,230 @@ function validateIncidentRow(row, context) {
     location: (row.location || '').trim() || null,
     reported_by: context.staffEmailMap?.[reportedByEmail] || null,
     status: 'submitted',
+  }
+
+  return { valid: errors.length === 0, errors, warnings, parsed }
+}
+
+function validateNavigatorReferralRow(row, context) {
+  const errors = []
+  const warnings = []
+
+  const studentIdNum = (row.student_id_number || '').toString().trim()
+  const referralDate = (row.referral_date || '').trim()
+  const description = (row.description || '').trim()
+  const reportedByEmail = (row.reported_by_email || '').trim().toLowerCase()
+  const campusName = (row.campus_name || '').trim()
+  const status = (row.status || 'pending').toLowerCase().trim()
+  const offenseCode = (row.offense_code || '').trim()
+  const location = (row.location || '').trim()
+
+  let studentId = null
+  if (!studentIdNum) {
+    errors.push('Student ID is required')
+  } else {
+    studentId = context.studentIdMap?.[studentIdNum]
+    if (!studentId) errors.push(`Student "${studentIdNum}" not found`)
+  }
+
+  if (!referralDate) {
+    errors.push('Referral date is required')
+  } else if (!isValidDate(referralDate)) {
+    errors.push('Invalid referral date (use YYYY-MM-DD)')
+  } else if (isFutureDate(referralDate)) {
+    errors.push('Referral date cannot be in the future')
+  }
+
+  if (!description) errors.push('Description is required')
+
+  let reportedBy = null
+  if (!reportedByEmail) {
+    errors.push('Reported by email is required')
+  } else {
+    reportedBy = context.staffEmailMap?.[reportedByEmail]
+    if (!reportedBy) errors.push(`Staff member "${reportedByEmail}" not found`)
+  }
+
+  let campusId = null
+  if (!campusName) {
+    errors.push('Campus name is required')
+  } else {
+    campusId = context.campusMap?.[campusName.toLowerCase()]
+    if (!campusId) errors.push(`Campus "${campusName}" not found`)
+  }
+
+  if (status && !VALID_REFERRAL_STATUSES.includes(status)) {
+    errors.push(`Status must be one of: ${VALID_REFERRAL_STATUSES.join(', ')}`)
+  }
+
+  let offenseCodeId = null
+  if (offenseCode) {
+    offenseCodeId = context.offenseCodeMap?.[offenseCode.toUpperCase()]
+    if (!offenseCodeId) warnings.push(`Offense code "${offenseCode}" not found — field will be left blank`)
+  }
+
+  const parsed = {
+    student_id: studentId,
+    campus_id: campusId,
+    reported_by: reportedBy,
+    referral_date: referralDate,
+    description,
+    status: VALID_REFERRAL_STATUSES.includes(status) ? status : 'pending',
+    offense_code_id: offenseCodeId,
+    location: location || null,
+  }
+
+  return { valid: errors.length === 0, errors, warnings, parsed }
+}
+
+function validateNavigatorPlacementRow(row, context) {
+  const errors = []
+  const warnings = []
+
+  const studentIdNum = (row.student_id_number || '').toString().trim()
+  const placementType = (row.placement_type || '').toLowerCase().trim()
+  const startDate = (row.start_date || '').trim()
+  const endDate = (row.end_date || '').trim()
+  const assignedByEmail = (row.assigned_by_email || '').trim().toLowerCase()
+  const campusName = (row.campus_name || '').trim()
+  const daysStr = (row.days || '').toString().trim()
+  const location = (row.location || '').trim()
+  const reason = (row.reason || '').trim()
+
+  let studentId = null
+  if (!studentIdNum) {
+    errors.push('Student ID is required')
+  } else {
+    studentId = context.studentIdMap?.[studentIdNum]
+    if (!studentId) errors.push(`Student "${studentIdNum}" not found`)
+  }
+
+  if (!placementType || !VALID_PLACEMENT_TYPES.includes(placementType)) {
+    errors.push(`Placement type must be one of: ${VALID_PLACEMENT_TYPES.join(', ')}`)
+  }
+
+  if (!startDate) {
+    errors.push('Start date is required')
+  } else if (!isValidDate(startDate)) {
+    errors.push('Invalid start date (use YYYY-MM-DD)')
+  }
+
+  if (endDate) {
+    if (!isValidDate(endDate)) {
+      errors.push('Invalid end date (use YYYY-MM-DD)')
+    } else if (startDate && isValidDate(startDate) && new Date(endDate) < new Date(startDate)) {
+      errors.push('End date cannot be before start date')
+    }
+  }
+
+  let assignedBy = null
+  if (!assignedByEmail) {
+    errors.push('Assigned by email is required')
+  } else {
+    assignedBy = context.staffEmailMap?.[assignedByEmail]
+    if (!assignedBy) errors.push(`Staff member "${assignedByEmail}" not found`)
+  }
+
+  let campusId = null
+  if (!campusName) {
+    errors.push('Campus name is required')
+  } else {
+    campusId = context.campusMap?.[campusName.toLowerCase()]
+    if (!campusId) errors.push(`Campus "${campusName}" not found`)
+  }
+
+  let days = null
+  if (daysStr) {
+    days = parseInt(daysStr, 10)
+    if (isNaN(days) || days < 1) {
+      errors.push('Days must be a positive integer')
+      days = null
+    }
+  }
+
+  const parsed = {
+    student_id: studentId,
+    campus_id: campusId,
+    placement_type: VALID_PLACEMENT_TYPES.includes(placementType) ? placementType : null,
+    start_date: startDate || null,
+    end_date: endDate || null,
+    assigned_by: assignedBy,
+    days,
+    location: location || null,
+    reason: reason || null,
+  }
+
+  return { valid: errors.length === 0, errors, warnings, parsed }
+}
+
+function validateNavigatorSupportRow(row, context) {
+  const errors = []
+  const warnings = []
+
+  const studentIdNum = (row.student_id_number || '').toString().trim()
+  const supportType = (row.support_type || '').toLowerCase().trim()
+  const startDate = (row.start_date || '').trim()
+  const endDate = (row.end_date || '').trim()
+  const assignedByEmail = (row.assigned_by_email || '').trim().toLowerCase()
+  const campusName = (row.campus_name || '').trim()
+  const status = (row.status || 'active').toLowerCase().trim()
+  const assignedToEmail = (row.assigned_to_email || '').trim().toLowerCase()
+  const notes = (row.notes || '').trim()
+
+  let studentId = null
+  if (!studentIdNum) {
+    errors.push('Student ID is required')
+  } else {
+    studentId = context.studentIdMap?.[studentIdNum]
+    if (!studentId) errors.push(`Student "${studentIdNum}" not found`)
+  }
+
+  if (!supportType || !VALID_SUPPORT_TYPES.includes(supportType)) {
+    errors.push(`Support type must be one of: ${VALID_SUPPORT_TYPES.join(', ')}`)
+  }
+
+  if (!startDate) {
+    errors.push('Start date is required')
+  } else if (!isValidDate(startDate)) {
+    errors.push('Invalid start date (use YYYY-MM-DD)')
+  }
+
+  let assignedBy = null
+  if (!assignedByEmail) {
+    errors.push('Assigned by email is required')
+  } else {
+    assignedBy = context.staffEmailMap?.[assignedByEmail]
+    if (!assignedBy) errors.push(`Staff member "${assignedByEmail}" not found`)
+  }
+
+  let campusId = null
+  if (!campusName) {
+    errors.push('Campus name is required')
+  } else {
+    campusId = context.campusMap?.[campusName.toLowerCase()]
+    if (!campusId) errors.push(`Campus "${campusName}" not found`)
+  }
+
+  if (status && !VALID_SUPPORT_STATUSES.includes(status)) {
+    errors.push(`Status must be one of: ${VALID_SUPPORT_STATUSES.join(', ')}`)
+  }
+
+  let assignedTo = null
+  if (assignedToEmail) {
+    assignedTo = context.staffEmailMap?.[assignedToEmail]
+    if (!assignedTo) warnings.push(`Staff member "${assignedToEmail}" not found — assigned_to will be left blank`)
+  }
+
+  const parsed = {
+    student_id: studentId,
+    campus_id: campusId,
+    support_type: VALID_SUPPORT_TYPES.includes(supportType) ? supportType : null,
+    start_date: startDate || null,
+    end_date: endDate || null,
+    assigned_by: assignedBy,
+    assigned_to: assignedTo,
+    status: VALID_SUPPORT_STATUSES.includes(status) ? status : 'active',
+    notes: notes || null,
   }
 
   return { valid: errors.length === 0, errors, warnings, parsed }
