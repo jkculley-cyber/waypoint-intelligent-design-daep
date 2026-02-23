@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-22 (Session I — Pricing Calculator + Compliance Whitepaper)
+> Last updated: 2026-02-23 (Session J — Cloudflare Pages deployment fix)
 
 ---
 
@@ -10,7 +10,7 @@
 - **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML in `clearpath-site/`)
 - **Marketing site features:** All 3 products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. **Interactive pricing calculator** (enrollment slider 0–200k, tier toggle, product checkboxes, live bundle discount badge). **Free Compliance Checklist** lead magnet card linking to `/whitepaper.html`. Pricing tags visible. Google Slides embed (DAEP deck) in Waypoint card. SEO meta/sitemap/robots.txt. Cloudflare Web Analytics auto-injected via Pages dashboard.
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
-- **Hosting:** Cloudflare Pages — `waypoint` project (app), `clearpath-site` project (marketing site)
+- **Hosting:** Cloudflare Pages — `waypoint` project (app), `cpeg-site` project (marketing site, previously `clearpath-site` — renamed due to name conflict with another CF user)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
 - **Migrations applied:** 001–043 (production). All migrations applied.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -96,7 +96,7 @@
 6. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
 8. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
 9. **First pilot district** — not yet contracted. Product is sales-ready.
-10. **Cloudflare Pages deploy for marketing site** — Code is pushed to GitHub (`clearpath-site/` commits `22dd4ea`, `bada4eb`, `7f1b8ff`). If site is not updating, the CF Pages project may be set to Direct Upload rather than Git integration. Check Cloudflare dashboard: Pages → clearpathedgroup project → Settings → check if GitHub repo is connected. If Direct Upload, either switch to Git or manually upload `clearpath-site/index.html` and `clearpath-site/whitepaper.html`.
+10. **Marketing site pending Cloudflare provisioning** — New Pages project `cpeg-site` was created via Direct Upload API. Latest deployment (`119a417d`) reports success but `cpeg-site.pages.dev` still returns 500 — new project edge routing needs time to provision (typically a few hours). Custom domain `clearpathedgroup.com` is wired (CNAME → cpeg-site.pages.dev, proxied) but stuck in "error" state due to Let's Encrypt SSL rate limit from multiple attempts. **Rate limit expires ~09:32 UTC Feb 24.** Pages will auto-retry after expiry — no manual action needed. Deploy future changes with `node deploy-clearpath.mjs` from project root.
 
 ---
 
