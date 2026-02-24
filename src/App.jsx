@@ -18,7 +18,12 @@ import NavigatorReportsPage from './pages/navigator/NavigatorReportsPage'
 import NavigatorGoalsPage from './pages/navigator/NavigatorGoalsPage'
 import NavigatorImportPage from './pages/navigator/NavigatorImportPage'
 
-// Origins pages
+// Origins family portal (standalone — no AppShell)
+import OriginsFamilyEntryPage from './pages/origins/portal/OriginsFamilyEntryPage'
+import OriginsStudentPortalPage from './pages/origins/portal/OriginsStudentPortalPage'
+import OriginsParentPortalPage from './pages/origins/portal/OriginsParentPortalPage'
+
+// Origins staff pages
 import OriginsDashboardPage from './pages/origins/OriginsDashboardPage'
 import OriginsResponseMomentsPage from './pages/origins/OriginsResponseMomentsPage'
 import OriginsReplayToolPage from './pages/origins/OriginsReplayToolPage'
@@ -187,6 +192,11 @@ function App() {
             <Route path="/parent/incidents/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentIncidentViewPage /></RequireTier></RequireRole>} />
             <Route path="/parent/plans/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentPlanViewPage /></RequireTier></RequireRole>} />
           </Route>
+
+          {/* Origins Family Portal — standalone, no auth required */}
+          <Route path="/family" element={<OriginsFamilyEntryPage />} />
+          <Route path="/family/student" element={<OriginsStudentPortalPage />} />
+          <Route path="/family/parent" element={<OriginsParentPortalPage />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
