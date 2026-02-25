@@ -192,6 +192,11 @@ async function run() {
   // 3. Clean up previous approval flow seed data
   // =============================================
   console.log('Cleaning up previous approval flow data...');
+  // Delete separation orders for seeded incidents
+  await q(`DELETE FROM incident_separations WHERE district_id = $1
+    AND incident_id IN (SELECT id FROM incidents WHERE notes LIKE '%[APPROVAL_FLOW_SEED]%')`, [DISTRICT_ID]);
+  // Delete orientation-type alerts created by previous seed runs
+  await q(`DELETE FROM alerts WHERE district_id = $1 AND trigger_type IN ('orientation_missed', 'placement_not_started')`, [DISTRICT_ID]);
   // Delete scheduling records first (FK to incidents)
   await q('DELETE FROM daep_placement_scheduling WHERE district_id = $1', [DISTRICT_ID]);
   // Delete approval steps and chains
@@ -261,14 +266,18 @@ async function run() {
     `, s);
   }
 
-  // Create scheduling record (approved → orientation pending)
-  await q(`
+  // Create scheduling record — INSERT as pending, then UPDATE to missed so trigger fires
+  const { rows: [schedA] } = await q(`
     INSERT INTO daep_placement_scheduling (district_id, incident_id, student_id,
-      ard_required, ard_status, orientation_status, orientation_scheduled_date)
-    VALUES ($1, $2, $3, false, 'pending', 'scheduled', '2026-01-08')
+      ard_required, ard_status, orientation_status)
+    VALUES ($1, $2, $3, false, 'pending', 'pending')
+    RETURNING id
   `, [DISTRICT_ID, incA.id, david.id]);
+  await q(`UPDATE daep_placement_scheduling SET orientation_status='scheduled', orientation_scheduled_date='2026-01-08' WHERE id=$1`, [schedA.id]);
+  // UPDATE to 'missed' fires trg_orientation_missed_alert → creates orientation_missed alert
+  await q(`UPDATE daep_placement_scheduling SET orientation_status='missed' WHERE id=$1`, [schedA.id]);
 
-  console.log('  ✓ Scenario A: David Nguyen — FULLY APPROVED (6/6 steps), orientation scheduled');
+  console.log('  ✓ Scenario A: David Nguyen — FULLY APPROVED (6/6 steps), orientation MISSED (alert created)');
 
   // ---- SCENARIO B: Waiting at Step 3 (SPED review) — SPED student ----
   // Tyler Williams (LS-10003, SPED ED)
@@ -565,15 +574,43 @@ async function run() {
     `, s);
   }
 
-  // Scheduling — orientation completed
-  await q(`
+  // Scheduling — INSERT pending, UPDATE to scheduled, UPDATE to completed so trigger fires
+  const { rows: [schedH] } = await q(`
     INSERT INTO daep_placement_scheduling (district_id, incident_id, student_id,
-      ard_required, orientation_status, orientation_scheduled_date, orientation_completed_date)
-    VALUES ($1, $2, $3, false, 'completed', '2025-12-16', '2025-12-16')
+      ard_required, orientation_status)
+    VALUES ($1, $2, $3, false, 'pending')
+    RETURNING id
   `, [DISTRICT_ID, incH.id, marcus.id]);
+  await q(`UPDATE daep_placement_scheduling SET orientation_status='scheduled', orientation_scheduled_date='2025-12-16' WHERE id=$1`, [schedH.id]);
+  // UPDATE to 'completed' fires trg_placement_not_started_alert → creates placement_not_started alert
+  await q(`UPDATE daep_placement_scheduling SET orientation_status='completed', orientation_completed_date='2025-12-16' WHERE id=$1`, [schedH.id]);
 
-  console.log('  ✓ Scenario H: Marcus Johnson — APPROVED, orientation completed, ready for activation');
+  console.log('  ✓ Scenario H: Marcus Johnson — APPROVED, orientation COMPLETED, awaiting kiosk check-in (alert created)');
 
+  console.log('');
+
+  // =============================================
+  // 5b. Separation orders
+  // =============================================
+  console.log('\nAdding separation orders...');
+
+  // Marcus Johnson (H, fighting) ↔ Tyler Williams (B, fighting SPED)
+  await q(`
+    INSERT INTO incident_separations (district_id, incident_id, other_student_id, notes, created_by)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [DISTRICT_ID, incH.id, tyler.id,
+    'Do not allow contact in hallways, cafeteria, or common areas. Students involved in prior altercation.',
+    ADMIN_USER_ID]);
+
+  // Tyler Williams (B, fighting) ↔ Marcus Johnson (H)
+  await q(`
+    INSERT INTO incident_separations (district_id, incident_id, other_student_id, notes, created_by)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [DISTRICT_ID, incB.id, marcus.id,
+    'Keep separated pending MDR completion and DAEP placement. No shared classes or common spaces.',
+    ADMIN_USER_ID]);
+
+  console.log('  ✓ Separation: Marcus Johnson ↔ Tyler Williams (mutual, both incidents)');
   console.log('');
 
   // =============================================
@@ -595,9 +632,15 @@ async function run() {
   const { rows: chainCount } = await q('SELECT COUNT(*) as c FROM daep_approval_chains WHERE district_id = $1', [DISTRICT_ID]);
   const { rows: stepCount } = await q('SELECT COUNT(*) as c FROM daep_approval_steps WHERE district_id = $1', [DISTRICT_ID]);
   const { rows: schedCount } = await q('SELECT COUNT(*) as c FROM daep_placement_scheduling WHERE district_id = $1', [DISTRICT_ID]);
-  console.log(`  Approval chains: ${chainCount[0].c}`);
-  console.log(`  Approval steps:  ${stepCount[0].c}`);
-  console.log(`  Scheduling records: ${schedCount[0].c}`);
+  const { rows: alertCount } = await q(`SELECT trigger_type, COUNT(*) as c FROM alerts WHERE district_id = $1 AND trigger_type IN ('orientation_missed','placement_not_started') GROUP BY trigger_type`, [DISTRICT_ID]);
+  const { rows: sepCount } = await q('SELECT COUNT(*) as c FROM incident_separations WHERE district_id = $1', [DISTRICT_ID]);
+  console.log(`  Approval chains:     ${chainCount[0].c}`);
+  console.log(`  Approval steps:      ${stepCount[0].c}`);
+  console.log(`  Scheduling records:  ${schedCount[0].c}`);
+  console.log(`  Separation orders:   ${sepCount[0].c}`);
+  for (const r of alertCount) {
+    console.log(`  Alert [${r.trigger_type}]: ${r.c}`);
+  }
 
   await client.end();
 
@@ -605,14 +648,14 @@ async function run() {
   console.log('  APPROVAL FLOW DEMO DATA CREATED');
   console.log('========================================\n');
   console.log('  SCENARIOS:');
-  console.log('  A) David Nguyen      — Fully Approved (6/6), orientation scheduled');
-  console.log('  B) Tyler Williams    — Pending at Step 3 (SPED Coordinator) [SPED]');
+  console.log('  A) David Nguyen      — Approved (6/6), orientation MISSED → orientation_missed alert');
+  console.log('  B) Tyler Williams    — Pending at Step 3 (SPED Coordinator) [SPED] + SEP order');
   console.log('  C) Aaliyah Brown     — Pending at Step 6 (Director) [504]');
-  console.log('  D) Sofia Garcia      — Denied at Step 2 (Counselor) [ELL]');
-  console.log('  E) Carlos Hernandez  — Returned by SSS for revision [ELL]');
+  console.log('  D) Sofia Garcia      — DENIED at Step 2 (Counselor) [ELL] → shows on campus dashboard');
+  console.log('  E) Carlos Hernandez  — RETURNED by SSS for revision [ELL] → shows on campus dashboard');
   console.log('  F) Emily Martinez    — Just submitted, Step 1 (CBC) [SPED]');
   console.log('  G) DeShawn Jackson   — Approved, ARD scheduled, orientation pending [SPED]');
-  console.log('  H) Marcus Johnson    — Approved, orientation completed');
+  console.log('  H) Marcus Johnson    — Approved, orientation COMPLETED → placement_not_started alert + SEP order');
   console.log('');
   console.log('  NEW STAFF ACCOUNTS (Password: Password123!):');
   console.log('  hs-cbc@lonestar-isd.org           CBC (High School)');
