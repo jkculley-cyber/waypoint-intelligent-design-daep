@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-25 (Session L — Origins scenario player + security hardening)
+> Last updated: 2026-02-25 (Session M — Separation orders bugs fixed, compliance docs, security page)
 
 ---
 
@@ -8,11 +8,11 @@
 - **Development phase:** Pre-pilot — product feature-complete, ready for first district pitch
 - **Waypoint app URL:** `https://waypoint.clearpathedgroup.com` (also `app.clearpathedgroup.com`)
 - **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML in `clearpath-site/`)
-- **Marketing site features:** All 3 products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. **Interactive pricing calculator** (enrollment slider 0–200k, tier toggle, product checkboxes, live bundle discount badge). **Free Compliance Checklist** lead magnet card linking to `/whitepaper.html`. Pricing tags visible. Google Slides embed (DAEP deck) in Waypoint card. SEO meta/sitemap/robots.txt. Cloudflare Web Analytics auto-injected via Pages dashboard.
+- **Marketing site features:** All 3 products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. **Interactive pricing calculator** (enrollment slider 0–200k, tier toggle, product checkboxes, live bundle discount badge). **Free Compliance Checklist** lead magnet card linking to `/whitepaper.html`. Pricing tags visible. Google Slides embed (DAEP deck) in Waypoint card. SEO meta/sitemap/robots.txt. Cloudflare Web Analytics auto-injected via Pages dashboard. **Security & Compliance page** at `/security.html` (FERPA statement, subprocessor list, DPA references).
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via `node deploy-clearpath.mjs` Direct Upload)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–043 + 045 + 046 (production). Migration 044 (Origins schema) NOT YET applied.
+- **Migrations applied:** 001–046 (production). Migration 044 (Origins schema) NOT YET applied.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
 - **Email notifications:** Live via Resend (`onboarding@resend.dev` sandbox sender) — Edge Function deployed
@@ -102,14 +102,16 @@
 ## Pending / Not Done
 
 1. **Apply migration 044** — Origins DB schema. Run via SQL Editor when ready to go live with DB-backed sessions. Then run `node supabase/seed_origins_scenarios.mjs` to seed global scenarios.
-2. **Verify Business Dashboard loads on live site** — log in as `admin@waypoint.internal` → Business Dashboard. Confirm no errors.
-3. **Enable Meridian + Origins for Lone Star ISD** — `/waypoint-admin` → Manage Lone Star ISD → Licensed Products.
-4. **Seed Meridian demo data** — No test SPED students in `meridian_students` yet.
-5. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
-6. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
-7. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
-8. **Supabase Pro upgrade** — required to permanently enable HaveIBeenPwned password protection ($25/month).
-9. **First pilot district** — not yet contracted. Product is sales-ready.
+2. **Migration 047** — Orientation alerts (missed orientation + placement not started DB triggers) + dashboard widgets. See plan file `C:\Users\jkcul\.claude\plans\eager-hatching-kazoo.md`.
+3. **Set up `privacy@clearpathedgroup.com`** — referenced in all compliance docs; must exist before sharing docs with districts.
+4. **Verify Business Dashboard loads on live site** — log in as `admin@waypoint.internal` → Business Dashboard. Confirm no errors.
+5. **Enable Meridian + Origins for Lone Star ISD** — `/waypoint-admin` → Manage Lone Star ISD → Licensed Products.
+6. **Seed Meridian demo data** — No test SPED students in `meridian_students` yet.
+7. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
+8. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
+9. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
+10. **Supabase Pro upgrade** — required to permanently enable HaveIBeenPwned password protection ($25/month).
+11. **First pilot district** — not yet contracted. Product is sales-ready.
 
 ---
 
@@ -133,6 +135,6 @@
 
 ## Don't Touch Right Now
 
-- `supabase/migrations/` — migrations 001–043, 045, 046 applied to production; 044 NOT applied yet; don't re-run earlier ones
+- `supabase/migrations/` — migrations 001–046 applied to production; 044 NOT applied yet; don't re-run earlier ones
 - `.env.local` — credentials live here; do not commit
 - Demo seed data (Lone Star ISD) — keep intact for demos
