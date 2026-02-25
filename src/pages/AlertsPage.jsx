@@ -23,7 +23,7 @@ function SeparationOrdersHotBox() {
   const { grouped, studentCount, loading } = useSeparationOrdersSummary()
   const navigate = useNavigate()
 
-  if (loading || grouped.length === 0) return null
+  if (!loading && grouped.length === 0) return null
 
   return (
     <div className="rounded-xl border border-orange-300 overflow-hidden mb-6">
@@ -49,77 +49,81 @@ function SeparationOrdersHotBox() {
 
       {/* Table */}
       <div className="bg-white overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-gray-500 uppercase border-b border-orange-100">
-              <th className="px-4 py-2">Placed Student</th>
-              <th className="px-4 py-2">ID</th>
-              <th className="px-4 py-2">Campus</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Must Be Kept Away From</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-orange-50">
-            {grouped.map(({ incident, separations }) => {
-              const student = Array.isArray(incident.student) ? incident.student[0] : incident.student
-              const campus = Array.isArray(incident.campus) ? incident.campus[0] : incident.campus
-              return (
-                <tr
-                  key={incident.id}
-                  className="hover:bg-orange-50 cursor-pointer"
-                  onClick={() => navigate(`/incidents/${incident.id}`)}
-                >
-                  <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
-                    {student ? `${student.last_name}, ${student.first_name}` : '—'}
-                    {(student?.is_sped || student?.is_504) && (
-                      <Badge color={student.is_sped ? 'purple' : 'blue'} size="sm" className="ml-1.5">
-                        {student.is_sped ? 'SPED' : '504'}
+        {loading ? (
+          <p className="text-sm text-gray-400 text-center py-4">Loading separation orders...</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 uppercase border-b border-orange-100">
+                <th className="px-4 py-2">Placed Student</th>
+                <th className="px-4 py-2">ID</th>
+                <th className="px-4 py-2">Campus</th>
+                <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Must Be Kept Away From</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-orange-50">
+              {grouped.map(({ incident, separations }) => {
+                const student = Array.isArray(incident.student) ? incident.student[0] : incident.student
+                const campus = Array.isArray(incident.campus) ? incident.campus[0] : incident.campus
+                return (
+                  <tr
+                    key={incident.id}
+                    className="hover:bg-orange-50 cursor-pointer"
+                    onClick={() => navigate(`/incidents/${incident.id}`)}
+                  >
+                    <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
+                      {student ? `${student.last_name}, ${student.first_name}` : '—'}
+                      {(student?.is_sped || student?.is_504) && (
+                        <Badge color={student.is_sped ? 'purple' : 'blue'} size="sm" className="ml-1.5">
+                          {student.is_sped ? 'SPED' : '504'}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                      {student?.student_id_number || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      {campus?.name || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge color={
+                        incident.status === 'active' ? 'indigo' :
+                        incident.status === 'approved' ? 'blue' :
+                        incident.status === 'pending_approval' ? 'yellow' :
+                        'gray'
+                      } size="sm">
+                        {INCIDENT_STATUS_LABELS[incident.status] || incident.status}
                       </Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
-                    {student?.student_id_number || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                    {campus?.name || '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge color={
-                      incident.status === 'active' ? 'indigo' :
-                      incident.status === 'approved' ? 'blue' :
-                      incident.status === 'pending_approval' ? 'yellow' :
-                      'gray'
-                    } size="sm">
-                      {INCIDENT_STATUS_LABELS[incident.status] || incident.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {separations.map(sep => {
-                        const other = sep.other_student
-                        return other ? (
-                          <span
-                            key={sep.id}
-                            className="inline-flex items-center text-xs bg-red-50 border border-red-200 text-red-700 rounded px-1.5 py-0.5"
-                            title={sep.notes || ''}
-                          >
-                            {other.last_name}, {other.first_name}
-                          </span>
-                        ) : null
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-xs text-orange-600 hover:text-orange-800 font-medium">
-                      View / Edit →
-                    </span>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {separations.map(sep => {
+                          const other = sep.other_student
+                          return other ? (
+                            <span
+                              key={sep.id}
+                              className="inline-flex items-center text-xs bg-red-50 border border-red-200 text-red-700 rounded px-1.5 py-0.5"
+                              title={sep.notes || ''}
+                            >
+                              {other.last_name}, {other.first_name}
+                            </span>
+                          ) : null
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs text-orange-600 hover:text-orange-800 font-medium">
+                        View / Edit →
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )
