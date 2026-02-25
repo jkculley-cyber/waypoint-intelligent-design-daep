@@ -111,3 +111,72 @@ export function useStudentSearch(query, districtId) {
 
   return { results, loading }
 }
+
+/**
+ * District-wide summary of all separation orders, grouped by incident.
+ * Used for the hot box on the Alerts page.
+ * FERPA: staff-only — never expose to parent portal.
+ */
+export function useSeparationOrdersSummary() {
+  const [grouped, setGrouped] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+
+  useEffect(() => {
+    if (!districtId) return
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('incident_separations')
+          .select(`
+            id, notes,
+            incident:incidents!incident_separations_incident_id_fkey(
+              id, status,
+              student:students(id, first_name, last_name, student_id_number, grade_level, is_sped, is_504),
+              campus:campuses!campus_id(id, name)
+            ),
+            other_student:students!incident_separations_other_student_id_fkey(
+              id, first_name, last_name, student_id_number, grade_level
+            )
+          `)
+          .eq('district_id', districtId)
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+
+        // Group by incident id
+        const byIncident = {}
+        for (const sep of (data || [])) {
+          const inc = Array.isArray(sep.incident) ? sep.incident[0] : sep.incident
+          if (!inc) continue
+          if (!byIncident[inc.id]) {
+            byIncident[inc.id] = { incident: inc, separations: [] }
+          }
+          byIncident[inc.id].separations.push({
+            id: sep.id,
+            notes: sep.notes,
+            other_student: Array.isArray(sep.other_student) ? sep.other_student[0] : sep.other_student,
+          })
+        }
+
+        setGrouped(Object.values(byIncident))
+      } catch (err) {
+        console.error('Error fetching separation orders summary:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
+  }, [districtId])
+
+  // Count unique placed students with separation orders
+  const studentCount = new Set(
+    grouped.map(g => {
+      const s = Array.isArray(g.incident?.student) ? g.incident.student[0] : g.incident?.student
+      return s?.id
+    }).filter(Boolean)
+  ).size
+
+  return { grouped, studentCount, loading }
+}

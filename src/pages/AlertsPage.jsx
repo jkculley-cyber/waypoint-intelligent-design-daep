@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -7,13 +8,124 @@ import EmptyState from '../components/ui/EmptyState'
 import { PageLoader } from '../components/ui/LoadingSpinner'
 import AlertCard from '../components/alerts/AlertCard'
 import { useAlerts } from '../hooks/useAlerts'
+import { useSeparationOrdersSummary } from '../hooks/useSeparations'
 import { useCampuses } from '../hooks/useCampuses'
 import { useNotifications } from '../contexts/NotificationContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAccessScope } from '../hooks/useAccessScope'
-import { ALERT_TRIGGER_LABELS } from '../lib/constants'
+import { ALERT_TRIGGER_LABELS, INCIDENT_STATUS_LABELS } from '../lib/constants'
 import { exportToPdf, exportToExcel } from '../lib/exportUtils'
 import { formatStudentName, formatDate } from '../lib/utils'
+
+// =================== SEPARATION ORDERS HOT BOX ===================
+
+function SeparationOrdersHotBox() {
+  const { grouped, studentCount, loading } = useSeparationOrdersSummary()
+  const navigate = useNavigate()
+
+  if (loading || grouped.length === 0) return null
+
+  return (
+    <div className="rounded-xl border border-orange-300 overflow-hidden mb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-orange-50 border-b border-orange-200">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-orange-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+          <div>
+            <span className="text-sm font-semibold text-orange-900">
+              Separation Orders
+            </span>
+            <Badge color="orange" size="sm" className="ml-2">{studentCount} student{studentCount !== 1 ? 's' : ''}</Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-orange-600 bg-orange-100 border border-orange-200 rounded px-2 py-0.5 font-medium">
+            🔒 FERPA — Staff Only
+          </span>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 uppercase border-b border-orange-100">
+              <th className="px-4 py-2">Placed Student</th>
+              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">Campus</th>
+              <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Must Be Kept Away From</th>
+              <th className="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-orange-50">
+            {grouped.map(({ incident, separations }) => {
+              const student = Array.isArray(incident.student) ? incident.student[0] : incident.student
+              const campus = Array.isArray(incident.campus) ? incident.campus[0] : incident.campus
+              return (
+                <tr
+                  key={incident.id}
+                  className="hover:bg-orange-50 cursor-pointer"
+                  onClick={() => navigate(`/incidents/${incident.id}`)}
+                >
+                  <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
+                    {student ? `${student.last_name}, ${student.first_name}` : '—'}
+                    {(student?.is_sped || student?.is_504) && (
+                      <Badge color={student.is_sped ? 'purple' : 'blue'} size="sm" className="ml-1.5">
+                        {student.is_sped ? 'SPED' : '504'}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                    {student?.student_id_number || '—'}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    {campus?.name || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge color={
+                      incident.status === 'active' ? 'indigo' :
+                      incident.status === 'approved' ? 'blue' :
+                      incident.status === 'pending_approval' ? 'yellow' :
+                      'gray'
+                    } size="sm">
+                      {INCIDENT_STATUS_LABELS[incident.status] || incident.status}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {separations.map(sep => {
+                        const other = sep.other_student
+                        return other ? (
+                          <span
+                            key={sep.id}
+                            className="inline-flex items-center text-xs bg-red-50 border border-red-200 text-red-700 rounded px-1.5 py-0.5"
+                            title={sep.notes || ''}
+                          >
+                            {other.last_name}, {other.first_name}
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-xs text-orange-600 hover:text-orange-800 font-medium">
+                      View / Edit →
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// =================== MAIN PAGE ===================
 
 export default function AlertsPage() {
   const [levelFilter, setLevelFilter] = useState('')
@@ -93,6 +205,9 @@ export default function AlertsPage() {
       />
 
       <div className="p-3 md:p-6">
+        {/* Separation Orders Hot Box */}
+        <SeparationOrdersHotBox />
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="p-4 rounded-xl border bg-red-50 border-red-200">

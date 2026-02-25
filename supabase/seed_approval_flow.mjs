@@ -611,12 +611,22 @@ async function run() {
   // =============================================
   console.log('\nAdding separation orders...');
 
+  const jayden = studentLookup['LS-10007']; // Jayden Smith — 3rd party in group altercation
+
   // Marcus Johnson (H, fighting) ↔ Tyler Williams (B, fighting SPED)
   await q(`
     INSERT INTO incident_separations (district_id, incident_id, other_student_id, notes, created_by)
     VALUES ($1, $2, $3, $4, $5)
   `, [DISTRICT_ID, incH.id, tyler.id,
     'Do not allow contact in hallways, cafeteria, or common areas. Students involved in prior altercation.',
+    ADMIN_USER_ID]);
+
+  // Marcus Johnson (H) ↔ Jayden Smith (3rd party in brawl)
+  await q(`
+    INSERT INTO incident_separations (district_id, incident_id, other_student_id, notes, created_by)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [DISTRICT_ID, incH.id, jayden.id,
+    'Student was present during the altercation and escalated the situation. Campus must ensure no contact in hallways, cafeteria, or athletics.',
     ADMIN_USER_ID]);
 
   // Tyler Williams (B, fighting) ↔ Marcus Johnson (H)
@@ -627,7 +637,15 @@ async function run() {
     'Keep separated pending MDR completion and DAEP placement. No shared classes or common spaces.',
     ADMIN_USER_ID]);
 
-  console.log('  ✓ Separation: Marcus Johnson ↔ Tyler Williams (mutual, both incidents)');
+  // Tyler Williams (B) ↔ Jayden Smith (3rd party)
+  await q(`
+    INSERT INTO incident_separations (district_id, incident_id, other_student_id, notes, created_by)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [DISTRICT_ID, incB.id, jayden.id,
+    'Third party involved in the same group altercation. No shared classes, lunch period, or extracurricular activities until further notice.',
+    ADMIN_USER_ID]);
+
+  console.log('  ✓ Separations: Marcus Johnson ↔ Tyler Williams ↔ Jayden Smith (group altercation, all 3 incidents)');
   console.log('');
 
   // =============================================
