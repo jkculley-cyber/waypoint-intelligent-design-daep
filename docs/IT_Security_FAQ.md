@@ -23,10 +23,9 @@ Waypoint is a multi-tenant SaaS application. Multiple districts share the same u
 |-------------|------|----------|
 | Amazon Web Services (AWS) | Cloud infrastructure, physical servers, storage | US East (N. Virginia) |
 | Supabase | Managed PostgreSQL database, authentication, file storage | US East (N. Virginia) via AWS |
-| Netlify | Frontend static hosting (no student data stored here) | CDN — US primary |
-| Cloudflare | DDoS protection, CDN layer (Supabase-managed) | US primary |
+| Cloudflare Pages | Frontend static hosting — no student data stored here | CDN — US primary |
 
-No student data is stored by Netlify or Cloudflare. They serve the application files only. All student records and documents reside exclusively in the Supabase/AWS environment.
+No student data is stored by Cloudflare Pages. It serves the application files only. All student records and documents reside exclusively in the Supabase/AWS environment.
 
 ---
 
