@@ -25,6 +25,8 @@ export default function OrientationSchedulePage() {
     for (const o of orientations) {
       if (o.orientation_status === 'pending') {
         pending.push(o)
+      } else if (o.orientation_status === 'missed') {
+        missed.push(o)
       } else if (o.orientation_status === 'scheduled') {
         if (o.orientation_scheduled_date && o.orientation_scheduled_date < today) {
           missed.push(o)
