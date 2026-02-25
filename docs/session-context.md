@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-23 (Session K — Mobile responsive layout)
+> Last updated: 2026-02-25 (Session L — Origins scenario player + security hardening)
 
 ---
 
@@ -12,7 +12,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via `node deploy-clearpath.mjs` Direct Upload)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–043 (production). All migrations applied.
+- **Migrations applied:** 001–043 + 045 + 046 (production). Migration 044 (Origins schema) NOT YET applied.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
 - **Email notifications:** Live via Resend (`onboarding@resend.dev` sandbox sender) — Edge Function deployed
@@ -27,6 +27,7 @@
 | Waypoint (DAEP) | Live | Default, all districts |
 | Navigator (ISS/OSS) | Live — migrations 037–042 applied | `hasProduct('navigator')` |
 | Meridian (SPED) | Built — migration 040 applied | `hasProduct('meridian')` |
+| Origins (Family Portal) | Built — migration 044 NOT YET applied | `hasProduct('origins')` + `/family` public |
 
 - Product provisioning: WaypointAdminPage Step 1 has product checkboxes; Manage drawer has product toggle
 - `districts.settings.products` stores the array (JSONB)
@@ -61,11 +62,22 @@
 - Bulk incident export (select checkboxes → Export PDF/Excel)
 - **Navigator module** — referrals, placements, supports, student detail, reports, goals & progress, data import (gated by `hasProduct('navigator')`)
 - **Meridian module (code complete)** — SPED overview dashboard, ARD timelines, student detail, dyslexia/HB3928 tracker, folder readiness, CAP tracker, Waypoint sync, data integration (gated by `hasProduct('meridian')`)
+- **Origins module (code complete)** — 8 staff pages + full family portal: student 7-step scenario player (choose → outcome → reflect → commit → complete), parent view with conversation starters, 18 TEC-aligned global scenarios. Migration 044 NOT yet applied — runs off localStorage until then.
 - **Cloudflare Web Analytics** — auto-injected via Cloudflare Pages dashboard (no code token needed)
 
 ---
 
-## Security Hardening (Done — Migrations 028–039)
+## Origins Family Portal
+- Public portal at `/family` — no auth required
+- Student view: `/family/student` → assigned scenarios → `/family/student/scenario/:id` (7-step player)
+- Parent view: `/family/parent` → reads completed sessions from localStorage, shows conversation starters
+- Scenario library: `src/lib/originsScenarios.js` (18 global scenarios, 8 TEC offense categories)
+- Sessions stored in `localStorage` key `origins_sessions` until migration 044 is applied
+- Staff pages at `/origins/*` gated by `hasProduct('origins')`
+
+---
+
+## Security Hardening (Done — Migrations 028–039, 045–046)
 
 | Migration | What It Fixed |
 |-----------|--------------|
@@ -89,15 +101,15 @@
 
 ## Pending / Not Done
 
-1. **Verify Business Dashboard loads on live site** — log in as `admin@waypoint.internal` → Business Dashboard. If red error shows, paste the message. (Deployed end of last session — may just need verification.)
-2. **Enable Meridian for Lone Star ISD** — `/waypoint-admin` → Manage Lone Star ISD → Licensed Products → check Meridian → Save Products
-3. **Seed Meridian demo data** — No test SPED students in `meridian_students` yet
-4. ~~**Build pricing page**~~ — **DONE.** Interactive calculator live on clearpath-site with 8 bands (Micro → Metro, Enterprise for 200k+), tier toggle, product checkboxes, bundle discounts.
+1. **Apply migration 044** — Origins DB schema. Run via SQL Editor when ready to go live with DB-backed sessions. Then run `node supabase/seed_origins_scenarios.mjs` to seed global scenarios.
+2. **Verify Business Dashboard loads on live site** — log in as `admin@waypoint.internal` → Business Dashboard. Confirm no errors.
+3. **Enable Meridian + Origins for Lone Star ISD** — `/waypoint-admin` → Manage Lone Star ISD → Licensed Products.
+4. **Seed Meridian demo data** — No test SPED students in `meridian_students` yet.
 5. **Resend sender domain** — currently using `onboarding@resend.dev` sandbox. Verify `waypointdaep.com` in Resend → Domains, then update `FROM_EMAIL` in `supabase/functions/send-notification/index.ts` and redeploy.
 6. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
-8. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
+7. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
+8. **Supabase Pro upgrade** — required to permanently enable HaveIBeenPwned password protection ($25/month).
 9. **First pilot district** — not yet contracted. Product is sales-ready.
-10. **Marketing site pending Cloudflare provisioning** — New Pages project `cpeg-site` was created via Direct Upload API. Latest deployment (`119a417d`) reports success but `cpeg-site.pages.dev` still returns 500 — new project edge routing needs time to provision (typically a few hours). Custom domain `clearpathedgroup.com` is wired (CNAME → cpeg-site.pages.dev, proxied) but stuck in "error" state due to Let's Encrypt SSL rate limit from multiple attempts. **Rate limit expires ~09:32 UTC Feb 24.** Pages will auto-retry after expiry — no manual action needed. Deploy future changes with `node deploy-clearpath.mjs` from project root.
 
 ---
 
@@ -121,6 +133,6 @@
 
 ## Don't Touch Right Now
 
-- `supabase/migrations/` — migrations 001–043 all applied to production; don't re-run earlier ones
+- `supabase/migrations/` — migrations 001–043, 045, 046 applied to production; 044 NOT applied yet; don't re-run earlier ones
 - `.env.local` — credentials live here; do not commit
 - Demo seed data (Lone Star ISD) — keep intact for demos
