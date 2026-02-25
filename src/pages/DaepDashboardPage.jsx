@@ -14,6 +14,8 @@ import {
   useDaepSubPopulations,
   useDaepDaysActions,
   usePendingApprovals,
+  useMissedOrientations,
+  usePendingPlacementStart,
 } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
@@ -39,6 +41,8 @@ export default function DaepDashboardPage() {
         <SummaryCards />
         <ActiveEnrollmentsTable />
         <ApprovalFlowTable />
+        <MissedOrientationsWidget />
+        <PendingPlacementStartWidget />
         <ScheduledOrientationsTable />
         <ApprovedPlacementsTable />
         <PendingPlacementsTable />
@@ -161,7 +165,10 @@ function ActiveEnrollmentsTable() {
                       <ProgressBar pct={progressPct} />
                     </td>
                     <td className="px-3 py-2">
-                      <StudentFlags student={row.student} />
+                      <StudentFlags
+                        student={row.student}
+                        hasSeparation={Array.isArray(row.incident_separations) ? row.incident_separations.length > 0 : false}
+                      />
                     </td>
                     {canEdit && (
                       <td className="px-3 py-2">
@@ -229,7 +236,7 @@ function ProgressBar({ pct }) {
   )
 }
 
-function StudentFlags({ student }) {
+function StudentFlags({ student, hasSeparation }) {
   if (!student) return null
   const flags = []
   if (student.is_sped) flags.push({ label: 'SPED', color: 'purple' })
@@ -237,12 +244,13 @@ function StudentFlags({ student }) {
   if (student.is_ell) flags.push({ label: 'ELL', color: 'orange' })
   if (student.is_homeless) flags.push({ label: 'HML', color: 'red' })
   if (student.is_foster_care) flags.push({ label: 'FC', color: 'red' })
+  if (hasSeparation) flags.push({ label: 'SEP', color: 'orange', title: 'Separation order on file' })
   if (!flags.length) return null
 
   return (
     <div className="flex flex-wrap gap-1">
       {flags.map(f => (
-        <Badge key={f.label} color={f.color} size="sm">{f.label}</Badge>
+        <Badge key={f.label} color={f.color} size="sm" title={f.title}>{f.label}</Badge>
       ))}
     </div>
   )
@@ -355,6 +363,162 @@ function ApprovalFlowTable() {
         </div>
       )}
     </Card>
+  )
+}
+
+// =================== MISSED ORIENTATIONS WIDGET ===================
+
+function MissedOrientationsWidget() {
+  const { missed, loading } = useMissedOrientations()
+  const navigate = useNavigate()
+
+  if (loading || missed.length === 0) return null
+
+  return (
+    <div className="rounded-xl border border-red-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-red-600">
+        <div className="flex items-center gap-3">
+          <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-white">Missed Orientations ({missed.length})</p>
+            <p className="text-xs text-red-100">Scheduled orientation date passed — reschedule required</p>
+          </div>
+        </div>
+        <Link to="/daep/orientations" className="text-xs text-red-100 hover:text-white underline">
+          View All Orientations
+        </Link>
+      </div>
+      <div className="bg-red-50 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 uppercase border-b border-red-200">
+              <th className="px-4 py-2">Student</th>
+              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">Scheduled Date</th>
+              <th className="px-4 py-2">Days Overdue</th>
+              <th className="px-4 py-2">Campus</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-red-100">
+            {missed.map(row => {
+              const inc = Array.isArray(row.incident) ? row.incident[0] : row.incident
+              const daysOverdue = row.orientation_scheduled_date
+                ? Math.max(0, Math.floor((Date.now() - new Date(row.orientation_scheduled_date + 'T00:00:00').getTime()) / 86400000))
+                : null
+              return (
+                <tr
+                  key={row.id}
+                  className="hover:bg-red-100 cursor-pointer"
+                  onClick={() => inc?.id && navigate(`/incidents/${inc.id}`)}
+                >
+                  <td className="px-4 py-2.5 font-medium text-gray-900 whitespace-nowrap">
+                    {row.student ? `${row.student.last_name}, ${row.student.first_name}` : '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                    {row.student?.student_id_number || '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-red-700 font-medium whitespace-nowrap">
+                    {row.orientation_scheduled_date
+                      ? new Date(row.orientation_scheduled_date + 'T00:00:00').toLocaleDateString('en-US', {
+                          weekday: 'short', month: 'short', day: 'numeric',
+                        })
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {daysOverdue != null
+                      ? <Badge color="red" size="sm">{daysOverdue}d overdue</Badge>
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                    {inc?.campus?.name || '—'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// =================== PENDING PLACEMENT START WIDGET ===================
+
+function PendingPlacementStartWidget() {
+  const { pending, loading } = usePendingPlacementStart()
+  const navigate = useNavigate()
+
+  if (loading || pending.length === 0) return null
+
+  return (
+    <div className="rounded-xl border border-amber-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-amber-100 border-b border-amber-200">
+        <div className="flex items-center gap-3">
+          <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Orientation Complete — Awaiting Kiosk Check-In ({pending.length})</p>
+            <p className="text-xs text-amber-600">These students completed orientation but have not signed in on the daily check-in kiosk.</p>
+          </div>
+        </div>
+        <Link to="/daep/orientations" className="text-xs text-amber-600 hover:text-amber-800 underline">
+          View All Orientations
+        </Link>
+      </div>
+      <div className="bg-amber-50 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 uppercase border-b border-amber-200">
+              <th className="px-4 py-2">Student</th>
+              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">Orientation Completed</th>
+              <th className="px-4 py-2">Days Since</th>
+              <th className="px-4 py-2">Campus</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-amber-100">
+            {pending.map(row => {
+              const inc = Array.isArray(row.incident) ? row.incident[0] : row.incident
+              const daysSince = row.orientation_completed_date
+                ? Math.max(0, Math.floor((Date.now() - new Date(row.orientation_completed_date + 'T00:00:00').getTime()) / 86400000))
+                : null
+              return (
+                <tr
+                  key={row.id}
+                  className="hover:bg-amber-100 cursor-pointer"
+                  onClick={() => inc?.id && navigate(`/incidents/${inc.id}`)}
+                >
+                  <td className="px-4 py-2.5 font-medium text-gray-900 whitespace-nowrap">
+                    {row.student ? `${row.student.last_name}, ${row.student.first_name}` : '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                    {row.student?.student_id_number || '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                    {row.orientation_completed_date
+                      ? new Date(row.orientation_completed_date + 'T00:00:00').toLocaleDateString('en-US', {
+                          weekday: 'short', month: 'short', day: 'numeric',
+                        })
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {daysSince != null
+                      ? <Badge color={daysSince >= 3 ? 'red' : 'yellow'} size="sm">{daysSince}d</Badge>
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                    {inc?.campus?.name || '—'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }
 

@@ -36,10 +36,15 @@ const ACTION_ITEMS = [
   },
 ]
 
+const ORIENTATION_TRIGGERS = ['orientation_missed', 'placement_not_started']
+
 export default function AlertActionChecklist({ alert, onUpdate }) {
   const { updateActionItem } = useAlertActions()
 
   if (!alert) return null
+
+  // Orientation alerts don't require the SPED behavior checklist
+  if (ORIENTATION_TRIGGERS.includes(alert.trigger_type)) return null
 
   const isResolved = alert.status === 'resolved' || alert.status === 'dismissed'
 

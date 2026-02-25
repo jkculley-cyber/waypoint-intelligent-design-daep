@@ -193,6 +193,80 @@ export default function OrientationSchedulePage() {
           </div>
         ))}
 
+        {/* Section 2B: Awaiting Placement Start */}
+        {!loading && (() => {
+          const awaitingStart = completed.filter(o => {
+            const inc = Array.isArray(o.incident) ? o.incident[0] : o.incident
+            return inc?.status === 'approved'
+          })
+          if (awaitingStart.length === 0) return null
+          return (
+            <div className="rounded-xl border border-amber-200 overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3 bg-amber-100 border-b border-amber-200">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">
+                    Awaiting Placement Start ({awaitingStart.length})
+                  </p>
+                  <p className="text-xs text-amber-600">
+                    Student completed orientation but has not yet signed in at DAEP. Contact campus to confirm start.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-amber-50 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-gray-500 uppercase border-b border-amber-200">
+                      <th className="px-4 py-2">Student</th>
+                      <th className="px-4 py-2">ID</th>
+                      <th className="px-4 py-2">Orientation Completed</th>
+                      <th className="px-4 py-2">Days Since Completion</th>
+                      <th className="px-4 py-2">Home Campus</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-amber-100">
+                    {awaitingStart.map(row => {
+                      const inc = Array.isArray(row.incident) ? row.incident[0] : row.incident
+                      const daysSince = row.orientation_completed_date
+                        ? Math.max(0, Math.floor((Date.now() - new Date(row.orientation_completed_date + 'T00:00:00').getTime()) / 86400000))
+                        : null
+                      return (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-amber-100 cursor-pointer"
+                          onClick={() => inc?.id && navigate(`/incidents/${inc.id}`)}
+                        >
+                          <td className="px-4 py-2.5 font-medium text-gray-900 whitespace-nowrap">
+                            {row.student ? formatStudentName(row.student) : '—'}
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                            {row.student?.student_id_number || '—'}
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                            {row.orientation_completed_date
+                              ? new Date(row.orientation_completed_date + 'T00:00:00').toLocaleDateString('en-US', {
+                                  weekday: 'short', month: 'short', day: 'numeric',
+                                })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-2.5 text-amber-700 font-medium">
+                            {daysSince != null ? `${daysSince}d` : '—'}
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                            {inc?.campus?.name || '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Section 3: Upcoming Scheduled Orientations */}
         {!loading && (
           <Card padding={false}>

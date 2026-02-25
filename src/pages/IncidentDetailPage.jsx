@@ -14,6 +14,7 @@ import PolicyMismatchBanner from '../components/incidents/PolicyMismatchBanner'
 import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
 import PlacementScheduler from '../components/daep/PlacementScheduler'
 import { useIncident, useIncidentActions } from '../hooks/useIncidents'
+import { useSeparations, useStudentSearch } from '../hooks/useSeparations'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
@@ -37,7 +38,7 @@ export default function IncidentDetailPage() {
   const { id } = useParams()
   const { incident, loading, refetch } = useIncident(id)
   const { approveIncident, activateIncident, completeIncident } = useIncidentActions()
-  const { hasRole } = useAuth()
+  const { hasRole, profile, districtId } = useAuth()
 
   // Fetch check-in count for this placement — hooks must be before any early return
   const [daysServed, setDaysServed] = useState(0)
@@ -267,6 +268,14 @@ export default function IncidentDetailPage() {
                 onUpdate={refetch}
               />
             )}
+
+            {/* Separation Orders (staff only, FERPA-guarded) */}
+            {profile?.role !== 'parent' && profile?.role !== 'student' && (
+              <SeparationOrdersSection
+                incidentId={incident.id}
+                districtId={districtId}
+              />
+            )}
           </div>
 
           {/* Sidebar - Right 1/3 */}
@@ -402,6 +411,210 @@ export default function IncidentDetailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// =================== SEPARATION ORDERS ===================
+
+function SeparationOrdersSection({ incidentId, districtId }) {
+  const { separations, loading, addSeparation, removeSeparation } = useSeparations(incidentId)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [removing, setRemoving] = useState(null)
+
+  const handleRemove = async (id) => {
+    setRemoving(id)
+    const { error } = await removeSeparation(id)
+    if (error) toast.error('Failed to remove separation order')
+    setRemoving(null)
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+          <CardTitle>Separation Orders</CardTitle>
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>
+          Add Separation Order
+        </Button>
+      </div>
+
+      <div className="mt-2 p-2.5 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2">
+        <svg className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+        <p className="text-xs text-orange-700">
+          <span className="font-semibold">FERPA:</span> This information is visible to district staff only and is never shared with parents or students.
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-gray-400 py-4 text-center">Loading...</p>
+      ) : separations.length === 0 ? (
+        <p className="text-sm text-gray-400 py-4 text-center">No separation orders on file.</p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {separations.map(sep => {
+            const s = Array.isArray(sep.other_student) ? sep.other_student[0] : sep.other_student
+            const campus = Array.isArray(s?.campus) ? s.campus[0] : s?.campus
+            return (
+              <div key={sep.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {s ? `${s.last_name}, ${s.first_name}` : '—'}
+                    {s?.student_id_number && (
+                      <span className="ml-2 text-xs text-gray-500">#{s.student_id_number}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Grade {s?.grade_level ?? '—'} — {campus?.name || '—'}
+                  </p>
+                  {sep.notes && (
+                    <p className="text-xs text-gray-600 mt-1 italic">{sep.notes}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleRemove(sep.id)}
+                  disabled={removing === sep.id}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+                >
+                  {removing === sep.id ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {modalOpen && (
+        <SeparationSearchModal
+          districtId={districtId}
+          onClose={() => setModalOpen(false)}
+          onSave={async (studentId, notes) => {
+            const { error } = await addSeparation(studentId, notes)
+            if (error) {
+              toast.error('Failed to add separation order')
+            } else {
+              toast.success('Separation order added')
+              setModalOpen(false)
+            }
+          }}
+        />
+      )}
+    </Card>
+  )
+}
+
+function SeparationSearchModal({ districtId, onClose, onSave }) {
+  const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const { results, loading: searching } = useStudentSearch(query, districtId)
+
+  const handleSave = async () => {
+    if (!selected) return
+    setSaving(true)
+    await onSave(selected.id, notes)
+    setSaving(false)
+  }
+
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Add Separation Order"
+      size="md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={!selected}
+            loading={saving}
+          >
+            Save Separation Order
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search Student by Name or ID
+          </label>
+          <input
+            type="text"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setSelected(null) }}
+            placeholder="e.g. Smith or 10234..."
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
+        </div>
+
+        {query.length >= 2 && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+            {searching && (
+              <p className="text-sm text-gray-400 text-center py-3">Searching...</p>
+            )}
+            {!searching && results.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-3">No students found.</p>
+            )}
+            {!searching && results.map(s => {
+              const campus = Array.isArray(s.campus) ? s.campus[0] : s.campus
+              const isSelected = selected?.id === s.id
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelected(s)}
+                  className={`w-full text-left px-3 py-2.5 text-sm border-b border-gray-100 last:border-0 transition-colors ${
+                    isSelected ? 'bg-orange-50 text-orange-900' : 'hover:bg-gray-50 text-gray-900'
+                  }`}
+                >
+                  <span className="font-medium">{s.last_name}, {s.first_name}</span>
+                  <span className="text-gray-500 ml-2 text-xs">
+                    #{s.student_id_number} — Gr {s.grade_level ?? '—'} — {campus?.name || '—'}
+                  </span>
+                  {isSelected && (
+                    <svg className="w-4 h-4 text-orange-500 inline ml-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {selected && (
+          <div className="p-2.5 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
+            Selected: <span className="font-medium">{selected.last_name}, {selected.first_name}</span>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Notes <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <textarea
+            rows={2}
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="e.g. Do not allow contact in hallways or common areas."
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
+        </div>
+
+        <p className="text-xs text-gray-400">
+          FERPA Notice: Separation orders are visible to district staff only and will never be shared with parents or students.
+        </p>
+      </div>
+    </Modal>
   )
 }
 

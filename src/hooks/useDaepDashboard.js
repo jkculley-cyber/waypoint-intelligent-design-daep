@@ -126,7 +126,8 @@ export function useActiveDaepEnrollments() {
           student:students(id, first_name, last_name, middle_name, grade_level, student_id_number,
             is_sped, is_504, is_ell, is_homeless, is_foster_care, campus_id),
           campus:campuses!campus_id(id, name),
-          offense:offense_codes(id, code, title)
+          offense:offense_codes(id, code, title),
+          incident_separations(id)
         `)
         .eq('district_id', districtId)
         .eq('consequence_type', 'daep')
@@ -494,7 +495,7 @@ export function useOrientationSchedule(showPast = false) {
           id, orientation_scheduled_date, orientation_scheduled_time, orientation_status,
           orientation_completed_date, orientation_form_data,
           student:students(id, first_name, last_name, middle_name, student_id_number, grade_level, campus_id),
-          incident:incidents(id, campus_id, campus:campuses!campus_id(id, name))
+          incident:incidents(id, status, campus_id, campus:campuses!campus_id(id, name))
         `)
         .eq('district_id', districtId)
         .order('orientation_scheduled_date', { ascending: true })
@@ -545,6 +546,99 @@ export function useOrientationSchedule(showPast = false) {
   }, [fetchOrientations])
 
   return { orientations, loading, refetch: fetchOrientations }
+}
+
+/**
+ * Missed orientations — orientation_status = 'missed', campus-scoped.
+ */
+export function useMissedOrientations() {
+  const [missed, setMissed] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        let query = supabase
+          .from('daep_placement_scheduling')
+          .select(`
+            id, orientation_scheduled_date, orientation_status,
+            student:students(id, first_name, last_name, student_id_number, grade_level),
+            incident:incidents(id, campus_id, campus:campuses!campus_id(id, name))
+          `)
+          .eq('district_id', districtId)
+          .eq('orientation_status', 'missed')
+          .order('orientation_scheduled_date', { ascending: true })
+
+        query = applyCampusScope(query, scope)
+        const { data, error } = await query
+        if (error) throw error
+        setMissed(data || [])
+      } catch (err) {
+        console.error('Error fetching missed orientations:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetch()
+  }, [districtId, scopeLoading, scope])
+
+  return { missed, loading }
+}
+
+/**
+ * Pending placement start — orientation_status = 'completed' but incident.status = 'approved'.
+ * These students completed orientation but haven't started at DAEP yet.
+ */
+export function usePendingPlacementStart() {
+  const [pending, setPending] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        let query = supabase
+          .from('daep_placement_scheduling')
+          .select(`
+            id, orientation_completed_date, orientation_status,
+            student:students(id, first_name, last_name, student_id_number, grade_level),
+            incident:incidents(id, status, campus_id, campus:campuses!campus_id(id, name))
+          `)
+          .eq('district_id', districtId)
+          .eq('orientation_status', 'completed')
+          .order('orientation_completed_date', { ascending: true })
+
+        query = applyCampusScope(query, scope)
+        const { data, error } = await query
+        if (error) throw error
+
+        // Filter client-side: only those where the linked incident is still 'approved' (not yet active)
+        const filtered = (data || []).filter(o => {
+          const inc = Array.isArray(o.incident) ? o.incident[0] : o.incident
+          return inc?.status === 'approved'
+        })
+        setPending(filtered)
+      } catch (err) {
+        console.error('Error fetching pending placement start:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetch()
+  }, [districtId, scopeLoading, scope])
+
+  return { pending, loading }
 }
 
 /**
