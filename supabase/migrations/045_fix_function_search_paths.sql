@@ -24,8 +24,8 @@ ALTER FUNCTION public.check_repeat_offender()              SET search_path = pub
 ALTER FUNCTION public.fn_create_daep_approval_chain()      SET search_path = public;
 ALTER FUNCTION public.fn_create_daep_scheduling()          SET search_path = public;
 
--- ── Migration 020: District settings update RPC ──────────────────────────────
-ALTER FUNCTION public.update_district_settings(JSONB)      SET search_path = public;
+-- Migration 020: update_district_settings already has SET search_path = public
+-- (search_path was on the line following SECURITY DEFINER — not a false negative)
 
 -- ── Migration 029: Approval chain RPCs (overrides 014 versions) ──────────────
 ALTER FUNCTION public.process_approval_step(UUID, TEXT, TEXT)  SET search_path = public;
