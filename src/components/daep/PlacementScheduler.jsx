@@ -440,6 +440,29 @@ export default function PlacementScheduler({ incidentId, incident, student }) {
             </div>
           )}
 
+          {/* Missed state — show reschedule action */}
+          {scheduling.orientation_status === 'missed' && !rescheduling && (
+            <div className="space-y-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <p className="text-sm text-red-700 font-medium">
+                  Student missed their scheduled orientation
+                  {scheduling.orientation_scheduled_date && (
+                    <> on {new Date(scheduling.orientation_scheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</>
+                  )}.
+                  A new orientation must be scheduled.
+                </p>
+              </div>
+              {canEdit && !ardBlocked && (
+                <button
+                  onClick={() => { setFallbackDate(''); setFallbackTime(''); setRescheduling(true) }}
+                  className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                >
+                  Schedule New Orientation →
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Scheduled state — show booked slot + reschedule + completion date */}
           {scheduling.orientation_status === 'scheduled' && !rescheduling && (
             <div className="space-y-3">
