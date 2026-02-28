@@ -329,6 +329,115 @@ export function useRDAIndicators() {
   , [districtId])
 }
 
+// Campus-level RDA breakdown — auto-derived from existing Meridian data
+export function useCampusRDABreakdown() {
+  const { districtId } = useAuth()
+  const sy = currentSchoolYear()
+
+  return useQuery(async () => {
+    const [campusesRes, deadlinesRes, transitionsRes, folderRes, referralsRes, studentsRes] =
+      await Promise.all([
+        supabase.from('campuses').select('id, name').eq('district_id', districtId).order('name'),
+        supabase.from('meridian_compliance_deadlines').select('campus_id, status').eq('district_id', districtId),
+        supabase.from('meridian_secondary_transitions')
+          .select('student_id, school_year, has_postsecondary_goals, has_transition_assessments, has_transition_services, student_participated, agency_invited, student:meridian_students(campus_id)')
+          .eq('district_id', districtId)
+          .eq('school_year', sy),
+        supabase.from('meridian_student_folder_readiness').select('campus_id, iep_readiness_pct, plan_504_readiness_pct').eq('district_id', districtId),
+        supabase.from('meridian_referrals').select('campus_id, ard_due_date, ard_held_date').eq('district_id', districtId).not('ard_due_date', 'is', null),
+        supabase.from('meridian_students').select('campus_id').eq('district_id', districtId).eq('sped_status', 'eligible'),
+      ])
+
+    const err = campusesRes.error || deadlinesRes.error || transitionsRes.error || folderRes.error || referralsRes.error || studentsRes.error
+    if (err) return { data: null, error: err }
+
+    const campusMap = {}
+    for (const c of (campusesRes.data ?? [])) {
+      campusMap[c.id] = {
+        campus_id: c.id, campus_name: c.name,
+        sped_count: 0,
+        sppi11_ontime: 0, sppi11_total: 0,
+        sppi13_compliant: 0, sppi13_total: 0,
+        folder_scores: [],
+        ard_ontime: 0, ard_total: 0,
+      }
+    }
+
+    for (const s of (studentsRes.data ?? [])) {
+      if (campusMap[s.campus_id]) campusMap[s.campus_id].sped_count++
+    }
+
+    for (const d of (deadlinesRes.data ?? [])) {
+      if (campusMap[d.campus_id]) {
+        campusMap[d.campus_id].sppi11_total++
+        if (d.status !== 'overdue') campusMap[d.campus_id].sppi11_ontime++
+      }
+    }
+
+    for (const t of (transitionsRes.data ?? [])) {
+      const cid = t.student?.campus_id
+      if (cid && campusMap[cid]) {
+        campusMap[cid].sppi13_total++
+        if (t.has_postsecondary_goals && t.has_transition_assessments &&
+            t.has_transition_services && t.student_participated && t.agency_invited) {
+          campusMap[cid].sppi13_compliant++
+        }
+      }
+    }
+
+    for (const f of (folderRes.data ?? [])) {
+      if (campusMap[f.campus_id]) {
+        const score = f.iep_readiness_pct ?? f.plan_504_readiness_pct
+        if (score !== null && score !== undefined) campusMap[f.campus_id].folder_scores.push(score)
+      }
+    }
+
+    for (const r of (referralsRes.data ?? [])) {
+      if (campusMap[r.campus_id]) {
+        campusMap[r.campus_id].ard_total++
+        if (r.ard_held_date && r.ard_held_date <= r.ard_due_date) {
+          campusMap[r.campus_id].ard_ontime++
+        }
+      }
+    }
+
+    const rows = Object.values(campusMap).map(c => ({
+      campus_id:    c.campus_id,
+      campus_name:  c.campus_name,
+      sped_count:   c.sped_count,
+      sppi11_pct:   c.sppi11_total > 0 ? Math.round(c.sppi11_ontime / c.sppi11_total * 100) : null,
+      sppi13_pct:   c.sppi13_total > 0 ? Math.round(c.sppi13_compliant / c.sppi13_total * 100) : null,
+      folder_pct:   c.folder_scores.length > 0 ? Math.round(c.folder_scores.reduce((a, b) => a + b, 0) / c.folder_scores.length) : null,
+      ard_pct:      c.ard_total > 0 ? Math.round(c.ard_ontime / c.ard_total * 100) : null,
+    }))
+
+    // Compute district-wide totals from raw counters
+    const totals = Object.values(campusMap).reduce(
+      (acc, c) => {
+        acc.sped_count   += c.sped_count
+        acc.sppi11_ontime += c.sppi11_ontime;  acc.sppi11_total += c.sppi11_total
+        acc.sppi13_compliant += c.sppi13_compliant; acc.sppi13_total += c.sppi13_total
+        acc.folder_scores.push(...c.folder_scores)
+        acc.ard_ontime += c.ard_ontime;  acc.ard_total += c.ard_total
+        return acc
+      },
+      { sped_count: 0, sppi11_ontime: 0, sppi11_total: 0, sppi13_compliant: 0, sppi13_total: 0, folder_scores: [], ard_ontime: 0, ard_total: 0 }
+    )
+
+    const districtRow = {
+      campus_id:   'district',
+      campus_name: 'District Total',
+      sped_count:  totals.sped_count,
+      sppi11_pct:  totals.sppi11_total > 0 ? Math.round(totals.sppi11_ontime / totals.sppi11_total * 100) : null,
+      sppi13_pct:  totals.sppi13_total > 0 ? Math.round(totals.sppi13_compliant / totals.sppi13_total * 100) : null,
+      folder_pct:  totals.folder_scores.length > 0 ? Math.round(totals.folder_scores.reduce((a, b) => a + b, 0) / totals.folder_scores.length) : null,
+      ard_pct:     totals.ard_total > 0 ? Math.round(totals.ard_ontime / totals.ard_total * 100) : null,
+    }
+
+    return { data: [districtRow, ...rows], error: null }
+  }, [districtId])
+}
+
 export async function upsertTransitionPlan(data) {
   const { error } = await supabase
     .from('meridian_secondary_transitions')
