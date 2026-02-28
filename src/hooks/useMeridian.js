@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -7,6 +7,8 @@ function useQuery(queryFn, deps = []) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [rev, setRev] = useState(0)
+  const refetch = useCallback(() => setRev(r => r + 1), [])
 
   useEffect(() => {
     let cancelled = false
@@ -20,9 +22,9 @@ function useQuery(queryFn, deps = []) {
     })
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [...deps, rev])
 
-  return { data, loading, error }
+  return { data, loading, error, refetch }
 }
 
 // ── Campuses (shared table, scoped by district) ───────────────────────────────
@@ -226,4 +228,69 @@ export function useWaypointLinked() {
       .not('waypoint_student_id', 'is', null)
       .order('last_name')
   , [districtId])
+}
+
+// ── Mutations (async functions, not hooks) ────────────────────────────────────
+
+export async function scheduleARDMeeting({ referralId, ardDueDate, evalCompletedDate }) {
+  const update = { ard_due_date: ardDueDate }
+  if (evalCompletedDate) update.eval_completed_date = evalCompletedDate
+  const { error } = await supabase.from('meridian_referrals').update(update).eq('id', referralId)
+  return { error }
+}
+
+export async function linkToWaypoint({ meridianStudentId, waypointStudentId }) {
+  const { error } = await supabase
+    .from('meridian_students')
+    .update({ waypoint_student_id: waypointStudentId })
+    .eq('id', meridianStudentId)
+  return { error }
+}
+
+export async function markHB3928Reviewed({ planId, studentId }) {
+  const [a, b] = await Promise.all([
+    supabase.from('meridian_plans_504')
+      .update({ hb3928_reviewed: true })
+      .eq('id', planId),
+    supabase.from('meridian_students')
+      .update({ hb3928_review_status: 'complete' })
+      .eq('id', studentId),
+  ])
+  return { error: a.error || b.error }
+}
+
+export async function toggleCAPTask({ taskId, currentStatus }) {
+  const newStatus = currentStatus === 'complete' ? 'pending' : 'complete'
+  const today = new Date().toISOString().split('T')[0]
+  const { error } = await supabase.from('meridian_cap_tasks')
+    .update({ status: newStatus, completed_date: newStatus === 'complete' ? today : null })
+    .eq('id', taskId)
+  return { error }
+}
+
+export async function createCAPFinding({ districtId, campusId, findingNumber, description, legalCitation, systemicDue, childDue, tasks }) {
+  const { data, error } = await supabase.from('meridian_cap_findings').insert({
+    district_id: districtId,
+    campus_id: campusId || null,
+    finding_number: findingNumber,
+    description,
+    legal_citation: legalCitation || null,
+    issued_date: new Date().toISOString().split('T')[0],
+    systemic_correction_due: systemicDue || null,
+    child_correction_due: childDue || null,
+    status: 'open',
+  }).select().single()
+  if (error || !data) return { error: error || new Error('Failed to create finding') }
+  if (tasks?.length) {
+    const { error: taskError } = await supabase.from('meridian_cap_tasks').insert(
+      tasks.filter(t => t.trim()).map(t => ({
+        finding_id: data.id,
+        district_id: districtId,
+        task_label: t.trim(),
+        status: 'pending',
+      }))
+    )
+    if (taskError) return { error: taskError }
+  }
+  return { error: null }
 }

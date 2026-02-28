@@ -232,6 +232,7 @@ export const ALERT_TRIGGERS = {
   SPED_CUMULATIVE_MDR: 'sped_cumulative_mdr',
   ORIENTATION_MISSED: 'orientation_missed',
   PLACEMENT_NOT_STARTED: 'placement_not_started',
+  SPED_ESCALATION: 'sped_escalation',
 }
 
 export const ALERT_TRIGGER_LABELS = {
@@ -243,6 +244,7 @@ export const ALERT_TRIGGER_LABELS = {
   [ALERT_TRIGGERS.SPED_CUMULATIVE_MDR]: 'SPED/504 MDR Required (10+ Cumulative Days)',
   [ALERT_TRIGGERS.ORIENTATION_MISSED]: 'Orientation Date Missed',
   [ALERT_TRIGGERS.PLACEMENT_NOT_STARTED]: 'Orientation Complete — Placement Not Started',
+  [ALERT_TRIGGERS.SPED_ESCALATION]: 'SPED Director Escalation (Meridian)',
 }
 
 // Alert statuses

@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { useDyslexiaStudents } from '../../hooks/useMeridian'
+import toast from 'react-hot-toast'
+import { useDyslexiaStudents, markHB3928Reviewed } from '../../hooks/useMeridian'
+import Modal from '../../components/ui/Modal'
+import Button from '../../components/ui/Button'
 import { Skeleton, StatusBadge, Card, FilterTabs } from './MeridianUI'
 
 const FILTERS = [
@@ -11,7 +14,8 @@ const FILTERS = [
 
 export default function MeridianDyslexiaPage() {
   const [filter, setFilter] = useState('all')
-  const { data: students, loading } = useDyslexiaStudents()
+  const [reviewTarget, setReviewTarget] = useState(null) // { student, plan }
+  const { data: students, loading, refetch } = useDyslexiaStudents()
 
   const pending      = students?.filter(s => s.hb3928_review_status === 'pending').length ?? 0
   const progressDue  = students?.filter(s => s.meridian_plan_504_progress_reports?.some(r => r.status === 'pending')).length ?? 0
@@ -71,7 +75,10 @@ export default function MeridianDyslexiaPage() {
             <strong>Grading period ending</strong> — HB 3928 requires progress reports every grading period for all dyslexia plans.
             {' '}{progressDue} report{progressDue !== 1 ? 's' : ''} outstanding.
           </p>
-          <button className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors whitespace-nowrap">
+          <button
+            onClick={() => toast('Contact case managers directly to submit progress reports.')}
+            className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors whitespace-nowrap"
+          >
             Send Reminders
           </button>
         </div>
@@ -96,9 +103,10 @@ export default function MeridianDyslexiaPage() {
                   </tr>
                 ))
               : filtered.map(s => {
-                  const dysPlan      = s.meridian_plans_504?.find(p => p.is_dyslexia_plan) || s.meridian_plans_504?.[0]
+                  const dysPlan        = s.meridian_plans_504?.find(p => p.is_dyslexia_plan) || s.meridian_plans_504?.[0]
                   const hasProgressDue = s.meridian_plan_504_progress_reports?.some(r => r.status === 'pending')
-                  const mdtVerified  = dysPlan?.mdt_composition_verified ?? false
+                  const mdtVerified    = dysPlan?.mdt_composition_verified ?? false
+                  const needsReview    = s.hb3928_review_status === 'pending'
                   return (
                     <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3.5">
@@ -125,9 +133,16 @@ export default function MeridianDyslexiaPage() {
                         }
                       </td>
                       <td className="px-5 py-3.5">
-                        <button className="text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1 rounded hover:bg-purple-50">
-                          View Plan →
-                        </button>
+                        {needsReview && dysPlan ? (
+                          <button
+                            onClick={() => setReviewTarget({ student: s, plan: dysPlan })}
+                            className="text-xs text-white bg-purple-600 hover:bg-purple-700 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Mark Reviewed
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-300 px-2 py-1">—</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -141,6 +156,61 @@ export default function MeridianDyslexiaPage() {
           </p>
         )}
       </Card>
+
+      {/* HB 3928 Review Modal */}
+      {reviewTarget && (
+        <HB3928ReviewModal
+          open={!!reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          student={reviewTarget.student}
+          plan={reviewTarget.plan}
+          onSaved={() => { refetch(); setReviewTarget(null) }}
+        />
+      )}
     </div>
+  )
+}
+
+// ── HB 3928 Review Modal ──────────────────────────────────────────────────────
+
+function HB3928ReviewModal({ open, onClose, student, plan, onSaved }) {
+  const [saving, setSaving] = useState(false)
+
+  const handleConfirm = async () => {
+    setSaving(true)
+    const { error } = await markHB3928Reviewed({ planId: plan.id, studentId: student.id })
+    setSaving(false)
+    if (error) return toast.error(error.message)
+    toast.success(`HB 3928 review marked complete for ${student.first_name} ${student.last_name}`)
+    onSaved()
+  }
+
+  return (
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Mark HB 3928 Review Complete"
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="primary" onClick={handleConfirm} loading={saving}>Confirm Review</Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <p className="text-sm text-gray-700">
+          Confirm that the HB 3928 dyslexia plan review has been completed for:
+        </p>
+        <div className="px-4 py-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <p className="text-sm font-semibold text-purple-900">{student.first_name} {student.last_name}</p>
+          <p className="text-xs text-purple-600 mt-0.5">Grade {student.grade} · {student.campus?.name}</p>
+        </div>
+        <p className="text-xs text-gray-500">
+          This will update the student's HB 3928 review status to <strong>complete</strong> and mark the 504 plan as reviewed.
+          Ensure the review was conducted by a qualified ARD committee before confirming.
+        </p>
+      </div>
+    </Modal>
   )
 }
