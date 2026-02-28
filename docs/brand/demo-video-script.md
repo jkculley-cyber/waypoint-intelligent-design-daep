@@ -192,120 +192,113 @@
 
 *Each numbered block = one HeyGen slide. All blocks are under 840 characters.*
 *Paste each block separately. Do not combine blocks.*
+*Abbreviations use periods so the avatar reads letters, not words: T.E.A. / I.E.P. / P.E.I.M.S.*
 
 ---
 
-**BLOCK 1 — Hook** *(~55 words / ~340 chars)*
+**BLOCK 1 — The Student** *(~62 words / ~375 chars)*
 
-It's Monday morning.
+Every district in Texas wants the same thing — a student who walks into DAEP and walks out better than when they came in.
 
-A student gets referred to your DAEP campus.
+But between the paperwork, the T.E.A. timelines, the I.E.P. checks, the parent notifications, and the reporting requirements — the work of actually helping that student often gets buried under the administrative weight.
 
-By Friday — your team needs to have documented everything correctly, notified the parents, checked for any IEP or 504 plan, and filed it in a way that would hold up to a TEA audit.
-
-For most Texas districts, that's a spreadsheet, a folder, and a lot of hope.
+Waypoint was built to change that.
 
 ---
 
-**BLOCK 2 — Stakes** *(~50 words / ~310 chars)*
+**BLOCK 2 — What DAEP Should Be** *(~57 words / ~355 chars)*
 
-One missed step can become a federal compliance finding.
+DAEP was never supposed to be a holding room.
 
-But it's not just about paperwork.
+It's a bridge — a structured intervention designed to help a student course-correct before a difficult moment becomes a lost future.
 
-These are kids going through one of the hardest stretches of their school year — and they deserve more than clean documentation. They deserve a real plan to come back stronger.
+But that only works if the adults around them have the time, the tools, and the clear guidance to actually show up for them.
 
-That's exactly why we built Waypoint.
-
----
-
-**BLOCK 3 — Meet Waypoint** *(~50 words / ~320 chars)*
-
-Waypoint is a compliance and student success platform designed specifically for Texas DAEP campuses.
-
-From the moment a student is referred, Waypoint handles every compliance requirement automatically — so your staff can focus on what matters most: building a real path forward for every student.
-
-Here's what that looks like.
+That's the problem we solve.
 
 ---
 
-**BLOCK 4 — Compliance Checklist** *(~50 words / ~315 chars)*
+**BLOCK 3 — Meet Waypoint** *(~52 words / ~320 chars)*
 
-When a new incident is created, Waypoint automatically generates a compliance checklist.
+Waypoint is a student success and compliance platform built specifically for Texas DAEP campuses.
 
-The right questions. The right documentation. The right sequence — all matched to Texas Education Code requirements.
+We handle the compliance automatically — every T.E.A. requirement, every timeline, every notification — so your staff can spend their energy where it actually matters.
 
-Your staff doesn't have to remember what's required.
+On the student in front of them.
 
-Waypoint shows them — and tracks what's been completed.
-
----
-
-**BLOCK 5 — SPED Hard Block** *(~67 words / ~415 chars)*
-
-Here's where Waypoint does something no other platform does.
-
-If the student has an IEP or a 504 plan, the system actually blocks the DAEP placement — until a manifestation determination is complete.
-
-Not a reminder. Not a yellow flag.
-
-A hard stop.
-
-Because a missed manifestation determination isn't just a paperwork error — it's a federal violation.
-
-Waypoint makes sure your team never makes that mistake.
+Here's what that looks like in practice.
 
 ---
 
-**BLOCK 6 — Transition Plans + Reducing Recidivism** *(~65 words / ~400 chars)*
+**BLOCK 4 — Compliance Checklist** *(~47 words / ~295 chars)*
 
-But compliance is just the floor.
+When a new incident is created, Waypoint automatically generates a complete compliance checklist — matched to Texas Education Code requirements.
 
-Once a student is placed, Waypoint builds a personalized transition plan — with behavioral support alternatives, academic interventions, and 30, 60, and 90-day review checkpoints built right in.
+The right steps, in the right order, for every placement.
 
-Your team knows exactly what each student needs, when they need it, and whether it's working.
-
-Because the goal isn't a clean audit. It's a student who doesn't come back.
+Your team doesn't have to remember what's required. Waypoint tracks it — and flags anything that's falling behind.
 
 ---
 
-**BLOCK 7 — DAEP Dashboard** *(~52 words / ~330 chars)*
+**BLOCK 5 — SPED Hard Block** *(~67 words / ~430 chars)*
 
-Your DAEP dashboard gives every administrator a real-time view of every active placement.
+If a student has an I.E.P. or a 504 plan, Waypoint goes further.
 
-Who's been oriented. Who has a behavior review coming up. Who's hitting their goals — and who needs more support before they transition back.
+The system actually blocks the placement until a manifestation determination is complete.
 
-Everything in one place — so no student falls through the cracks.
+Not a reminder. Not a yellow flag. A hard stop.
 
----
+Because these are your most vulnerable students — and a missed manifestation determination isn't just a compliance error. It's a federal violation that can derail a child's entire educational path.
 
-**BLOCK 8 — Parent Portal** *(~43 words / ~270 chars)*
-
-Parents can see exactly what's happening with their child.
-
-Placement details, behavior scores, upcoming review dates — all in a dedicated parent portal.
-
-Transparent communication builds trust.
-
-And it documents that you stayed engaged — not just at the start, but throughout.
+Waypoint makes sure that never happens.
 
 ---
 
-**BLOCK 9 — PEIMS Export** *(~32 words / ~192 chars)*
+**BLOCK 6 — Transition Plans + Recidivism** *(~57 words / ~360 chars)*
 
-When reporting season arrives, Waypoint exports audit-ready PEIMS discipline data with a single click.
+The moment a student is placed, Waypoint builds a personalized transition plan.
 
-No spreadsheet cleanup. No manual coding. Just the file your state submission needs.
+Behavioral support options. Academic interventions. A clear structure for 30, 60, and 90-day reviews — so the student's progress is tracked, not just assumed.
+
+This is how you turn a placement into a turning point. And it's how you reduce the chance they ever come back.
 
 ---
 
-**BLOCK 10 — Close** *(~62 words / ~390 chars)*
+**BLOCK 7 — DAEP Dashboard** *(~46 words / ~252 chars)*
 
-Waypoint was built for Texas school districts — by people who understand TEC Chapter 37, and who believe DAEP should be a turning point, not a revolving door.
+Your DAEP dashboard gives every administrator a live view of every active student.
 
-Our districts spend less time on paperwork and more time building the supports that actually change outcomes.
+Who needs a check-in this week. Who's hitting their behavior goals. Who may need more support before they transition back.
 
-If that sounds like the change your campus needs, we'd love to show you more.
+Everything visible. Nothing falling through the cracks.
+
+---
+
+**BLOCK 8 — Parent Portal** *(~43 words / ~252 chars)*
+
+Parents are kept in the loop through a dedicated portal — placement details, behavior scores, upcoming reviews, all in one place.
+
+Because when families stay engaged, students do better.
+
+And you have a documented record that you never stopped communicating.
+
+---
+
+**BLOCK 9 — P.E.I.M.S. Export** *(~33 words / ~180 chars)*
+
+And when reporting season comes, Waypoint exports audit-ready P.E.I.M.S. discipline data with a single click.
+
+No cleanup. No manual coding. Just the file your T.E.A. submission needs.
+
+---
+
+**BLOCK 10 — Close** *(~63 words / ~400 chars)*
+
+Waypoint was built for the districts that believe DAEP should be a turning point — not a revolving door.
+
+We handle the compliance so your team can focus on what they actually went into education to do.
+
+If that sounds like the platform your campus has been waiting for, we'd love to show you what it looks like for your district.
 
 Visit clearpathedgroup.com to request your free demo.
 
