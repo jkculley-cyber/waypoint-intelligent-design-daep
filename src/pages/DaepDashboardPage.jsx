@@ -16,6 +16,7 @@ import {
   usePendingApprovals,
   useMissedOrientations,
   usePendingPlacementStart,
+  useDaepEnrollmentStats,
 } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
@@ -24,6 +25,7 @@ import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import CapacitySettingsModal from '../components/daep/CapacitySettingsModal'
 import { formatStudentName, formatDate, formatGradeLevel, getSchoolYearLabel } from '../lib/utils'
 import { INCIDENT_STATUS_LABELS, INCIDENT_STATUS_COLORS, SCHEDULING_STATUS_LABELS, SCHEDULING_STATUS_COLORS, ROLE_LABELS } from '../lib/constants'
 import { formatTime12h } from '../lib/orientationUtils'
@@ -31,23 +33,56 @@ import { formatTime12h } from '../lib/orientationUtils'
 const CHART_COLORS = ['#f97316', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 
 export default function DaepDashboardPage() {
+  const [activeTab, setActiveTab] = useState('operations')
+
   return (
     <div>
       <Topbar
         title="DAEP Dashboard"
         subtitle={`${getSchoolYearLabel()} School Year`}
       />
-      <div className="p-6 space-y-6">
-        <SummaryCards />
-        <ActiveEnrollmentsTable />
-        <ApprovalFlowTable />
-        <MissedOrientationsWidget />
-        <PendingPlacementStartWidget />
-        <ScheduledOrientationsTable />
-        <ApprovedPlacementsTable />
-        <PendingPlacementsTable />
-        <SubPopulationCharts />
+      <div className="px-6 pt-4">
+        {/* Tab toggle */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+          {[
+            { key: 'operations', label: 'Live Operations' },
+            { key: 'analytics', label: 'Analytics' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {activeTab === 'operations' && (
+        <div className="p-6 space-y-6">
+          <SummaryCards />
+          <ActiveEnrollmentsTable />
+          <ApprovalFlowTable />
+          <MissedOrientationsWidget />
+          <PendingPlacementStartWidget />
+          <ScheduledOrientationsTable />
+          <ApprovedPlacementsTable />
+          <PendingPlacementsTable />
+          <SubPopulationCharts />
+        </div>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="p-6 space-y-6">
+          <CapacityTrackerWidget />
+          <EnrollmentByGradeTable />
+        </div>
+      )}
     </div>
   )
 }
@@ -976,5 +1011,286 @@ function SubPopulationCharts() {
         </div>
       </div>
     </div>
+  )
+}
+
+// =================== CAPACITY TRACKER WIDGET ===================
+
+function CapacityTrackerWidget() {
+  const { district, districtId, profile } = useAuth()
+  const { stats, loading } = useDaepEnrollmentStats()
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const capacity = district?.settings?.daep_capacity || null
+  const canEdit = ['admin', 'principal', 'waypoint_admin'].includes(profile?.role)
+
+  const occupied = stats?.occupied?.length ?? 0
+  const reserved = stats?.reserved?.length ?? 0
+  const committed = occupied + reserved
+
+  const getCapacityNumbers = () => {
+    if (!capacity) return null
+    if (capacity.mode === 'total') {
+      return { total: capacity.total, middleTotal: null, highTotal: null }
+    }
+    return {
+      total: (capacity.by_level?.middle || 0) + (capacity.by_level?.high || 0),
+      middleTotal: capacity.by_level?.middle || 0,
+      highTotal: capacity.by_level?.high || 0,
+    }
+  }
+
+  const cap = getCapacityNumbers()
+  const overCapacity = cap ? committed > cap.total : false
+
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-orange-600">
+        <p className="text-sm font-semibold text-white">DAEP Seat Capacity</p>
+        {canEdit && (
+          <button
+            onClick={() => setModalOpen(true)}
+            className="text-xs text-orange-100 hover:text-white underline"
+          >
+            {capacity ? 'Edit Capacity' : 'Set Up Capacity'}
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 bg-white">
+        {loading ? (
+          <div className="flex justify-center py-4"><LoadingSpinner /></div>
+        ) : !capacity ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-500">No capacity configured.</p>
+            {canEdit && (
+              <button
+                onClick={() => setModalOpen(true)}
+                className="mt-2 text-sm text-orange-600 hover:underline font-medium"
+              >
+                Set Up Capacity
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Counters */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-orange-600">{occupied}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Occupied (Active)</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-amber-500">{reserved}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Reserved (Approved)</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-700">{committed}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Total Committed</p>
+              </div>
+              <div className="text-center">
+                <p className={`text-2xl font-bold ${overCapacity ? 'text-red-600' : 'text-green-600'}`}>
+                  {cap.total - committed}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Remaining</p>
+              </div>
+            </div>
+
+            {overCapacity && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-xs text-red-700 font-medium">Over capacity — committed seats exceed configured total</p>
+              </div>
+            )}
+
+            {/* Progress bar(s) */}
+            {capacity.mode === 'total' ? (
+              <CapacityBar occupied={occupied} reserved={reserved} total={cap.total} label={`${committed} of ${cap.total} seats committed`} />
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">Middle School (6–8) — {cap.middleTotal} seats</p>
+                  <CapacityBar
+                    occupied={stats?.byLevel?.middle?.occupied ?? 0}
+                    reserved={stats?.byLevel?.middle?.reserved ?? 0}
+                    total={cap.middleTotal}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">High School (9–12) — {cap.highTotal} seats</p>
+                  <CapacityBar
+                    occupied={stats?.byLevel?.high?.occupied ?? 0}
+                    reserved={stats?.byLevel?.high?.reserved ?? 0}
+                    total={cap.highTotal}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {modalOpen && (
+        <CapacitySettingsModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          districtId={districtId}
+          currentCapacity={capacity}
+        />
+      )}
+    </div>
+  )
+}
+
+function CapacityBar({ occupied, reserved, total, label }) {
+  if (!total) return null
+  const occupiedPct = Math.min(100, Math.round((occupied / total) * 100))
+  const reservedPct = Math.min(100 - occupiedPct, Math.round((reserved / total) * 100))
+  return (
+    <div className="space-y-1">
+      <div className="flex h-4 rounded-full overflow-hidden bg-gray-100">
+        <div className="bg-orange-500 transition-all" style={{ width: `${occupiedPct}%` }} title={`Occupied: ${occupied}`} />
+        <div className="bg-amber-400 transition-all" style={{ width: `${reservedPct}%` }} title={`Reserved: ${reserved}`} />
+      </div>
+      {label && <p className="text-xs text-gray-500">{label}</p>}
+    </div>
+  )
+}
+
+// =================== ENROLLMENT BY GRADE TABLE ===================
+
+function gradeLabel(g) {
+  const num = parseInt(g)
+  if (num === -1) return 'Pre-K'
+  if (num === 0) return 'K'
+  return `Grade ${num}`
+}
+
+function gradeLevel(g) {
+  const num = parseInt(g)
+  if (num >= 9 && num <= 12) return 'high'
+  if (num >= 6 && num <= 8) return 'middle'
+  return 'elementary'
+}
+
+function EnrollmentByGradeTable() {
+  const { stats, loading } = useDaepEnrollmentStats()
+
+  if (loading) {
+    return (
+      <Card>
+        <CardTitle>Enrollment by Grade</CardTitle>
+        <div className="flex justify-center py-8"><LoadingSpinner /></div>
+      </Card>
+    )
+  }
+
+  if (!stats || stats.total === 0) {
+    return (
+      <Card>
+        <CardTitle>Enrollment by Grade</CardTitle>
+        <p className="text-sm text-gray-400 text-center py-8">
+          No active or approved DAEP enrollments.
+        </p>
+      </Card>
+    )
+  }
+
+  const sortedGrades = Object.keys(stats.byGrade).sort((a, b) => parseInt(a) - parseInt(b))
+
+  const sections = [
+    { label: 'Elementary', level: 'elementary', grades: sortedGrades.filter(g => gradeLevel(g) === 'elementary') },
+    { label: 'Middle School (6–8)', level: 'middle', grades: sortedGrades.filter(g => gradeLevel(g) === 'middle') },
+    { label: 'High School (9–12)', level: 'high', grades: sortedGrades.filter(g => gradeLevel(g) === 'high') },
+  ].filter(s => s.grades.length > 0)
+
+  const cols = ['Grade', 'Occupied', 'Reserved', 'Total', 'SPED', '504', 'ELL', 'Homeless', 'FC', 'Military', 'Gifted']
+
+  const SubtotalRow = ({ label: rowLabel, counts }) => (
+    <tr className="bg-orange-50 font-semibold text-sm">
+      <td className="px-3 py-2 text-gray-800">{rowLabel}</td>
+      <td className="px-3 py-2 text-center text-orange-700">{counts.occupied}</td>
+      <td className="px-3 py-2 text-center text-amber-600">{counts.reserved}</td>
+      <td className="px-3 py-2 text-center text-gray-800">{counts.total}</td>
+      <td className="px-3 py-2 text-center text-purple-700">{counts.sped}</td>
+      <td className="px-3 py-2 text-center text-blue-700">{counts.is504}</td>
+      <td className="px-3 py-2 text-center text-orange-600">{counts.ell}</td>
+      <td className="px-3 py-2 text-center text-red-600">{counts.homeless}</td>
+      <td className="px-3 py-2 text-center text-red-600">{counts.fosterCare}</td>
+      <td className="px-3 py-2 text-center text-gray-600">{counts.military}</td>
+      <td className="px-3 py-2 text-center text-gray-600">{counts.gifted}</td>
+    </tr>
+  )
+
+  const grand = { total: 0, occupied: 0, reserved: 0, sped: 0, is504: 0, ell: 0, homeless: 0, fosterCare: 0, military: 0, gifted: 0 }
+  Object.values(stats.byGrade).forEach(c => {
+    Object.keys(grand).forEach(k => { grand[k] += c[k] || 0 })
+  })
+
+  return (
+    <Card>
+      <CardTitle>Enrollment by Grade</CardTitle>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100">
+              {cols.map(c => (
+                <th key={c} className="px-3 py-2 text-center first:text-left">{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {sections.flatMap(section => [
+              ...section.grades.map(g => {
+                const c = stats.byGrade[g]
+                return (
+                  <tr key={g} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 text-gray-700">{gradeLabel(g)}</td>
+                    <td className="px-3 py-2 text-center text-orange-600 font-medium">{c.occupied}</td>
+                    <td className="px-3 py-2 text-center text-amber-500 font-medium">{c.reserved}</td>
+                    <td className="px-3 py-2 text-center text-gray-700 font-medium">{c.total}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.sped || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.is504 || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.ell || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.homeless || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.fosterCare || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.military || '—'}</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{c.gifted || '—'}</td>
+                  </tr>
+                )
+              }),
+              <SubtotalRow
+                key={`sub-${section.level}`}
+                label={section.label}
+                counts={stats.byLevel[section.level]}
+              />,
+            ])}
+            <tr className="bg-gray-100 font-bold text-sm border-t-2 border-gray-200">
+              <td className="px-3 py-2 text-gray-900">Grand Total</td>
+              <td className="px-3 py-2 text-center text-orange-700">{grand.occupied}</td>
+              <td className="px-3 py-2 text-center text-amber-600">{grand.reserved}</td>
+              <td className="px-3 py-2 text-center text-gray-900">{grand.total}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.sped}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.is504}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.ell}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.homeless}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.fosterCare}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.military}</td>
+              <td className="px-3 py-2 text-center text-gray-700">{grand.gifted}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500 px-1">
+        <span>FC = Foster Care</span>
+        <span>·</span>
+        <span>Occupied = status active</span>
+        <span>·</span>
+        <span>Reserved = approved, not yet started</span>
+      </div>
+    </Card>
   )
 }

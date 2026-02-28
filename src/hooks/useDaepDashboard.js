@@ -642,6 +642,160 @@ export function usePendingPlacementStart() {
 }
 
 /**
+ * Enrollment stats for active/approved DAEP incidents: by grade, by school level, sub-pop totals.
+ */
+export function useDaepEnrollmentStats() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+
+    const fetchStats = async () => {
+      setLoading(true)
+      try {
+        let query = supabase
+          .from('incidents')
+          .select(`
+            id, status,
+            student:students(id, grade_level, is_sped, is_504, is_ell,
+              is_homeless, is_foster_care, is_military_connected, is_gifted)
+          `)
+          .eq('district_id', districtId)
+          .eq('consequence_type', 'daep')
+          .in('status', ['active', 'approved'])
+
+        query = applyCampusScope(query, scope)
+        const { data, error } = await query
+        if (error) throw error
+
+        const rows = scope.spedOnly
+          ? (data || []).filter(r => isSpedStudent(r.student))
+          : (data || [])
+
+        const occupied = rows.filter(r => r.status === 'active')
+        const reserved = rows.filter(r => r.status === 'approved')
+
+        // Build per-grade breakdown
+        const byGrade = {}
+        rows.forEach(r => {
+          const grade = r.student?.grade_level
+          if (grade == null) return
+          if (!byGrade[grade]) {
+            byGrade[grade] = { total: 0, occupied: 0, reserved: 0, sped: 0, is504: 0, ell: 0, homeless: 0, fosterCare: 0, military: 0, gifted: 0 }
+          }
+          byGrade[grade].total++
+          if (r.status === 'active') byGrade[grade].occupied++
+          if (r.status === 'approved') byGrade[grade].reserved++
+          const s = r.student
+          if (s?.is_sped) byGrade[grade].sped++
+          if (s?.is_504) byGrade[grade].is504++
+          if (s?.is_ell) byGrade[grade].ell++
+          if (s?.is_homeless) byGrade[grade].homeless++
+          if (s?.is_foster_care) byGrade[grade].fosterCare++
+          if (s?.is_military_connected) byGrade[grade].military++
+          if (s?.is_gifted) byGrade[grade].gifted++
+        })
+
+        // Aggregate by school level
+        const emptyLevel = () => ({ total: 0, occupied: 0, reserved: 0, sped: 0, is504: 0, ell: 0, homeless: 0, fosterCare: 0, military: 0, gifted: 0 })
+        const middle = emptyLevel()
+        const high = emptyLevel()
+        const elementary = emptyLevel()
+        Object.entries(byGrade).forEach(([grade, counts]) => {
+          const g = parseInt(grade)
+          const target = g >= 9 && g <= 12 ? high : g >= 6 && g <= 8 ? middle : elementary
+          Object.keys(counts).forEach(k => { target[k] += counts[k] })
+        })
+
+        // District-wide sub-pop totals (active + reserved)
+        const subPopTotals = rows.reduce((acc, r) => {
+          const s = r.student
+          if (s?.is_sped) acc.sped++
+          if (s?.is_504) acc.is504++
+          if (s?.is_ell) acc.ell++
+          if (s?.is_homeless) acc.homeless++
+          if (s?.is_foster_care) acc.fosterCare++
+          if (s?.is_military_connected) acc.military++
+          if (s?.is_gifted) acc.gifted++
+          return acc
+        }, { sped: 0, is504: 0, ell: 0, homeless: 0, fosterCare: 0, military: 0, gifted: 0 })
+
+        setStats({
+          occupied,
+          reserved,
+          byGrade,
+          byLevel: { middle, high, elementary },
+          subPopTotals,
+          total: rows.length,
+        })
+      } catch (err) {
+        console.error('Error fetching DAEP enrollment stats:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [districtId, scopeLoading, scope])
+
+  return { stats, loading }
+}
+
+/**
+ * Lightweight seat capacity counts for the approval section in IncidentDetailPage.
+ * Returns occupied (active) + reserved (approved) counts district-wide.
+ * Capacity value comes from district.settings.daep_capacity (already in AuthContext).
+ */
+export function useCapacityCount() {
+  const [counts, setCounts] = useState({ occupied: 0, reserved: 0 })
+  const [loading, setLoading] = useState(true)
+  const { districtId, district } = useAuth()
+
+  useEffect(() => {
+    if (!districtId) {
+      setLoading(false)
+      return
+    }
+
+    const fetchCounts = async () => {
+      setLoading(true)
+      try {
+        const [occupiedRes, reservedRes] = await Promise.all([
+          supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .eq('status', 'active'),
+          supabase
+            .from('incidents')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', districtId)
+            .eq('consequence_type', 'daep')
+            .eq('status', 'approved'),
+        ])
+        setCounts({
+          occupied: occupiedRes.count || 0,
+          reserved: reservedRes.count || 0,
+        })
+      } catch (err) {
+        console.error('Error fetching capacity counts:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCounts()
+  }, [districtId])
+
+  const capacity = district?.settings?.daep_capacity || null
+  return { ...counts, capacity, loading }
+}
+
+/**
  * Actions for updating DAEP placement days (consequence_days, consequence_end, days_absent).
  */
 export function useDaepDaysActions() {

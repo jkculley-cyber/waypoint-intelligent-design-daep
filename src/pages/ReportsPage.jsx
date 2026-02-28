@@ -14,6 +14,8 @@ import {
   useInterventionEffectiveness,
   usePeimsExport,
 } from '../hooks/useReports'
+import { useDaepEnrollmentStats } from '../hooks/useDaepDashboard'
+import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -40,6 +42,7 @@ export default function ReportsPage() {
 
   const tabs = [
     { key: 'overview', label: 'Overview' },
+    { key: 'enrollment', label: 'Enrollment' },
     { key: 'disproportionality', label: 'Disproportionality' },
     { key: 'recidivism', label: 'Recidivism' },
     { key: 'interventions', label: 'Interventions' },
@@ -73,6 +76,7 @@ export default function ReportsPage() {
 
         {/* Tab Content */}
         {activeTab === 'overview' && <OverviewTab />}
+        {activeTab === 'enrollment' && <EnrollmentTab />}
         {activeTab === 'disproportionality' && <DisproportionalityTab />}
         {activeTab === 'recidivism' && <RecidivismTab />}
         {activeTab === 'interventions' && <InterventionsTab />}
@@ -907,6 +911,230 @@ function ExportButtons({ onExport }) {
         Excel
       </button>
     </div>
+  )
+}
+
+// =================== ENROLLMENT TAB ===================
+
+function gradeLabelR(g) {
+  const num = parseInt(g)
+  if (num === -1) return 'Pre-K'
+  if (num === 0) return 'K'
+  return `Grade ${num}`
+}
+
+function gradeLevelR(g) {
+  const num = parseInt(g)
+  if (num >= 9 && num <= 12) return 'high'
+  if (num >= 6 && num <= 8) return 'middle'
+  return 'elementary'
+}
+
+function EnrollmentTab() {
+  const { stats, loading } = useDaepEnrollmentStats()
+
+  const handleExport = (format) => {
+    if (!stats) return
+    const headers = ['Grade', 'Occupied', 'Reserved', 'Total', 'SPED', '504', 'ELL', 'Homeless', 'Foster Care', 'Military', 'Gifted']
+    const sortedGrades = Object.keys(stats.byGrade).sort((a, b) => parseInt(a) - parseInt(b))
+    const rows = sortedGrades.map(g => {
+      const c = stats.byGrade[g]
+      return [gradeLabelR(g), c.occupied, c.reserved, c.total, c.sped, c.is504, c.ell, c.homeless, c.fosterCare, c.military, c.gifted]
+    })
+    const title = 'DAEP Enrollment by Grade'
+    const subtitle = `${getSchoolYearLabel()} School Year — Active & Approved placements`
+    try {
+      if (format === 'pdf') {
+        exportToPdf(title, headers, rows, { subtitle })
+      } else {
+        exportToExcel(title, headers, rows)
+      }
+      toast.success(`${format.toUpperCase()} exported`)
+    } catch (err) {
+      toast.error('Export failed')
+      console.error(err)
+    }
+  }
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+  }
+
+  if (!stats) {
+    return (
+      <Card>
+        <p className="text-sm text-gray-400 text-center py-8">No enrollment data available.</p>
+      </Card>
+    )
+  }
+
+  const { byLevel, byGrade, total } = stats
+  const sortedGrades = Object.keys(byGrade).sort((a, b) => parseInt(a) - parseInt(b))
+
+  // Build bar chart data
+  const chartData = sortedGrades.map(g => ({
+    grade: gradeLabelR(g),
+    Occupied: byGrade[g].occupied,
+    Reserved: byGrade[g].reserved,
+  }))
+
+  return (
+    <div className="space-y-6">
+      <ExportButtons onExport={handleExport} />
+
+      {/* School Level Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <EnrollmentLevelCard label="Middle School (Grades 6–8)" counts={byLevel.middle} />
+        <EnrollmentLevelCard label="High School (Grades 9–12)" counts={byLevel.high} />
+      </div>
+
+      {/* Enrollment by Grade Bar Chart */}
+      {chartData.length > 0 && (
+        <Card>
+          <CardTitle>Occupied & Reserved by Grade</CardTitle>
+          <div className="mt-4" style={{ height: 320 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} />
+                <YAxis type="category" dataKey="grade" tick={{ fontSize: 11, fill: '#6b7280' }} width={60} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Occupied" fill="#f97316" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="Reserved" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
+
+      {/* Sub-Population by Grade Table */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <CardTitle>Sub-Population Breakdown by Grade</CardTitle>
+        </div>
+        {total === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No active or approved DAEP enrollments.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100">
+                  {['Grade', 'Occupied', 'Reserved', 'Total', 'SPED', '504', 'ELL', 'Homeless', 'FC', 'Military', 'Gifted'].map(c => (
+                    <th key={c} className="px-3 py-2 text-center first:text-left">{c}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {sortedGrades.map(g => {
+                  const c = byGrade[g]
+                  return (
+                    <tr key={g} className={`hover:bg-gray-50 ${
+                      gradeLevelR(g) === 'middle' ? 'border-l-2 border-l-blue-300' :
+                      gradeLevelR(g) === 'high' ? 'border-l-2 border-l-purple-300' : ''
+                    }`}>
+                      <td className="px-3 py-2 text-gray-700">{gradeLabelR(g)}</td>
+                      <td className="px-3 py-2 text-center text-orange-600 font-medium">{c.occupied}</td>
+                      <td className="px-3 py-2 text-center text-amber-500 font-medium">{c.reserved}</td>
+                      <td className="px-3 py-2 text-center text-gray-700 font-medium">{c.total}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.sped || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.is504 || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.ell || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.homeless || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.fosterCare || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.military || '—'}</td>
+                      <td className="px-3 py-2 text-center text-gray-600">{c.gifted || '—'}</td>
+                    </tr>
+                  )
+                })}
+                <tr className="bg-gray-100 font-bold text-sm border-t-2 border-gray-200">
+                  <td className="px-3 py-2 text-gray-900">Total</td>
+                  <td className="px-3 py-2 text-center text-orange-700">{stats.occupied.length}</td>
+                  <td className="px-3 py-2 text-center text-amber-600">{stats.reserved.length}</td>
+                  <td className="px-3 py-2 text-center text-gray-900">{total}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.sped}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.is504}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.ell}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.homeless}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.fosterCare}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.military}</td>
+                  <td className="px-3 py-2 text-center text-gray-700">{stats.subPopTotals.gifted}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500 px-1">
+          <span>FC = Foster Care · Occupied = status active · Reserved = approved, not yet started</span>
+        </div>
+      </Card>
+
+      {/* Capacity Status Card */}
+      <CapacityStatusCard />
+    </div>
+  )
+}
+
+function EnrollmentLevelCard({ label, counts }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+      <p className="text-sm font-semibold text-gray-700">{label}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-2xl font-bold text-orange-600">{counts.occupied}</p>
+          <p className="text-xs text-gray-500">Occupied</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-amber-500">{counts.reserved}</p>
+          <p className="text-xs text-gray-500">Reserved</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-purple-600">{counts.sped}</p>
+          <p className="text-xs text-gray-500">SPED</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-orange-500">{counts.ell}</p>
+          <p className="text-xs text-gray-500">ELL</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CapacityStatusCard() {
+  const { district } = useAuth()
+  const capacity = district?.settings?.daep_capacity || null
+
+  if (!capacity) return null
+
+  return (
+    <Card>
+      <div className="flex items-start justify-between">
+        <div>
+          <CardTitle>Capacity Status</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">
+            Configure capacity in{' '}
+            <Link to="/daep" className="text-orange-600 hover:underline">
+              DAEP Dashboard → Analytics tab
+            </Link>
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 text-sm text-gray-600">
+        {capacity.mode === 'total' ? (
+          <p>Total configured seats: <span className="font-semibold text-gray-800">{capacity.total}</span></p>
+        ) : (
+          <div className="flex gap-6">
+            <p>Middle School: <span className="font-semibold text-gray-800">{capacity.by_level?.middle}</span> seats</p>
+            <p>High School: <span className="font-semibold text-gray-800">{capacity.by_level?.high}</span> seats</p>
+          </div>
+        )}
+      </div>
+    </Card>
   )
 }
 

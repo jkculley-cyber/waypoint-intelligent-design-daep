@@ -16,6 +16,7 @@ import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
 import PlacementScheduler from '../components/daep/PlacementScheduler'
 import { useIncident, useIncidentActions } from '../hooks/useIncidents'
 import { useSeparations, useStudentSearch } from '../hooks/useSeparations'
+import { useCapacityCount } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
@@ -59,6 +60,8 @@ export default function IncidentDetailPage() {
     }
     fetchCount()
   }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
+
+  const capacityInfo = useCapacityCount()
 
   if (loading) return <PageLoader message="Loading incident..." />
   if (!incident) {
@@ -190,6 +193,11 @@ export default function IncidentDetailPage() {
             </Badge>
           )}
         </div>
+
+        {/* Capacity info for DAEP incidents awaiting approval */}
+        {isDaep && ['submitted', 'under_review', 'compliance_hold'].includes(incident.status) && (
+          <DaepCapacityInfo capacityInfo={capacityInfo} />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left 2/3 */}
@@ -410,6 +418,48 @@ export default function IncidentDetailPage() {
             </Card>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// =================== DAEP CAPACITY INFO ===================
+
+function DaepCapacityInfo({ capacityInfo }) {
+  const { occupied, reserved, capacity, loading } = capacityInfo
+  if (loading || !capacity) return null
+
+  const total = capacity.mode === 'total'
+    ? capacity.total
+    : (capacity.by_level?.middle || 0) + (capacity.by_level?.high || 0)
+
+  const committed = occupied + reserved
+  const remaining = total - committed
+  const isOver = remaining <= 0
+
+  return (
+    <div className={`flex items-center gap-4 rounded-lg px-4 py-3 text-sm ${
+      isOver ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'
+    }`}>
+      <svg className={`w-4 h-4 shrink-0 ${isOver ? 'text-amber-500' : 'text-blue-400'}`} fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+      <div className="flex items-center gap-4 flex-wrap">
+        <span className={`font-medium ${isOver ? 'text-amber-800' : 'text-blue-800'}`}>
+          DAEP Capacity:
+        </span>
+        <span className="text-orange-700 font-semibold">{occupied} occupied</span>
+        <span className="text-gray-400">·</span>
+        <span className="text-amber-600 font-semibold">{reserved} reserved</span>
+        <span className="text-gray-400">·</span>
+        <span className={`font-semibold ${isOver ? 'text-red-700' : 'text-green-700'}`}>
+          {remaining} remaining of {total}
+        </span>
+        {isOver && (
+          <span className="text-amber-700 font-medium text-xs bg-amber-100 px-2 py-0.5 rounded">
+            No seats available — approval will exceed configured capacity
+          </span>
+        )}
       </div>
     </div>
   )
