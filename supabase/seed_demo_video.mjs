@@ -144,11 +144,24 @@ async function run() {
   console.log(`  ✓ David incident:   ${davidInc.id} (campus: HS)`);
   console.log(`  ✓ DeShawn incident: ${deshawnInc.id} (campus: MS)\n`);
 
-  // ─── 3. Disable triggers on incidents + behavior tracking ────────────────
+  // ─── 3. Disable app-level triggers (not system FK triggers) ──────────────
   console.log('Disabling triggers...');
-  await q('ALTER TABLE incidents DISABLE TRIGGER ALL');
-  await q('ALTER TABLE daily_behavior_tracking DISABLE TRIGGER ALL');
-  console.log('  ✓ Triggers disabled\n');
+  const appTriggers = [
+    'trg_create_daep_approval_chain',
+    'trg_check_sped_compliance',
+    'trg_check_repeat_offender',
+    'trg_resolve_placement_started_activation',
+    'trg_orientation_missed_alert',
+    'trg_create_daep_scheduling',
+  ];
+  for (const t of appTriggers) {
+    try { await q(`ALTER TABLE incidents DISABLE TRIGGER ${t}`); }
+    catch { /* trigger may not exist — skip */ }
+  }
+  // Disable the behavior-tracking alert trigger (resolves placement_not_started alerts)
+  try { await q('ALTER TABLE daily_behavior_tracking DISABLE TRIGGER trg_resolve_placement_started_tracking'); }
+  catch { /* may not exist */ }
+  console.log('  ✓ App triggers disabled\n');
 
   // ─── 4. Activate incidents ────────────────────────────────────────────────
   console.log('Activating DAEP incidents...');
@@ -361,11 +374,15 @@ async function run() {
   }
   console.log(`  ✓ DeShawn — ${n} days, strong performance (goal 70, avg ~84)\n`);
 
-  // ─── 7. Re-enable triggers ────────────────────────────────────────────────
+  // ─── 7. Re-enable app-level triggers ─────────────────────────────────────
   console.log('Re-enabling triggers...');
-  await q('ALTER TABLE incidents ENABLE TRIGGER ALL');
-  await q('ALTER TABLE daily_behavior_tracking ENABLE TRIGGER ALL');
-  console.log('  ✓ Triggers re-enabled\n');
+  for (const t of appTriggers) {
+    try { await q(`ALTER TABLE incidents ENABLE TRIGGER ${t}`); }
+    catch { /* skip if didn't exist */ }
+  }
+  try { await q('ALTER TABLE daily_behavior_tracking ENABLE TRIGGER trg_resolve_placement_started_tracking'); }
+  catch { /* skip if didn't exist */ }
+  console.log('  ✓ App triggers re-enabled\n');
 
   // ─── 8. Parent portal account for Marcus Johnson ──────────────────────────
   console.log('Creating parent portal account...');
