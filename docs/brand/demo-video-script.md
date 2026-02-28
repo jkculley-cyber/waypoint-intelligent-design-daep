@@ -2,10 +2,11 @@
 ## Full Production Package
 
 **Format:** AI presenter + screen recording B-roll (HeyGen / Synthesia / ElevenLabs)
-**Target length:** 2 minutes 25 seconds
+**Target length:** 3 minutes 00 seconds
 **Audience:** District administrators + DAEP campus staff
-**Tone:** Warm, confident, human — compliance authority without cold corporate energy
+**Tone:** Warm, confident, human — proactive student success + compliance authority
 **CTA:** Visit clearpathedgroup.com to request a free demo
+**HeyGen character limit:** 840 per block — each scene below is a separate paste
 
 ---
 
@@ -187,11 +188,14 @@
 
 ---
 
-## Full Narration Script (Clean — Paste-Ready for HeyGen)
+## Full Narration Script — HeyGen Blocks (Paste One Block at a Time)
 
-*Use this as the direct paste input. Do not include the scene headers.*
+*Each numbered block = one HeyGen slide. All blocks are under 840 characters.*
+*Paste each block separately. Do not combine blocks.*
 
 ---
+
+**BLOCK 1 — Hook** *(~55 words / ~340 chars)*
 
 It's Monday morning.
 
@@ -201,21 +205,31 @@ By Friday — your team needs to have documented everything correctly, notified 
 
 For most Texas districts, that's a spreadsheet, a folder, and a lot of hope.
 
+---
+
+**BLOCK 2 — Stakes** *(~50 words / ~310 chars)*
+
 One missed step can become a federal compliance finding.
 
 But it's not just about paperwork.
 
-These are kids going through one of the hardest stretches of their school year.
-
-They deserve a system that keeps track of every obligation — so the adults in their lives can stay focused on actually helping them.
+These are kids going through one of the hardest stretches of their school year — and they deserve more than clean documentation. They deserve a real plan to come back stronger.
 
 That's exactly why we built Waypoint.
 
-Waypoint is a compliance platform designed specifically for Texas DAEP campuses.
+---
 
-From the moment a student is referred, Waypoint walks your team through every required step — so nothing gets missed.
+**BLOCK 3 — Meet Waypoint** *(~50 words / ~320 chars)*
 
-Here's what that looks like in practice.
+Waypoint is a compliance and student success platform designed specifically for Texas DAEP campuses.
+
+From the moment a student is referred, Waypoint handles every compliance requirement automatically — so your staff can focus on what matters most: building a real path forward for every student.
+
+Here's what that looks like.
+
+---
+
+**BLOCK 4 — Compliance Checklist** *(~50 words / ~315 chars)*
 
 When a new incident is created, Waypoint automatically generates a compliance checklist.
 
@@ -224,6 +238,10 @@ The right questions. The right documentation. The right sequence — all matched
 Your staff doesn't have to remember what's required.
 
 Waypoint shows them — and tracks what's been completed.
+
+---
+
+**BLOCK 5 — SPED Hard Block** *(~67 words / ~415 chars)*
 
 Here's where Waypoint does something no other platform does.
 
@@ -237,11 +255,31 @@ Because a missed manifestation determination isn't just a paperwork error — it
 
 Waypoint makes sure your team never makes that mistake.
 
+---
+
+**BLOCK 6 — Transition Plans + Reducing Recidivism** *(~65 words / ~400 chars)*
+
+But compliance is just the floor.
+
+Once a student is placed, Waypoint builds a personalized transition plan — with behavioral support alternatives, academic interventions, and 30, 60, and 90-day review checkpoints built right in.
+
+Your team knows exactly what each student needs, when they need it, and whether it's working.
+
+Because the goal isn't a clean audit. It's a student who doesn't come back.
+
+---
+
+**BLOCK 7 — DAEP Dashboard** *(~52 words / ~330 chars)*
+
 Your DAEP dashboard gives every administrator a real-time view of every active placement.
 
-Who's been oriented. Who has a behavior review coming up. Who needs a 30-day check-in this week.
+Who's been oriented. Who has a behavior review coming up. Who's hitting their goals — and who needs more support before they transition back.
 
-Everything in one place — so nothing surprises you.
+Everything in one place — so no student falls through the cracks.
+
+---
+
+**BLOCK 8 — Parent Portal** *(~43 words / ~270 chars)*
 
 Parents can see exactly what's happening with their child.
 
@@ -249,15 +287,23 @@ Placement details, behavior scores, upcoming review dates — all in a dedicated
 
 Transparent communication builds trust.
 
-And it creates a documented record that you reached out.
+And it documents that you stayed engaged — not just at the start, but throughout.
+
+---
+
+**BLOCK 9 — PEIMS Export** *(~32 words / ~192 chars)*
 
 When reporting season arrives, Waypoint exports audit-ready PEIMS discipline data with a single click.
 
 No spreadsheet cleanup. No manual coding. Just the file your state submission needs.
 
-Waypoint was built for Texas school districts — by people who understand TEC Chapter 37, not just discipline software in general.
+---
 
-Our districts spend less time on paperwork and more time supporting students through what can be a really difficult season.
+**BLOCK 10 — Close** *(~62 words / ~390 chars)*
+
+Waypoint was built for Texas school districts — by people who understand TEC Chapter 37, and who believe DAEP should be a turning point, not a revolving door.
+
+Our districts spend less time on paperwork and more time building the supports that actually change outcomes.
 
 If that sounds like the change your campus needs, we'd love to show you more.
 
@@ -267,16 +313,18 @@ Visit clearpathedgroup.com to request your free demo.
 
 ## On-Screen Text Callouts (Lower Thirds)
 
-| Scene | Text | Timing |
+| Block | Text | Timing |
 |-------|------|--------|
-| Scene 3 | Built for Texas Education Code | Fade in at "specifically for Texas" |
-| Scene 4 | Automatic Compliance Checklist | Fade in when checklist appears on screen |
-| Scene 5 | SPED Protection — Built In | Fade in on the hard-block modal |
-| Scene 5 | Hard Stop. Not a Reminder. | Fade in on "Not a reminder" line |
-| Scene 6 | Real-Time Oversight | Fade in when dashboard B-roll starts |
-| Scene 7 | Parent Portal Included | Fade in when parent portal B-roll starts |
-| Scene 8 | One-Click PEIMS Export | Fade in on the export click |
-| Scene 9 | clearpathedgroup.com | Hold for last 8 seconds of video |
+| 3 | Built for Texas Education Code | Fade in at "specifically for Texas" |
+| 4 | Automatic Compliance Checklist | Fade in when checklist appears on screen |
+| 5 | SPED Protection — Built In | Fade in on the hard-block modal |
+| 5 | Hard Stop. Not a Reminder. | Fade in on "Not a reminder" line |
+| 6 | Built to Reduce Recidivism | Fade in at "But compliance is just the floor" |
+| 6 | 30 / 60 / 90-Day Reviews | Fade in when transition plan B-roll starts |
+| 7 | Real-Time Oversight | Fade in when dashboard B-roll starts |
+| 8 | Parent Portal Included | Fade in when parent portal B-roll starts |
+| 9 | One-Click PEIMS Export | Fade in on the export click |
+| 10 | clearpathedgroup.com | Hold for last 8 seconds of video |
 
 ---
 
@@ -293,19 +341,21 @@ Visit clearpathedgroup.com to request your free demo.
 
 ## Word Count & Timing Reference
 
-| Section | Words | Est. Time |
-|---------|-------|-----------|
-| Hook + Stakes (Scenes 1–2) | 90 | 0:40 |
-| Meet Waypoint (Scene 3) | 48 | 0:21 |
-| Incident → Checklist (Scene 4) | 52 | 0:23 |
-| SPED Block (Scene 5) | 63 | 0:28 |
-| Dashboard (Scene 6) | 42 | 0:19 |
-| Parent Portal (Scene 7) | 38 | 0:17 |
-| Reports (Scene 8) | 29 | 0:13 |
-| Close (Scene 9) | 62 | 0:27 |
-| **Total** | **424** | **~2:28** |
+| Block | Topic | Words | Est. Time |
+|-------|-------|-------|-----------|
+| 1 | Hook | 55 | 0:24 |
+| 2 | Stakes | 50 | 0:22 |
+| 3 | Meet Waypoint | 50 | 0:22 |
+| 4 | Compliance Checklist | 50 | 0:22 |
+| 5 | SPED Hard Block | 67 | 0:30 |
+| 6 | Transition Plans + Recidivism | 65 | 0:29 |
+| 7 | DAEP Dashboard | 52 | 0:23 |
+| 8 | Parent Portal | 43 | 0:19 |
+| 9 | PEIMS Export | 32 | 0:14 |
+| 10 | Close | 62 | 0:28 |
+| **Total** | | **526** | **~3:53 raw / ~3:00 with pauses** |
 
-*At 135 wpm with natural pauses. Adjust presenter speed in HeyGen to hit this timing.*
+*At 135 wpm. HeyGen adds natural pauses between sentences — set speed to 1.1–1.2x to hit ~3:00.*
 
 ---
 
