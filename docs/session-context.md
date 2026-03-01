@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-28 (Session S — Meridian SPPI-13 Secondary Transition Tracker + RDA Dashboard)
+> Last updated: 2026-02-28 (Session T — Demo video script + seed data + marketing site revert)
 
 ---
 
@@ -8,11 +8,13 @@
 - **Development phase:** Pre-pilot — product feature-complete, ready for first district pitch
 - **Waypoint app URL:** `https://waypoint.clearpathedgroup.com` (also `app.clearpathedgroup.com`)
 - **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML in `clearpath-site/`)
-- **Marketing site features:** All 3 products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. **Interactive pricing calculator** (enrollment slider 0–200k, tier toggle, product checkboxes, live bundle discount badge). **Free Compliance Checklist** lead magnet card linking to `/whitepaper.html`. Pricing tags visible. Google Slides embed (DAEP deck) + **narrated overview video** (`Waypoint__Safety_and_Growth.mp4`) in Waypoint card (tabbed, not stacked). SEO meta/sitemap/robots.txt. Cloudflare Web Analytics auto-injected via Pages dashboard. **Security & Compliance page** at `/security.html` (FERPA statement, subprocessor list, DPA references). **Redesigned layout** (Session R): removed About strip, Pathways section, Who We Serve section — replaced with stats bar, 2-col Waypoint card with tabbed demo, 50/50 product rows; ~1400px less scroll. **Demo request form** at `/#contact`: 3-field inline form (district+enrollment, compliance challenge select, email) → Formspree AJAX submit (`xpqjngpp`, live) → success state (no redirect).
+- **Marketing site features:** Company-level site for Clear Path Education Group — all 4 pathways (Compass active, 3 coming soon). All 3 Compass products (Waypoint, Navigator, Meridian) + Clear Path Suite bundle callout. **Interactive pricing calculator**. **Free Compliance Checklist** lead magnet. Google Slides embed + **narrated overview video** (`Waypoint__Safety_and_Growth.mp4`) tabbed in Waypoint card. SEO/sitemap/robots.txt. Cloudflare Web Analytics. **Security page** at `/security.html`. **Demo request form** at `/#contact` → Formspree `xpqjngpp`. Session T minor changes: nav CTA → "Request a Demo →" (#contact); Waypoint video tab label → "Watch Demo · 3 min". ⚠️ Site must remain company-level — not a Waypoint product page (see DECISIONS.md 2026-02-28).
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
 - **Migrations applied:** 001–048 (production). Migration 044 (Origins schema) NOT YET applied. Migration 049 (SPPI-13 + RDA tables) written but NOT YET applied — paste SQL Editor.
+- **Demo seed data:** `supabase/seed_demo_video.mjs` created and ran successfully — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus).
+- **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
 - **Email notifications:** Live via Resend — sandbox sender `onboarding@resend.dev` still active. Code updated to default `noreply@waypointdaep.com` but Supabase secret + function redeploy still needed.
