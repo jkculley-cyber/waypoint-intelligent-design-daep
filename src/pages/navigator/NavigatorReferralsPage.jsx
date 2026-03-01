@@ -22,6 +22,15 @@ const OUTCOME_LABELS = {
   escalated_to_daep: 'Escalated to DAEP',
 }
 
+const SKILL_GAP_LABELS = {
+  emotional_regulation: 'Emotional Regulation',
+  executive_functioning: 'Executive Functioning',
+  peer_conflict_resolution: 'Peer Conflict Resolution',
+  academic_frustration_tolerance: 'Academic Frustration Tolerance',
+  impulse_control: 'Impulse Control',
+  adult_communication: 'Adult Communication',
+}
+
 export default function NavigatorReferralsPage() {
   const [filters, setFilters] = useState({ status: '', campus_id: '', date_from: '', date_to: '' })
   const [showDrawer, setShowDrawer] = useState(false)
@@ -183,6 +192,8 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
     status: referral?.status || 'pending',
     outcome: referral?.outcome || '',
     admin_notes: referral?.admin_notes || '',
+    skill_gap: referral?.skill_gap || '',
+    skill_gap_notes: referral?.skill_gap_notes || '',
   })
 
   const isNew = !referral
@@ -235,6 +246,8 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
       status: reviewForm.status,
       outcome: reviewForm.outcome || null,
       admin_notes: reviewForm.admin_notes || null,
+      skill_gap: reviewForm.skill_gap || null,
+      skill_gap_notes: reviewForm.skill_gap_notes || null,
       reviewed_by: profile.id,
       reviewed_at: new Date().toISOString(),
     }).eq('id', referral.id)
@@ -409,6 +422,33 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
                   onChange={e => setReviewForm(f => ({ ...f, admin_notes: e.target.value }))}
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Skill Gap Identified</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400"
+                  value={reviewForm.skill_gap}
+                  onChange={e => setReviewForm(f => ({ ...f, skill_gap: e.target.value }))}
+                >
+                  <option value="">None identified</option>
+                  {Object.entries(SKILL_GAP_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              {reviewForm.skill_gap && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Skill Gap Notes</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 resize-none"
+                    rows={2}
+                    placeholder="Observations about this skill gap..."
+                    value={reviewForm.skill_gap_notes}
+                    onChange={e => setReviewForm(f => ({ ...f, skill_gap_notes: e.target.value }))}
+                  />
+                </div>
+              )}
 
               <div className="pt-1">
                 <Link

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { format, addDays, differenceInDays, parseISO } from 'date-fns'
@@ -259,6 +259,8 @@ export default function WaypointAdminPage() {
           onRefresh={fetchDistricts}
         />
       )}
+
+      <PartnerChat />
     </div>
   )
 }
@@ -1652,6 +1654,160 @@ function ReviewRow({ label, value }) {
     <div className="flex justify-between gap-4">
       <span className="text-gray-400 shrink-0">{label}</span>
       <span className="text-white text-right">{value}</span>
+    </div>
+  )
+}
+
+// ─── Partner Chat (connects to ops Supabase) ───────────────────────────────────
+
+const OPS_URL = 'https://xbpuqaqpcbixxodblaes.supabase.co'
+const OPS_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA'
+const CHAT_SENDER = 'Kim'
+
+async function opsGetMessages() {
+  const r = await fetch(`${OPS_URL}/rest/v1/messages?order=created_at.asc&limit=100`, {
+    headers: { apikey: OPS_KEY, Authorization: `Bearer ${OPS_KEY}` },
+  })
+  if (!r.ok) throw new Error(r.status)
+  return r.json()
+}
+
+async function opsSendMessage(message) {
+  const r = await fetch(`${OPS_URL}/rest/v1/messages`, {
+    method: 'POST',
+    headers: {
+      apikey: OPS_KEY,
+      Authorization: `Bearer ${OPS_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ sender: CHAT_SENDER, message }),
+  })
+  if (!r.ok) throw new Error(r.status)
+}
+
+function PartnerChat() {
+  const [open, setOpen] = useState(false)
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const [unread, setUnread] = useState(0)
+  const [error, setError] = useState(null)
+  const lastIdRef = useRef(0)
+  const bottomRef = useRef(null)
+  const pollRef = useRef(null)
+
+  const load = useCallback(async () => {
+    try {
+      const msgs = await opsGetMessages()
+      setError(null)
+      const newFromOther = msgs.filter(m => m.id > lastIdRef.current && m.sender !== CHAT_SENDER)
+      if (newFromOther.length && !open) setUnread(u => u + newFromOther.length)
+      if (msgs.length) lastIdRef.current = msgs[msgs.length - 1].id
+      setMessages(msgs)
+    } catch {
+      setError('Chat unavailable — run the messages table SQL first')
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (open) {
+      setUnread(0)
+      load()
+      pollRef.current = setInterval(load, 5000)
+    } else {
+      clearInterval(pollRef.current)
+    }
+    return () => clearInterval(pollRef.current)
+  }, [open, load])
+
+  useEffect(() => {
+    if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, open])
+
+  async function send() {
+    const msg = input.trim()
+    if (!msg || sending) return
+    setSending(true)
+    setInput('')
+    try {
+      await opsSendMessage(msg)
+      await load()
+    } catch {
+      setError('Failed to send')
+    }
+    setSending(false)
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      {open && (
+        <div className="w-80 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: 420 }}>
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
+            <div>
+              <p className="text-sm font-semibold text-white">Partner Chat</p>
+              <p className="text-xs text-gray-400">Kim &amp; Melissa</p>
+            </div>
+            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white transition-colors text-lg leading-none">✕</button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+            {error && <p className="text-center text-red-400 text-xs mt-4 px-3">{error}</p>}
+            {!error && messages.length === 0 && (
+              <p className="text-center text-gray-500 text-xs mt-8">No messages yet. Say hello! 👋</p>
+            )}
+            {messages.map(m => {
+              const isMe = m.sender === CHAT_SENDER
+              return (
+                <div key={m.id} className={`flex flex-col gap-0.5 max-w-[80%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                  <div className={`px-3 py-2 rounded-2xl text-sm leading-snug break-words ${isMe ? 'bg-orange-500 text-white rounded-br-sm' : 'bg-gray-700 text-gray-100 rounded-bl-sm'}`}>
+                    {m.message}
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-mono">
+                    {isMe ? '' : `${m.sender} · `}{new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                </div>
+              )
+            })}
+            <div ref={bottomRef} />
+          </div>
+
+          <div className="flex gap-2 p-3 border-t border-gray-700 flex-shrink-0">
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              rows={1}
+              placeholder="Message Melissa…"
+              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-orange-500 transition-colors"
+            />
+            <button
+              onClick={send}
+              disabled={sending || !input.trim()}
+              className="px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+            >
+              →
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="relative w-12 h-12 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg transition-all flex items-center justify-center text-xl"
+        title="Partner Chat"
+      >
+        💬
+        {!open && unread > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </button>
     </div>
   )
 }

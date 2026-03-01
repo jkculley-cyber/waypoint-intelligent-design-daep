@@ -34,6 +34,7 @@ const STATUS_COLORS = {
 export default function NavigatorSupportsPage() {
   const [typeFilter, setTypeFilter] = useState('')
   const [showDrawer, setShowDrawer] = useState(false)
+  const [editingSupport, setEditingSupport] = useState(null)
   const { supports, loading, refetch } = useNavigatorSupports()
 
   const filtered = typeFilter ? supports.filter(s => s.support_type === typeFilter) : supports
@@ -84,7 +85,7 @@ export default function NavigatorSupportsPage() {
           ) : activeSupports.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">No active supports.</div>
           ) : (
-            <SupportsTable supports={activeSupports} />
+            <SupportsTable supports={activeSupports} onEdit={setEditingSupport} />
           )}
         </div>
 
@@ -95,7 +96,7 @@ export default function NavigatorSupportsPage() {
               <h2 className="text-sm font-semibold text-gray-900">Past Supports</h2>
               <span className="text-xs text-gray-400">{pastSupports.length} record{pastSupports.length !== 1 ? 's' : ''}</span>
             </div>
-            <SupportsTable supports={pastSupports} />
+            <SupportsTable supports={pastSupports} onEdit={setEditingSupport} />
           </div>
         )}
       </div>
@@ -106,11 +107,19 @@ export default function NavigatorSupportsPage() {
           onSaved={() => { setShowDrawer(false); refetch() }}
         />
       )}
+
+      {editingSupport && (
+        <EditSupportDrawer
+          support={editingSupport}
+          onClose={() => setEditingSupport(null)}
+          onSaved={() => { setEditingSupport(null); refetch() }}
+        />
+      )}
     </div>
   )
 }
 
-function SupportsTable({ supports }) {
+function SupportsTable({ supports, onEdit }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -123,6 +132,7 @@ function SupportsTable({ supports }) {
             <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Start</th>
             <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
             <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Notes</th>
+            <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
@@ -146,6 +156,14 @@ function SupportsTable({ supports }) {
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate" title={s.notes || ''}>
                 {s.notes || '—'}
+              </td>
+              <td className="px-4 py-3">
+                <button
+                  onClick={() => onEdit(s)}
+                  className="text-xs text-orange-500 hover:text-orange-700 font-medium transition-colors"
+                >
+                  Edit
+                </button>
               </td>
             </tr>
           ))}
@@ -312,6 +330,132 @@ function NewSupportDrawer({ onClose, onSaved }) {
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
           <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg">
             {saving ? 'Saving…' : 'Save Support'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Edit Support Drawer ──────────────────────────────────────────────────────
+
+function EditSupportDrawer({ support, onClose, onSaved }) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [form, setForm] = useState({
+    status: support.status || 'active',
+    outcome_notes: support.outcome_notes || '',
+    incidents_before: support.incidents_before ?? '',
+    incidents_after: support.incidents_after ?? '',
+    notes: support.notes || '',
+  })
+
+  const handleSave = async () => {
+    setSaving(true); setError(null)
+    const { error: err } = await supabase.from('navigator_supports').update({
+      status: form.status,
+      outcome_notes: form.outcome_notes || null,
+      incidents_before: form.incidents_before !== '' ? Number(form.incidents_before) : null,
+      incidents_after: form.incidents_after !== '' ? Number(form.incidents_after) : null,
+      notes: form.notes || null,
+    }).eq('id', support.id)
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    onSaved()
+  }
+
+  const studentName = support.students ? `${support.students.first_name} ${support.students.last_name}` : 'Support'
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/30" onClick={onClose} />
+      <div className="w-full max-w-lg bg-white shadow-2xl overflow-y-auto flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Edit Support — {studentName}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{SUPPORT_TYPE_LABELS[support.support_type] || support.support_type}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4 flex-1">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400"
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+            >
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="discontinued">Discontinued</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
+            <textarea
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 resize-none"
+              rows={2}
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+            />
+          </div>
+
+          {/* Effectiveness fields — shown when completed */}
+          {form.status === 'completed' && (
+            <>
+              <div className="pt-1 pb-1 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Effectiveness Data</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Incidents Before</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400"
+                    placeholder="0"
+                    value={form.incidents_before}
+                    onChange={e => setForm(f => ({ ...f, incidents_before: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Incidents After</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400"
+                    placeholder="0"
+                    value={form.incidents_after}
+                    onChange={e => setForm(f => ({ ...f, incidents_after: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Outcome Notes</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 resize-none"
+                  rows={3}
+                  placeholder="Describe what changed, what worked, what didn't..."
+                  value={form.outcome_notes}
+                  onChange={e => setForm(f => ({ ...f, outcome_notes: e.target.value }))}
+                />
+              </div>
+            </>
+          )}
+
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+
+        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg">
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
