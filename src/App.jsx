@@ -17,6 +17,11 @@ import NavigatorStudentPage from './pages/navigator/NavigatorStudentPage'
 import NavigatorReportsPage from './pages/navigator/NavigatorReportsPage'
 import NavigatorGoalsPage from './pages/navigator/NavigatorGoalsPage'
 import NavigatorImportPage from './pages/navigator/NavigatorImportPage'
+import NavigatorEscalationPage from './pages/navigator/NavigatorEscalationPage'
+import NavigatorSkillMapPage from './pages/navigator/NavigatorSkillMapPage'
+import NavigatorEffectivenessPage from './pages/navigator/NavigatorEffectivenessPage'
+import NavigatorDisproportionalityPage from './pages/navigator/NavigatorDisproportionalityPage'
+import NavigatorPilotPage from './pages/navigator/NavigatorPilotPage'
 
 // Origins family portal (standalone — no AppShell)
 import OriginsFamilyEntryPage from './pages/origins/portal/OriginsFamilyEntryPage'
@@ -144,6 +149,11 @@ function App() {
               <Route path="/navigator/reports" element={<RequireRole roles={STAFF_ROLES}><NavigatorReportsPage /></RequireRole>} />
               <Route path="/navigator/goals" element={<RequireRole roles={STAFF_ROLES}><NavigatorGoalsPage /></RequireRole>} />
               <Route path="/navigator/import" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><NavigatorImportPage /></RequireRole>} />
+              <Route path="/navigator/escalation" element={<RequireRole roles={STAFF_ROLES}><NavigatorEscalationPage /></RequireRole>} />
+              <Route path="/navigator/skill-map" element={<RequireRole roles={STAFF_ROLES}><NavigatorSkillMapPage /></RequireRole>} />
+              <Route path="/navigator/effectiveness" element={<RequireRole roles={STAFF_ROLES}><NavigatorEffectivenessPage /></RequireRole>} />
+              <Route path="/navigator/disproportionality" element={<RequireRole roles={STAFF_ROLES}><NavigatorDisproportionalityPage /></RequireRole>} />
+              <Route path="/navigator/pilot" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><NavigatorPilotPage /></RequireRole>} />
             </Route>
 
             {/* ── Meridian product routes ── */}

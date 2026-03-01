@@ -564,12 +564,22 @@ function ContractModal({ contract, onClose, onSuccess }) {
       ({ error: err } = await supabase.from('contracts').insert(payload))
     }
     setSaving(false)
-    if (err) { setError(err.message) } else { onSuccess() }
+    if (err) {
+      console.error('Contract save error:', err)
+      setError(err.message)
+    } else {
+      onSuccess()
+    }
   }
 
   return (
     <ModalShell onClose={onClose} title={contract ? 'Edit Contract' : 'Add Contract'}>
       <form onSubmit={handleSave} className="space-y-4">
+        {error && (
+          <div className="p-3 bg-red-900/40 border border-red-700 rounded-lg text-sm text-red-300">
+            <span className="font-medium">Error: </span>{error}
+          </div>
+        )}
         <Field label="Link to Provisioned District (optional)">
           <Select value={linkedDistrictId} onChange={handleLinkedDistrictChange}>
             <option value="">— Not yet provisioned —</option>
@@ -656,12 +666,6 @@ function ContractModal({ contract, onClose, onSuccess }) {
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors resize-none"
           />
         </Field>
-
-        {error && (
-          <div className="p-3 bg-red-900/40 border border-red-700 rounded-lg text-sm text-red-300">
-            {error}
-          </div>
-        )}
 
         <div className="flex gap-3 pt-2">
           <button

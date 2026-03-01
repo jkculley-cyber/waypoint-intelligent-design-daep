@@ -386,6 +386,459 @@ export function useNavigatorYOYData(schoolYear) {
   return { currentYear, priorYear, loading }
 }
 
+// ─── Escalation Risk Engine ───────────────────────────────────────────────────
+
+// Weighted risk score — pure, exported for use in student-level views
+export function computeRiskScore(referrals, placements, activeSupportCount) {
+  const now = new Date()
+  const d14 = new Date(now - 14 * 86400000)
+  const d30 = new Date(now - 30 * 86400000)
+  const d60 = new Date(now - 60 * 86400000)
+
+  let score = 0
+  const triggers = []
+
+  const refs14 = referrals.filter(r => new Date(r.referral_date) >= d14)
+  const refs30 = referrals.filter(r => new Date(r.referral_date) >= d30)
+  const refs60 = referrals.filter(r => new Date(r.referral_date) >= d60)
+
+  if (refs14.length >= 1) { score += 30; triggers.push('Referral ≤14d') }
+  if (refs14.length >= 2) { score += 15; triggers.push('2+ refs in 14d') }
+  if (refs30.length >= 2) { score += 15; triggers.push('Freq. referrals') }
+  if (refs60.length >= 5) { score += 10; triggers.push('5+ in 60d') }
+
+  const oss30 = placements.filter(p => p.placement_type === 'oss' && new Date(p.start_date) >= d30)
+  const iss30 = placements.filter(p => p.placement_type === 'iss' && new Date(p.start_date) >= d30)
+  const daepPrior = referrals.filter(r => r.outcome === 'escalated_to_daep')
+
+  if (oss30.length >= 1) { score += 25; triggers.push('OSS ≤30d') }
+  if (oss30.length >= 2) { score += 10; triggers.push('Multiple OSS') }
+  if (iss30.length >= 1) { score += 10; triggers.push('ISS ≤30d') }
+  if (daepPrior.length >= 1) { score += 20; triggers.push('Prior DAEP escalation') }
+
+  score -= activeSupportCount * 12
+
+  return { score: Math.max(0, Math.min(100, score)), triggers }
+}
+
+export function riskLevel(score) {
+  if (score >= 70) return 'high'
+  if (score >= 35) return 'medium'
+  return 'low'
+}
+
+export function useEscalationRisk() {
+  const { districtId } = useAuth()
+  const [students, setStudents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+
+      const [refRes, placRes, supRes] = await Promise.all([
+        supabase
+          .from('navigator_referrals')
+          .select('id, student_id, referral_date, outcome, students(id, first_name, last_name, grade_level), campuses(id, name)')
+          .eq('district_id', districtId)
+          .gte('referral_date', d90),
+
+        supabase
+          .from('navigator_placements')
+          .select('id, student_id, placement_type, start_date')
+          .eq('district_id', districtId)
+          .gte('start_date', d90),
+
+        supabase
+          .from('navigator_supports')
+          .select('id, student_id')
+          .eq('district_id', districtId)
+          .eq('status', 'active'),
+      ])
+
+      if (refRes.error) throw refRes.error
+      if (placRes.error) throw placRes.error
+      if (supRes.error) throw supRes.error
+
+      const studentMap = {}
+
+      ;(refRes.data || []).forEach(r => {
+        const sid = r.student_id
+        if (!studentMap[sid]) {
+          studentMap[sid] = { student_id: sid, student: r.students, campus: r.campuses, referrals: [], placements: [], activeSupports: 0 }
+        }
+        studentMap[sid].referrals.push(r)
+      })
+
+      ;(placRes.data || []).forEach(p => {
+        const sid = p.student_id
+        if (!studentMap[sid]) {
+          studentMap[sid] = { student_id: sid, student: null, campus: null, referrals: [], placements: [], activeSupports: 0 }
+        }
+        studentMap[sid].placements.push(p)
+      })
+
+      ;(supRes.data || []).forEach(s => {
+        if (studentMap[s.student_id]) studentMap[s.student_id].activeSupports++
+      })
+
+      const result = Object.values(studentMap)
+        .map(s => {
+          const { score, triggers } = computeRiskScore(s.referrals, s.placements, s.activeSupports)
+          return { ...s, risk_score: score, risk_level: riskLevel(score), triggers }
+        })
+        .filter(s => s.risk_score > 0)
+        .sort((a, b) => {
+          const order = { high: 0, medium: 1, low: 2 }
+          if (order[a.risk_level] !== order[b.risk_level]) return order[a.risk_level] - order[b.risk_level]
+          return b.risk_score - a.risk_score
+        })
+
+      setStudents(result)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { students, loading, error, refetch: fetch }
+}
+
+// ─── Skill Gap Data ───────────────────────────────────────────────────────────
+
+export const SKILL_GAP_LABELS = {
+  emotional_regulation: 'Emotional Regulation',
+  executive_functioning: 'Executive Functioning',
+  peer_conflict_resolution: 'Peer Conflict Resolution',
+  academic_frustration_tolerance: 'Academic Frustration Tolerance',
+  impulse_control: 'Impulse Control',
+  adult_communication: 'Adult Communication',
+}
+
+const SKILL_INTERVENTIONS = {
+  emotional_regulation: ['CICO', 'Counseling Referral', 'Mindfulness Protocol'],
+  executive_functioning: ['Behavior Contract', 'Academic Support', 'CICO'],
+  peer_conflict_resolution: ['Peer Mediation', 'Counseling Referral', 'Social Skills Group'],
+  academic_frustration_tolerance: ['Academic Support', 'Behavior Contract', 'Counseling Referral'],
+  impulse_control: ['CICO', 'Behavior Contract', 'Counseling Referral'],
+  adult_communication: ['Social Skills Group', 'Counseling Referral', 'Parent Conference'],
+}
+
+export function useSkillGapData() {
+  const { districtId } = useAuth()
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: rows, error: err } = await supabase
+        .from('navigator_referrals')
+        .select('skill_gap, student_id, students(id, first_name, last_name, grade_level), campuses(name)')
+        .eq('district_id', districtId)
+        .not('skill_gap', 'is', null)
+
+      if (err) throw err
+
+      const counts = {}
+      const studentsBySkill = {}
+      ;(rows || []).forEach(r => {
+        const gap = r.skill_gap
+        counts[gap] = (counts[gap] || 0) + 1
+        if (!studentsBySkill[gap]) studentsBySkill[gap] = new Set()
+        studentsBySkill[gap].add(r.student_id)
+      })
+
+      const gapData = Object.entries(counts)
+        .map(([gap, count]) => ({
+          gap,
+          label: SKILL_GAP_LABELS[gap] || gap,
+          count,
+          unique_students: studentsBySkill[gap]?.size || 0,
+          interventions: SKILL_INTERVENTIONS[gap] || [],
+        }))
+        .sort((a, b) => b.count - a.count)
+
+      setData(gapData)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, loading, error, refetch: fetch }
+}
+
+// ─── Intervention Effectiveness ───────────────────────────────────────────────
+
+export function useInterventionEffectiveness() {
+  const { districtId } = useAuth()
+  const [supports, setSupports] = useState([])
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: rows, error: err } = await supabase
+        .from('navigator_supports')
+        .select(`
+          *,
+          students(id, first_name, last_name, grade_level),
+          campuses(id, name),
+          assigner:profiles!navigator_supports_assigned_by_fkey(full_name)
+        `)
+        .eq('district_id', districtId)
+        .eq('status', 'completed')
+        .not('incidents_before', 'is', null)
+        .not('incidents_after', 'is', null)
+        .order('end_date', { ascending: false })
+
+      if (err) throw err
+      const data = rows || []
+
+      if (data.length > 0) {
+        const totalBefore = data.reduce((s, r) => s + (r.incidents_before || 0), 0)
+        const totalAfter = data.reduce((s, r) => s + (r.incidents_after || 0), 0)
+        const improved = data.filter(r => (r.incidents_after || 0) < (r.incidents_before || 0)).length
+
+        const byType = {}
+        data.forEach(r => {
+          const t = r.support_type
+          if (!byType[t]) byType[t] = { type: t, count: 0, before: 0, after: 0 }
+          byType[t].count++
+          byType[t].before += r.incidents_before || 0
+          byType[t].after += r.incidents_after || 0
+        })
+
+        setMetrics({
+          totalTracked: data.length,
+          avgReduction: totalBefore > 0 ? Math.round((totalBefore - totalAfter) / totalBefore * 100) : 0,
+          improved,
+          improvedPct: Math.round(improved / data.length * 100),
+          byType: Object.values(byType).sort((a, b) => b.count - a.count),
+        })
+      } else {
+        setMetrics(null)
+      }
+
+      setSupports(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { supports, metrics, loading, error, refetch: fetch }
+}
+
+// ─── Disproportionality ───────────────────────────────────────────────────────
+
+export function useDisproportionality() {
+  const { districtId } = useAuth()
+  const [campusData, setCampusData] = useState([])
+  const [gradeData, setGradeData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+
+      const [refRes, studRes] = await Promise.all([
+        supabase
+          .from('navigator_referrals')
+          .select('campus_id, student_id, students(grade_level), campuses(id, name)')
+          .eq('district_id', districtId)
+          .gte('referral_date', d90),
+
+        supabase
+          .from('students')
+          .select('id, grade_level, campus_id')
+          .eq('district_id', districtId)
+          .eq('status', 'active'),
+      ])
+
+      if (refRes.error) throw refRes.error
+
+      const referrals = refRes.data || []
+      const allStudents = studRes.data || []
+
+      const campusRefs = {}
+      const campusNames = {}
+      referrals.forEach(r => {
+        campusRefs[r.campus_id] = (campusRefs[r.campus_id] || 0) + 1
+        if (r.campuses) campusNames[r.campus_id] = r.campuses.name
+      })
+
+      const campusPop = {}
+      allStudents.forEach(s => {
+        campusPop[s.campus_id] = (campusPop[s.campus_id] || 0) + 1
+      })
+
+      setCampusData(
+        Object.entries(campusRefs)
+          .map(([cid, refs]) => ({
+            campus_id: cid,
+            name: campusNames[cid] || 'Unknown',
+            referrals: refs,
+            enrollment: campusPop[cid] || 0,
+            rate: campusPop[cid] ? +(refs / campusPop[cid] * 100).toFixed(1) : null,
+          }))
+          .sort((a, b) => (b.rate || 0) - (a.rate || 0))
+      )
+
+      const gradeRefs = {}
+      const gradePop = {}
+      referrals.forEach(r => {
+        const g = r.students?.grade_level ?? 'Unknown'
+        gradeRefs[g] = (gradeRefs[g] || 0) + 1
+      })
+      allStudents.forEach(s => {
+        const g = s.grade_level ?? 'Unknown'
+        gradePop[g] = (gradePop[g] || 0) + 1
+      })
+
+      setGradeData(
+        Object.entries(gradeRefs)
+          .map(([g, refs]) => ({
+            grade: g,
+            label: isNaN(parseInt(g)) ? g : `Grade ${g}`,
+            referrals: refs,
+            enrollment: gradePop[g] || 0,
+            rate: gradePop[g] ? +(refs / gradePop[g] * 100).toFixed(1) : null,
+          }))
+          .sort((a, b) => {
+            const an = parseInt(a.grade), bn = parseInt(b.grade)
+            return isNaN(an) || isNaN(bn) ? 0 : an - bn
+          })
+      )
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { campusData, gradeData, loading, error, refetch: fetch }
+}
+
+// ─── Pilot Summary ────────────────────────────────────────────────────────────
+
+export function useNavigatorPilotSummary(schoolYear) {
+  const { districtId } = useAuth()
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId || !schoolYear) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { start, end } = getSchoolYearBounds(schoolYear)
+
+      const [refRes, placRes, supRes] = await Promise.all([
+        supabase
+          .from('navigator_referrals')
+          .select('id, student_id, status, outcome, skill_gap')
+          .eq('district_id', districtId)
+          .gte('referral_date', start)
+          .lte('referral_date', end),
+
+        supabase
+          .from('navigator_placements')
+          .select('id, student_id, placement_type, days')
+          .eq('district_id', districtId)
+          .gte('start_date', start)
+          .lte('start_date', end),
+
+        supabase
+          .from('navigator_supports')
+          .select('id, student_id, support_type, status, incidents_before, incidents_after')
+          .eq('district_id', districtId)
+          .gte('start_date', start)
+          .lte('start_date', end),
+      ])
+
+      if (refRes.error) throw refRes.error
+
+      const referrals = refRes.data || []
+      const placements = placRes.data || []
+      const supports = supRes.data || []
+
+      const escalated = referrals.filter(r => r.outcome === 'escalated_to_daep').length
+      const diverted = referrals.filter(r => r.outcome && r.outcome !== 'escalated_to_daep' && r.outcome !== 'no_action').length
+      const issCount = placements.filter(p => p.placement_type === 'iss').length
+      const ossCount = placements.filter(p => p.placement_type === 'oss').length
+      const totalDaysRemoved = placements.reduce((s, p) => s + (p.days || 0), 0)
+
+      const effectivenessRows = supports.filter(s => s.incidents_before != null && s.incidents_after != null && s.incidents_before > 0)
+      const avgReduction = effectivenessRows.length > 0
+        ? Math.round(effectivenessRows.reduce((sum, s) => sum + (s.incidents_before - s.incidents_after) / s.incidents_before, 0) / effectivenessRows.length * 100)
+        : null
+
+      const gapCounts = {}
+      referrals.filter(r => r.skill_gap).forEach(r => {
+        gapCounts[r.skill_gap] = (gapCounts[r.skill_gap] || 0) + 1
+      })
+      const topGaps = Object.entries(gapCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([gap, count]) => ({ gap, label: SKILL_GAP_LABELS[gap] || gap, count }))
+
+      setSummary({
+        schoolYear,
+        totalReferrals: referrals.length,
+        uniqueStudents: new Set(referrals.map(r => r.student_id)).size,
+        escalated,
+        diverted,
+        issCount,
+        ossCount,
+        totalDaysRemoved,
+        activeSupports: supports.filter(s => s.status === 'active').length,
+        completedSupports: supports.filter(s => s.status === 'completed').length,
+        avgReduction,
+        topGaps,
+      })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, schoolYear])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { summary, loading, error, refetch: fetch }
+}
+
+// ─── YOY ─────────────────────────────────────────────────────────────────────
+
 // Groups placements by month offset from school year start (Aug = 0)
 const MONTH_LABELS = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
 
