@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-02-28 (Session T — Demo video script + seed data + marketing site revert)
+> Last updated: 2026-03-01 (Session U — Navigator Intelligence 5 features + Command Center fix)
 
 ---
 
@@ -12,7 +12,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–048 (production). Migration 044 (Origins schema) NOT YET applied. Migration 049 (SPPI-13 + RDA tables) written but NOT YET applied — paste SQL Editor.
+- **Migrations applied:** 001–048 (production). Migration 044 (Origins schema) NOT YET applied. Migration 049 (SPPI-13 + RDA tables) written but NOT YET applied — paste SQL Editor. Migration 050 (Navigator skill_gap + effectiveness columns) written but NOT YET applied — paste SQL Editor.
 - **Demo seed data:** `supabase/seed_demo_video.mjs` created and ran successfully — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -62,7 +62,7 @@
 - **Mobile responsive layout** — hamburger drawer (mobile), always-visible sidebar (desktop). `SidebarContext` at `src/contexts/SidebarContext.jsx`. No page files changed.
 - Teacher referral page (`/referral`), DAEP scoring page (`/daep/scoring`)
 - Bulk incident export (select checkboxes → Export PDF/Excel)
-- **Navigator module** — referrals, placements, supports, student detail, reports, goals & progress, data import (gated by `hasProduct('navigator')`)
+- **Navigator module** — referrals, placements, supports, student detail, reports, goals & progress, data import, **Escalation Engine**, **Skill Gap Map**, **Effectiveness**, **Disproportionality Radar**, **Pilot Summary** (gated by `hasProduct('navigator')`)
 - **Meridian module (operationally complete)** — Dashboard, Timelines, Student Detail (Schedule ARD modal, Escalate modal, Link Waypoint modal, Generate Compliance PDF), Dyslexia/HB3928 (Mark Reviewed modal), CAP Tracker (task toggle, Log New Finding modal, Generate TEA Docs PDF), Folder Readiness, Waypoint Sync, Integration, **Transition SPPI-13** (compliance table + TransitionPlanModal 5 accordion elements + jsPDF report), **RDA Dashboard** (DL banner, 3 domain sections, indicator cards Live/Manual, RDADataModal 3-step, IndicatorEditModal). All hooks have `refetch()`. Mutations in `useMeridian.js`.
 - **DAEP Analytics** — Analytics tab on DAEP Dashboard: CapacityTrackerWidget (occupied/reserved/remaining), EnrollmentByGradeTable (sub-pop breakdown). Reports → Enrollment tab. IncidentDetailPage capacity banner. `set_daep_capacity` RPC applied to DB (migration 048).
 - **Origins module (code complete)** — 8 staff pages + full family portal: student 7-step scenario player (choose → outcome → reflect → commit → complete), parent view with conversation starters, 18 TEC-aligned global scenarios. Migration 044 NOT yet applied — runs off localStorage until then.
@@ -114,6 +114,9 @@
 8. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
 9. **Supabase Pro upgrade** — required to permanently enable HaveIBeenPwned password protection ($25/month).
 10. **Apply migration 049** — `supabase/migrations/049_meridian_transition_rda.sql` creates `meridian_secondary_transitions`, `meridian_rda_determination`, `meridian_rda_indicators`. Paste SQL into SQL Editor. Pages exist and build clean; empty-state safe until migration applied.
+13. **Apply migration 050** — `supabase/migrations/050_navigator_intelligence.sql` adds `skill_gap` (CHECK constraint) + `skill_gap_notes` to `navigator_referrals`, and `outcome_notes` + `incidents_before` + `incidents_after` to `navigator_supports`. Required for Skill Gap Map + Effectiveness pages to show real data. Paste SQL into SQL Editor.
+14. **Wire skill_gap field into Referral form** — Migration 050 adds the column; the navigator referral create/edit form still needs a `<select>` for `skill_gap`. Optional but needed for Skill Gap Map to populate.
+15. **Wire effectiveness fields into Support form** — `incidents_before`, `incidents_after`, `outcome_notes` need inputs in the Navigator Supports edit modal for Effectiveness page to show data.
 11. **Meridian escalations table** — Escalate button shows modal but logs to console only. Needs a future migration for `meridian_escalations` — separate from 049.
 12. **First pilot district** — not yet contracted. Product is sales-ready.
 12. **clearpathedgroup.com custom domain** — `www.clearpathedgroup.com` CNAME record needs to be added manually in Cloudflare DNS: Type=CNAME, Name=`www`, Target=`cpeg-site.pages.dev`, Proxied=ON. Root domain (`clearpathedgroup.com`) DNS is verified; TLS cert may still be provisioning. Check Cloudflare Pages → cpeg-site → Custom Domains if either domain shows errors.
