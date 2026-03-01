@@ -117,6 +117,16 @@ export default function WaypointAdminPage() {
           >
             Business Dashboard
           </button>
+          <button
+            onClick={() => setActiveTab('hub')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'hub'
+                ? 'bg-gray-700 text-white'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Product Hub
+          </button>
         </div>
 
         {/* Districts tab */}
@@ -192,6 +202,9 @@ export default function WaypointAdminPage() {
 
         {/* Business Dashboard tab */}
         {activeTab === 'dashboard' && <OwnerDashboard />}
+
+        {/* Product Hub tab */}
+        {activeTab === 'hub' && <ProductHub />}
       </main>
 
       {showProvisionModal && (
@@ -1193,6 +1206,249 @@ function ModalShell({ title, onClose, children }) {
         </div>
         <div className="p-5">{children}</div>
       </div>
+    </div>
+  )
+}
+
+// ─── Product Hub ──────────────────────────────────────────────────────────────
+
+const HUB_PRODUCTS = [
+  {
+    name: 'Waypoint', tagline: 'DAEP Management', color: '#f97316',
+    status: 'Live',
+    description: 'Full DAEP lifecycle — incident creation, approval chain, SPED compliance blocking, transition plans, orientation kiosk, parent portal.',
+    links: [
+      { label: 'Dashboard',       href: '/dashboard' },
+      { label: 'Incidents',       href: '/incidents' },
+      { label: 'DAEP Dashboard',  href: '/daep' },
+      { label: 'Compliance',      href: '/compliance' },
+      { label: 'Transition Plans',href: '/plans' },
+      { label: 'Reports',         href: '/reports' },
+      { label: 'Calendar',        href: '/calendar' },
+    ],
+  },
+  {
+    name: 'Navigator', tagline: 'ISS / OSS + Behavior Intelligence', color: '#3b82f6',
+    status: 'Live',
+    description: 'Referrals, ISS/OSS placements, proactive supports, escalation risk scoring, skill gap mapping, effectiveness tracking, disproportionality radar.',
+    links: [
+      { label: 'Nav Dashboard',      href: '/navigator' },
+      { label: 'Escalation Engine',  href: '/navigator/escalation' },
+      { label: 'Skill Gap Map',      href: '/navigator/skill-map' },
+      { label: 'Effectiveness',      href: '/navigator/effectiveness' },
+      { label: 'Disproportionality', href: '/navigator/disproportionality' },
+      { label: 'Pilot Summary',      href: '/navigator/pilot' },
+    ],
+  },
+  {
+    name: 'Meridian', tagline: 'SPED Compliance', color: '#a855f7',
+    status: 'Live',
+    description: 'ARD timelines, dyslexia/HB 3928, folder readiness, CAP tracker, SPPI-13 secondary transition, RDA indicators dashboard.',
+    links: [
+      { label: 'SPED Overview',       href: '/meridian' },
+      { label: 'ARD Timelines',       href: '/meridian/timelines' },
+      { label: 'Dyslexia / HB 3928',  href: '/meridian/dyslexia' },
+      { label: 'Folder Readiness',    href: '/meridian/folders' },
+      { label: 'CAP Tracker',         href: '/meridian/cap' },
+      { label: 'Transition SPPI-13',  href: '/meridian/transition' },
+      { label: 'RDA Dashboard',       href: '/meridian/rda' },
+    ],
+  },
+  {
+    name: 'Origins', tagline: 'Family Portal', color: '#0d9488',
+    status: 'Live (migration 044 needed for DB)',
+    description: 'Restorative family engagement — student scenario player (7-step), parent conversation starters, 18 TEC-aligned scenarios, skill pathways.',
+    links: [
+      { label: 'Origins Dashboard',  href: '/origins' },
+      { label: 'Response Moments',   href: '/origins/response-moments' },
+      { label: 'Family Workspace',   href: '/origins/family-workspace' },
+      { label: 'Skill Pathways',     href: '/origins/pathways' },
+      { label: 'Student Portal',     href: '/family/student' },
+      { label: 'Parent Portal',      href: '/family/parent' },
+    ],
+  },
+]
+
+const DEMO_SITES = [
+  { label: 'App — Staff Login',   url: 'https://waypoint.clearpathedgroup.com' },
+  { label: 'App — Parent Portal', url: 'https://waypoint.clearpathedgroup.com/parent' },
+  { label: 'DAEP Kiosk',          url: 'https://waypoint.clearpathedgroup.com/kiosk' },
+  { label: 'Orientation Kiosk',   url: 'https://waypoint.clearpathedgroup.com/orientation' },
+  { label: 'Family Portal',       url: 'https://waypoint.clearpathedgroup.com/family' },
+  { label: 'Marketing Site',      url: 'https://clearpathedgroup.com' },
+  { label: 'Whitepaper',          url: 'https://clearpathedgroup.com/whitepaper.html' },
+  { label: 'Waypoint Admin',      url: 'https://waypoint.clearpathedgroup.com/waypoint-admin' },
+]
+
+const DEMO_ACCOUNTS_HUB = [
+  {
+    group: 'Lone Star ISD — Staff (Password: Password123!)',
+    accounts: [
+      { role: 'District Admin',      email: 'admin@lonestar-isd.org',        pw: 'Password123!', note: 'Full access, all campuses' },
+      { role: 'DAEP Staff (AP)',      email: 'daep-staff@lonestar-isd.org',   pw: 'Password123!', note: 'All campuses' },
+      { role: 'Principal',           email: 'hs-principal@lonestar-isd.org',  pw: 'Password123!', note: 'High School only' },
+      { role: 'Asst. Principal',     email: 'hs-ap@lonestar-isd.org',         pw: 'Password123!', note: 'High School only' },
+      { role: 'Counselor',           email: 'ms-counselor@lonestar-isd.org',  pw: 'Password123!', note: 'Middle School only' },
+      { role: 'Teacher',             email: 'el-teacher@lonestar-isd.org',    pw: 'Password123!', note: 'Elementary only' },
+      { role: 'SPED Coordinator',    email: 'sped-coord@lonestar-isd.org',    pw: 'Password123!', note: 'Middle School only' },
+    ],
+  },
+  {
+    group: 'Parent Portal',
+    accounts: [
+      { role: 'Parent (demo)',       email: 'parent@lonestar-isd.org',        pw: 'Password123!', note: 'Marcus & Sofia Johnson' },
+      { role: 'Parent (B-roll)',     email: 'parent.marcus@gmail.com',         pw: 'Password123!', note: 'Sandra Johnson (guardian of Marcus)' },
+    ],
+  },
+  {
+    group: 'Internal',
+    accounts: [
+      { role: 'Waypoint Admin',      email: 'admin@waypoint.internal',         pw: 'Waypoint2025!', note: '/waypoint-admin' },
+    ],
+  },
+]
+
+function ProductHub() {
+  const [showPasswords, setShowPasswords] = useState(false)
+  const [copied, setCopied] = useState(null)
+
+  function copy(text, key) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1400)
+    })
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Product Cards */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Compass Pathway — All Products</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {HUB_PRODUCTS.map(p => (
+            <div key={p.name} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col">
+              {/* Color band */}
+              <div className="h-1.5 w-full" style={{ backgroundColor: p.color }} />
+              <div className="px-4 pt-4 pb-3 flex-1">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <h3 className="text-white font-bold text-base">{p.name}</h3>
+                    <p className="text-xs mt-0.5" style={{ color: p.color }}>{p.tagline}</p>
+                  </div>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 shrink-0 mt-0.5">{p.status}</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">{p.description}</p>
+              </div>
+              <div className="px-4 pb-4">
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-2">Quick Links</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  {p.links.map(l => (
+                    <a
+                      key={l.href}
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium transition-colors hover:underline"
+                      style={{ color: p.color }}
+                    >
+                      {l.label} →
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Demo Sites */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Demo Sites</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {DEMO_SITES.map(s => (
+            <a
+              key={s.url}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 flex items-center justify-between hover:border-gray-600 transition-colors group"
+            >
+              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{s.label}</span>
+              <svg className="h-3.5 w-3.5 text-gray-600 group-hover:text-gray-300 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* Demo Credentials */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Demo Credentials</h2>
+          <button
+            onClick={() => setShowPasswords(v => !v)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              showPasswords ? 'bg-amber-900/60 text-amber-300' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            {showPasswords ? 'Hide Passwords' : 'Show Passwords'}
+          </button>
+        </div>
+
+        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
+          {DEMO_ACCOUNTS_HUB.map(group => (
+            <div key={group.group} className="px-5 py-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{group.group}</p>
+              <div className="space-y-2">
+                {group.accounts.map(acc => (
+                  <div key={acc.email} className="grid grid-cols-12 gap-2 items-center bg-gray-800/50 rounded-lg px-3 py-2">
+                    {/* Role */}
+                    <span className="col-span-3 text-xs font-medium text-gray-300 truncate">{acc.role}</span>
+
+                    {/* Email */}
+                    <div className="col-span-4 flex items-center gap-1.5">
+                      <span className="text-xs text-gray-400 font-mono truncate">{acc.email}</span>
+                      <button
+                        onClick={() => copy(acc.email, `e-${acc.email}`)}
+                        className="shrink-0 text-gray-600 hover:text-orange-400 transition-colors"
+                        title="Copy email"
+                      >
+                        {copied === `e-${acc.email}`
+                          ? <svg className="h-3.5 w-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                          : <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
+                        }
+                      </button>
+                    </div>
+
+                    {/* Password */}
+                    <div className="col-span-3 flex items-center gap-1.5">
+                      <span className="text-xs text-gray-400 font-mono">
+                        {showPasswords ? acc.pw : '••••••••••'}
+                      </span>
+                      {showPasswords && (
+                        <button
+                          onClick={() => copy(acc.pw, `p-${acc.email}`)}
+                          className="shrink-0 text-gray-600 hover:text-orange-400 transition-colors"
+                          title="Copy password"
+                        >
+                          {copied === `p-${acc.email}`
+                            ? <svg className="h-3.5 w-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                            : <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
+                          }
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Note */}
+                    <span className="col-span-2 text-xs text-gray-600 truncate hidden lg:block">{acc.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
