@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-03 (Session Y — Full Navigator audit + all page fixes + seed data with active placements)
+> Last updated: 2026-03-03 (Session Z — Email live, video chat on ops site, Supabase Pro, agent team defined)
 
 ---
 
@@ -105,23 +105,18 @@
 ## Pending / Not Done
 
 1. ~~**Apply migration 044**~~ — ✅ Applied 2026-03-01 via SQL Editor. Run `node supabase/seed_origins_scenarios.mjs` to seed global scenarios if not yet done.
-2. **Set up `privacy@clearpathedgroup.com`** — referenced in all compliance docs; must exist before sharing docs with districts.
-3. **Verify Business Dashboard loads on live site** — log in as `admin@waypoint.internal` → Business Dashboard. Confirm no errors.
-4. ~~**Enable Meridian + Origins for Lone Star ISD**~~ — ✅ Done (Session V). Meridian + Navigator enabled via seed scripts. Origins still pending migration 044.
-5. ~~**Seed Meridian demo data**~~ — ✅ Done (Session V). 9 students, 4 IEPs, 2 504 plans seeded via `seed_meridian.mjs`.
-6. **Resend sender domain** — verify `waypointdaep.com` in Resend → Domains. Then set Supabase secret `FROM_EMAIL="Waypoint <noreply@waypointdaep.com>"` and redeploy Edge Function. Code fallback already updated.
-7. **Supabase redirect URLs** — add `https://waypoint.clearpathedgroup.com/reset-password` to Supabase Auth → URL Configuration → Redirect URLs.
-8. **Google Search Console** — register clearpathedgroup.com to accelerate search indexing.
-9. **Supabase Pro upgrade** — required to permanently enable HaveIBeenPwned password protection ($25/month).
-10. ~~**Apply migration 049**~~ — ✅ Applied 2026-03-01 via SQL Editor. `meridian_secondary_transitions`, `meridian_rda_determination`, `meridian_rda_indicators` tables now live.
-13. ~~**Apply migration 050**~~ — ✅ Applied 2026-03-01 via SQL Editor. `skill_gap`, `skill_gap_notes` on `navigator_referrals`; `outcome_notes`, `incidents_before`, `incidents_after` on `navigator_supports` now live.
-14. ~~**Wire skill_gap field into Referral form**~~ — ✅ Done. `skill_gap` select + `skill_gap_notes` textarea in review form. Skill Gap Map now populates.
-15. ~~**Wire effectiveness fields into Support form**~~ — ✅ Done. `EditSupportDrawer` in NavigatorSupportsPage with `incidents_before`, `incidents_after`, `outcome_notes` (shown when status=completed).
-16. **Create `messages` table in ops Supabase** — Run SQL in https://supabase.com/dashboard/project/xbpuqaqpcbixxodblaes/sql/new to activate Partner Chat (see Session X handover). Table: `id BIGSERIAL, sender TEXT, message TEXT, created_at TIMESTAMPTZ DEFAULT now()` + anon RLS policy. ⚠️ Also in action tracker as task 15.
-17. **Verify Business Dashboard loads on live site** — Log in as `admin@waypoint.internal` → Business Dashboard tab. Confirm charts load. (Action tracker task 16.)
-11. **Meridian escalations table** — Escalate button shows modal but logs to console only. Needs a future migration for `meridian_escalations` — separate from 049.
-12. **First pilot district** — not yet contracted. Product is sales-ready.
-12. **clearpathedgroup.com custom domain** — `www.clearpathedgroup.com` CNAME record needs to be added manually in Cloudflare DNS: Type=CNAME, Name=`www`, Target=`cpeg-site.pages.dev`, Proxied=ON. Root domain (`clearpathedgroup.com`) DNS is verified; TLS cert may still be provisioning. Check Cloudflare Pages → cpeg-site → Custom Domains if either domain shows errors.
+1. **Set up `privacy@clearpathedgroup.com`** — referenced in all compliance docs; must exist before sharing docs with districts.
+2. **Google Search Console** — register clearpathedgroup.com (Sage owns this).
+3. ~~**Resend sender domain**~~ — ✅ Done (Session Z). clearpathedgroup.com confirmed correct. DKIM already set. Edge Function updated + redeployed. Secrets set.
+4. ~~**Supabase redirect URL**~~ — ✅ Done (Session Z). `https://waypoint.clearpathedgroup.com/reset-password` added to Supabase Auth → URL Configuration.
+5. ~~**Supabase Pro upgrade**~~ — ✅ Done (Session Z). HaveIBeenPwned (Leaked Password Protection) enabled in Auth → Security.
+6. ~~**www CNAME**~~ — ✅ Done (earlier session). `www.clearpathedgroup.com` → `cpeg-site.pages.dev`, Proxied ON.
+7. ~~**Partner Chat messages table**~~ — ✅ Already existed. Partner Chat live.
+8. ~~**Business Dashboard**~~ — ✅ Verified live on `admin@waypoint.internal`.
+9. **Meridian escalations table** — Escalate button logs to console only. Needs future migration for `meridian_escalations`.
+10. **First pilot district** — not yet contracted. Product is sales-ready. Nova owns the sales strategy.
+11. **SPF record** — add `include:spf.resend.com` to `clearpathedgroup.com` TXT record in Cloudflare DNS (needs DNS:Edit token — current token is Pages-only).
+12. **AI Agent team** — Archer (CTO), Vera (COO), Nova (CRO), Sage (CMO). Docs in `docs/agents/`.
 
 ---
 

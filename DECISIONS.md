@@ -8,6 +8,15 @@
 
 ---
 
+## AI Agent Team
+
+| Date | Decision | Context |
+|------|----------|---------|
+| 2026-03-03 | **AI executive team: Archer (CTO), Vera (COO), Nova (CRO), Sage (CMO).** Archer owns all code and infrastructure. Vera owns operations and the command center. Nova owns revenue, sales, and district pipeline. Sage owns brand, marketing copy, and content. Full specs in `docs/agents/`. | Named to allow clean role separation when invoking AI agents for different business functions. |
+| 2026-03-03 | **Sender domain for all Waypoint emails is `clearpathedgroup.com`, not `waypointdaep.com`.** Edge Function default FROM: `Waypoint <noreply@clearpathedgroup.com>`. DKIM already configured in Cloudflare. SPF needs `include:spf.resend.com` added. | `waypointdaep.com` had no DNS records. `clearpathedgroup.com` is the live company domain. |
+
+---
+
 ## Architecture & Technology
 
 | Date | Decision | Context |
