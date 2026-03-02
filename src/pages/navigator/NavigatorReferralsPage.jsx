@@ -32,10 +32,18 @@ const SKILL_GAP_LABELS = {
 }
 
 export default function NavigatorReferralsPage() {
+  const { districtId } = useAuth()
   const [filters, setFilters] = useState({ status: '', campus_id: '', date_from: '', date_to: '' })
   const [showDrawer, setShowDrawer] = useState(false)
   const [selectedReferral, setSelectedReferral] = useState(null)
+  const [campuses, setCampuses] = useState([])
   const { referrals, loading, refetch } = useNavigatorReferrals(filters)
+
+  useEffect(() => {
+    if (!districtId) return
+    supabase.from('campuses').select('id, name').eq('district_id', districtId).order('name')
+      .then(({ data }) => setCampuses(data || []))
+  }, [districtId])
 
   return (
     <div>
@@ -67,19 +75,27 @@ export default function NavigatorReferralsPage() {
               <option value="closed">Closed</option>
               <option value="escalated_to_daep">Escalated to DAEP</option>
             </select>
+            <select
+              value={filters.campus_id}
+              onChange={e => setFilters(f => ({ ...f, campus_id: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-orange-400"
+            >
+              <option value="">All Campuses</option>
+              {campuses.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
             <input
               type="date"
               value={filters.date_from}
               onChange={e => setFilters(f => ({ ...f, date_from: e.target.value }))}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-orange-400"
-              placeholder="From date"
             />
             <input
               type="date"
               value={filters.date_to}
               onChange={e => setFilters(f => ({ ...f, date_to: e.target.value }))}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-orange-400"
-              placeholder="To date"
             />
             <button
               onClick={() => setFilters({ status: '', campus_id: '', date_from: '', date_to: '' })}

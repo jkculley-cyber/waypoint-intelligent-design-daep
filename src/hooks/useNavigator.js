@@ -153,7 +153,7 @@ export function useNavigatorDashboardStats() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
     const ninetyDaysAgo = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-    const [referralsThisMonth, activeISS, activeOSS, recentRes, ossStudents] = await Promise.all([
+    const [referralsThisMonth, activeISS, activeOSS, activeSupports, recentRes, ossStudents] = await Promise.all([
       supabase
         .from('navigator_referrals')
         .select('id', { count: 'exact', head: true })
@@ -173,6 +173,12 @@ export function useNavigatorDashboardStats() {
         .eq('district_id', districtId)
         .eq('placement_type', 'oss')
         .is('end_date', null),
+
+      supabase
+        .from('navigator_supports')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .eq('status', 'active'),
 
       supabase
         .from('navigator_referrals')
@@ -211,6 +217,7 @@ export function useNavigatorDashboardStats() {
       referralsThisMonth: referralsThisMonth.count || 0,
       activeISS: activeISS.count || 0,
       activeOSS: activeOSS.count || 0,
+      activeSupports: activeSupports.count || 0,
     })
     setRecentReferrals(recentRes.data || [])
     setEscalationAlerts(escalations)
@@ -274,10 +281,12 @@ export function useNavigatorStudentHistory(studentId) {
 
   useEffect(() => { fetch() }, [fetch])
 
-  // Simple risk score: 0–10 based on referral + placement count
-  const riskScore = Math.min(10, (referrals.length * 1) + (placements.length * 2))
+  // Risk score uses the same weighted algorithm as the Escalation Engine
+  const activeSupports = supports.filter(s => s.status === 'active')
+  const { score: riskScore, triggers: riskTriggers } = computeRiskScore(referrals, placements, activeSupports.length)
+  const studentRiskLevel = riskLevel(riskScore)
 
-  return { student, referrals, placements, supports, riskScore, loading, refetch: fetch }
+  return { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel: studentRiskLevel, loading, refetch: fetch }
 }
 
 // ─── School Year Helpers ────────────────────────────────────────────────────────

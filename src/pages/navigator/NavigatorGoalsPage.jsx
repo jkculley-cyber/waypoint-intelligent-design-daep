@@ -65,7 +65,7 @@ function statusColor(ytd, trajectory) {
   return 'red'
 }
 
-function CampusGoalCard({ goal, placements, currentWeek }) {
+function CampusGoalCard({ goal, placements, currentWeek, onEdit, isAdmin }) {
   const campusId = goal.campus_id
   const issTarget = Math.round(goal.iss_baseline * (1 - goal.iss_reduction_pct / 100))
   const ossTarget = Math.round(goal.oss_baseline * (1 - goal.oss_reduction_pct / 100))
@@ -113,9 +113,20 @@ function CampusGoalCard({ goal, placements, currentWeek }) {
           <h3 className="text-sm font-semibold text-gray-900">{goal.campuses?.name || 'Campus'}</h3>
           <span className="text-xs text-gray-400">{goal.school_year}</span>
         </div>
-        <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-          {goal.iss_reduction_pct}% / {goal.oss_reduction_pct}% goal
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+            {goal.iss_reduction_pct}% / {goal.oss_reduction_pct}% goal
+          </span>
+          {isAdmin && (
+            <button
+              onClick={() => onEdit(goal.campus_id)}
+              className="text-xs text-gray-400 hover:text-blue-600 transition-colors px-1"
+              title="Edit goal"
+            >
+              ✎
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ISS row */}
@@ -165,7 +176,7 @@ function CampusGoalCard({ goal, placements, currentWeek }) {
 
 // ─── Set Goals Modal ───────────────────────────────────────────────────────────
 
-function SetGoalsModal({ isOpen, onClose, schoolYear, onSaved }) {
+function SetGoalsModal({ isOpen, onClose, schoolYear, existingGoals, initialCampusId, onSaved }) {
   const { districtId, profile } = useAuth()
   const [campuses, setCampuses] = useState([])
   const [form, setForm] = useState({
@@ -184,16 +195,58 @@ function SetGoalsModal({ isOpen, onClose, schoolYear, onSaved }) {
     if (!isOpen || !districtId) return
     supabase.from('campuses').select('id, name').eq('district_id', districtId).order('name')
       .then(({ data }) => setCampuses(data || []))
-    setForm({
-      campus_id: '',
-      school_year: schoolYear,
-      iss_baseline: '',
-      iss_reduction_pct: '10',
-      oss_baseline: '',
-      oss_reduction_pct: '10',
-    })
+    // If opened with a specific campus, pre-populate from existing goal
+    const startCampusId = initialCampusId || ''
+    if (startCampusId) {
+      const existing = existingGoals?.find(g => g.campus_id === startCampusId)
+      if (existing) {
+        setForm({
+          campus_id: startCampusId,
+          school_year: schoolYear,
+          iss_baseline: String(existing.iss_baseline),
+          iss_reduction_pct: String(existing.iss_reduction_pct),
+          oss_baseline: String(existing.oss_baseline),
+          oss_reduction_pct: String(existing.oss_reduction_pct),
+        })
+      } else {
+        setForm({ campus_id: startCampusId, school_year: schoolYear, iss_baseline: '', iss_reduction_pct: '10', oss_baseline: '', oss_reduction_pct: '10' })
+      }
+    } else {
+      setForm({
+        campus_id: '',
+        school_year: schoolYear,
+        iss_baseline: '',
+        iss_reduction_pct: '10',
+        oss_baseline: '',
+        oss_reduction_pct: '10',
+      })
+    }
     setError(null)
-  }, [isOpen, districtId, schoolYear])
+  }, [isOpen, districtId, schoolYear, initialCampusId])
+
+  // Pre-populate form when campus changes to match existing goal
+  function handleCampusChange(campusId) {
+    const existing = existingGoals?.find(g => g.campus_id === campusId)
+    if (existing) {
+      setForm(f => ({
+        ...f,
+        campus_id: campusId,
+        iss_baseline: String(existing.iss_baseline),
+        iss_reduction_pct: String(existing.iss_reduction_pct),
+        oss_baseline: String(existing.oss_baseline),
+        oss_reduction_pct: String(existing.oss_reduction_pct),
+      }))
+    } else {
+      setForm(f => ({
+        ...f,
+        campus_id: campusId,
+        iss_baseline: '',
+        iss_reduction_pct: '10',
+        oss_baseline: '',
+        oss_reduction_pct: '10',
+      }))
+    }
+  }
 
   // Compute targets in real time
   const issTarget = form.iss_baseline
@@ -248,7 +301,7 @@ function SetGoalsModal({ isOpen, onClose, schoolYear, onSaved }) {
           <select
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={form.campus_id}
-            onChange={e => setForm(f => ({ ...f, campus_id: e.target.value }))}
+            onChange={e => handleCampusChange(e.target.value)}
           >
             <option value="">Select a campus…</option>
             {campuses.map(c => (
@@ -339,6 +392,7 @@ export default function NavigatorGoalsPage() {
   const [schoolYear, setSchoolYear] = useState(currentSchoolYear())
   const [metricToggle, setMetricToggle] = useState('combined') // 'iss' | 'oss' | 'combined'
   const [modalOpen, setModalOpen] = useState(false)
+  const [editCampusId, setEditCampusId] = useState(null)
 
   const { goals, loading: goalsLoading, refetch: refetchGoals } = useNavigatorGoals(schoolYear)
   const { currentYear, priorYear, loading: yoyLoading } = useNavigatorYOYData(schoolYear)
@@ -483,7 +537,7 @@ export default function NavigatorGoalsPage() {
               <p className="text-gray-400 text-sm">Loading…</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={yoyChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                 <defs>
                   <linearGradient id="curGrad" x1="0" y1="0" x2="0" y2="1">
@@ -532,7 +586,7 @@ export default function NavigatorGoalsPage() {
           ) : weeklyData.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-16">No placement data for this school year yet.</p>
           ) : (
-            <ResponsiveContainer width="100%" style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height={280}>
               <LineChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                 <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9ca3af' }} interval={Math.floor(weeklyData.length / 6)} />
@@ -584,6 +638,8 @@ export default function NavigatorGoalsPage() {
                   goal={goal}
                   placements={yearPlacements}
                   currentWeek={currentWeek}
+                  isAdmin={isAdmin}
+                  onEdit={campusId => { setEditCampusId(campusId); setModalOpen(true) }}
                 />
               ))}
             </div>
@@ -593,8 +649,10 @@ export default function NavigatorGoalsPage() {
 
       <SetGoalsModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setEditCampusId(null) }}
         schoolYear={schoolYear}
+        existingGoals={goals}
+        initialCampusId={editCampusId}
         onSaved={refetchGoals}
       />
     </div>

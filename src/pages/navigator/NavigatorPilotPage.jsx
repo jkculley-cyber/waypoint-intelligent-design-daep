@@ -105,7 +105,7 @@ export default function NavigatorPilotPage() {
                   })}
                 </div>
                 <p className="text-xs text-gray-400 mt-4">
-                  Requires migration 050 <code className="px-1 bg-gray-100 rounded">skill_gap</code> field on referrals.
+                  Skill gaps are tagged on referrals during the review process.
                 </p>
               </div>
             )}

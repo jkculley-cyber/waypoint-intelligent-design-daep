@@ -12,9 +12,15 @@ const SUPPORT_TYPE_LABELS = {
   other: 'Other',
 }
 
+const RISK_STYLES = {
+  high:   { badge: 'text-red-600 bg-red-50 border-red-200',    label: 'HIGH RISK' },
+  medium: { badge: 'text-yellow-600 bg-yellow-50 border-yellow-200', label: 'MEDIUM RISK' },
+  low:    { badge: 'text-green-600 bg-green-50 border-green-200',  label: 'LOW RISK' },
+}
+
 export default function NavigatorStudentPage() {
   const { id } = useParams()
-  const { student, referrals, placements, supports, riskScore, loading } = useNavigatorStudentHistory(id)
+  const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
 
   if (loading) {
     return (
@@ -35,7 +41,15 @@ export default function NavigatorStudentPage() {
   }
 
   const activeSupports = supports.filter(s => s.status === 'active')
-  const riskColor = riskScore >= 7 ? 'text-red-600 bg-red-50 border-red-200' : riskScore >= 4 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' : 'text-green-600 bg-green-50 border-green-200'
+  const level = riskLevel || 'low'
+  const riskStyle = RISK_STYLES[level]
+
+  // Build chronological timeline from referrals, placements, AND supports
+  const timelineItems = [
+    ...referrals.map(r => ({ type: 'referral', date: r.referral_date, data: r })),
+    ...placements.map(p => ({ type: 'placement', date: p.start_date, data: p })),
+    ...supports.map(s => ({ type: 'support', date: s.start_date, data: s })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date))
 
   return (
     <div>
@@ -67,11 +81,22 @@ export default function NavigatorStudentPage() {
               <p className="text-xs text-gray-400 mt-1 font-mono">{student.student_id}</p>
             )}
           </div>
-          <div className={`px-4 py-3 rounded-xl border text-center ${riskColor}`}>
-            <p className="text-2xl font-bold">{riskScore}/10</p>
-            <p className="text-xs font-medium mt-0.5">Behavior Risk</p>
+          <div className={`px-4 py-3 rounded-xl border text-center min-w-[96px] ${riskStyle.badge}`}>
+            <p className="text-2xl font-bold">{riskScore}</p>
+            <p className="text-xs font-semibold mt-0.5 tracking-wide">{riskStyle.label}</p>
           </div>
         </div>
+
+        {/* Risk Triggers */}
+        {riskTriggers && riskTriggers.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {riskTriggers.map(t => (
+              <span key={t} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -117,46 +142,57 @@ export default function NavigatorStudentPage() {
             <h3 className="text-sm font-semibold text-gray-900">Behavior Timeline</h3>
           </div>
           <div className="p-5">
-            {referrals.length === 0 && placements.length === 0 ? (
+            {timelineItems.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-4">No behavior history on record.</p>
             ) : (
               <div className="relative space-y-4">
                 <div className="absolute left-3.5 top-0 bottom-0 w-px bg-gray-200" />
 
-                {/* Merge referrals and placements into chronological timeline */}
-                {[
-                  ...referrals.map(r => ({ type: 'referral', date: r.referral_date, data: r })),
-                  ...placements.map(p => ({ type: 'placement', date: p.start_date, data: p })),
-                ]
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .map((item, i) => (
+                {timelineItems.map((item, i) => {
+                  const isReferral = item.type === 'referral'
+                  const isPlacement = item.type === 'placement'
+                  const isSupport = item.type === 'support'
+                  const dotClass = isReferral
+                    ? 'bg-orange-100 text-orange-600'
+                    : isPlacement
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-green-100 text-green-600'
+                  const dotLabel = isReferral ? 'R' : isPlacement ? 'P' : 'S'
+
+                  return (
                     <div key={i} className="relative flex items-start gap-4 pl-8">
-                      <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                        item.type === 'referral' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {item.type === 'referral' ? 'R' : 'P'}
+                      <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${dotClass}`}>
+                        {dotLabel}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-medium text-gray-900">
-                            {item.type === 'referral'
+                            {isReferral
                               ? `Referral — ${item.data.offense_codes?.code || 'No code'}`
-                              : `${item.data.placement_type?.toUpperCase()} Placement`}
+                              : isPlacement
+                              ? `${item.data.placement_type?.toUpperCase()} Placement`
+                              : `Support — ${SUPPORT_TYPE_LABELS[item.data.support_type] || item.data.support_type}`}
                           </p>
                           <span className="text-xs text-gray-400 shrink-0">
                             {item.date ? format(parseISO(item.date), 'MMM d, yyyy') : '—'}
                           </span>
                         </div>
-                        {item.type === 'referral' && item.data.description && (
+                        {isReferral && item.data.description && (
                           <p className="text-xs text-gray-500 mt-0.5 truncate">{item.data.description}</p>
                         )}
-                        {item.type === 'placement' && (
+                        {isPlacement && (
                           <p className="text-xs text-gray-500 mt-0.5">
                             {item.data.days ? `${item.data.days} day${item.data.days !== 1 ? 's' : ''}` : ''}
                             {item.data.end_date ? ` · Ended ${format(parseISO(item.data.end_date), 'MMM d')}` : ' · Active'}
                           </p>
                         )}
-                        {item.type === 'referral' && item.data.status && (
+                        {isSupport && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {item.data.assignee?.full_name ? `Assigned to ${item.data.assignee.full_name}` : ''}
+                            {item.data.status ? ` · ${item.data.status.charAt(0).toUpperCase() + item.data.status.slice(1)}` : ''}
+                          </p>
+                        )}
+                        {isReferral && item.data.status && (
                           <span className={`inline-block mt-1 text-xs px-1.5 py-0.5 rounded capitalize ${
                             item.data.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
                           }`}>
@@ -165,9 +201,15 @@ export default function NavigatorStudentPage() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  )
+                })}
               </div>
             )}
+          </div>
+          <div className="px-5 pb-4 flex gap-4 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-orange-100 inline-block" />Referral</span>
+            <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-blue-100 inline-block" />Placement</span>
+            <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-green-100 inline-block" />Support</span>
           </div>
         </div>
       </div>

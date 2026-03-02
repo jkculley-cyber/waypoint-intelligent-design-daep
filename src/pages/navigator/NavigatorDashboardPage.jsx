@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorDashboardStats } from '../../hooks/useNavigator'
 import { format } from 'date-fns'
@@ -57,8 +56,8 @@ export default function NavigatorDashboardPage() {
 
         {/* Stat Cards */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
                 <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
                 <div className="h-8 w-12 bg-gray-200 rounded" />
@@ -66,7 +65,7 @@ export default function NavigatorDashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard
               label="Referrals This Month"
               value={stats?.referralsThisMonth ?? 0}
@@ -75,18 +74,25 @@ export default function NavigatorDashboardPage() {
               link="/navigator/referrals"
             />
             <StatCard
-              label="Active ISS Placements"
+              label="Active ISS"
               value={stats?.activeISS ?? 0}
               color="text-blue-600"
               icon={<PlacementIcon />}
               link="/navigator/placements"
             />
             <StatCard
-              label="Active OSS Placements"
+              label="Active OSS"
               value={stats?.activeOSS ?? 0}
               color="text-red-600"
               icon={<PlacementIcon />}
               link="/navigator/placements"
+            />
+            <StatCard
+              label="Active Supports"
+              value={stats?.activeSupports ?? 0}
+              color="text-emerald-600"
+              icon={<SupportIcon />}
+              link="/navigator/supports"
             />
           </div>
         )}
@@ -171,6 +177,14 @@ function PlacementIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+    </svg>
+  )
+}
+
+function SupportIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
     </svg>
   )
 }

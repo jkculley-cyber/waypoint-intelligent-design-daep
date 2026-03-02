@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-01 (Session X — Navigator 050 wiring + Partner Chat + ops site overhaul)
+> Last updated: 2026-03-03 (Session Y — Full Navigator audit + all page fixes + seed data with active placements)
 
 ---
 
@@ -13,7 +13,7 @@
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
 - **Migrations applied:** 001–050 (production). All migrations applied. 044 (Origins schema), 049 (Meridian SPPI-13 + RDA tables), 050 (Navigator skill_gap + effectiveness) applied via SQL Editor 2026-03-01.
-- **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 6 placements, 6 supports seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
+- **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 28 placements (6 completed + 2 active + 20 prior year), 6 supports, 3 campus goals seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). 2 active placements (Marcus OSS, DeShawn ISS — no end_date) power the Active ISS/Active OSS tabs. `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
@@ -62,7 +62,7 @@
 - **Mobile responsive layout** — hamburger drawer (mobile), always-visible sidebar (desktop). `SidebarContext` at `src/contexts/SidebarContext.jsx`. No page files changed.
 - Teacher referral page (`/referral`), DAEP scoring page (`/daep/scoring`)
 - Bulk incident export (select checkboxes → Export PDF/Excel)
-- **Navigator module** — referrals, placements, supports, student detail, reports, goals & progress, data import, **Escalation Engine**, **Skill Gap Map**, **Effectiveness**, **Disproportionality Radar**, **Pilot Summary** (gated by `hasProduct('navigator')`)
+- **Navigator module** — referrals, placements, supports, student detail, reports, goals & progress, data import, **Escalation Engine**, **Skill Gap Map**, **Effectiveness**, **Disproportionality Radar**, **Pilot Summary** (gated by `hasProduct('navigator')`). Full audit done Session Y — all pages functional. Campus filter, risk score (0-100), Active ISS/OSS tabs, Goals Edit button, dashboard active supports card all fixed.
 - **Meridian module (operationally complete)** — Dashboard, Timelines, Student Detail (Schedule ARD modal, Escalate modal, Link Waypoint modal, Generate Compliance PDF), Dyslexia/HB3928 (Mark Reviewed modal), CAP Tracker (task toggle, Log New Finding modal, Generate TEA Docs PDF), Folder Readiness, Waypoint Sync, Integration, **Transition SPPI-13** (compliance table + TransitionPlanModal 5 accordion elements + jsPDF report), **RDA Dashboard** (DL banner, 3 domain sections, indicator cards Live/Manual, RDADataModal 3-step, IndicatorEditModal). All hooks have `refetch()`. Mutations in `useMeridian.js`.
 - **DAEP Analytics** — Analytics tab on DAEP Dashboard: CapacityTrackerWidget (occupied/reserved/remaining), EnrollmentByGradeTable (sub-pop breakdown). Reports → Enrollment tab. IncidentDetailPage capacity banner. `set_daep_capacity` RPC applied to DB (migration 048).
 - **Origins module (live)** — 8 staff pages + full family portal: student 7-step scenario player (choose → outcome → reflect → commit → complete), parent view with conversation starters, 18 TEC-aligned global scenarios. Migration 044 applied — DB-backed sessions active.
@@ -117,7 +117,8 @@
 13. ~~**Apply migration 050**~~ — ✅ Applied 2026-03-01 via SQL Editor. `skill_gap`, `skill_gap_notes` on `navigator_referrals`; `outcome_notes`, `incidents_before`, `incidents_after` on `navigator_supports` now live.
 14. ~~**Wire skill_gap field into Referral form**~~ — ✅ Done. `skill_gap` select + `skill_gap_notes` textarea in review form. Skill Gap Map now populates.
 15. ~~**Wire effectiveness fields into Support form**~~ — ✅ Done. `EditSupportDrawer` in NavigatorSupportsPage with `incidents_before`, `incidents_after`, `outcome_notes` (shown when status=completed).
-16. **Create `messages` table in ops Supabase** — Run SQL in https://supabase.com/dashboard/project/xbpuqaqpcbixxodblaes/sql/new to activate Partner Chat (see handover). Table: `id BIGSERIAL, sender TEXT, message TEXT, created_at TIMESTAMPTZ DEFAULT now()` + anon RLS policy.
+16. **Create `messages` table in ops Supabase** — Run SQL in https://supabase.com/dashboard/project/xbpuqaqpcbixxodblaes/sql/new to activate Partner Chat (see Session X handover). Table: `id BIGSERIAL, sender TEXT, message TEXT, created_at TIMESTAMPTZ DEFAULT now()` + anon RLS policy. ⚠️ Also in action tracker as task 15.
+17. **Verify Business Dashboard loads on live site** — Log in as `admin@waypoint.internal` → Business Dashboard tab. Confirm charts load. (Action tracker task 16.)
 11. **Meridian escalations table** — Escalate button shows modal but logs to console only. Needs a future migration for `meridian_escalations` — separate from 049.
 12. **First pilot district** — not yet contracted. Product is sales-ready.
 12. **clearpathedgroup.com custom domain** — `www.clearpathedgroup.com` CNAME record needs to be added manually in Cloudflare DNS: Type=CNAME, Name=`www`, Target=`cpeg-site.pages.dev`, Proxied=ON. Root domain (`clearpathedgroup.com`) DNS is verified; TLS cert may still be provisioning. Check Cloudflare Pages → cpeg-site → Custom Domains if either domain shows errors.

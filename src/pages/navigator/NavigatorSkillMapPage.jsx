@@ -149,8 +149,7 @@ export default function NavigatorSkillMapPage() {
 
             {/* Info note */}
             <p className="text-xs text-gray-400">
-              Skill gaps are tagged on individual referrals. To populate this map, set the "Skill Gap" field when creating or editing a referral.
-              Migration 050 adds this field — apply via SQL Editor before skill gaps will save.
+              Skill gaps are tagged on individual referrals. To populate this map, open a referral and set the "Skill Gap" field when reviewing.
             </p>
           </>
         )}
