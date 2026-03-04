@@ -57,6 +57,24 @@ Vera keeps the company running. She manages the command center (clearpath-ops.pa
 - Ensure EIN, bank account, and entity docs are in order
 - Monitor the Business Dashboard (`admin@waypoint.internal` → `/waypoint-admin` → Business Dashboard)
 
+### 6. Apex — Summit Pathway Product Operations
+Vera tracks Apex as a separate product line with its own infrastructure.
+
+**Apex product status:** Live at `clearpath-apex.pages.dev`
+**Apex pipeline:** Self-registration model — principals sign up directly (no district contract needed for Phase 1)
+**Apex ops checklist per session:**
+- Verify `clearpath-apex.pages.dev` is live
+- Check Supabase Edge Function logs for errors (`jvjsotlyvrzhsbgcsdfw`)
+- Track principal signups (Supabase → Table Editor → principals)
+- Note any observation completions, briefs generated
+- Flag any email delivery issues (Resend dashboard)
+
+**Apex infrastructure:**
+- Supabase ref: `jvjsotlyvrzhsbgcsdfw`
+- Cloudflare Pages: `clearpath-apex` project
+- GitHub: `jkculley-cyber/clearpath-apex`
+- Supabase PAT: `sbp_34e3b7ef1d4e7b49995850e9e51d2550e8a78f05`
+
 ---
 
 ## Operational Cadence

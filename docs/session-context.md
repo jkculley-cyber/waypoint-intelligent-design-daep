@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-03 (Session Z — Email live, video chat on ops site, Supabase Pro, agent team defined)
+> Last updated: 2026-03-03 (Session AA — Apex scaffold, build, deployed to clearpath-apex.pages.dev)
 
 ---
 
@@ -117,6 +117,24 @@
 10. **First pilot district** — not yet contracted. Product is sales-ready. Nova owns the sales strategy.
 11. **SPF record** — add `include:spf.resend.com` to `clearpathedgroup.com` TXT record in Cloudflare DNS (needs DNS:Edit token — current token is Pages-only).
 12. **AI Agent team** — Archer (CTO), Vera (COO), Nova (CRO), Sage (CMO). Docs in `docs/agents/`.
+
+---
+
+## Apex — Summit Pathway (NEW PRODUCT, Session AA)
+
+- **Live URL:** `https://clearpath-apex.pages.dev`
+- **Repo:** `jkculley-cyber/clearpath-apex` (branch: master)
+- **Supabase ref:** `jvjsotlyvrzhsbgcsdfw` (separate project — different auth pool from Waypoint)
+- **DB password:** `ApexClearPath2025!`
+- **Auth:** Magic link only, Resend SMTP configured
+- **Migrations applied:** 001 (core schema), 002 (pg_cron morning brief scheduler)
+- **Edge Functions deployed:** `transcribe-observation`, `generate-coaching-draft`, `send-observation-feedback`, `generate-morning-brief`
+- **Secrets set:** `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`
+- **Supabase PAT:** `sbp_34e3b7ef1d4e7b49995850e9e51d2550e8a78f05`
+
+**Built this session:** Dashboard command center · Observation Loop (voice→Whisper→Claude→email) · Teachers Page (recency/growth arc) · Observation Review Page · Morning Brief (daily/weekly/monthly/long-range, pg_cron auto-delivers 5:50 AM CST)
+
+**Apex Pending:** TeacherDetailPage · CommunicatePage · SettingsPage · CSV roster import · Mobile optimization · Quick capture
 
 ---
 
