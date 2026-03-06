@@ -297,6 +297,16 @@ export default function AlertsPage() {
               placeholder="All Triggers"
             />
           </div>
+          {(levelFilter || statusFilter || campusFilter || triggerFilter) && (
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => { setLevelFilter(''); setStatusFilter(''); setCampusFilter(''); setTriggerFilter('') }}
+                className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </Card>
 
         {/* Alert List */}

@@ -352,7 +352,7 @@ export default function IncidentsPage() {
           </div>
           {/* Quick filter for approval-chain roles */}
           {['cbc', 'counselor', 'sped_coordinator', 'section_504_coordinator', 'sss'].includes(profile?.role) && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
               <button
                 onClick={() => setMyApprovalsOnly(!myApprovalsOnly)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
@@ -365,6 +365,24 @@ export default function IncidentsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 My Pending Approvals
+              </button>
+              {(search || statusFilter || campusFilter || consequenceFilter || myApprovalsOnly) && (
+                <button
+                  onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter(''); setMyApprovalsOnly(false) }}
+                  className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          )}
+          {!['cbc', 'counselor', 'sped_coordinator', 'section_504_coordinator', 'sss'].includes(profile?.role) && (search || statusFilter || campusFilter || consequenceFilter) && (
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter('') }}
+                className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+              >
+                Clear Filters
               </button>
             </div>
           )}

@@ -13,7 +13,7 @@ import {
 } from '../../lib/constants'
 import { COMPLIANCE_GUIDANCE, TEC_37_006_F_FACTORS, IDEA_SPECIAL_CIRCUMSTANCES } from '../../lib/complianceGuidance'
 
-const CHECKLIST_ITEMS = [
+const SPED_CHECKLIST_ITEMS = [
   {
     field: 'ard_committee_notified',
     label: 'ARD Committee Notified',
@@ -31,13 +31,15 @@ const CHECKLIST_ITEMS = [
     field: 'bip_reviewed',
     label: 'Current BIP Reviewed',
     description: 'Current Behavior Intervention Plan reviewed for implementation fidelity',
-    required: false,
+    required: true,
+    spedOnly: false,
   },
   {
     field: 'fba_conducted',
     label: 'FBA Conducted (within last year)',
     description: 'Functional Behavior Assessment has been conducted within the past 12 months',
-    required: false,
+    required: true,
+    spedOnly: false,
   },
   {
     field: 'parent_notified',
@@ -65,7 +67,62 @@ const CHECKLIST_ITEMS = [
   },
 ]
 
-export default function ComplianceChecklist({ checklist, onUpdate }) {
+const SECTION_504_CHECKLIST_ITEMS = [
+  {
+    field: 'ard_committee_notified',
+    label: 'Section 504 Team Notified',
+    description: '504 team members have been notified of the pending DAEP recommendation',
+    required: true,
+  },
+  {
+    field: 'manifestation_determination',
+    label: 'Manifestation Determination Conducted',
+    description: 'Section 504 team has conducted a manifestation determination review per OCR guidelines',
+    required: true,
+    hasResult: true,
+  },
+  {
+    field: 'bip_reviewed',
+    label: 'Behavioral Supports Reviewed',
+    description: 'Existing 504 behavioral supports and accommodations reviewed',
+    required: false,
+  },
+  {
+    field: 'fba_conducted',
+    label: 'FBA Conducted (if applicable)',
+    description: 'Functional Behavior Assessment considered — required only if behavior is related to disability',
+    required: false,
+  },
+  {
+    field: 'parent_notified',
+    label: 'Parents Notified of Procedural Safeguards',
+    description: 'Parents/guardians provided 504 procedural safeguards notice',
+    required: true,
+  },
+  {
+    field: 'fape_plan_documented',
+    label: 'FAPE Plan for DAEP Documented',
+    description: 'Plan to continue 504 accommodations/services during DAEP placement has been documented',
+    required: true,
+  },
+  {
+    field: 'iep_goals_reviewed',
+    label: 'Accommodation Plan Updated',
+    description: '504 accommodation plan reviewed and adjusted for DAEP setting',
+    required: false,
+  },
+  {
+    field: 'educational_services_arranged',
+    label: 'Educational Services Arranged at DAEP',
+    description: '504 accommodations and services have been arranged at the DAEP campus',
+    required: false,
+  },
+]
+
+export default function ComplianceChecklist({ checklist, student, onUpdate }) {
+  const isSped = student?.is_sped
+  const is504 = student?.is_504 && !isSped
+  const CHECKLIST_ITEMS = is504 ? SECTION_504_CHECKLIST_ITEMS : SPED_CHECKLIST_ITEMS
   const { updateChecklistItem, updateChecklist, overrideBlock } = useComplianceActions()
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
@@ -167,11 +224,11 @@ export default function ComplianceChecklist({ checklist, onUpdate }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" id="compliance-checklist">
       <Card>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <CardTitle>SPED Compliance Checklist</CardTitle>
+            <CardTitle>{is504 ? 'Section 504 Compliance Checklist' : 'SPED/IDEA Compliance Checklist'}</CardTitle>
             <Badge color={statusColor[checklist.status]} dot>
               {checklist.status === 'incomplete' ? 'Incomplete' :
                checklist.status === 'in_progress' ? 'In Progress' :

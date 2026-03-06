@@ -5,6 +5,8 @@ export default function ComplianceBlockBanner({ checklist, student }) {
   if (!checklist || !checklist.placement_blocked) return null
 
   const isOverridden = checklist.block_overridden
+  const isSped = student?.is_sped
+  const is504 = student?.is_504 && !isSped
 
   if (isOverridden) {
     return (
@@ -24,6 +26,11 @@ export default function ComplianceBlockBanner({ checklist, student }) {
   ].filter(Boolean).length
 
   const totalRequired = 4
+  const whoNeedsToAct = isSped
+    ? 'SPED Coordinator or Campus Admin'
+    : is504
+    ? 'Section 504 Coordinator or Campus Admin'
+    : 'Campus Admin'
 
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -35,15 +42,14 @@ export default function ComplianceBlockBanner({ checklist, student }) {
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-red-800">
-            DAEP Placement Blocked — SPED Compliance Required
+            DAEP Placement Blocked — {isSped ? 'IDEA/SPED' : 'Section 504'} Compliance Required
           </h3>
           <p className="text-sm text-red-700 mt-1">
             {student?.first_name} {student?.last_name} is identified as{' '}
-            <Badge color="purple" size="sm">
-              {student?.is_sped ? 'SPED' : '504'}
+            <Badge color={isSped ? 'purple' : 'blue'} size="sm">
+              {isSped ? 'SPED' : '504'}
             </Badge>
-            . Federal law (IDEA) requires completion of the compliance checklist below before
-            this student can be placed in DAEP.
+            . Federal law requires completion of the compliance checklist before this student can be placed in DAEP.
           </p>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex-1 bg-red-200 rounded-full h-2 overflow-hidden">
@@ -55,6 +61,17 @@ export default function ComplianceBlockBanner({ checklist, student }) {
             <span className="text-xs font-medium text-red-700">
               {completedItems}/{totalRequired} completed
             </span>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-xs text-red-600">
+              <span className="font-semibold">Next action:</span> {whoNeedsToAct} must complete the checklist below.
+            </p>
+            <a
+              href="#compliance-checklist"
+              className="text-xs font-semibold text-red-700 hover:text-red-900 underline"
+            >
+              Go to checklist ↓
+            </a>
           </div>
         </div>
       </div>

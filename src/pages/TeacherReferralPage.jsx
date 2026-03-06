@@ -15,6 +15,9 @@ export default function TeacherReferralPage() {
   const [students, setStudents] = useState([])
   const [studentSearch, setStudentSearch] = useState('')
   const [offenseCodes, setOffenseCodes] = useState([])
+  const [offenseSearch, setOffenseSearch] = useState('')
+  const [selectedOffense, setSelectedOffense] = useState(null)
+  const [showReview, setShowReview] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const [form, setForm] = useState({
@@ -65,12 +68,32 @@ export default function TeacherReferralPage() {
     return () => clearTimeout(timeout)
   }, [studentSearch, districtId, campusIds])
 
-  const handleSubmit = async (e) => {
+  const filteredOffenses = offenseSearch.trim().length >= 1
+    ? offenseCodes.filter(o =>
+        `${o.code} ${o.title} ${o.category}`.toLowerCase().includes(offenseSearch.toLowerCase())
+      ).slice(0, 10)
+    : []
+
+  const handleOffenseSelect = (offense) => {
+    setSelectedOffense(offense)
+    setOffenseSearch('')
+    setForm(f => ({
+      ...f,
+      offense_code_id: offense.id,
+      severity: offense.severity || f.severity,
+    }))
+  }
+
+  const handleReviewSubmit = (e) => {
     e.preventDefault()
     if (!form.student_id || !form.description.trim()) {
       toast.error('Please select a student and add a description')
       return
     }
+    setShowReview(true)
+  }
+
+  const handleSubmit = async () => {
     setSubmitting(true)
     try {
       const campusId = campusIds?.[0] || null
@@ -107,6 +130,68 @@ export default function TeacherReferralPage() {
 
   const selectedStudent = students.find(s => s.id === form.student_id)
 
+  if (showReview) {
+    return (
+      <div>
+        <Topbar
+          title="Review Your Referral"
+          subtitle="Confirm details before submitting"
+        />
+        <div className="p-6 max-w-2xl space-y-6">
+          <Card>
+            <CardTitle>Referral Summary</CardTitle>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Student</dt>
+                <dd className="font-medium text-gray-900">
+                  {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : '—'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Date</dt>
+                <dd className="text-gray-900">{form.incident_date}</dd>
+              </div>
+              {form.incident_time && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Time</dt>
+                  <dd className="text-gray-900">{form.incident_time}</dd>
+                </div>
+              )}
+              {form.location && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Location</dt>
+                  <dd className="text-gray-900">{form.location}</dd>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Offense</dt>
+                <dd className="text-gray-900">
+                  {selectedOffense ? `${selectedOffense.code} — ${selectedOffense.title}` : 'Not specified'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Severity</dt>
+                <dd className="text-gray-900">{SEVERITY_LABELS[form.severity] || form.severity}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 mb-1">Description</dt>
+                <dd className="text-gray-900 p-3 bg-gray-50 rounded-lg text-sm">{form.description}</dd>
+              </div>
+            </dl>
+          </Card>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setShowReview(false)}>
+              Back to Edit
+            </Button>
+            <Button onClick={handleSubmit} loading={submitting}>
+              Confirm &amp; Submit
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <Topbar
@@ -114,7 +199,7 @@ export default function TeacherReferralPage() {
         subtitle="Referrals are sent to your AP for review"
       />
       <div className="p-6 max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleReviewSubmit} className="space-y-6">
           {/* Student Search */}
           <Card>
             <CardTitle>Student</CardTitle>
@@ -206,16 +291,50 @@ export default function TeacherReferralPage() {
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Offense Type</label>
-                <select
-                  value={form.offense_code_id}
-                  onChange={e => setForm(f => ({ ...f, offense_code_id: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">-- Select offense (optional) --</option>
-                  {offenseCodes.map(o => (
-                    <option key={o.id} value={o.id}>{o.code} — {o.title}</option>
-                  ))}
-                </select>
+                {selectedOffense ? (
+                  <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{selectedOffense.code} — {selectedOffense.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{selectedOffense.category} · Severity auto-set to: {SEVERITY_LABELS[selectedOffense.severity] || selectedOffense.severity}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedOffense(null); setForm(f => ({ ...f, offense_code_id: '' })) }}
+                      className="text-xs text-gray-400 hover:text-red-500 ml-3"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      value={offenseSearch}
+                      onChange={e => setOffenseSearch(e.target.value)}
+                      placeholder="Search by offense code or title..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    {filteredOffenses.length > 0 && (
+                      <div className="mt-1 border border-gray-200 rounded-lg divide-y max-h-44 overflow-y-auto shadow-sm">
+                        {filteredOffenses.map(o => (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() => handleOffenseSelect(o)}
+                            className="w-full text-left px-3 py-2 hover:bg-orange-50 text-sm"
+                          >
+                            <span className="font-medium text-orange-700">{o.code}</span>
+                            {' '}&mdash; {o.title}
+                            <span className="ml-2 text-xs text-gray-400">{o.category}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {offenseSearch.trim().length === 0 && (
+                      <p className="text-xs text-gray-400 mt-1">Start typing to search — or leave blank</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Description *</label>
@@ -235,8 +354,8 @@ export default function TeacherReferralPage() {
             <Button type="button" variant="secondary" onClick={() => navigate('/incidents')}>
               Cancel
             </Button>
-            <Button type="submit" loading={submitting}>
-              Submit Referral
+            <Button type="submit">
+              Review &amp; Submit
             </Button>
           </div>
         </form>

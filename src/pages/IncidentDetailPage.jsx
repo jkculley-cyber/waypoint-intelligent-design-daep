@@ -274,6 +274,7 @@ export default function IncidentDetailPage() {
             {incident.sped_compliance_required && compliance && (
               <ComplianceChecklist
                 checklist={compliance}
+                student={incident.student}
                 onUpdate={refetch}
               />
             )}

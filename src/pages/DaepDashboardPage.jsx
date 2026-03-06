@@ -65,6 +65,7 @@ export default function DaepDashboardPage() {
 
       {activeTab === 'operations' && (
         <div className="p-6 space-y-6">
+          <CapacityWarningBanner />
           <SummaryCards />
           <ActiveEnrollmentsTable />
           <ApprovalFlowTable />
@@ -1009,6 +1010,41 @@ function SubPopulationCharts() {
           <p className="text-xs text-gray-500">Total DAEP Placements (YTD)</p>
           <p className="text-2xl font-bold mt-0.5 text-gray-900">{data.total}</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// =================== CAPACITY WARNING BANNER ===================
+
+function CapacityWarningBanner() {
+  const { district } = useAuth()
+  const { stats, loading } = useDaepEnrollmentStats()
+
+  const capacity = district?.settings?.daep_capacity || null
+  if (!capacity || loading) return null
+
+  const occupied = stats?.occupied?.length ?? 0
+  const reserved = stats?.reserved?.length ?? 0
+  const committed = occupied + reserved
+  const total = capacity.mode === 'total'
+    ? capacity.total
+    : (capacity.by_level?.middle || 0) + (capacity.by_level?.high || 0)
+
+  if (!total || committed <= total) return null
+
+  return (
+    <div className="flex items-center gap-3 bg-red-50 border border-red-300 rounded-lg px-4 py-3">
+      <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+      </svg>
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-red-800">
+          DAEP Over Capacity — {committed} committed of {total} total seats
+        </p>
+        <p className="text-xs text-red-600 mt-0.5">
+          New placements should be paused. Review the Analytics tab for a full capacity breakdown.
+        </p>
       </div>
     </div>
   )

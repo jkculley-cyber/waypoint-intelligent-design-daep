@@ -218,6 +218,16 @@ export default function CompliancePage() {
               placeholder="All Statuses"
             />
           </div>
+          {statusFilter && (
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setStatusFilter('')}
+                className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </Card>
 
         {/* Table */}
