@@ -26,8 +26,22 @@ export default function ParentDashboardPage() {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [acknowledging, setAcknowledging] = useState(null)
+  const [ackModal, setAckModal] = useState(null) // { incidentId, offense }
+  const [ackName, setAckName] = useState('')
+  const [ackNameError, setAckNameError] = useState('')
 
-  const handleAcknowledge = async (incidentId) => {
+  const openAckModal = (incident) => {
+    setAckModal({ incidentId: incident.id, offense: incident.offense_codes?.name || 'this incident' })
+    setAckName(profile?.full_name || '')
+    setAckNameError('')
+  }
+
+  const handleAcknowledge = async () => {
+    if (!ackName.trim()) {
+      setAckNameError('Please enter your full name to confirm.')
+      return
+    }
+    const incidentId = ackModal.incidentId
     setAcknowledging(incidentId)
     const { error } = await supabase
       .from('incidents')
@@ -40,6 +54,7 @@ export default function ParentDashboardPage() {
         i.id === incidentId ? { ...i, parent_acknowledged_at: new Date().toISOString() } : i
       ))
       toast.success('Receipt acknowledged')
+      setAckModal(null)
     }
     setAcknowledging(null)
   }
@@ -290,15 +305,14 @@ export default function ParentDashboardPage() {
                           {incident.parent_acknowledged_at ? (
                             <span className="text-xs text-green-700 flex items-center gap-1">
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                              Acknowledged {format(new Date(incident.parent_acknowledged_at), 'MMM d, yyyy')}
+                              Receipt acknowledged — {format(new Date(incident.parent_acknowledged_at), 'MMM d, yyyy')}
                             </span>
                           ) : (
                             <button
-                              onClick={() => handleAcknowledge(incident.id)}
-                              disabled={acknowledging === incident.id}
-                              className="text-xs text-orange-600 hover:text-orange-800 font-medium disabled:opacity-50"
+                              onClick={() => openAckModal(incident)}
+                              className="text-xs text-orange-600 hover:text-orange-800 font-medium"
                             >
-                              {acknowledging === incident.id ? 'Saving...' : 'Acknowledge Receipt'}
+                              Acknowledge Receipt
                             </button>
                           )}
                         </div>
@@ -357,6 +371,50 @@ export default function ParentDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Acknowledgment Confirmation Modal */}
+      {ackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Acknowledge Receipt of Notice</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              By entering your name below, you confirm that you have received notice regarding <strong>{ackModal.offense}</strong>.
+              This acknowledgment is timestamped and recorded in the student's file.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Your Full Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={ackName}
+                onChange={(e) => { setAckName(e.target.value); setAckNameError('') }}
+                placeholder="Enter your full legal name"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${ackNameError ? 'border-red-400' : 'border-gray-300'}`}
+              />
+              {ackNameError && <p className="text-xs text-red-600 mt-1">{ackNameError}</p>}
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Timestamp: {format(new Date(), 'MMMM d, yyyy h:mm a')}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setAckModal(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAcknowledge}
+                disabled={!!acknowledging}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+              >
+                {acknowledging ? 'Saving...' : 'Confirm Acknowledgment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

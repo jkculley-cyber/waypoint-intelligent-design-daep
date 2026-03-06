@@ -135,10 +135,20 @@ export default function TransitionPlansPage() {
       render: (_, row) => {
         if (!row.next_review_date) return <span className="text-xs text-gray-400">--</span>
         const days = daysRemaining(row.next_review_date)
+        const isOverdue = days !== null && days < 0
+        const isDueSoon = days !== null && days >= 0 && days <= 7
         return (
-          <span className={`text-xs ${days <= 3 ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
-            {formatDate(row.next_review_date)}
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className={`text-xs ${isOverdue ? 'text-red-600 font-semibold' : isDueSoon ? 'text-amber-600 font-medium' : 'text-gray-600'}`}>
+              {formatDate(row.next_review_date)}
+            </span>
+            {isOverdue && (
+              <Badge color="red" size="sm">Overdue</Badge>
+            )}
+            {isDueSoon && !isOverdue && (
+              <Badge color="yellow" size="sm">Due Soon</Badge>
+            )}
+          </div>
         )
       },
     },
@@ -195,6 +205,23 @@ export default function TransitionPlansPage() {
       />
 
       <div className="p-3 md:p-6">
+        {/* Overdue review alert */}
+        {(() => {
+          const today = new Date().toISOString().slice(0, 10)
+          const overdueCount = plans.filter(p => p.status === 'active' && p.next_review_date && p.next_review_date < today).length
+          if (overdueCount === 0) return null
+          return (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <p className="text-sm font-semibold text-red-800">
+                {overdueCount} transition plan review{overdueCount !== 1 ? 's' : ''} overdue — click a plan to complete the review.
+              </p>
+            </div>
+          )
+        })()}
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <MiniStat label="Total Plans" value={stats.total} />

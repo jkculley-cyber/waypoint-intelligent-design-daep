@@ -298,14 +298,37 @@ export default function IncidentsPage() {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <SelectField
-              label="Status"
-              name="status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={statusOptions}
-              placeholder="All Statuses"
-            />
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <div className="relative group">
+                  <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                  </svg>
+                  <div className="absolute left-0 top-5 z-20 hidden group-hover:block w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl">
+                    <p className="font-semibold mb-1.5 text-gray-300">Status Definitions</p>
+                    <div className="space-y-1">
+                      <p><span className="text-gray-400">Draft</span> — Saved but not yet submitted</p>
+                      <p><span className="text-gray-400">Submitted</span> — Sent for review</p>
+                      <p><span className="text-gray-400">Pending Approval</span> — In the approval chain</p>
+                      <p><span className="text-gray-400">Compliance Hold</span> — Blocked — SPED/504 checklist incomplete</p>
+                      <p><span className="text-gray-400">Approved</span> — Approved, placement not yet active</p>
+                      <p><span className="text-gray-400">Active</span> — Student is currently in DAEP</p>
+                      <p><span className="text-gray-400">Completed</span> — Placement finished</p>
+                      <p><span className="text-gray-400">Denied</span> — Referral denied by approver</p>
+                      <p><span className="text-gray-400">Returned</span> — Sent back to submitter for revision</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <SelectField
+                name="status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                options={statusOptions}
+                placeholder="All Statuses"
+              />
+            </div>
             <SelectField
               label="Campus"
               name="campus"

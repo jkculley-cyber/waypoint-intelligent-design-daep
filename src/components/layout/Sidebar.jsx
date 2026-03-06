@@ -81,6 +81,64 @@ const parentNavigation = [
   },
 ]
 
+// Grouped Waypoint navigation — paths determine which sub-section each item belongs to
+const WAYPOINT_GROUPS = [
+  {
+    label: 'Overview',
+    paths: ['/dashboard', '/students'],
+  },
+  {
+    label: 'Discipline',
+    paths: ['/incidents', '/referral', '/incidents?filter=cbc_queue', '/incidents?filter=sss_queue', '/incidents?filter=504_queue', '/incidents?filter=director_queue'],
+  },
+  {
+    label: 'Compliance & Alerts',
+    paths: ['/compliance', '/alerts'],
+  },
+  {
+    label: 'DAEP Program',
+    paths: ['/daep', '/daep/orientations', '/daep/phone-return', '/daep/scoring'],
+  },
+  {
+    label: 'Planning',
+    paths: ['/plans', '/calendar', '/matrix'],
+  },
+  {
+    label: 'Reports & Admin',
+    paths: ['/reports', '/settings/import-data', '/kiosk', '/orientation-kiosk', '/settings'],
+  },
+]
+
+function SidebarGroupLabel({ label }) {
+  return (
+    <div className="px-3 pt-3 pb-0.5">
+      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{label}</span>
+    </div>
+  )
+}
+
+function WaypointNav({ items, alertCount }) {
+  return (
+    <>
+      {WAYPOINT_GROUPS.map(group => {
+        const groupItems = items.filter(i => group.paths.includes(i.path))
+        if (groupItems.length === 0) return null
+        return (
+          <div key={group.label}>
+            <SidebarGroupLabel label={group.label} />
+            {groupItems.map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)}
+          </div>
+        )
+      })}
+      {/* Any items not in a group */}
+      {items
+        .filter(i => !WAYPOINT_GROUPS.flatMap(g => g.paths).includes(i.path))
+        .map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)
+      }
+    </>
+  )
+}
+
 function NavItem({ item, alertCount }) {
   const { setSidebarOpen } = useSidebar()
 
@@ -187,7 +245,7 @@ export default function Sidebar() {
                 <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">Waypoint</span>
               </div>
             )}
-            {waypointItems.map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)}
+            <WaypointNav items={waypointItems} alertCount={alertCount} profile={profile} />
           </>
         )}
 
