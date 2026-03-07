@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" fill="none">
+  <!-- Compass ring -->
+  <circle cx="28" cy="28" r="22" stroke="#f4a84a" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="28" cy="28" r="17" stroke="#f4a84a" stroke-width="0.75" opacity="0.25"/>
+
+  <!-- North tick -->
+  <line x1="28" y1="6" x2="28" y2="11" stroke="#f4a84a" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- South tick -->
+  <line x1="28" y1="45" x2="28" y2="50" stroke="#f4a84a" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+  <!-- East tick -->
+  <line x1="45" y1="28" x2="50" y2="28" stroke="#f4a84a" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+  <!-- West tick -->
+  <line x1="6" y1="28" x2="11" y2="28" stroke="#f4a84a" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Compass needle — north amber, south dim -->
+  <polygon points="28,10 31,28 28,25 25,28" fill="#f4a84a"/>
+  <polygon points="28,46 31,28 28,31 25,28" fill="#f4a84a" opacity="0.25"/>
+
+  <!-- Center dot -->
+  <circle cx="28" cy="28" r="2.5" fill="#f4a84a"/>
+
+  <!-- Company name -->
+  <text x="60" y="22" font-family="Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#f4a84a" letter-spacing="0.5">Clear Path</text>
+  <text x="60" y="38" font-family="Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#f4a84a" letter-spacing="0.5">Education Group</text>
+
+  <!-- Sub label -->
+  <text x="61" y="50" font-family="Arial, sans-serif" font-size="7" font-weight="600" fill="#f4a84a" opacity="0.45" letter-spacing="1.8">TEXAS  ·  CLEARPATHEDGROUP.COM</text>
+</svg>
