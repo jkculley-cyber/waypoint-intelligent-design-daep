@@ -34,6 +34,12 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
   const isResolved = alert.status === 'resolved' || alert.status === 'dismissed'
   const isRed = alert.alert_level === 'red'
 
+  // Escalation: alert has been open (not resolved) for 5+ days
+  const daysOpen = alert.created_at
+    ? Math.floor((Date.now() - new Date(alert.created_at).getTime()) / 86400000)
+    : 0
+  const isEscalated = !isResolved && daysOpen >= 5
+
   const borderColor = isRed ? 'border-l-red-500' : 'border-l-yellow-500'
   const bgColor = isResolved ? 'bg-gray-50' : isRed ? 'bg-red-50/30' : 'bg-yellow-50/30'
 
@@ -123,6 +129,14 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
                     {ALERT_LEVEL_LABELS[alert.alert_level]}
                   </Badge>
                   {statusBadge()}
+                  {isEscalated && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                      </svg>
+                      {daysOpen}d overdue
+                    </span>
+                  )}
                   <span className="text-xs text-gray-400">{formatTimeAgo(alert.created_at)}</span>
                 </div>
                 <p className="text-sm font-semibold text-gray-900 mt-1">

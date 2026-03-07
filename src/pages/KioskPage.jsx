@@ -329,6 +329,20 @@ export default function KioskPage() {
             <p className="text-xl text-gray-300">{student.first_name} {student.last_name}</p>
             <p className="text-sm text-gray-500 mt-1">Grade {student.grade_level} | ID: {student.student_id_number}</p>
 
+            {/* Campus scope warning — shown when kiosk is campus-locked but no active placement found here */}
+            {kioskCampusId && placementLoaded && !placement && (
+              <div className="mt-5 bg-yellow-900/40 border border-yellow-600/60 rounded-xl px-4 py-3 text-left">
+                <p className="text-sm font-semibold text-yellow-300">No active DAEP placement at this campus</p>
+                <p className="text-sm text-yellow-200 mt-0.5">
+                  Your placement may be at a different campus, or may not have been activated yet.
+                  Contact your campus administrator if you believe this is an error.
+                </p>
+                <p className="text-xs text-yellow-500 mt-1">
+                  Check-in will still be recorded, but will not count toward a DAEP placement.
+                </p>
+              </div>
+            )}
+
             {/* Phone Bag / Locker Number */}
             {!hasCheckedInToday && (
               <div className="mt-6 text-left">
