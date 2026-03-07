@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { useSidebar } from '../../contexts/SidebarContext'
@@ -6,140 +7,89 @@ import { cn } from '../../lib/utils'
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, DAEP_ROLES } from '../../lib/constants'
 import AlertBadge from '../alerts/AlertBadge'
 
-const navigatorNavigation = [
-  { name: 'Nav Dashboard',      path: '/navigator',                   icon: DashboardIcon      },
-  { name: 'Referrals',          path: '/navigator/referrals',         icon: ReferralIcon       },
-  { name: 'Placements',         path: '/navigator/placements',        icon: PlacementIcon      },
-  { name: 'Supports',           path: '/navigator/supports',          icon: SupportsIcon       },
-  { name: 'Reports',            path: '/navigator/reports',           icon: ReportsIcon        },
-  { name: 'Goals & Progress',   path: '/navigator/goals',             icon: GoalsIcon          },
-  { name: 'Escalation Engine',  path: '/navigator/escalation',        icon: EscalationIcon     },
-  { name: 'Skill Gap Map',      path: '/navigator/skill-map',         icon: BrainIcon          },
-  { name: 'Effectiveness',      path: '/navigator/effectiveness',     icon: TrendingUpIcon     },
-  { name: 'Disproportionality', path: '/navigator/disproportionality',icon: ScaleIcon          },
-  { name: 'Pilot Summary',      path: '/navigator/pilot',             icon: ClipboardListIcon  },
-  { name: 'Data Import',        path: '/navigator/import',            icon: ImportIcon         },
-]
+// ─── Navigation Definitions ───────────────────────────────────────────────────
 
-const originsNavigation = [
-  { name: 'Dashboard',        path: '/origins',                   icon: OriginsProductIcon    },
-  { name: 'Response Moments', path: '/origins/response-moments',  icon: PlayCircleIcon        },
-  { name: 'Replay Tool',      path: '/origins/replay-tool',       icon: ArrowPathIcon         },
-  { name: 'Family Workspace', path: '/origins/family-workspace',  icon: HomeIcon              },
-  { name: 'Skill Pathways',   path: '/origins/pathways',          icon: AcademicCapIcon       },
-  { name: 'Progress Reports', path: '/origins/progress',          icon: ReportsIcon           },
+const navigatorNavigation = [
+  { name: 'Dashboard',          path: '/navigator',                    icon: DashboardIcon,      end: true },
+  { name: 'Referrals',          path: '/navigator/referrals',          icon: ReferralIcon        },
+  { name: 'Placements',         path: '/navigator/placements',         icon: PlacementIcon       },
+  { name: 'Supports',           path: '/navigator/supports',           icon: SupportsIcon        },
+  { name: 'Goals & Progress',   path: '/navigator/goals',              icon: GoalsIcon           },
+  { name: 'Reports',            path: '/navigator/reports',            icon: ReportsIcon         },
+  { name: 'Escalation Engine',  path: '/navigator/escalation',         icon: EscalationIcon      },
+  { name: 'Skill Gap Map',      path: '/navigator/skill-map',          icon: BrainIcon           },
+  { name: 'Effectiveness',      path: '/navigator/effectiveness',      icon: TrendingUpIcon      },
+  { name: 'Disproportionality', path: '/navigator/disproportionality', icon: ScaleIcon           },
+  { name: 'Pilot Summary',      path: '/navigator/pilot',              icon: ClipboardListIcon   },
+  { name: 'Data Import',        path: '/navigator/import',             icon: ImportIcon          },
 ]
 
 const meridianNavigation = [
-  { name: 'SPED Overview',     path: '/meridian',                icon: DashboardIcon      },
-  { name: 'ARD Timelines',     path: '/meridian/timelines',      icon: PlansIcon          },
-  { name: 'Dyslexia / HB 3928',path: '/meridian/dyslexia',       icon: ComplianceIcon     },
-  { name: 'Folder Readiness',  path: '/meridian/folders',        icon: ImportIcon         },
-  { name: 'CAP Tracker',       path: '/meridian/cap',            icon: AlertsIcon         },
-  { name: 'Transition (SPPI-13)',path: '/meridian/transition',   icon: TransitionIcon     },
-  { name: 'RDA Dashboard',     path: '/meridian/rda',            icon: RDAIcon            },
-  { name: 'Waypoint Sync',     path: '/meridian/waypoint-sync',  icon: MatrixIcon         },
-  { name: 'Data Integration',  path: '/meridian/integration',    icon: SettingsIcon       },
+  { name: 'SPED Overview',       path: '/meridian',                    icon: DashboardIcon,  end: true },
+  { name: 'ARD Timelines',       path: '/meridian/timelines',          icon: PlansIcon       },
+  { name: 'Dyslexia / HB 3928', path: '/meridian/dyslexia',           icon: ComplianceIcon  },
+  { name: 'Folder Readiness',    path: '/meridian/folders',            icon: ImportIcon      },
+  { name: 'CAP Tracker',         path: '/meridian/cap',                icon: AlertsIcon      },
+  { name: 'Transition (SPPI-13)',path: '/meridian/transition',         icon: TransitionIcon  },
+  { name: 'RDA Dashboard',       path: '/meridian/rda',                icon: RDAIcon         },
+  { name: 'Waypoint Sync',       path: '/meridian/waypoint-sync',      icon: MatrixIcon      },
+  { name: 'Data Integration',    path: '/meridian/integration',        icon: SettingsIcon    },
 ]
 
-// Staff navigation items
-// product: 'waypoint' — only shown when district has Waypoint licensed
-// no product field     — always shown (role/feature still apply)
 const staffNavigation = [
-  { name: 'Dashboard',        path: '/dashboard',                   icon: DashboardIcon, roles: null,                                              product: 'waypoint' },
-  { name: 'Students',         path: '/students',                    icon: StudentsIcon,  roles: null,                                              product: 'waypoint' },
-  { name: 'Incidents',        path: '/incidents',                   icon: IncidentsIcon, roles: null,                                              product: 'waypoint' },
-  { name: 'Compliance',       path: '/compliance',                  icon: ComplianceIcon, roles: COMPLIANCE_ROLES, feature: 'compliance',          product: 'waypoint' },
-  { name: 'Alerts',           path: '/alerts',                      icon: AlertsIcon,    roles: ALERT_ROLES,        feature: 'alerts',             product: 'waypoint' },
-  { name: 'Transition Plans', path: '/plans',                       icon: PlansIcon,     roles: null,               feature: 'transition_plans',   product: 'waypoint' },
-  { name: 'DAEP Dashboard',   path: '/daep',                        icon: DaepIcon,      roles: DAEP_ROLES,         feature: 'daep_dashboard',     product: 'waypoint' },
-  { name: 'Phone Return',     path: '/daep/phone-return',           icon: PhoneIcon,     roles: DAEP_ROLES,         feature: 'phone_return',       product: 'waypoint' },
-  { name: 'Orientations',     path: '/daep/orientations',           icon: CalendarIcon,  roles: DAEP_ROLES,         feature: 'daep_dashboard',     product: 'waypoint' },
-  { name: 'Discipline Matrix',path: '/matrix',                      icon: MatrixIcon,    roles: null,                                              product: 'waypoint' },
-  { name: 'Submit Referral',  path: '/referral',                    icon: ReferralIcon,  roles: [ROLES.TEACHER],                                   product: 'waypoint' },
-  { name: 'My Referrals',     path: '/incidents?filter=cbc_queue',  icon: IncidentsIcon, roles: [ROLES.CBC],                                       product: 'waypoint' },
-  { name: 'My Cases',         path: '/incidents?filter=sss_queue',  icon: IncidentsIcon, roles: [ROLES.SSS],                                       product: 'waypoint' },
-  { name: '504 Reviews',      path: '/incidents?filter=504_queue',  icon: ComplianceIcon,roles: [ROLES.SECTION_504_COORDINATOR],                   product: 'waypoint' },
-  { name: 'Pending Approval', path: '/incidents?filter=director_queue', icon: IncidentsIcon, roles: [ROLES.DIRECTOR_STUDENT_AFFAIRS],              product: 'waypoint' },
-  { name: 'Daily Scoring',    path: '/daep/scoring',                icon: ScoringIcon,   roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'daep_dashboard', product: 'waypoint' },
-  { name: 'Calendar',         path: '/calendar',                    icon: CalendarIcon,  roles: null,                                              product: 'waypoint' },
-  { name: 'Reports',          path: '/reports',                     icon: ReportsIcon,   roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'reports', product: 'waypoint' },
-  { name: 'Data Import',      path: '/settings/import-data',        icon: ImportIcon,    roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'data_import', product: 'waypoint' },
-  { name: 'Student Kiosk',    path: '/kiosk',                       icon: KioskIcon,     roles: [ROLES.ADMIN], external: true, feature: 'kiosk',  product: 'waypoint' },
-  { name: 'Orientation Kiosk',path: '/orientation-kiosk',           icon: KioskIcon,     roles: [ROLES.ADMIN], external: true, feature: 'orientation_kiosk', product: 'waypoint' },
-  // Settings — always accessible regardless of product (admin only)
-  { name: 'Settings',         path: '/settings',                    icon: SettingsIcon,  roles: [ROLES.ADMIN] },
+  { name: 'Dashboard',        path: '/dashboard',                       icon: DashboardIcon,   roles: null,                                              product: 'waypoint', group: 'overview' },
+  { name: 'Students',         path: '/students',                        icon: StudentsIcon,    roles: null,                                              product: 'waypoint', group: 'overview' },
+  { name: 'Incidents',        path: '/incidents',                       icon: IncidentsIcon,   roles: null,                                              product: 'waypoint', group: 'discipline' },
+  { name: 'Compliance',       path: '/compliance',                      icon: ComplianceIcon,  roles: COMPLIANCE_ROLES, feature: 'compliance',          product: 'waypoint', group: 'discipline' },
+  { name: 'Alerts',           path: '/alerts',                          icon: AlertsIcon,      roles: ALERT_ROLES,      feature: 'alerts',              product: 'waypoint', group: 'discipline' },
+  { name: 'Submit Referral',  path: '/referral',                        icon: ReferralIcon,    roles: [ROLES.TEACHER],                                   product: 'waypoint', group: 'discipline' },
+  { name: 'My Referrals',     path: '/incidents?filter=cbc_queue',      icon: IncidentsIcon,   roles: [ROLES.CBC],                                       product: 'waypoint', group: 'discipline' },
+  { name: 'My Cases',         path: '/incidents?filter=sss_queue',      icon: IncidentsIcon,   roles: [ROLES.SSS],                                       product: 'waypoint', group: 'discipline' },
+  { name: '504 Reviews',      path: '/incidents?filter=504_queue',      icon: ComplianceIcon,  roles: [ROLES.SECTION_504_COORDINATOR],                   product: 'waypoint', group: 'discipline' },
+  { name: 'Pending Approval', path: '/incidents?filter=director_queue', icon: IncidentsIcon,   roles: [ROLES.DIRECTOR_STUDENT_AFFAIRS],                  product: 'waypoint', group: 'discipline' },
+  { name: 'Transition Plans', path: '/plans',                           icon: PlansIcon,       roles: null,             feature: 'transition_plans',    product: 'waypoint', group: 'daep' },
+  { name: 'DAEP Dashboard',   path: '/daep',                            icon: DaepIcon,        roles: DAEP_ROLES,       feature: 'daep_dashboard',      product: 'waypoint', group: 'daep' },
+  { name: 'Orientations',     path: '/daep/orientations',               icon: CalendarIcon,    roles: DAEP_ROLES,       feature: 'daep_dashboard',      product: 'waypoint', group: 'daep' },
+  { name: 'Phone Return',     path: '/daep/phone-return',               icon: PhoneIcon,       roles: DAEP_ROLES,       feature: 'phone_return',        product: 'waypoint', group: 'daep' },
+  { name: 'Daily Scoring',    path: '/daep/scoring',                    icon: ScoringIcon,     roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'daep_dashboard', product: 'waypoint', group: 'daep' },
+  { name: 'Discipline Matrix',path: '/matrix',                          icon: MatrixIcon,      roles: null,                                              product: 'waypoint', group: 'tools' },
+  { name: 'Calendar',         path: '/calendar',                        icon: CalendarIcon,    roles: null,                                              product: 'waypoint', group: 'tools' },
+  { name: 'Reports',          path: '/reports',                         icon: ReportsIcon,     roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'reports', product: 'waypoint', group: 'tools' },
+  { name: 'Data Import',      path: '/settings/import-data',            icon: ImportIcon,      roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'data_import', product: 'waypoint', group: 'tools' },
+  { name: 'Student Kiosk',    path: '/kiosk',                           icon: KioskIcon,       roles: [ROLES.ADMIN], external: true, feature: 'kiosk', product: 'waypoint', group: 'tools' },
+  { name: 'Orientation Kiosk',path: '/orientation-kiosk',               icon: KioskIcon,       roles: [ROLES.ADMIN], external: true, feature: 'orientation_kiosk', product: 'waypoint', group: 'tools' },
+  { name: 'Settings',         path: '/settings',                        icon: SettingsIcon,    roles: [ROLES.ADMIN] },
 ]
 
-// Parent-only navigation items
-const parentNavigation = [
-  {
-    name: 'My Dashboard',
-    path: '/parent',
-    icon: DashboardIcon,
-    roles: null,
-  },
-]
-
-// Grouped Waypoint navigation — paths determine which sub-section each item belongs to
 const WAYPOINT_GROUPS = [
-  {
-    label: 'Overview',
-    paths: ['/dashboard', '/students'],
-  },
-  {
-    label: 'Discipline',
-    paths: ['/incidents', '/referral', '/incidents?filter=cbc_queue', '/incidents?filter=sss_queue', '/incidents?filter=504_queue', '/incidents?filter=director_queue'],
-  },
-  {
-    label: 'Compliance & Alerts',
-    paths: ['/compliance', '/alerts'],
-  },
-  {
-    label: 'DAEP Program',
-    paths: ['/daep', '/daep/orientations', '/daep/phone-return', '/daep/scoring'],
-  },
-  {
-    label: 'Planning',
-    paths: ['/plans', '/calendar', '/matrix'],
-  },
-  {
-    label: 'Reports & Admin',
-    paths: ['/reports', '/settings/import-data', '/kiosk', '/orientation-kiosk', '/settings'],
-  },
+  { key: 'overview',    label: 'Overview'        },
+  { key: 'discipline',  label: 'Discipline'      },
+  { key: 'daep',        label: 'DAEP Program'    },
+  { key: 'tools',       label: 'Reports & Tools' },
 ]
 
-function SidebarGroupLabel({ label }) {
-  return (
-    <div className="px-3 pt-3 pb-0.5">
-      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{label}</span>
-    </div>
-  )
+const parentNavigation = [
+  { name: 'My Dashboard', path: '/parent', icon: DashboardIcon },
+]
+
+// ─── Product config ───────────────────────────────────────────────────────────
+
+const PRODUCTS = {
+  waypoint:  { label: 'Waypoint',  color: 'orange', activeClass: 'bg-orange-500 text-white', hoverClass: 'hover:text-orange-400 hover:bg-gray-800', textClass: 'text-orange-400', borderClass: 'border-orange-500', Icon: WaypointProductIcon },
+  navigator: { label: 'Navigator', color: 'blue',   activeClass: 'bg-blue-600 text-white',   hoverClass: 'hover:text-blue-400 hover:bg-gray-800',   textClass: 'text-blue-400',   borderClass: 'border-blue-500',   Icon: NavigatorProductIcon },
+  meridian:  { label: 'Meridian',  color: 'purple', activeClass: 'bg-purple-600 text-white', hoverClass: 'hover:text-purple-400 hover:bg-gray-800', textClass: 'text-purple-400', borderClass: 'border-purple-500', Icon: MeridianProductIcon  },
 }
 
-function WaypointNav({ items, alertCount }) {
-  return (
-    <>
-      {WAYPOINT_GROUPS.map(group => {
-        const groupItems = items.filter(i => group.paths.includes(i.path))
-        if (groupItems.length === 0) return null
-        return (
-          <div key={group.label}>
-            <SidebarGroupLabel label={group.label} />
-            {groupItems.map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)}
-          </div>
-        )
-      })}
-      {/* Any items not in a group */}
-      {items
-        .filter(i => !WAYPOINT_GROUPS.flatMap(g => g.paths).includes(i.path))
-        .map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)
-      }
-    </>
-  )
+// Derive active product from the current URL path
+function productFromPath(pathname) {
+  if (pathname.startsWith('/navigator')) return 'navigator'
+  if (pathname.startsWith('/meridian'))  return 'meridian'
+  return 'waypoint'
 }
 
-function NavItem({ item, alertCount }) {
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function NavItem({ item, accentClass, borderClass }) {
   const { setSidebarOpen } = useSidebar()
 
   if (item.external) {
@@ -149,47 +99,172 @@ function NavItem({ item, alertCount }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => setSidebarOpen(false)}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-300 hover:bg-gray-800 hover:text-white"
+        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-800 hover:text-white"
       >
-        <item.icon className="h-5 w-5 flex-shrink-0" />
+        <item.icon className="h-4 w-4 flex-shrink-0" />
         <span className="flex-1">{item.name}</span>
-        <ExternalLinkIcon className="h-3.5 w-3.5 text-gray-500" />
+        <ExternalLinkIcon className="h-3 w-3 text-gray-600" />
       </a>
     )
   }
+
+  return (
+    <NavLink
+      to={item.path}
+      end={item.end}
+      onClick={() => setSidebarOpen(false)}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all border-l-2',
+          isActive
+            ? `border-current ${accentClass} bg-white/5 text-white`
+            : `border-transparent text-gray-400 hover:bg-gray-800/60 hover:text-gray-100`
+        )
+      }
+    >
+      <item.icon className="h-4 w-4 flex-shrink-0" />
+      <span className="flex-1">{item.name}</span>
+    </NavLink>
+  )
+}
+
+function AlertNavItem({ item, alertCount, accentClass }) {
+  const { setSidebarOpen } = useSidebar()
   return (
     <NavLink
       to={item.path}
       onClick={() => setSidebarOpen(false)}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all border-l-2',
           isActive
-            ? 'bg-orange-500 text-white'
-            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            ? `border-current ${accentClass} bg-white/5 text-white`
+            : `border-transparent text-gray-400 hover:bg-gray-800/60 hover:text-gray-100`
         )
       }
     >
-      <item.icon className="h-5 w-5 flex-shrink-0" />
+      <item.icon className="h-4 w-4 flex-shrink-0" />
       <span className="flex-1">{item.name}</span>
-      {item.path === '/alerts' && alertCount > 0 && (
-        <AlertBadge count={alertCount} />
-      )}
+      {alertCount > 0 && <AlertBadge count={alertCount} />}
     </NavLink>
   )
 }
+
+function GroupLabel({ label }) {
+  return (
+    <div className="px-3 pt-4 pb-1">
+      <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{label}</span>
+    </div>
+  )
+}
+
+function WaypointNav({ items, alertCount, accentClass, borderClass }) {
+  return (
+    <>
+      {WAYPOINT_GROUPS.map(group => {
+        const groupItems = items.filter(i => i.group === group.key)
+        if (groupItems.length === 0) return null
+        return (
+          <div key={group.key}>
+            <GroupLabel label={group.label} />
+            {groupItems.map(item =>
+              item.path === '/alerts'
+                ? <AlertNavItem key={item.path} item={item} alertCount={alertCount} accentClass={accentClass} />
+                : <NavItem key={item.path} item={item} accentClass={accentClass} borderClass={borderClass} />
+            )}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+// ─── Product Rail (multi-product only) ───────────────────────────────────────
+
+function ProductRail({ activeProducts, activeProduct, onSwitch, profile, onSignOut }) {
+  return (
+    <div className="flex flex-col w-12 bg-gray-950 border-r border-gray-800/60 flex-shrink-0">
+      {/* Logo mark */}
+      <div className="flex items-center justify-center h-14 border-b border-gray-800/60">
+        <img src="/logo.png" alt="Waypoint" className="h-7 w-7 object-contain opacity-90" />
+      </div>
+
+      {/* Product switcher buttons */}
+      <div className="flex-1 flex flex-col items-center gap-1.5 py-3">
+        {activeProducts.map(productKey => {
+          const p = PRODUCTS[productKey]
+          const isActive = activeProduct === productKey
+          return (
+            <button
+              key={productKey}
+              onClick={() => onSwitch(productKey)}
+              title={p.label}
+              className={cn(
+                'w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150',
+                isActive
+                  ? p.activeClass
+                  : `text-gray-600 ${p.hoverClass}`
+              )}
+            >
+              <p.Icon className="h-4.5 w-4.5" style={{ width: '18px', height: '18px' }} />
+            </button>
+          )
+        })}
+      </div>
+
+      {/* User + sign out at bottom */}
+      <div className="flex flex-col items-center gap-1.5 py-3 border-t border-gray-800/60">
+        <div
+          className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-xs font-semibold text-white cursor-default"
+          title={profile?.full_name}
+        >
+          {profile?.full_name?.charAt(0) || '?'}
+        </div>
+        <button
+          onClick={onSignOut}
+          title="Sign out"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:text-white hover:bg-gray-800 transition-colors"
+        >
+          <LogoutIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Sidebar ─────────────────────────────────────────────────────────────
 
 export default function Sidebar() {
   const { profile, hasRole, hasFeature, hasProduct, signOut } = useAuth()
   const { alertCount } = useNotifications()
   const { sidebarOpen, setSidebarOpen } = useSidebar()
+  const { pathname } = useLocation()
 
   const isParent = profile?.role === 'parent'
-  const showWaypoint = !isParent && hasProduct('waypoint')
+  const showWaypoint  = !isParent && hasProduct('waypoint')
   const showNavigator = !isParent && hasProduct('navigator')
-  const showMeridian = !isParent && hasProduct('meridian')
-  const activeProductCount = [showWaypoint, showNavigator, showMeridian].filter(Boolean).length
-  const showProductHeaders = activeProductCount > 1
+  const showMeridian  = !isParent && hasProduct('meridian')
+
+  const activeProducts = [
+    showWaypoint  && 'waypoint',
+    showNavigator && 'navigator',
+    showMeridian  && 'meridian',
+  ].filter(Boolean)
+
+  const showRail = activeProducts.length > 1
+
+  // Sync active product with URL — if you navigate directly via a link, the rail updates
+  const [activeProduct, setActiveProduct] = useState(() => {
+    const fromPath = productFromPath(pathname)
+    return activeProducts.includes(fromPath) ? fromPath : (activeProducts[0] || 'waypoint')
+  })
+
+  useEffect(() => {
+    const fromPath = productFromPath(pathname)
+    if (activeProducts.includes(fromPath)) {
+      setActiveProduct(fromPath)
+    }
+  }, [pathname])
 
   function itemVisible(item) {
     if (item.roles && !hasRole(item.roles)) return false
@@ -198,176 +273,153 @@ export default function Sidebar() {
   }
 
   const waypointItems = isParent ? [] : staffNavigation.filter(i => i.product === 'waypoint' && itemVisible(i))
-  const commonItems = (isParent ? parentNavigation : staffNavigation).filter(i => !i.product && itemVisible(i))
+  const commonItems   = (isParent ? parentNavigation : staffNavigation).filter(i => !i.product && itemVisible(i))
+
+  const product = PRODUCTS[activeProduct] || PRODUCTS.waypoint
 
   return (
     <aside className={cn(
-      'flex flex-col w-64 bg-gray-900 text-white flex-shrink-0',
-      // Mobile: fixed overlay drawer with slide animation
-      'fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out overflow-y-auto',
-      // Desktop: static sidebar in flex layout, always visible
+      'flex flex-shrink-0',
+      'fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out',
       'md:relative md:inset-y-auto md:left-auto md:z-auto md:translate-x-0 md:min-h-screen',
-      // Mobile open/close state
-      sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+      showRail ? 'w-64' : 'w-64'
     )}>
-      {/* Logo */}
-      <div className="relative px-6 py-5 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Compass Pathway" className="h-9 w-9 object-contain" />
-          <div>
-            <h1 className="text-sm font-bold leading-tight">
-              <span className="text-orange-400">Compass</span>
-              <span className="text-purple-400"> Pathway</span>
-            </h1>
-            <p className="text-xs text-gray-400">Behavioral Solutions</p>
-          </div>
-        </div>
-        {/* X close button — mobile only */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden absolute top-4 right-3 p-1.5 text-gray-400 hover:text-white rounded"
-          aria-label="Close menu"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {/* Waypoint section */}
-        {showWaypoint && (
-          <>
-            {showProductHeaders && (
-              <div className="pt-2 pb-1 px-3 flex items-center gap-1.5">
-                <WaypointProductIcon className="h-3.5 w-3.5 text-orange-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">Waypoint</span>
+      {/* ── Product Rail (multi-product) ── */}
+      {showRail && (
+        <ProductRail
+          activeProducts={activeProducts}
+          activeProduct={activeProduct}
+          onSwitch={setActiveProduct}
+          profile={profile}
+          onSignOut={signOut}
+        />
+      )}
+
+      {/* ── Nav Panel ── */}
+      <div className="flex flex-col flex-1 bg-gray-900 overflow-hidden min-h-0">
+
+        {/* Header */}
+        <div className={cn(
+          'relative px-4 border-b border-gray-800/60',
+          showRail ? 'py-3' : 'py-4'
+        )}>
+          {/* Logo row — only when no rail */}
+          {!showRail && (
+            <div className="flex items-center gap-2.5 mb-3">
+              <img src="/logo.png" alt="Waypoint" className="h-8 w-8 object-contain" />
+              <div>
+                <p className="text-[13px] font-bold text-gray-100 leading-tight">Compass Pathway</p>
+                <p className="text-[10px] text-gray-500">Behavioral Solutions</p>
               </div>
-            )}
-            <WaypointNav items={waypointItems} alertCount={alertCount} profile={profile} />
-          </>
-        )}
-
-        {/* Navigator section */}
-        {showNavigator && (
-          <>
-            <div className="pt-3 pb-1 px-3 flex items-center gap-1.5">
-              <NavigatorProductIcon className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />
-              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Navigator</span>
             </div>
-            {navigatorNavigation.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/navigator'}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  )
-                }
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1">{item.name}</span>
-              </NavLink>
-            ))}
-            {/* Discipline Matrix — only show here if Waypoint isn't active (avoids duplication) */}
-            {!showWaypoint && (
-              <NavLink
-                to="/matrix"
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  )
-                }
-              >
-                <MatrixIcon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1">Discipline Matrix</span>
-              </NavLink>
-            )}
-          </>
-        )}
+          )}
 
-        {/* Meridian section */}
-        {showMeridian && (
-          <>
-            <div className="pt-3 pb-1 px-3 flex items-center gap-1.5">
-              <MeridianProductIcon className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
-              <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider">Meridian</span>
-            </div>
-            {meridianNavigation.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/meridian'}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  )
-                }
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1">{item.name}</span>
-              </NavLink>
-            ))}
-          </>
-        )}
+          {/* Active product label */}
+          <div className="flex items-center gap-2">
+            <product.Icon className={cn('h-4 w-4 flex-shrink-0', product.textClass)} />
+            <span className={cn('text-sm font-bold tracking-wide', product.textClass)}>
+              {product.label}
+            </span>
+          </div>
 
-        {/* Common items — always visible (Settings etc.) */}
-        {commonItems.length > 0 && (
-          <div className="pt-2">
-            {commonItems.map(item => <NavItem key={item.path} item={item} alertCount={alertCount} />)}
-          </div>
-        )}
-      </nav>
-
-      {/* User Section */}
-      <div className="px-3 py-4 border-t border-gray-800">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-medium">
-            {profile?.full_name?.charAt(0) || '?'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {profile?.full_name || 'User'}
-            </p>
-            <p className="text-xs text-gray-400 truncate capitalize">
-              {profile?.role?.replace('_', ' ') || 'Staff'}
-            </p>
-          </div>
+          {/* Mobile close */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden absolute top-3 right-3 p-1.5 text-gray-500 hover:text-white rounded"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={signOut}
-          className="w-full flex items-center gap-3 px-3 py-2 mt-1 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <LogoutIcon className="h-5 w-5" />
-          Sign Out
-        </button>
-      </div>
 
-      {/* LLC Attribution */}
-      <div className="px-4 py-3 border-t border-gray-800">
-        <p className="text-[10px] text-gray-500 text-center leading-tight">
-          &copy; 2026 Clear Path Education Group, LLC. All rights reserved.
-        </p>
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-2 overflow-y-auto">
+          {isParent ? (
+            parentNavigation.map(item => (
+              <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+            ))
+          ) : activeProduct === 'waypoint' && showWaypoint ? (
+            <>
+              <WaypointNav
+                items={waypointItems}
+                alertCount={alertCount}
+                accentClass={product.activeClass}
+                borderClass={product.borderClass}
+              />
+              {/* Settings — always at bottom of Waypoint */}
+              {commonItems.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-800/60">
+                  {commonItems.map(item => (
+                    <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : activeProduct === 'navigator' && showNavigator ? (
+            <>
+              {navigatorNavigation.map(item => (
+                <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+              ))}
+              {!showWaypoint && (
+                <NavItem item={{ name: 'Discipline Matrix', path: '/matrix', icon: MatrixIcon }} accentClass={product.activeClass} borderClass={product.borderClass} />
+              )}
+              {commonItems.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-800/60">
+                  {commonItems.map(item => (
+                    <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : activeProduct === 'meridian' && showMeridian ? (
+            <>
+              {meridianNavigation.map(item => (
+                <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+              ))}
+              {commonItems.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-800/60">
+                  {commonItems.map(item => (
+                    <NavItem key={item.path} item={item} accentClass={product.activeClass} borderClass={product.borderClass} />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : null}
+        </nav>
+
+        {/* User section — only when no rail */}
+        {!showRail && (
+          <div className="px-3 py-3 border-t border-gray-800/60">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
+              <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
+                {profile?.full_name?.charAt(0) || '?'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-100 truncate">{profile?.full_name || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate capitalize">{profile?.role?.replace(/_/g, ' ') || 'Staff'}</p>
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-2 py-2 mt-0.5 text-sm text-gray-500 hover:text-gray-100 hover:bg-gray-800/60 rounded-lg transition-colors"
+            >
+              <LogoutIcon className="h-4 w-4" />
+              Sign Out
+            </button>
+            <p className="text-[10px] text-gray-700 text-center mt-3 leading-tight">
+              &copy; 2026 Clear Path Education Group, LLC
+            </p>
+          </div>
+        )}
       </div>
     </aside>
   )
 }
 
-// ---- Icons ----
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function DashboardIcon({ className }) {
   return (
@@ -376,7 +428,6 @@ function DashboardIcon({ className }) {
     </svg>
   )
 }
-
 function StudentsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -384,7 +435,6 @@ function StudentsIcon({ className }) {
     </svg>
   )
 }
-
 function IncidentsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -392,7 +442,6 @@ function IncidentsIcon({ className }) {
     </svg>
   )
 }
-
 function ComplianceIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -400,7 +449,6 @@ function ComplianceIcon({ className }) {
     </svg>
   )
 }
-
 function AlertsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -408,7 +456,6 @@ function AlertsIcon({ className }) {
     </svg>
   )
 }
-
 function PlansIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -416,7 +463,6 @@ function PlansIcon({ className }) {
     </svg>
   )
 }
-
 function MatrixIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -424,7 +470,6 @@ function MatrixIcon({ className }) {
     </svg>
   )
 }
-
 function ReportsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -432,7 +477,6 @@ function ReportsIcon({ className }) {
     </svg>
   )
 }
-
 function SettingsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -441,7 +485,6 @@ function SettingsIcon({ className }) {
     </svg>
   )
 }
-
 function KioskIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -449,7 +492,6 @@ function KioskIcon({ className }) {
     </svg>
   )
 }
-
 function PhoneIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -457,7 +499,6 @@ function PhoneIcon({ className }) {
     </svg>
   )
 }
-
 function DaepIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -465,7 +506,6 @@ function DaepIcon({ className }) {
     </svg>
   )
 }
-
 function CalendarIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -473,7 +513,6 @@ function CalendarIcon({ className }) {
     </svg>
   )
 }
-
 function ExternalLinkIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -481,7 +520,6 @@ function ExternalLinkIcon({ className }) {
     </svg>
   )
 }
-
 function ImportIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -489,7 +527,6 @@ function ImportIcon({ className }) {
     </svg>
   )
 }
-
 function LogoutIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -497,7 +534,6 @@ function LogoutIcon({ className }) {
     </svg>
   )
 }
-
 function ReferralIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -505,7 +541,6 @@ function ReferralIcon({ className }) {
     </svg>
   )
 }
-
 function ScoringIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -513,34 +548,6 @@ function ScoringIcon({ className }) {
     </svg>
   )
 }
-
-// ---- Product Brand Icons ----
-
-function WaypointProductIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-    </svg>
-  )
-}
-
-function NavigatorProductIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-    </svg>
-  )
-}
-
-function MeridianProductIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-    </svg>
-  )
-}
-
 function PlacementIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -548,17 +555,13 @@ function PlacementIcon({ className }) {
     </svg>
   )
 }
-
 function GoalsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2M3 12h2m14 0h2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 15a3 3 0 100-6 3 3 0 000 6zM12 3v2m0 14v2M3 12h2m14 0h2" />
     </svg>
   )
 }
-
 function SupportsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -566,72 +569,6 @@ function SupportsIcon({ className }) {
     </svg>
   )
 }
-
-// ---- Origins Icons ----
-
-function OriginsProductIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 0v.75m0 18.75v-.75M2.25 12h.75m18.75 0h-.75" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14.47 9.53l-4.94 2.47-2.47 4.94 4.94-2.47 2.47-4.94z" />
-    </svg>
-  )
-}
-
-function PlayCircleIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.328l5.603 3.113z" />
-    </svg>
-  )
-}
-
-function ArrowPathIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-    </svg>
-  )
-}
-
-function HomeIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-    </svg>
-  )
-}
-
-function AcademicCapIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-    </svg>
-  )
-}
-
-// Graduation cap — Transition (SPPI-13)
-function TransitionIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-    </svg>
-  )
-}
-
-// Bar chart — RDA Dashboard
-function RDAIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-    </svg>
-  )
-}
-
-// ---- Navigator Intelligence Icons ----
-
-// Fire — Escalation Engine
 function EscalationIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -640,8 +577,6 @@ function EscalationIcon({ className }) {
     </svg>
   )
 }
-
-// Light bulb / brain — Skill Gap Map
 function BrainIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -649,8 +584,6 @@ function BrainIcon({ className }) {
     </svg>
   )
 }
-
-// Arrow trending up — Effectiveness
 function TrendingUpIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -658,8 +591,6 @@ function TrendingUpIcon({ className }) {
     </svg>
   )
 }
-
-// Scale — Disproportionality
 function ScaleIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -667,12 +598,49 @@ function ScaleIcon({ className }) {
     </svg>
   )
 }
-
-// Clipboard list — Pilot Summary
 function ClipboardListIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+    </svg>
+  )
+}
+function TransitionIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+    </svg>
+  )
+}
+function RDAIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  )
+}
+
+// ─── Product Brand Icons ──────────────────────────────────────────────────────
+
+function WaypointProductIcon({ className, style }) {
+  return (
+    <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+    </svg>
+  )
+}
+function NavigatorProductIcon({ className, style }) {
+  return (
+    <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+    </svg>
+  )
+}
+function MeridianProductIcon({ className, style }) {
+  return (
+    <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
     </svg>
   )
 }
