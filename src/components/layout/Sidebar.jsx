@@ -322,27 +322,39 @@ export default function Sidebar() {
       <div className="flex flex-col flex-1 bg-gray-900 overflow-hidden min-h-0">
 
         {/* Header */}
-        <div className="relative px-4 py-3.5 border-b border-white/5">
-          {/* Logo row — only when no rail */}
-          {!showRail && (
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+        <div className="relative border-b border-white/5">
+          {/* Waypoint — full logo hero (shown when waypoint is active, whether rail or not) */}
+          {activeProduct === 'waypoint' ? (
+            <div className="flex flex-col items-center pt-5 pb-4 px-4">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-orange-500/40 shadow-xl shadow-orange-500/20 mb-3">
                 <img src="/logo.png" alt="Waypoint" className="w-full h-full object-cover" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-white leading-tight">Waypoint</p>
-                <p className="text-[10px] text-gray-500">Clear Path Education Group</p>
+              <p className="text-base font-bold text-white tracking-wide">Waypoint</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">Clear Path Education Group</p>
+            </div>
+          ) : (
+            /* Other products — compact header with icon + label */
+            <div className="px-4 py-3.5">
+              {/* Logo row — only when no rail */}
+              {!showRail && (
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+                    <img src="/logo.png" alt="Waypoint" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white leading-tight">Waypoint</p>
+                    <p className="text-[10px] text-gray-500">Clear Path Education Group</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <product.Icon className={cn('flex-shrink-0', product.textClass)} style={{ width: '15px', height: '15px' }} />
+                <span className={cn('text-xs font-semibold tracking-widest uppercase', product.textClass)}>
+                  {product.label}
+                </span>
               </div>
             </div>
           )}
-
-          {/* Active product label */}
-          <div className="flex items-center gap-2">
-            <product.Icon className={cn('flex-shrink-0', product.textClass)} style={{ width: '15px', height: '15px' }} />
-            <span className={cn('text-xs font-semibold tracking-widest uppercase', product.textClass)}>
-              {product.label}
-            </span>
-          </div>
 
           {/* Mobile close */}
           <button
