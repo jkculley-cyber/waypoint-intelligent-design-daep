@@ -1579,10 +1579,11 @@
     </div>
 
     <!-- Success state (hidden) -->
-    <div id="lc-success" style="display:none;padding:32px 20px;text-align:center;">
-      <div style="font-size:1.8rem;margin-bottom:12px;">✓</div>
-      <div style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin-bottom:8px;">Got it — thanks.</div>
-      <div style="font-size:0.8rem;color:rgba(240,230,211,0.55);line-height:1.6;">We'll be in touch soon. In the meantime, <a href="#contact" onclick="lcToggle()" style="color:#f4a84a;">request a full demo</a> to skip the queue.</div>
+    <div id="lc-success" style="display:none;padding:28px 20px;text-align:center;">
+      <div style="font-size:1.8rem;margin-bottom:10px;">✓</div>
+      <div style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin-bottom:10px;">Got it — thanks.</div>
+      <div id="lc-reply" style="font-size:0.82rem;color:rgba(240,230,211,0.65);line-height:1.7;margin-bottom:14px;"></div>
+      <div style="font-size:0.75rem;color:rgba(240,230,211,0.35);line-height:1.6;">In the meantime, <a href="#contact" onclick="lcToggle()" style="color:#f4a84a;">request a full demo</a> to jump ahead.</div>
     </div>
   </div>
 </div>
@@ -1618,9 +1619,20 @@
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   }
 
+  var lcReplies = {
+    'daep_sped':          'SPED manifestation documentation is one of the most scrutinised areas in any OCR review. Waypoint was built specifically to close that gap — blocking placement if the MDR hasn\'t been completed.',
+    'peims':              'PEIMS accuracy starts with clean incident data. Waypoint exports discipline records directly — no manual re-entry, no spreadsheet reconciliation.',
+    'transition_plans':   'Transition plans are one of the most commonly missing documents when TEA comes knocking. Waypoint tracks every plan, every 30/60/90-day review, automatically.',
+    'ocr_complaint':      'An active OCR situation is serious, but manageable with the right documentation trail. We\'ve built Waypoint around exactly this scenario — let\'s talk.',
+    'parent_notifications': 'Parent notification gaps are easy to miss and expensive to defend. Waypoint timestamps every notice and tracks acknowledgment so you always have proof.',
+    'general':            'TEC Chapter 37 compliance touches every part of the DAEP process. Waypoint handles the workflow from placement to re-entry so nothing slips through.',
+    'exploring':          'Good time to look. Most districts don\'t realise they have compliance gaps until an audit or complaint surfaces. We\'re happy to walk you through what to watch for.'
+  };
+
   document.getElementById('lc-form').addEventListener('submit', function(e) {
     e.preventDefault();
     var btn = document.getElementById('lc-submit');
+    var challenge = this.querySelector('[name="compliance_challenge"]').value;
     btn.disabled = true;
     btn.textContent = 'Sending…';
 
@@ -1631,6 +1643,8 @@
     })
     .then(function(r) {
       if (r.ok) {
+        var reply = lcReplies[challenge] || 'We\'ll take a look and be in touch soon.';
+        document.getElementById('lc-reply').textContent = reply;
         document.getElementById('lc-form-wrap').style.display = 'none';
         document.getElementById('lc-success').style.display = 'block';
       } else {
