@@ -174,11 +174,22 @@ export default function NewIncidentPage() {
     })
   }
 
+  const today = new Date().toISOString().split('T')[0]
+
   // Date ordering validation (used in canProceed and JSX error display)
   const datesInvalid =
     formData.consequence_start &&
     formData.consequence_end &&
     formData.consequence_end < formData.consequence_start
+
+  const startBeforeIncident =
+    formData.consequence_start &&
+    formData.incident_date &&
+    formData.consequence_start < formData.incident_date
+
+  const incidentInFuture =
+    formData.incident_date &&
+    formData.incident_date > today
 
   const canProceed = () => {
     switch (step) {
@@ -202,6 +213,8 @@ export default function NewIncidentPage() {
         }
         // Consequence date ordering: end must be on or after start
         if (datesInvalid) return false
+        // Consequence start cannot be before incident date
+        if (startBeforeIncident) return false
         // IDEA §300.536 hard block: 10+ cumulative removal days for SPED/504 students
         // requires Manifestation Determination Review BEFORE proceeding.
         // For DAEP, the MDR document upload above already enforces this.
@@ -212,7 +225,7 @@ export default function NewIncidentPage() {
         }
         return true
       }
-      case 3: return !!formData.description && !!formData.incident_date && !!formData.location
+      case 3: return !!formData.description && !!formData.incident_date && !!formData.location && !incidentInFuture
       case 4: return true
       default: return false
     }
@@ -453,6 +466,11 @@ export default function NewIncidentPage() {
                       End date cannot be before start date.
                     </p>
                   )}
+                  {startBeforeIncident && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Consequence start date cannot be before the incident date.
+                    </p>
+                  )}
                   {!isOverride && matrixEntry && formData.consequence_days && (() => {
                     const days = parseInt(formData.consequence_days)
                     const outOfRange =
@@ -538,14 +556,20 @@ export default function NewIncidentPage() {
               <CardTitle>Incident Details</CardTitle>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Incident Date"
-                  name="incident_date"
-                  type="date"
-                  value={formData.incident_date}
-                  onChange={(e) => updateField('incident_date', e.target.value)}
-                  required
-                />
+                <div>
+                  <FormField
+                    label="Incident Date"
+                    name="incident_date"
+                    type="date"
+                    value={formData.incident_date}
+                    max={today}
+                    onChange={(e) => updateField('incident_date', e.target.value)}
+                    required
+                  />
+                  {incidentInFuture && (
+                    <p className="text-xs text-red-600 mt-1">Incident date cannot be in the future.</p>
+                  )}
+                </div>
                 <FormField
                   label="Incident Time"
                   name="incident_time"

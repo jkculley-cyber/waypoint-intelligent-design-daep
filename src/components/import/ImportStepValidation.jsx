@@ -9,6 +9,7 @@ export default function ImportStepValidation({
   onCancel,
 }) {
   const [activeTab, setActiveTab] = useState('summary')
+  const [errorAcknowledged, setErrorAcknowledged] = useState(false)
 
   if (!validationResults) return null
 
@@ -224,9 +225,22 @@ export default function ImportStepValidation({
             </button>
           )}
         </div>
+        {hasErrors && (
+          <label className="flex items-start gap-2 mr-4 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={errorAcknowledged}
+              onChange={(e) => setErrorAcknowledged(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-red-400 text-red-500 focus:ring-red-400"
+            />
+            <span>
+              I understand {errors.length} row{errors.length !== 1 ? 's' : ''} with errors will be skipped and not imported
+            </span>
+          </label>
+        )}
         <button
           type="button"
-          disabled={valid.length === 0}
+          disabled={valid.length === 0 || (hasErrors && !errorAcknowledged)}
           onClick={onConfirm}
           className="px-6 py-2.5 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >

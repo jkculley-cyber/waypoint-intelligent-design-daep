@@ -107,6 +107,10 @@ export default function IncidentDetailPage() {
       toast.error('Cannot activate DAEP placement — MDR not complete')
       return
     }
+    if (isDaep && incident.orientation_status === 'pending') {
+      toast.error('Orientation has not been scheduled yet — schedule orientation before activating DAEP placement', { duration: 5000 })
+      return
+    }
     const { error } = await activateIncident(incident.id)
     if (error) {
       toast.error('Failed to activate incident')

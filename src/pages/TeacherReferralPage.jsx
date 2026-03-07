@@ -253,10 +253,14 @@ export default function TeacherReferralPage() {
                 <input
                   type="date"
                   value={form.incident_date}
+                  max={new Date().toISOString().split('T')[0]}
                   onChange={e => setForm(f => ({ ...f, incident_date: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
+                {form.incident_date > new Date().toISOString().split('T')[0] && (
+                  <p className="text-xs text-red-600 mt-1">Incident date cannot be in the future.</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Time</label>
