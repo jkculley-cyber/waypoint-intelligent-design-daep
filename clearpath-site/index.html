@@ -84,7 +84,7 @@
     height: 100px;
   }
   .nav-logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
-  .nav-logo-img { display:block; width:300px; height:88px; background: rgba(14,6,24,1) url('clearpath-logo.png') no-repeat left center / contain; background-blend-mode:multiply; }
+  .nav-logo img { height:88px; width:auto; max-width:360px; object-fit:contain; }
   .nav-logo-text .name {
     font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700;
     background: linear-gradient(90deg, var(--amber-light), var(--amber-glow));
@@ -686,7 +686,7 @@
     margin-bottom: 8px; display: block;
   }
   .footer-brand p { font-size: 0.83rem; color: var(--text-muted); max-width: 240px; line-height: 1.65; }
-  .footer-logo { display:block; width:280px; height:80px; background: rgba(5,3,14,1) url('clearpath-logo.png') no-repeat left center / contain; background-blend-mode:multiply; margin-bottom:12px; }
+  .footer-logo { height:80px; width:auto; max-width:280px; object-fit:contain; display:block; margin-bottom:12px; }
   .footer-links h4 {
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--amber); margin-bottom: 16px;
@@ -735,7 +735,7 @@
   }
   @media (max-width: 600px) {
     nav { height: 80px; padding: 0 4%; }
-    .nav-logo-img { width: 200px; height: 64px; }
+    .nav-logo img { height: 64px; width: auto; max-width: 220px; }
     .nav-logo-text .name { font-size: 0.78rem; }
     .stats-bar-item { padding: 20px 12px; }
     .stats-bar-item .snum { font-size: 1.5rem; }
@@ -763,7 +763,7 @@
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="#">
-    <div class="nav-logo-img" role="img" aria-label="Clear Path Education Group"></div>
+    <img src="clearpath-logo.png" alt="Clear Path Education Group" />
   </a>
   <ul class="nav-links">
     <li><a href="#products">Products</a></li>
@@ -1210,7 +1210,7 @@
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
-      <div class="footer-logo" role="img" aria-label="Clear Path Education Group"></div>
+      <img src="clearpath-logo.png" alt="Clear Path Education Group" class="footer-logo" />
       <span class="fname">Clear Path Education Group, LLC</span>
       <p>Texas educators building technology and services that help districts create better outcomes for every student.</p>
     </div>
