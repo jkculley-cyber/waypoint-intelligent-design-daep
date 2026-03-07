@@ -7,7 +7,7 @@ import { SelectField } from '../components/ui/FormField'
 import EmptyState from '../components/ui/EmptyState'
 import { PageLoader } from '../components/ui/LoadingSpinner'
 import AlertCard from '../components/alerts/AlertCard'
-import { useAlerts } from '../hooks/useAlerts'
+import { useAlerts, useApprovalEscalationAlerts } from '../hooks/useAlerts'
 import { useSeparationOrdersSummary } from '../hooks/useSeparations'
 import { useCampuses } from '../hooks/useCampuses'
 import { useNotifications } from '../contexts/NotificationContext'
@@ -153,6 +153,7 @@ export default function AlertsPage() {
   }, [levelFilter, statusFilter, campusFilter, triggerFilter, scope])
 
   const { alerts, loading, refetch } = useAlerts(filters)
+  useApprovalEscalationAlerts() // creates yellow alerts for incidents pending approval 3+ days
   const { campuses } = useCampuses()
   const { redCount, yellowCount, refreshCounts } = useNotifications()
 

@@ -233,6 +233,8 @@ export const ALERT_TRIGGERS = {
   ORIENTATION_MISSED: 'orientation_missed',
   PLACEMENT_NOT_STARTED: 'placement_not_started',
   SPED_ESCALATION: 'sped_escalation',
+  TRANSITION_REVIEW_OVERDUE: 'transition_review_overdue',
+  APPROVAL_PENDING_ESCALATION: 'approval_pending_escalation',
 }
 
 export const ALERT_TRIGGER_LABELS = {
@@ -245,6 +247,8 @@ export const ALERT_TRIGGER_LABELS = {
   [ALERT_TRIGGERS.ORIENTATION_MISSED]: 'Orientation Date Missed',
   [ALERT_TRIGGERS.PLACEMENT_NOT_STARTED]: 'Orientation Complete — Placement Not Started',
   [ALERT_TRIGGERS.SPED_ESCALATION]: 'SPED Director Escalation (Meridian)',
+  [ALERT_TRIGGERS.TRANSITION_REVIEW_OVERDUE]: 'Transition Plan Review Overdue',
+  [ALERT_TRIGGERS.APPROVAL_PENDING_ESCALATION]: 'Incident Pending Approval — 3+ Days',
 }
 
 // Alert statuses

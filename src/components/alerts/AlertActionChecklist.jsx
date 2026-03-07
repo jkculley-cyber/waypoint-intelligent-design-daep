@@ -36,15 +36,21 @@ const ACTION_ITEMS = [
   },
 ]
 
-const ORIENTATION_TRIGGERS = ['orientation_missed', 'placement_not_started']
+// Trigger types that use free-form notes instead of the SPED behavior checklist
+const NO_CHECKLIST_TRIGGERS = [
+  'orientation_missed',
+  'placement_not_started',
+  'transition_review_overdue',
+  'approval_pending_escalation',
+]
 
 export default function AlertActionChecklist({ alert, onUpdate }) {
   const { updateActionItem } = useAlertActions()
 
   if (!alert) return null
 
-  // Orientation alerts don't require the SPED behavior checklist
-  if (ORIENTATION_TRIGGERS.includes(alert.trigger_type)) return null
+  // These alert types don't require the SPED behavior action checklist
+  if (NO_CHECKLIST_TRIGGERS.includes(alert.trigger_type)) return null
 
   const isResolved = alert.status === 'resolved' || alert.status === 'dismissed'
 

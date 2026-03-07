@@ -109,8 +109,13 @@ export function useComplianceChecklist(checklistId) {
 export function useComplianceActions() {
   const { user } = useAuth()
 
-  const updateChecklistItem = async (checklistId, field, value) => {
-    const update = { [field]: value || new Date().toISOString() }
+  // itemCompletedBy: the full merged item_completed_by JSONB object
+  // (caller builds it by merging current checklist.item_completed_by with the new entry)
+  const updateChecklistItem = async (checklistId, field, value, itemCompletedBy) => {
+    const update = { [field]: value || null }
+    if (itemCompletedBy !== undefined) {
+      update.item_completed_by = itemCompletedBy
+    }
 
     const { data, error } = await supabase
       .from('compliance_checklists')

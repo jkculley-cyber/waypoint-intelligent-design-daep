@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTransitionPlans } from '../hooks/useTransitionPlans'
+import { useTransitionReviewOverdueAlerts } from '../hooks/useAlerts'
 import { useCampuses } from '../hooks/useCampuses'
 import { useAuth } from '../contexts/AuthContext'
 import { useAccessScope } from '../hooks/useAccessScope'
@@ -41,6 +42,7 @@ export default function TransitionPlansPage() {
   }, [statusFilter, typeFilter, scope])
 
   const { plans, loading } = useTransitionPlans(filters)
+  useTransitionReviewOverdueAlerts(plans) // creates yellow alerts for overdue 30/60/90-day reviews
   const { campuses } = useCampuses()
 
   const canCreate = hasRole(['admin', 'principal', 'ap', 'counselor'])

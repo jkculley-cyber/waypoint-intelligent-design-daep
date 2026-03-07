@@ -6,6 +6,7 @@ import Badge from '../ui/Badge'
 import { SelectField } from '../ui/FormField'
 import { ConfirmDialog } from '../ui/Modal'
 import { useComplianceActions } from '../../hooks/useCompliance'
+import { useAuth } from '../../contexts/AuthContext'
 import { formatDateTime } from '../../lib/utils'
 import {
   MANIFESTATION_RESULT,
@@ -124,6 +125,7 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
   const is504 = student?.is_504 && !isSped
   const CHECKLIST_ITEMS = is504 ? SECTION_504_CHECKLIST_ITEMS : SPED_CHECKLIST_ITEMS
   const { updateChecklistItem, updateChecklist, overrideBlock } = useComplianceActions()
+  const { profile } = useAuth()
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
   const [overriding, setOverriding] = useState(false)
@@ -146,7 +148,13 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
     const currentValue = checklist[field]
     const newValue = currentValue ? null : new Date().toISOString()
 
-    const { error } = await updateChecklistItem(checklist.id, field, newValue)
+    // Build merged item_completed_by: add entry when checking, remove when unchecking
+    const current = checklist.item_completed_by || {}
+    const newCompletedBy = newValue
+      ? { ...current, [field]: { id: profile?.id, name: profile?.full_name || 'Staff' } }
+      : Object.fromEntries(Object.entries(current).filter(([k]) => k !== field))
+
+    const { error } = await updateChecklistItem(checklist.id, field, newValue, newCompletedBy)
 
     if (error) {
       toast.error('Failed to update checklist item')
@@ -388,6 +396,11 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
                     {isChecked && (
                       <p className="text-xs text-green-600 mt-1">
                         Completed: {formatDateTime(checklist[item.field])}
+                        {checklist.item_completed_by?.[item.field]?.name && (
+                          <span className="ml-1 text-green-500">
+                            by {checklist.item_completed_by[item.field].name}
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>
