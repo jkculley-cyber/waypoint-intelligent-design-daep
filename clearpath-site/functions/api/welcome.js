@@ -1,8 +1,8 @@
 // Cloudflare Pages Function: /api/welcome
 // Fires a welcome email via the Waypoint send-notification Edge Function.
 //
-// POST { email, source }
-// source: 'demo_request' | 'pilot_application' | 'chat_widget'
+// POST { email, name?, source }
+// source: 'demo_request' | 'pilot_application' | 'chat_widget' | 'sandbox_explore'
 //
 // Always returns HTTP 200 — email failures must not break form UX.
 // Set in CF Pages dashboard:
@@ -13,19 +13,22 @@ const SOURCE_TO_TEMPLATE = {
   demo_request:       'welcome_demo_request',
   pilot_application:  'welcome_pilot_application',
   chat_widget:        'welcome_demo_request',
+  sandbox_explore:    'welcome_demo_request',
 }
 
 const SOURCE_TO_SUBJECT = {
   demo_request:      "You're on our list — here's what's next",
   pilot_application: "We received your Waypoint Founding District application",
   chat_widget:       "You're on our list — here's what's next",
+  sandbox_explore:   "Your Waypoint sandbox credentials",
 }
 
 export async function onRequestPost({ request, env }) {
-  let email, source
+  let email, name, source
   try {
     const body = await request.json()
     email  = (body.email  || '').trim()
+    name   = (body.name   || '').trim()
     source = (body.source || '').trim()
   } catch (_) {
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
@@ -54,7 +57,7 @@ export async function onRequestPost({ request, env }) {
         'Authorization': `Bearer ${serviceRoleKey}`,
         'apikey': serviceRoleKey,
       },
-      body: JSON.stringify({ to: email, subject, template, data: { email } }),
+      body: JSON.stringify({ to: email, subject, template, data: { email, name } }),
     })
 
     if (!res.ok) {

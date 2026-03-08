@@ -805,7 +805,7 @@
         <span style="background:rgba(232,134,42,0.12);border:1px solid rgba(232,134,42,0.35);color:#f4a84a;font-size:0.72rem;font-weight:600;padding:5px 12px;border-radius:4px;">Parent Portal</span>
         <span style="background:rgba(232,134,42,0.12);border:1px solid rgba(232,134,42,0.35);color:#f4a84a;font-size:0.72rem;font-weight:600;padding:5px 12px;border-radius:4px;">Repeat Offender Alerts</span>
       </div>
-      <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.82rem;font-weight:700;padding:12px 26px;border-radius:6px;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;box-shadow:0 0 30px rgba(232,134,42,0.4);">Launch App &#8594;</a>
+      <button onclick="openExploreModal()" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.82rem;font-weight:700;padding:12px 26px;border-radius:6px;border:none;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;box-shadow:0 0 30px rgba(232,134,42,0.4);font-family:inherit;">Explore the App &#9654;</button>
     </div>
   </div>
 </section>
@@ -840,9 +840,9 @@
           <li>Transition plans with 30/60/90-day reviews</li>
         </ul>
         <div class="product-main-actions">
-          <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:0.82rem;padding:11px 22px;">
-            Launch App &#8594;
-          </a>
+          <button onclick="openExploreModal()" class="btn-primary" style="font-size:0.82rem;padding:11px 22px;border:none;cursor:pointer;font-family:inherit;">
+            Explore the App &#9654;
+          </button>
           <a href="/whitepaper.html" class="btn-ghost" style="font-size:0.82rem;padding:11px 22px;">
             Free Compliance Guide
           </a>
@@ -1378,9 +1378,46 @@
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:28px;">
-    <p style="font-size:0.78rem;color:rgba(240,230,211,0.35);margin:0 0 14px;">Read-only simulation — Explorer ISD is pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
-    <a href="#contact" style="display:inline-block;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:#f97316;font-size:0.82rem;font-weight:700;padding:10px 26px;border-radius:999px;text-decoration:none;letter-spacing:0.04em;transition:all 0.2s;" onmouseover="this.style.background='rgba(249,115,22,0.22)'" onmouseout="this.style.background='rgba(249,115,22,0.12)'">See it with your district's data &rarr;</a>
+  <!-- Feature callouts -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:40px;">
+    <div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:20px 22px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:34px;height:34px;background:rgba(168,85,247,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p style="font-size:0.78rem;font-weight:800;color:#c084fc;margin:0;text-transform:uppercase;letter-spacing:0.07em;">SPED Compliance Blocking</p>
+      </div>
+      <p style="font-size:0.85rem;color:rgba(240,230,211,0.8);margin:0 0 8px;line-height:1.6;"><strong style="color:#e9d5ff;">Click any SPED or 504 student row</strong> in the preview above to see it in action.</p>
+      <p style="font-size:0.78rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Waypoint <em>blocks</em> DAEP placement for students with active IEPs or 504 plans until the legally-required manifestation determination is documented. No manual checklist. No relying on staff memory. The system enforces it.</p>
+    </div>
+    <div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:20px 22px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:34px;height:34px;background:rgba(249,115,22,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <p style="font-size:0.78rem;font-weight:800;color:#f97316;margin:0;text-transform:uppercase;letter-spacing:0.07em;">Alternative Consequence Suggestions</p>
+      </div>
+      <p style="font-size:0.85rem;color:rgba(240,230,211,0.8);margin:0 0 8px;line-height:1.6;"><strong style="color:#fed7aa;">Before a student reaches DAEP</strong>, Waypoint surfaces tiered alternatives.</p>
+      <p style="font-size:0.78rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">When a behavior incident is logged, Waypoint checks the district's discipline matrix and recommends Tier 1–3 interventions — counseling, behavior contracts, restorative practices — before escalating to removal. Less DAEP. More defensible decisions.</p>
+    </div>
+    <div style="background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.28);border-radius:12px;padding:20px 22px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:34px;height:34px;background:rgba(20,184,166,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <p style="font-size:0.78rem;font-weight:800;color:#2dd4bf;margin:0;text-transform:uppercase;letter-spacing:0.07em;">Recidivism Tracking</p>
+      </div>
+      <p style="font-size:0.85rem;color:rgba(240,230,211,0.8);margin:0 0 8px;line-height:1.6;"><strong style="color:#99f6e4;">30–50% of students return to DAEP</strong> within a year nationally.</p>
+      <p style="font-size:0.78rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Waypoint tracks post-DAEP outcomes by campus, grade, and student group — flagging repeat offenders before a third placement and benchmarking your district's recidivism rate against state and national data. Turn anecdotal concern into actionable data.</p>
+    </div>
+  </div>
+
+  <!-- Explore the App CTA -->
+  <div style="text-align:center;margin-top:36px;padding:28px;background:rgba(232,134,42,0.05);border:1px solid rgba(232,134,42,0.2);border-radius:14px;">
+    <p style="font-size:1rem;font-weight:700;color:#f0e6d3;margin:0 0 6px;">Ready to explore the real thing?</p>
+    <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0 0 20px;">Get instant access to the live sandbox — Explorer ISD, pre-loaded and ready.</p>
+    <button onclick="openExploreModal()" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.88rem;font-weight:700;padding:13px 32px;border-radius:8px;border:none;cursor:pointer;letter-spacing:0.05em;box-shadow:0 0 30px rgba(232,134,42,0.35);font-family:inherit;">Explore the App &#9654;</button>
+    <p style="font-size:0.7rem;color:rgba(240,230,211,0.3);margin:12px 0 0;">No setup. No credit card. Sandbox resets nightly.</p>
   </div>
 
 <script>
@@ -2086,6 +2123,91 @@
       btn.textContent = 'Try again';
     });
   });
+</script>
+
+<!-- Explore the App — Email Gate Modal -->
+<div id="explore-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#0f1120;border:1px solid rgba(232,134,42,0.35);border-radius:16px;max-width:420px;width:100%;padding:36px 32px;box-shadow:0 0 80px rgba(232,134,42,0.15);position:relative;">
+    <button onclick="closeExploreModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(240,230,211,0.4);font-size:1.3rem;cursor:pointer;line-height:1;font-family:inherit;">&#x2715;</button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg,#e8862a,#d97706);border-radius:10px;margin-bottom:14px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <h3 style="font-family:'Cinzel',serif;font-size:1.25rem;color:#f0e6d3;margin:0 0 8px;">Explore the Sandbox</h3>
+      <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">We'll send your login credentials to Explorer ISD — pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
+    </div>
+
+    <div id="explore-form-wrap">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:0.72rem;font-weight:600;color:rgba(240,230,211,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Your Name</label>
+          <input id="explore-name" type="text" placeholder="e.g. Dr. Sarah Mitchell" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:11px 14px;color:#f0e6d3;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(232,134,42,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;font-weight:600;color:rgba(240,230,211,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Work Email</label>
+          <input id="explore-email" type="email" placeholder="you@districtname.org" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:11px 14px;color:#f0e6d3;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(232,134,42,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+        </div>
+        <div id="explore-error" style="display:none;font-size:0.75rem;color:#f87171;"></div>
+        <button id="explore-submit-btn" onclick="submitExploreForm()" style="width:100%;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.9rem;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;letter-spacing:0.04em;font-family:inherit;margin-top:4px;">Get Sandbox Access &#8594;</button>
+        <p style="text-align:center;font-size:0.68rem;color:rgba(240,230,211,0.3);margin:0;">No credit card. No setup. We won't spam you.</p>
+      </div>
+    </div>
+
+    <div id="explore-creds" style="display:none;">
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:20px;">
+        <p style="font-size:0.72rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 14px;">&#10003; &nbsp;Credentials sent to your email</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <p style="font-size:0.65rem;color:rgba(240,230,211,0.4);text-transform:uppercase;letter-spacing:0.07em;margin:0 0 3px;">App URL</p>
+            <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem;color:#f4a84a;font-weight:600;text-decoration:none;">waypoint.clearpathedgroup.com</a>
+          </div>
+          <div>
+            <p style="font-size:0.65rem;color:rgba(240,230,211,0.4);text-transform:uppercase;letter-spacing:0.07em;margin:0 0 3px;">Email</p>
+            <p style="font-size:0.85rem;color:#f0e6d3;font-family:monospace;margin:0;">explore@clearpathedgroup.com</p>
+          </div>
+          <div>
+            <p style="font-size:0.65rem;color:rgba(240,230,211,0.4);text-transform:uppercase;letter-spacing:0.07em;margin:0 0 3px;">Password</p>
+            <p style="font-size:0.85rem;color:#f0e6d3;font-family:monospace;margin:0;">Explore2026!</p>
+          </div>
+        </div>
+        <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;margin-top:18px;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.85rem;font-weight:700;padding:12px;border-radius:8px;text-decoration:none;letter-spacing:0.04em;">Open Waypoint &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openExploreModal(){
+  var m=document.getElementById('explore-modal');
+  m.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeExploreModal(){
+  var m=document.getElementById('explore-modal');
+  m.style.display='none';
+  document.body.style.overflow='';
+}
+document.getElementById('explore-modal').addEventListener('click',function(e){
+  if(e.target===this) closeExploreModal();
+});
+function submitExploreForm(){
+  var name=document.getElementById('explore-name').value.trim();
+  var email=document.getElementById('explore-email').value.trim();
+  var err=document.getElementById('explore-error');
+  if(!name){err.textContent='Please enter your name.';err.style.display='block';return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Please enter a valid work email.';err.style.display='block';return;}
+  err.style.display='none';
+  var btn=document.getElementById('explore-submit-btn');
+  btn.disabled=true; btn.textContent='Sending…';
+  fetch('/api/welcome',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,email:email,source:'sandbox_explore'})
+  }).catch(function(){}).finally(function(){
+    document.getElementById('explore-form-wrap').style.display='none';
+    document.getElementById('explore-creds').style.display='block';
+  });
+}
 </script>
 
 <!-- Cloudflare Web Analytics injected automatically by Cloudflare Pages -->
