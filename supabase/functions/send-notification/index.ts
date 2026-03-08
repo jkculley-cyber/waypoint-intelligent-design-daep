@@ -55,10 +55,9 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <p><a href="${d.portalUrl}" style="background:#f97316;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;">View in Parent Portal</a></p>
   `,
 
-  welcome_demo_request: (_d) => `
-    <h2 style="color:#1f2937;margin-top:0;">You're on our list — here's what's next</h2>
-    <p>Thank you for reaching out. We've received your request and will be in touch shortly to schedule a focused, 30-minute walkthrough tailored to your district's biggest compliance challenges.</p>
-    <p>While you wait, feel free to explore Waypoint yourself using the sandbox credentials below.</p>
+  welcome_sandbox_explore: (_d) => `
+    <h2 style="color:#1f2937;margin-top:0;">Your Waypoint sandbox is ready</h2>
+    <p>Here are your login credentials for Explorer ISD — a pre-loaded sandbox district. Everything inside is manufactured data and does not represent any real students, incidents, or districts.</p>
 
     <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
       <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
@@ -76,7 +75,40 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
           <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
         </tr>
       </table>
-      <p style="font-size:0.75rem;color:#92400e;margin:12px 0 0;">The sandbox is pre-loaded with realistic student and incident data. Explore freely — nothing you do here affects real data.</p>
+      <p style="font-size:0.75rem;color:#92400e;margin:12px 0 0;">Take your time. The sandbox resets regularly so you can always start fresh.</p>
+    </div>
+
+    <p>We hope Waypoint is a fit for your district. When you're ready, there are a few ways to move forward:</p>
+    <ul style="color:#374151;line-height:2;">
+      <li><strong>Request a live demo</strong> — we'll walk through it with your team and your specific compliance challenges</li>
+      <li><strong>Apply for a pilot</strong> — get Waypoint running in your district and see it with real data</li>
+      <li><strong>Go straight to a contract</strong> — if you've seen enough and are ready, we can move quickly</li>
+    </ul>
+    <p>Reply to this email or reach us at <a href="mailto:support@clearpathedgroup.com" style="color:#d97706;">support@clearpathedgroup.com</a>.</p>
+    <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
+  `,
+
+  welcome_demo_request: (_d) => `
+    <h2 style="color:#1f2937;margin-top:0;">You're on our list — here's what's next</h2>
+    <p>Thank you for reaching out. We've received your request and will be in touch shortly to schedule a focused, 30-minute walkthrough tailored to your district's biggest compliance challenges.</p>
+    <p>While you wait, feel free to explore Waypoint yourself using the sandbox credentials below. Note: all data in the sandbox is manufactured and does not represent any real students or districts.</p>
+
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;width:100px;">URL</td>
+          <td style="padding:6px 0;font-size:0.85rem;"><a href="https://waypoint.clearpathedgroup.com" style="color:#d97706;">waypoint.clearpathedgroup.com</a></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Email</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore@clearpathedgroup.com</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Password</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
+        </tr>
+      </table>
     </div>
 
     <p>We look forward to connecting with you.</p>

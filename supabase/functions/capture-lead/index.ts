@@ -24,7 +24,7 @@ const SOURCE_TO_SUBJECT: Record<string, string> = {
 }
 
 const SOURCE_TO_TEMPLATE: Record<string, string> = {
-  sandbox_explore:   'welcome_demo_request',
+  sandbox_explore:   'welcome_sandbox_explore',
   demo_request:      'welcome_demo_request',
   pilot_application: 'welcome_pilot_application',
   chat_widget:       'welcome_demo_request',
