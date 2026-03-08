@@ -54,6 +54,68 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <p>Please log in to the Waypoint Parent Portal to review the details and acknowledge receipt.</p>
     <p><a href="${d.portalUrl}" style="background:#f97316;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;">View in Parent Portal</a></p>
   `,
+
+  welcome_demo_request: (_d) => `
+    <h2 style="color:#1f2937;margin-top:0;">You're on our list — here's what's next</h2>
+    <p>Thank you for reaching out. We've received your request and will be in touch shortly to schedule a focused, 30-minute walkthrough tailored to your district's biggest compliance challenges.</p>
+    <p>While you wait, feel free to explore Waypoint yourself using the sandbox credentials below.</p>
+
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;width:100px;">URL</td>
+          <td style="padding:6px 0;font-size:0.85rem;"><a href="https://waypoint.clearpathedgroup.com" style="color:#d97706;">waypoint.clearpathedgroup.com</a></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Email</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore@clearpathedgroup.com</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Password</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
+        </tr>
+      </table>
+      <p style="font-size:0.75rem;color:#92400e;margin:12px 0 0;">The sandbox is pre-loaded with realistic student and incident data. Explore freely — nothing you do here affects real data.</p>
+    </div>
+
+    <p>We look forward to connecting with you.</p>
+    <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
+  `,
+
+  welcome_pilot_application: (_d) => `
+    <h2 style="color:#1f2937;margin-top:0;">We received your Waypoint Founding District application</h2>
+    <p>Thank you for applying to be a Waypoint Founding District. This means a lot to us — we're building Waypoint alongside districts like yours, and your feedback will directly shape the product.</p>
+    <p>Our team reviews every application personally. We'll be in touch within a few business days to discuss next steps.</p>
+
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Explore Now — Sandbox Credentials</p>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;width:100px;">URL</td>
+          <td style="padding:6px 0;font-size:0.85rem;"><a href="https://waypoint.clearpathedgroup.com" style="color:#d97706;">waypoint.clearpathedgroup.com</a></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Email</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore@clearpathedgroup.com</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;">Password</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
+        </tr>
+      </table>
+      <p style="font-size:0.75rem;color:#92400e;margin:12px 0 0;">Explorer ISD is a pre-loaded sandbox district. Feel free to explore all features — incidents, compliance workflows, SPED timelines, and more.</p>
+    </div>
+
+    <p><strong>What happens next:</strong></p>
+    <ol style="color:#374151;line-height:1.8;">
+      <li>We review your application (2–3 business days)</li>
+      <li>We schedule a 30-minute discovery call</li>
+      <li>We align on a pilot timeline and scope</li>
+    </ol>
+    <p>Founding Districts receive preferred pricing and direct access to our product team throughout the pilot.</p>
+    <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
+  `,
 }
 
 function wrapHtml(body: string, subject: string): string {

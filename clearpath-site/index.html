@@ -1191,6 +1191,352 @@
   </div>
 </section>
 
+<!-- ── EXPLORE WAYPOINT SIMULATION ──────────────────────────────────────── -->
+<section id="explore" style="background:linear-gradient(180deg,#0d0a1a 0%,#0e0618 100%);padding:80px 5%;position:relative;z-index:1;border-bottom:1px solid rgba(107,47,160,0.2);">
+<style>
+  .wp-browser{max-width:960px;margin:36px auto 0;border-radius:12px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.65),0 0 0 1px rgba(107,47,160,0.35)}
+  .wp-chrome{background:#1e1e2e;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .wp-dots{display:flex;gap:6px}
+  .wp-dots span{width:10px;height:10px;border-radius:50%;display:block}
+  .wp-dots span:nth-child(1){background:#ff5f57}
+  .wp-dots span:nth-child(2){background:#febc2e}
+  .wp-dots span:nth-child(3){background:#28c840}
+  .wp-url-bar{flex:1;background:rgba(255,255,255,0.06);border-radius:6px;padding:4px 12px;font-size:0.72rem;color:rgba(255,255,255,0.35);font-family:monospace;letter-spacing:0.02em}
+  .wp-app{display:flex;height:480px;background:#111827}
+  .wp-sidebar{width:182px;flex-shrink:0;background:#0f1623;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow:hidden}
+  .wp-logo{padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:9px}
+  .wp-logo-mark{width:28px;height:28px;background:#f97316;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;color:#fff;flex-shrink:0}
+  .wp-logo-text{font-size:0.78rem;font-weight:700;color:#f3f4f6}
+  .wp-logo-sub{font-size:0.55rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em}
+  .wp-district-badge{margin:10px 10px 4px;padding:8px 10px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.18);border-radius:8px}
+  .wp-district-badge p:first-child{font-size:0.58rem;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 2px}
+  .wp-district-badge p:last-child{font-size:0.72rem;font-weight:600;color:#f3f4f6;margin:0}
+  .wp-nav{padding:6px 0;flex:1}
+  .wp-nav-btn{width:100%;display:flex;align-items:center;gap:8px;padding:8px 14px;background:none;border:none;cursor:pointer;font-size:0.74rem;color:#9ca3af;text-align:left;transition:all 0.12s;position:relative;font-family:inherit}
+  .wp-nav-btn:hover{background:rgba(255,255,255,0.04);color:#e5e7eb}
+  .wp-nav-btn.wpactive{background:rgba(249,115,22,0.12);color:#f97316}
+  .wp-nav-btn.wpactive::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#f97316;border-radius:0 2px 2px 0}
+  .wp-nav-icon{width:14px;height:14px;opacity:0.65;flex-shrink:0}
+  .wp-nav-btn.wpactive .wp-nav-icon{opacity:1}
+  .wp-alert-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:0.55rem;font-weight:700;padding:1px 5px;border-radius:999px;line-height:1.5}
+  .wp-main{flex:1;overflow-y:auto;background:#111827}
+  .wp-main::-webkit-scrollbar{width:4px}
+  .wp-main::-webkit-scrollbar-track{background:transparent}
+  .wp-main::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+  .wp-topbar{padding:14px 20px 0;display:flex;align-items:flex-start;justify-content:space-between}
+  .wp-page-title{font-size:0.95rem;font-weight:700;color:#f9fafb;margin:0}
+  .wp-page-sub{font-size:0.68rem;color:#6b7280;margin:3px 0 0}
+  .wp-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 20px}
+  .wp-stat{background:#1f2937;border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
+  .wp-stat-val{font-size:1.4rem;font-weight:700;color:#f9fafb;line-height:1}
+  .wp-stat-val.xred{color:#ef4444}
+  .wp-stat-val.xgrn{color:#22c55e}
+  .wp-stat-val.xorg{color:#f97316}
+  .wp-stat-label{font-size:0.59rem;color:#9ca3af;text-transform:uppercase;letter-spacing:0.07em;margin-top:4px}
+  .wp-section-head{padding:2px 20px 8px;display:flex;align-items:center;justify-content:space-between}
+  .wp-section-title{font-size:0.65rem;font-weight:600;color:#d1d5db;text-transform:uppercase;letter-spacing:0.09em}
+  .wp-table{width:100%;border-collapse:collapse;font-size:0.72rem}
+  .wp-table th{padding:6px 20px;text-align:left;color:#6b7280;font-weight:500;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .wp-table td{padding:9px 20px;color:#d1d5db;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .wp-table tr.wpclick{cursor:pointer;transition:background 0.1s}
+  .wp-table tr.wpclick:hover td{background:rgba(249,115,22,0.06)}
+  .wp-bsped{background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:0.55rem;font-weight:700;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em}
+  .wp-b504{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);font-size:0.55rem;font-weight:700;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em}
+  .wp-bactive{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);font-size:0.6rem;font-weight:600;padding:1px 7px;border-radius:4px}
+  .wp-bpending{background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.25);font-size:0.6rem;font-weight:600;padding:1px 7px;border-radius:4px}
+  .wp-bdone{background:rgba(107,114,128,0.15);color:#9ca3af;border:1px solid rgba(107,114,128,0.25);font-size:0.6rem;font-weight:600;padding:1px 7px;border-radius:4px}
+  .wp-xwarn{color:#f87171!important}
+  .wp-cblock{margin:14px 20px;padding:14px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.35);border-radius:8px}
+  .wp-cblock-title{font-size:0.74rem;font-weight:700;color:#f87171;display:flex;align-items:center;gap:6px;margin:0 0 6px}
+  .wp-cblock-body{font-size:0.69rem;color:rgba(248,113,113,0.75);line-height:1.6;margin:0 0 10px}
+  .wp-cblock-btns{display:flex;gap:8px}
+  .wp-btn-sm{font-size:0.65rem;font-weight:600;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;transition:opacity 0.15s;font-family:inherit}
+  .wp-btn-primary{background:#f97316;color:#fff}
+  .wp-btn-ghost{background:rgba(255,255,255,0.07);color:#d1d5db}
+  .wp-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 20px 14px}
+  .wp-dcard{background:#1f2937;border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
+  .wp-dlabel{font-size:0.59rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 3px}
+  .wp-dval{font-size:0.78rem;color:#f3f4f6;font-weight:500;margin:0}
+  .wp-cl{padding:0 20px 20px}
+  .wp-clitem{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .wp-chk{width:16px;height:16px;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center}
+  .wp-chk.done{background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4)}
+  .wp-chk.todo{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4)}
+  .wp-cllabel{font-size:0.72rem;color:#d1d5db;flex:1}
+  .wp-cllabel.ov{color:#f87171}
+  .wp-clmeta{font-size:0.62rem;color:#6b7280;margin-top:2px}
+  .wp-clmeta.ov{color:#ef4444}
+  .wp-alist{padding:12px 20px;display:flex;flex-direction:column;gap:8px}
+  .wp-aitem{padding:12px 14px;border-radius:8px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:opacity 0.15s;border:1px solid transparent}
+  .wp-aitem:hover{opacity:0.82}
+  .wp-aitem.xred{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25)}
+  .wp-aitem.xyel{background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.2)}
+  .wp-adot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .wp-adot.xred{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.5)}
+  .wp-adot.xyel{background:#fbbf24}
+  .wp-atitle{font-size:0.75rem;font-weight:600;margin:0 0 3px}
+  .wp-atitle.xred{color:#f87171}
+  .wp-atitle.xyel{color:#fbbf24}
+  .wp-adesc{font-size:0.68rem;color:#9ca3af;margin:0;line-height:1.5}
+  .wp-backbtn{display:inline-flex;align-items:center;gap:5px;font-size:0.7rem;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;transition:color 0.15s}
+  .wp-backbtn:hover{color:#f97316}
+  .wp-dtopbar{padding:14px 20px 4px}
+  .wp-shead{padding:0 20px 10px;display:flex;align-items:flex-start;justify-content:space-between}
+  .wp-sname{font-size:0.95rem;font-weight:700;color:#f9fafb;margin:0}
+  .wp-smeta{font-size:0.68rem;color:#9ca3af;margin:3px 0 0}
+  .wp-stags{display:flex;gap:6px;align-items:center;margin-top:6px}
+  .wp-hint{padding:7px 20px;background:rgba(249,115,22,0.04);border-top:1px solid rgba(255,255,255,0.04)}
+  .wp-hint p{font-size:0.62rem;color:rgba(249,115,22,0.65);margin:0}
+  @media(max-width:680px){.wp-sidebar{display:none}.wp-stat-grid{grid-template-columns:1fr 1fr}.wp-table th:nth-child(n+4),.wp-table td:nth-child(n+4){display:none}}
+</style>
+
+  <div style="text-align:center;margin-bottom:8px;">
+    <div style="display:inline-block;font-size:0.65rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#f4a84a;background:rgba(244,168,74,0.1);border:1px solid rgba(244,168,74,0.25);border-radius:999px;padding:5px 16px;margin-bottom:16px;">Interactive Preview</div>
+    <h2 style="font-family:'Cinzel',serif;font-size:clamp(1.5rem,4vw,2rem);font-weight:800;color:#f0e6d3;margin:0 0 12px;">See Waypoint in action</h2>
+    <p style="font-size:0.9rem;color:rgba(240,230,211,0.55);max-width:560px;margin:0 auto;line-height:1.7;">Explorer ISD — a pre-loaded sandbox district. Click a SPED student row to see what Waypoint catches automatically. Click Alerts to see the live compliance queue.</p>
+  </div>
+
+  <div class="wp-browser">
+    <div class="wp-chrome">
+      <div class="wp-dots"><span></span><span></span><span></span></div>
+      <div class="wp-url-bar" id="wp-urlbar">waypoint.clearpathedgroup.com&nbsp;/&nbsp;dashboard</div>
+    </div>
+    <div class="wp-app">
+      <div class="wp-sidebar">
+        <div class="wp-logo">
+          <div class="wp-logo-mark">W</div>
+          <div><div class="wp-logo-text">Waypoint</div><div class="wp-logo-sub">DAEP Management</div></div>
+        </div>
+        <div class="wp-district-badge"><p>District</p><p>Explorer ISD</p></div>
+        <nav class="wp-nav">
+          <button class="wp-nav-btn wpactive" id="wpnav-dashboard" onclick="wpNav('dashboard')">
+            <svg class="wp-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+          </button>
+          <button class="wp-nav-btn" id="wpnav-incidents" onclick="wpNav('incidents')">
+            <svg class="wp-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Incidents
+          </button>
+          <button class="wp-nav-btn" id="wpnav-compliance" onclick="wpNav('compliance')">
+            <svg class="wp-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Compliance
+          </button>
+          <button class="wp-nav-btn" id="wpnav-alerts" onclick="wpNav('alerts')">
+            <svg class="wp-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            Alerts
+            <span class="wp-alert-badge">2</span>
+          </button>
+        </nav>
+      </div>
+      <div class="wp-main" id="wp-main"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px;">
+    <p style="font-size:0.78rem;color:rgba(240,230,211,0.35);margin:0 0 14px;">Read-only simulation — Explorer ISD is pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
+    <a href="#pilot" style="display:inline-block;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:#f97316;font-size:0.82rem;font-weight:700;padding:10px 26px;border-radius:999px;text-decoration:none;letter-spacing:0.04em;transition:all 0.2s;" onmouseover="this.style.background='rgba(249,115,22,0.22)'" onmouseout="this.style.background='rgba(249,115,22,0.12)'">Get your own sandbox access &rarr;</a>
+  </div>
+
+<script>
+(function(){
+  var STUDENTS=[
+    {id:'s1',name:'Marcus Rivera',    grade:'10',campus:'Explorer HS',sped:false,s504:false,status:'active',   day:8, tot:30},
+    {id:'s2',name:'Aaliyah Thompson', grade:'9', campus:'Explorer HS',sped:true, s504:false,status:'active',   day:12,tot:30},
+    {id:'s3',name:'DeShawn Williams', grade:'11',campus:'Explorer HS',sped:false,s504:false,status:'active',   day:2, tot:45},
+    {id:'s4',name:'Imani Jackson',    grade:'7', campus:'Explorer MS',sped:true, s504:false,status:'active',   day:5, tot:15},
+    {id:'s5',name:'Sofia Gutierrez',  grade:'10',campus:'Explorer HS',sped:false,s504:true, status:'pending',  day:0, tot:10},
+    {id:'s6',name:'Carlos Mendoza',   grade:'8', campus:'Explorer MS',sped:false,s504:false,status:'active',   day:10,tot:10},
+    {id:'s7',name:'Jordan Lee',       grade:'10',campus:'Explorer HS',sped:false,s504:false,status:'completed',day:30,tot:30},
+  ];
+  var INCIDENTS={
+    s2:{off:'Physical Altercation / Fighting',date:'March 3, 2026',start:'March 5, 2026',end:'April 4, 2026',
+      cl:[
+        {done:1,lbl:'Parent notified',         meta:'March 3, 2026 — 2:14 PM'},
+        {done:1,lbl:'Principal approval',       meta:'March 3, 2026 — 4:30 PM'},
+        {done:1,lbl:'Placement order issued',   meta:'March 4, 2026'},
+        {done:0,lbl:'Manifestation determination',meta:'OVERDUE — required by Day 10',ov:1},
+        {done:0,lbl:'ARD meeting held',          meta:'Not yet scheduled',ov:1},
+        {done:0,lbl:'IEP reviewed for DAEP setting',meta:'Pending ARD completion'},
+      ]},
+    s4:{off:'Insubordination / Repeated Defiance',date:'February 28, 2026',start:'March 1, 2026',end:'March 16, 2026',
+      cl:[
+        {done:1,lbl:'Parent notified',         meta:'February 28, 2026 — 3:45 PM'},
+        {done:1,lbl:'Principal approval',       meta:'February 28, 2026'},
+        {done:1,lbl:'Placement order issued',   meta:'March 1, 2026'},
+        {done:0,lbl:'Manifestation determination',meta:'Due by March 11, 2026 — 5 days remaining'},
+        {done:0,lbl:'ARD meeting held',          meta:'Schedule before March 11, 2026'},
+        {done:0,lbl:'IEP reviewed for DAEP setting',meta:'Pending ARD completion'},
+      ]},
+    s5:{off:'Insubordination',date:'March 6, 2026',start:'—',end:'—',
+      cl:[
+        {done:1,lbl:'Parent notified',         meta:'March 6, 2026 — 1:22 PM'},
+        {done:0,lbl:'504 meeting scheduled',   meta:'Required before extended removal'},
+        {done:0,lbl:'Placement determination', meta:'Pending 504 meeting outcome'},
+      ]},
+  };
+  var ALERTS=[
+    {sev:'xred',sid:'s2',title:'Manifestation determination overdue',desc:'Aaliyah Thompson — SPED student in DAEP 12 days. Federal 10-day ARD deadline has passed. Placement is legally exposed without documented action.'},
+    {sev:'xred',sid:'s4',title:'Manifestation determination due in 5 days',desc:'Imani Jackson — IEP student placed February 28. ARD meeting must occur by March 11, 2026. Schedule immediately.'},
+    {sev:'xyel',sid:'s6',title:'DAEP placement ending in 2 days',desc:'Carlos Mendoza — Placement ends March 10. No transition plan review has been scheduled. Required before return to home campus.'},
+  ];
+
+  function tbadge(s){
+    if(s.sped) return '<span class="wp-bsped">SPED</span>';
+    if(s.s504) return '<span class="wp-b504">504</span>';
+    return '<span style="font-size:0.6rem;color:#6b7280;">Gen Ed</span>';
+  }
+  function sbadge(st){
+    if(st==='active')    return '<span class="wp-bactive">Active</span>';
+    if(st==='pending')   return '<span class="wp-bpending">Pending</span>';
+    if(st==='completed') return '<span class="wp-bdone">Completed</span>';
+    return '';
+  }
+  function chksvg(done){
+    return done
+      ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  }
+
+  function vDashboard(){
+    var rows=STUDENTS.map(function(s){
+      var warn=s.sped&&s.status==='active'&&s.day>9;
+      var click=(s.sped||s.s504)&&s.status!=='completed';
+      var dayTxt=s.status==='pending'?'—':(warn?'<span class="wp-xwarn">Day '+s.day+' / '+s.tot+' ⚠</span>':'Day '+s.day+' / '+s.tot);
+      return '<tr class="'+(click?'wpclick':'')+'" '+(click?'onclick="wpStudent(\''+s.id+'\')"':'')+' style="'+(click?'':'opacity:0.7')+'">'
+        +'<td style="font-weight:500;color:#f3f4f6;">'+s.name+'</td>'
+        +'<td>'+s.grade+'</td>'
+        +'<td>'+s.campus+'</td>'
+        +'<td>'+tbadge(s)+'</td>'
+        +'<td>'+sbadge(s.status)+'</td>'
+        +'<td style="font-size:0.7rem;">'+dayTxt+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div class="wp-topbar"><div><p class="wp-page-title">DAEP Dashboard</p><p class="wp-page-sub">Explorer ISD &middot; Spring 2026</p></div></div>'
+      +'<div class="wp-stat-grid">'
+      +'<div class="wp-stat"><div class="wp-stat-val xorg">8</div><div class="wp-stat-label">Active Placements</div></div>'
+      +'<div class="wp-stat"><div class="wp-stat-val">3</div><div class="wp-stat-label">Pending Review</div></div>'
+      +'<div class="wp-stat"><div class="wp-stat-val xred">2</div><div class="wp-stat-label">Urgent Alerts</div></div>'
+      +'<div class="wp-stat"><div class="wp-stat-val xgrn">94%</div><div class="wp-stat-label">Compliance Rate</div></div>'
+      +'</div>'
+      +'<div class="wp-section-head"><span class="wp-section-title">Active Enrollments</span></div>'
+      +'<table class="wp-table"><thead><tr><th>Student</th><th>Grade</th><th>Campus</th><th>Type</th><th>Status</th><th>Progress</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table>'
+      +'<div class="wp-hint"><p>&#9888;&nbsp; Click any SPED or 504 student row to see the compliance workflow Waypoint enforces automatically</p></div>';
+  }
+
+  function vStudent(sid){
+    var s=STUDENTS.find(function(x){return x.id===sid;});
+    var inc=INCIDENTS[sid];
+    var block='';
+    if(s.sped&&s.day>9){
+      block='<div class="wp-cblock">'
+        +'<p class="wp-cblock-title"><svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Manifestation Determination Required &mdash; OVERDUE</p>'
+        +'<p class="wp-cblock-body"><strong>'+s.name+'</strong> has been in DAEP for <strong>'+s.day+' days</strong>. IDEA requires an ARD meeting within 10 school days of placement for any student with an active IEP. That deadline has passed. Without documented action, this placement is legally challengeable.</p>'
+        +'<div class="wp-cblock-btns"><button class="wp-btn-sm wp-btn-primary" onclick="alert(\'In the live app, this opens a guided ARD scheduling workflow tied to the student\'\'s IEP and placement record.\')">Schedule ARD Meeting</button><button class="wp-btn-sm wp-btn-ghost" onclick="wpNav(\'compliance\')">View Full Checklist</button></div>'
+        +'</div>';
+    } else if(s.sped){
+      var rem=10-s.day;
+      block='<div class="wp-cblock" style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.3);">'
+        +'<p class="wp-cblock-title" style="color:#fbbf24;"><svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Manifestation Determination Due in '+rem+' Day'+(rem===1?'':'s')+'</p>'
+        +'<p class="wp-cblock-body" style="color:rgba(251,191,36,0.7);"><strong>'+s.name+'</strong> has an active IEP. Federal law requires an ARD meeting within 10 school days of DAEP placement. Deadline: <strong>March 11, 2026</strong>. '+rem+' day'+(rem===1?'':'s')+' remaining.</p>'
+        +'<div class="wp-cblock-btns"><button class="wp-btn-sm wp-btn-primary" onclick="alert(\'In the live app, this opens a guided ARD scheduling workflow.\')">Schedule ARD Meeting</button></div>'
+        +'</div>';
+    } else if(s.s504){
+      block='<div class="wp-cblock" style="background:rgba(59,130,246,0.07);border-color:rgba(59,130,246,0.3);">'
+        +'<p class="wp-cblock-title" style="color:#60a5fa;"><svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>504 Manifestation Review Required Before Placement</p>'
+        +'<p class="wp-cblock-body" style="color:rgba(96,165,250,0.75);"><strong>'+s.name+'</strong> has a 504 plan. A manifestation determination meeting is required before finalizing DAEP placement. Waypoint has blocked placement until this step is completed.</p>'
+        +'<div class="wp-cblock-btns"><button class="wp-btn-sm wp-btn-primary" onclick="alert(\'In the live app, this opens the 504 manifestation documentation workflow.\')">Document 504 Meeting</button></div>'
+        +'</div>';
+    }
+    var incInfo='';
+    if(inc){
+      incInfo='<div class="wp-dgrid">'
+        +'<div class="wp-dcard"><p class="wp-dlabel">Offense</p><p class="wp-dval">'+inc.off+'</p></div>'
+        +'<div class="wp-dcard"><p class="wp-dlabel">Incident Date</p><p class="wp-dval">'+inc.date+'</p></div>'
+        +'<div class="wp-dcard"><p class="wp-dlabel">Placement Start</p><p class="wp-dval">'+inc.start+'</p></div>'
+        +'<div class="wp-dcard"><p class="wp-dlabel">Estimated End</p><p class="wp-dval">'+inc.end+'</p></div>'
+        +'</div>';
+    }
+    var cl='';
+    if(inc&&inc.cl){
+      cl='<div style="padding:0 20px 6px;"><span class="wp-section-title">Compliance Checklist</span></div>'
+        +'<div class="wp-cl">'
+        +inc.cl.map(function(c){
+          return '<div class="wp-clitem">'
+            +'<div class="wp-chk '+(c.done?'done':'todo')+'">'+chksvg(c.done)+'</div>'
+            +'<div><p class="wp-cllabel'+(c.ov?' ov':'')+'">'+c.lbl+'</p>'
+            +'<p class="wp-clmeta'+(c.ov?' ov':'')+'">'+c.meta+'</p></div>'
+            +'</div>';
+        }).join('')
+        +'</div>';
+    }
+    return '<div class="wp-dtopbar"><button class="wp-backbtn" onclick="wpNav(\'dashboard\')">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Dashboard</button></div>'
+      +'<div class="wp-shead"><div><p class="wp-sname">'+s.name+'</p><p class="wp-smeta">Grade '+s.grade+' &middot; '+s.campus+'</p>'
+      +'<div class="wp-stags">'+tbadge(s)+'&nbsp;&nbsp;'+sbadge(s.status)+'</div></div></div>'
+      +block+incInfo+cl;
+  }
+
+  function vAlerts(){
+    var items=ALERTS.map(function(a){
+      return '<div class="wp-aitem '+a.sev+'" onclick="wpStudent(\''+a.sid+'\')">'
+        +'<div class="wp-adot '+a.sev+'"></div>'
+        +'<div><p class="wp-atitle '+a.sev+'">'+a.title+'</p>'
+        +'<p class="wp-adesc">'+a.desc+'</p></div></div>';
+    }).join('');
+    return '<div class="wp-topbar"><div><p class="wp-page-title">Alerts</p><p class="wp-page-sub">2 require immediate action</p></div></div>'
+      +'<div class="wp-alist">'+items+'</div>'
+      +'<div class="wp-hint"><p>&#9888;&nbsp; Click any alert to open the student\'s incident and compliance workflow</p></div>';
+  }
+
+  function vCompliance(){
+    // Show Aaliyah's detail as the demo compliance case
+    return vStudent('s2');
+  }
+
+  function render(){
+    var el=document.getElementById('wp-main');
+    if(!el) return;
+    if(wpCurView==='dashboard') el.innerHTML=vDashboard();
+    else if(wpCurView==='student') el.innerHTML=vStudent(wpCurSid);
+    else if(wpCurView==='alerts') el.innerHTML=vAlerts();
+    else if(wpCurView==='incidents') el.innerHTML=vDashboard();
+    else if(wpCurView==='compliance') el.innerHTML=vCompliance();
+    el.scrollTop=0;
+  }
+
+  var wpCurView='dashboard', wpCurSid=null;
+
+  window.wpNav=function(v){
+    wpCurView=v; wpCurSid=null;
+    ['dashboard','incidents','compliance','alerts'].forEach(function(x){
+      var b=document.getElementById('wpnav-'+x);
+      if(b) b.classList.remove('wpactive');
+    });
+    var a=document.getElementById('wpnav-'+v)||document.getElementById('wpnav-dashboard');
+    if(a) a.classList.add('wpactive');
+    var u=document.getElementById('wp-urlbar');
+    if(u) u.textContent='waypoint.clearpathedgroup.com / '+v;
+    render();
+  };
+
+  window.wpStudent=function(sid){
+    wpCurView='student'; wpCurSid=sid;
+    ['dashboard','incidents','compliance','alerts'].forEach(function(x){
+      var b=document.getElementById('wpnav-'+x);
+      if(b) b.classList.remove('wpactive');
+    });
+    var s=STUDENTS.find(function(x){return x.id===sid;});
+    var u=document.getElementById('wp-urlbar');
+    if(u&&s) u.textContent='waypoint.clearpathedgroup.com / incidents / '+s.name.toLowerCase().replace(' ','-');
+    render();
+  };
+
+  render();
+})();
+</script>
+</section>
+
 <!-- CTA / Demo Request -->
 <div class="cta-banner" id="contact">
   <h2>Request a Private Demo</h2>
@@ -1388,6 +1734,11 @@
         if (res.ok) {
           form.style.display = 'none';
           success.style.display = 'block';
+          fetch('/api/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.get('email'), source: 'demo_request' })
+          }).catch(function() {});
         } else {
           btn.disabled = false;
           btn.textContent = 'Request My 30-Min Demo →';
@@ -1603,6 +1954,14 @@
       if (r.ok) {
         document.getElementById('pilot-form').style.display = 'none';
         document.getElementById('pilot-success').style.display = 'block';
+        var pilotEmail = document.querySelector('#pilot-form [name="email"]');
+        if (pilotEmail && pilotEmail.value) {
+          fetch('/api/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pilotEmail.value, source: 'pilot_application' })
+          }).catch(function() {});
+        }
       } else {
         btn.disabled = false;
         btn.textContent = 'Try again';
@@ -1647,6 +2006,14 @@
         document.getElementById('lc-reply').textContent = reply;
         document.getElementById('lc-form-wrap').style.display = 'none';
         document.getElementById('lc-success').style.display = 'block';
+        var lcEmail = document.querySelector('#lc-form [name="email"]');
+        if (lcEmail && lcEmail.value) {
+          fetch('/api/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: lcEmail.value, source: 'chat_widget' })
+          }).catch(function() {});
+        }
       } else {
         btn.disabled = false;
         btn.textContent = 'Try again';

@@ -743,6 +743,13 @@ function ContractModal({ contract, onClose, onSuccess }) {
 
 // ─── Manage district drawer ───────────────────────────────────────────────────
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://kvxecksvkimcgwhxxyhw.supabase.co'
+const SUPABASE_SERVICE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+
+const SANDBOX_URL   = 'https://waypoint.clearpathedgroup.com'
+const SANDBOX_EMAIL = 'explore@clearpathedgroup.com'
+const SANDBOX_PASS  = 'Explore2026!'
+
 function ManageDistrictDrawer({ district, onClose, onRefresh }) {
   const [campuses, setCampuses] = useState([])
   const [users, setUsers] = useState([])
@@ -752,6 +759,8 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
   const [savingTier, setSavingTier] = useState(false)
   const [products, setProducts] = useState(district.settings?.products || ['waypoint'])
   const [savingProducts, setSavingProducts] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetResult, setResetResult] = useState(null)
 
   // New campus form
   const [newCampusName, setNewCampusName] = useState('')
@@ -834,6 +843,32 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
     }
   }
 
+  const handleResetSandbox = async () => {
+    if (!window.confirm('Reset all transactional data for Explorer ISD? This takes ~15 seconds and cannot be undone.')) return
+    setResetting(true)
+    setResetResult(null)
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/reset-sandbox`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'apikey': SUPABASE_SERVICE_KEY,
+        },
+        body: JSON.stringify({ confirm: true }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setResetResult({ ok: true, ts: data.seeded_at })
+      } else {
+        setResetResult({ ok: false, msg: data.error || 'Unknown error' })
+      }
+    } catch (err) {
+      setResetResult({ ok: false, msg: err.message })
+    }
+    setResetting(false)
+  }
+
   const handleDeactivateUser = async (userId, currentStatus) => {
     await supabase.from('profiles').update({ is_active: !currentStatus }).eq('id', userId)
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: !currentStatus } : u))
@@ -857,6 +892,51 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
           <div className="p-8 text-center text-gray-500 text-sm">Loading...</div>
         ) : (
           <div className="p-5 space-y-6">
+            {/* Sandbox Credentials (only for sandbox districts) */}
+            {district.settings?.is_sandbox && (
+              <>
+                <div className="rounded-lg border border-amber-500/40 bg-amber-900/20 p-4">
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-widest mb-3">Sandbox Credentials</p>
+                  {[
+                    { label: 'URL',      value: SANDBOX_URL },
+                    { label: 'Email',    value: SANDBOX_EMAIL },
+                    { label: 'Password', value: SANDBOX_PASS },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex items-center justify-between py-1.5 gap-3">
+                      <span className="text-xs text-amber-300/70 w-16 shrink-0">{label}</span>
+                      <span className="text-xs text-amber-100 font-mono flex-1 truncate">{value}</span>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(value)}
+                        className="text-amber-400 hover:text-amber-200 transition-colors shrink-0"
+                        title="Copy"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  <p className="text-xs text-amber-400/60 mt-2">Copy into welcome email before sending</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">Wipes all transactional data and reseeds. ~15 seconds. District/campuses/admin unaffected.</p>
+                  <button
+                    onClick={handleResetSandbox}
+                    disabled={resetting}
+                    className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    {resetting ? 'Resetting…' : 'Reset Sandbox Data'}
+                  </button>
+                  {resetResult && (
+                    <p className={`text-xs mt-2 ${resetResult.ok ? 'text-green-400' : 'text-red-400'}`}>
+                      {resetResult.ok
+                        ? `✓ Reseeded at ${new Date(resetResult.ts).toLocaleTimeString()}`
+                        : `✗ ${resetResult.msg}`}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Tier */}
             <div>
               <h3 className="text-sm font-semibold text-gray-300 mb-2">Subscription Tier</h3>
