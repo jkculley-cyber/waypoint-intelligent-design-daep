@@ -277,61 +277,180 @@ function OffenseMatrixRow({ offenseCode, entries, hasMatrix, isExpanded, onToggl
               No matrix rules configured for this offense. Admin can add rules in the Matrix Editor.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-gray-500 uppercase">
-                    <th className="px-3 py-2 font-medium">Occurrence</th>
-                    <th className="px-3 py-2 font-medium">Min Consequence</th>
-                    <th className="px-3 py-2 font-medium">Recommended</th>
-                    <th className="px-3 py-2 font-medium">Max Consequence</th>
-                    <th className="px-3 py-2 font-medium">Duration</th>
-                    <th className="px-3 py-2 font-medium">Required Supports</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {entries.map((entry) => (
-                    <tr key={entry.id} className="bg-white">
-                      <td className="px-3 py-2">
-                        <Badge color="blue" size="sm">
-                          {getOrdinal(entry.occurrence)} Offense
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        {CONSEQUENCE_TYPE_LABELS[entry.min_consequence] || entry.min_consequence}
-                      </td>
-                      <td className="px-3 py-2 font-medium text-orange-600">
-                        {CONSEQUENCE_TYPE_LABELS[entry.default_consequence] || entry.default_consequence}
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        {CONSEQUENCE_TYPE_LABELS[entry.max_consequence] || entry.max_consequence}
-                      </td>
-                      <td className="px-3 py-2 text-gray-500">
-                        {entry.consequence_days_min || entry.consequence_days_max
-                          ? `${entry.consequence_days_min || '—'} – ${entry.consequence_days_max || '—'} days`
-                          : '—'}
-                      </td>
-                      <td className="px-3 py-2">
-                        {entry.required_supports?.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {entry.required_supports.map((s, i) => (
-                              <Badge key={i} color="purple" size="sm">
-                                {s.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-3">
+              {entries.map((entry) => (
+                <MatrixEntryCard key={entry.id} entry={entry} />
+              ))}
             </div>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+const CONSEQUENCE_SEVERITY = ['warning', 'detention', 'iss', 'oss', 'daep', 'expulsion']
+
+const PROACTIVE_LABELS = {
+  verbal_warning:           'Verbal Warning',
+  teacher_conference:       'Teacher/Student Conference',
+  parent_conference:        'Parent Conference',
+  counselor_check_in:       'Counselor Check-In',
+  behavior_contract:        'Behavior Contract',
+  administrator_conference: 'Administrator Conference',
+  cico:                     'Check-In/Check-Out (CICO)',
+  mentoring:                'Mentoring',
+  peer_mediation:           'Peer Mediation',
+  restorative_conversation: 'Restorative Conversation',
+  classroom_intervention:   'Classroom Intervention',
+  lunch_detention:          'Lunch Detention',
+}
+
+const RESTORATIVE_LABELS = {
+  restorative_circle:        'Restorative Circle',
+  community_service:         'Community Service',
+  written_apology:           'Written Apology / Reflection',
+  conflict_resolution:       'Conflict Resolution Program',
+  victim_offender_mediation: 'Victim-Offender Mediation',
+  restitution:               'Restitution',
+  community_conferencing:    'Community Conferencing',
+  restorative_chat:          'Restorative Chat with Staff',
+  service_learning:          'Service Learning Project',
+  peer_mediation:            'Peer Mediation',
+}
+
+function ConsequenceScale({ min, recommended, max }) {
+  const steps = [
+    { key: 'warning',    label: 'Warning' },
+    { key: 'detention',  label: 'Detention' },
+    { key: 'iss',        label: 'ISS' },
+    { key: 'oss',        label: 'OSS' },
+    { key: 'daep',       label: 'DAEP' },
+    { key: 'expulsion',  label: 'Expulsion' },
+  ]
+  const minIdx = CONSEQUENCE_SEVERITY.indexOf(min)
+  const recIdx = CONSEQUENCE_SEVERITY.indexOf(recommended)
+  const maxIdx = CONSEQUENCE_SEVERITY.indexOf(max)
+
+  return (
+    <div className="flex items-center gap-0 w-full">
+      {steps.map((step, i) => {
+        const inRange = i >= minIdx && i <= maxIdx
+        const isRec   = i === recIdx
+        const isMin   = i === minIdx
+        const isMax   = i === maxIdx
+        return (
+          <div key={step.key} className="flex-1 text-center">
+            <div
+              className={`h-2 mx-0.5 rounded-sm ${
+                isRec   ? 'bg-orange-500' :
+                inRange ? 'bg-orange-200' :
+                'bg-gray-100'
+              }`}
+            />
+            <p className={`text-[10px] mt-1 leading-tight ${
+              isRec   ? 'text-orange-600 font-bold' :
+              inRange ? 'text-gray-600 font-medium' :
+              'text-gray-300'
+            }`}>
+              {step.label}
+              {isMin && !isRec && <span className="block text-[9px] text-green-600">min</span>}
+              {isMax && !isRec && <span className="block text-[9px] text-red-500">max</span>}
+              {isRec && <span className="block text-[9px]">recommended</span>}
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function TagList({ items, labelMap, color }) {
+  if (!items?.length) return <span className="text-xs text-gray-400">None configured</span>
+  return (
+    <div className="flex flex-wrap gap-1">
+      {items.map((item, i) => (
+        <Badge key={i} color={color} size="sm">
+          {labelMap[item] || item.replace(/_/g, ' ')}
+        </Badge>
+      ))}
+    </div>
+  )
+}
+
+function MatrixEntryCard({ entry }) {
+  const hasDays = entry.consequence_days_min || entry.consequence_days_max
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Header: occurrence + days */}
+      <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100">
+        <Badge color="blue" size="sm">{getOrdinal(entry.occurrence)} Offense</Badge>
+        {entry.grade_group && entry.grade_group !== 'all' && (
+          <Badge color="gray" size="sm">Grades {entry.grade_group}</Badge>
+        )}
+        {hasDays && (
+          <span className="text-xs text-gray-500 ml-auto">
+            Duration: {entry.consequence_days_min || '—'}–{entry.consequence_days_max || '—'} days
+          </span>
+        )}
+      </div>
+
+      <div className="px-4 py-3 space-y-4">
+        {/* Consequence scale */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Consequence Range
+          </p>
+          <ConsequenceScale
+            min={entry.min_consequence}
+            recommended={entry.default_consequence}
+            max={entry.max_consequence}
+          />
+          <div className="flex justify-between mt-1 text-[10px] text-gray-400">
+            <span className="text-green-600 font-medium">
+              Min: {CONSEQUENCE_TYPE_LABELS[entry.min_consequence] || entry.min_consequence}
+            </span>
+            <span className="text-orange-600 font-bold">
+              Recommended: {CONSEQUENCE_TYPE_LABELS[entry.default_consequence] || entry.default_consequence}
+            </span>
+            <span className="text-red-500 font-medium">
+              Max: {CONSEQUENCE_TYPE_LABELS[entry.max_consequence] || entry.max_consequence}
+            </span>
+          </div>
+        </div>
+
+        {/* Three columns: Proactive | Restorative | Required Supports */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-50">
+          <div>
+            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Proactive Interventions
+            </p>
+            <TagList items={entry.proactive_interventions} labelMap={PROACTIVE_LABELS} color="green" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              Restorative Options
+            </p>
+            <TagList items={entry.restorative_options} labelMap={RESTORATIVE_LABELS} color="teal" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375" />
+              </svg>
+              Required Supports
+            </p>
+            <TagList items={entry.required_supports} labelMap={{}} color="purple" />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

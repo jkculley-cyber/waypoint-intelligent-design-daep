@@ -47,6 +47,34 @@ const SUPPORT_OPTIONS = [
   { value: 'sped_referral', label: 'SPED Referral Consideration' },
 ]
 
+const PROACTIVE_OPTIONS = [
+  { value: 'verbal_warning',           label: 'Verbal Warning' },
+  { value: 'teacher_conference',       label: 'Teacher/Student Conference' },
+  { value: 'parent_conference',        label: 'Parent Conference' },
+  { value: 'counselor_check_in',       label: 'Counselor Check-In' },
+  { value: 'behavior_contract',        label: 'Behavior Contract' },
+  { value: 'administrator_conference', label: 'Administrator Conference' },
+  { value: 'cico',                     label: 'Check-In/Check-Out (CICO)' },
+  { value: 'mentoring',                label: 'Mentoring' },
+  { value: 'peer_mediation',           label: 'Peer Mediation' },
+  { value: 'restorative_conversation', label: 'Restorative Conversation' },
+  { value: 'classroom_intervention',   label: 'Classroom Intervention' },
+  { value: 'lunch_detention',          label: 'Lunch Detention' },
+]
+
+const RESTORATIVE_OPTIONS = [
+  { value: 'restorative_circle',        label: 'Restorative Circle' },
+  { value: 'community_service',         label: 'Community Service' },
+  { value: 'written_apology',           label: 'Written Apology / Reflection' },
+  { value: 'conflict_resolution',       label: 'Conflict Resolution Program' },
+  { value: 'victim_offender_mediation', label: 'Victim-Offender Mediation' },
+  { value: 'restitution',               label: 'Restitution' },
+  { value: 'community_conferencing',    label: 'Community Conferencing' },
+  { value: 'restorative_chat',          label: 'Restorative Chat with Staff' },
+  { value: 'service_learning',          label: 'Service Learning Project' },
+  { value: 'peer_mediation',            label: 'Peer Mediation' },
+]
+
 const EMPTY_FORM = {
   offense_code_id: '',
   occurrence: 1,
@@ -56,6 +84,8 @@ const EMPTY_FORM = {
   consequence_days_min: '',
   consequence_days_max: '',
   required_supports: [],
+  proactive_interventions: [],
+  restorative_options: [],
 }
 
 export default function MatrixEditorPage() {
@@ -164,6 +194,8 @@ export default function MatrixEditorPage() {
       consequence_days_min: entry.consequence_days_min || '',
       consequence_days_max: entry.consequence_days_max || '',
       required_supports: entry.required_supports || [],
+      proactive_interventions: entry.proactive_interventions || [],
+      restorative_options: entry.restorative_options || [],
     })
     setSelectedEntry(entry)
     setEditModalOpen(true)
@@ -213,6 +245,8 @@ export default function MatrixEditorPage() {
       consequence_days_min: form.consequence_days_min ? parseInt(form.consequence_days_min) : null,
       consequence_days_max: form.consequence_days_max ? parseInt(form.consequence_days_max) : null,
       required_supports: form.required_supports,
+      proactive_interventions: form.proactive_interventions,
+      restorative_options: form.restorative_options,
     }
 
     let result
@@ -253,6 +287,24 @@ export default function MatrixEditorPage() {
       required_supports: prev.required_supports.includes(supportValue)
         ? prev.required_supports.filter((s) => s !== supportValue)
         : [...prev.required_supports, supportValue],
+    }))
+  }
+
+  const handleProactiveToggle = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      proactive_interventions: prev.proactive_interventions.includes(value)
+        ? prev.proactive_interventions.filter((s) => s !== value)
+        : [...prev.proactive_interventions, value],
+    }))
+  }
+
+  const handleRestorativeToggle = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      restorative_options: prev.restorative_options.includes(value)
+        ? prev.restorative_options.filter((s) => s !== value)
+        : [...prev.restorative_options, value],
     }))
   }
 
@@ -534,13 +586,73 @@ export default function MatrixEditorPage() {
             />
           </div>
 
+          {/* Proactive Interventions */}
+          <div>
+            <label className="block text-sm font-medium text-green-700 mb-1">
+              Proactive Interventions
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Steps that should be attempted <strong>before</strong> this consequence is applied.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {PROACTIVE_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                    form.proactive_interventions.includes(opt.value)
+                      ? 'bg-green-50 border-green-300'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.proactive_interventions.includes(opt.value)}
+                    onChange={() => handleProactiveToggle(opt.value)}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <span className="text-sm text-gray-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Restorative Options */}
+          <div>
+            <label className="block text-sm font-medium text-teal-700 mb-1">
+              Restorative Options
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Restorative alternatives that may be offered alongside or instead of punitive consequences.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {RESTORATIVE_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                    form.restorative_options.includes(opt.value)
+                      ? 'bg-teal-50 border-teal-300'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.restorative_options.includes(opt.value)}
+                    onChange={() => handleRestorativeToggle(opt.value)}
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           {/* Required Supports */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Required Supports
             </label>
             <p className="text-xs text-gray-500 mb-2">
-              Select the supports that must be implemented along with this consequence.
+              Supports that must be implemented alongside this consequence.
             </p>
             <div className="grid grid-cols-2 gap-2">
               {SUPPORT_OPTIONS.map((opt) => (
