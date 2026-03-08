@@ -55,6 +55,15 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <p><a href="${d.portalUrl}" style="background:#f97316;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;">View in Parent Portal</a></p>
   `,
 
+  welcome_community_explore: (d) => `
+    <h2 style="color:#1f2937;margin-top:0;">Thank you for exploring Waypoint.</h2>
+    <p>Hi${d.name ? ` ${d.name}` : ''},</p>
+    <p>We appreciate you taking the time to learn about Waypoint. Knowing that people in the community care about how schools support students means a lot to us.</p>
+    <p>Waypoint is a compliance and student support platform built for Texas school districts — helping campuses document discipline fairly, protect student rights, and build better outcomes. We believe every student deserves a clear path forward, and that starts with district leaders having the right tools and processes in place.</p>
+    <p>Your interest and feedback are genuinely appreciated. If you ever have questions or thoughts to share, feel free to reply to this email.</p>
+    <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
+  `,
+
   welcome_sandbox_explore: (_d) => `
     <h2 style="color:#1f2937;margin-top:0;">Your Waypoint sandbox is ready</h2>
     <p>Here are your login credentials for Explorer ISD — a pre-loaded sandbox district. Everything inside is manufactured data and does not represent any real students, incidents, or districts.</p>

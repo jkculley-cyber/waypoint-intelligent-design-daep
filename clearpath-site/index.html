@@ -2048,17 +2048,44 @@
 
 <!-- Explore the App — Email Gate Modal -->
 <div id="explore-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;">
-  <div style="background:#0f1120;border:1px solid rgba(232,134,42,0.35);border-radius:16px;max-width:420px;width:100%;padding:36px 32px;box-shadow:0 0 80px rgba(232,134,42,0.15);position:relative;">
+  <div style="background:#0f1120;border:1px solid rgba(232,134,42,0.35);border-radius:16px;max-width:440px;width:100%;padding:36px 32px;box-shadow:0 0 80px rgba(232,134,42,0.15);position:relative;">
     <button onclick="closeExploreModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(240,230,211,0.4);font-size:1.3rem;cursor:pointer;line-height:1;font-family:inherit;">&#x2715;</button>
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg,#e8862a,#d97706);border-radius:10px;margin-bottom:14px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+
+    <!-- Step 1: Role selection -->
+    <div id="explore-step-role">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg,#e8862a,#d97706);border-radius:10px;margin-bottom:14px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Explore the Sandbox</h3>
+        <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Quick question before we get you in — who are you?</p>
       </div>
-      <h3 style="font-family:'Cinzel',serif;font-size:1.25rem;color:#f0e6d3;margin:0 0 8px;">Explore the Sandbox</h3>
-      <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">We'll send your login credentials to Explorer ISD — pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="selectExploreRole('district_admin')" class="role-btn">
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🏢</span>
+          <span style="font-size:0.8rem;font-weight:700;color:#f0e6d3;display:block;">District Administrator</span>
+        </button>
+        <button onclick="selectExploreRole('campus_leader')" class="role-btn">
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🏫</span>
+          <span style="font-size:0.8rem;font-weight:700;color:#f0e6d3;display:block;">Campus Leader</span>
+        </button>
+        <button onclick="selectExploreRole('parent')" class="role-btn">
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">👤</span>
+          <span style="font-size:0.8rem;font-weight:700;color:#f0e6d3;display:block;">Parent</span>
+        </button>
+        <button onclick="selectExploreRole('community')" class="role-btn">
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🌐</span>
+          <span style="font-size:0.8rem;font-weight:700;color:#f0e6d3;display:block;">Community Member</span>
+        </button>
+      </div>
     </div>
 
-    <div id="explore-form-wrap">
+    <!-- Step 2a: District/Campus form → sandbox credentials -->
+    <div id="explore-step-district" style="display:none;">
+      <div style="text-align:center;margin-bottom:22px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Get Sandbox Access</h3>
+        <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Explorer ISD — pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
+      </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div>
           <label style="display:block;font-size:0.72rem;font-weight:600;color:rgba(240,230,211,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Your Name</label>
@@ -2074,6 +2101,27 @@
       </div>
     </div>
 
+    <!-- Step 2b: Parent/Community form → thank you -->
+    <div id="explore-step-community" style="display:none;">
+      <div style="text-align:center;margin-bottom:22px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Thanks for Your Interest</h3>
+        <p style="font-size:0.82rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">We're glad you're curious about how schools can better support students. Share your email and we'll send a quick note.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:0.72rem;font-weight:600;color:rgba(240,230,211,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Your Name</label>
+          <input id="community-name" type="text" placeholder="Your name" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:11px 14px;color:#f0e6d3;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(232,134,42,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;font-weight:600;color:rgba(240,230,211,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Email</label>
+          <input id="community-email" type="email" placeholder="your@email.com" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:11px 14px;color:#f0e6d3;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(232,134,42,0.6)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+        </div>
+        <div id="community-error" style="display:none;font-size:0.75rem;color:#f87171;"></div>
+        <button id="community-submit-btn" onclick="submitCommunityForm()" style="width:100%;background:linear-gradient(135deg,#6b2fa0,#7c3aed);color:white;font-size:0.9rem;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;letter-spacing:0.04em;font-family:inherit;margin-top:4px;">Send Me a Note &#8594;</button>
+      </div>
+    </div>
+
+    <!-- Success: district credentials -->
     <div id="explore-creds" style="display:none;">
       <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:20px;">
         <p style="font-size:0.72rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 14px;">&#10003; &nbsp;Credentials sent to your email</p>
@@ -2094,14 +2142,47 @@
         <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;margin-top:18px;background:linear-gradient(135deg,#e8862a,#d97706);color:white;font-size:0.85rem;font-weight:700;padding:12px;border-radius:8px;text-decoration:none;letter-spacing:0.04em;">Open Waypoint &rarr;</a>
       </div>
     </div>
+
+    <!-- Success: community thank you -->
+    <div id="explore-thankyou" style="display:none;text-align:center;padding:12px 0;">
+      <div style="font-size:2rem;margin-bottom:14px;">🙏</div>
+      <p style="font-size:1rem;font-weight:700;color:#f4a84a;margin:0 0 10px;">Thank you for exploring Waypoint.</p>
+      <p style="font-size:0.85rem;color:rgba(240,230,211,0.55);line-height:1.7;margin:0;">We've sent a short note to your inbox. Your interest and feedback genuinely matter to us — every student deserves a clear path forward.</p>
+    </div>
   </div>
 </div>
 
+<style>
+.role-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 16px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.role-btn:hover {
+  background: rgba(232,134,42,0.1);
+  border-color: rgba(232,134,42,0.4);
+}
+</style>
+
 <script>
+var _exploreRole = null;
+
 function openExploreModal(){
   var m=document.getElementById('explore-modal');
   m.style.display='flex';
   document.body.style.overflow='hidden';
+  // Reset to role step
+  _exploreRole = null;
+  document.getElementById('explore-step-role').style.display='block';
+  document.getElementById('explore-step-district').style.display='none';
+  document.getElementById('explore-step-community').style.display='none';
+  document.getElementById('explore-creds').style.display='none';
+  document.getElementById('explore-thankyou').style.display='none';
 }
 function closeExploreModal(){
   var m=document.getElementById('explore-modal');
@@ -2111,6 +2192,15 @@ function closeExploreModal(){
 document.getElementById('explore-modal').addEventListener('click',function(e){
   if(e.target===this) closeExploreModal();
 });
+function selectExploreRole(role){
+  _exploreRole = role;
+  document.getElementById('explore-step-role').style.display='none';
+  if(role==='district_admin'||role==='campus_leader'){
+    document.getElementById('explore-step-district').style.display='block';
+  } else {
+    document.getElementById('explore-step-community').style.display='block';
+  }
+}
 function submitExploreForm(){
   var name=document.getElementById('explore-name').value.trim();
   var email=document.getElementById('explore-email').value.trim();
@@ -2119,14 +2209,40 @@ function submitExploreForm(){
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Please enter a valid work email.';err.style.display='block';return;}
   err.style.display='none';
   var btn=document.getElementById('explore-submit-btn');
-  btn.disabled=true; btn.textContent='Sending…';
+  btn.disabled=true; btn.textContent='Sending\u2026';
   fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
-    body:JSON.stringify({name:name,email:email,source:'sandbox_explore'})
+    body:JSON.stringify({name:name,email:email,source:'sandbox_explore',role:_exploreRole})
   }).catch(function(){}).finally(function(){
-    document.getElementById('explore-form-wrap').style.display='none';
+    document.getElementById('explore-step-district').style.display='none';
     document.getElementById('explore-creds').style.display='block';
+    btn.disabled=false; btn.textContent='Get Sandbox Access \u2192';
+  });
+}
+function submitCommunityForm(){
+  var name=document.getElementById('community-name').value.trim();
+  var email=document.getElementById('community-email').value.trim();
+  var err=document.getElementById('community-error');
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Please enter a valid email.';err.style.display='block';return;}
+  err.style.display='none';
+  var btn=document.getElementById('community-submit-btn');
+  btn.disabled=true; btn.textContent='Sending\u2026';
+  // Capture the visit
+  fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
+    body:JSON.stringify({name:name,email:email,source:'community_explore',role:_exploreRole})
+  }).catch(function(){});
+  // Send thank-you email
+  fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/send-notification',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
+    body:JSON.stringify({to:email,subject:'Thank you for exploring Waypoint',template:'welcome_community_explore',data:{name:name}})
+  }).catch(function(){}).finally(function(){
+    document.getElementById('explore-step-community').style.display='none';
+    document.getElementById('explore-thankyou').style.display='block';
+    btn.disabled=false;
   });
 }
 </script>
