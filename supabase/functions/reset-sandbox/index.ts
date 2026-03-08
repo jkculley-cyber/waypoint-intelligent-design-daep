@@ -13,11 +13,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SERVICE_ROLE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const SUPABASE_URL     = Deno.env.get('SUPABASE_URL')     || 'https://kvxecksvkimcgwhxxyhw.supabase.co'
 
-const D      = '22222222-2222-2222-2222-222222222222'
-const HS     = 'bbbb0001-0001-0001-0001-000000000001'
-const MS     = 'bbbb0001-0001-0001-0001-000000000002'
-const EL     = 'bbbb0001-0001-0001-0001-000000000003'
-const DAEP_C = 'bbbb0001-0001-0001-0001-000000000004'
+const D  = '22222222-2222-2222-2222-222222222222'
+const HS = 'bbbb0001-0001-0001-0001-000000000001'
+const MS = 'bbbb0001-0001-0001-0001-000000000002'
+const EL = 'bbbb0001-0001-0001-0001-000000000003'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin':  '*',
@@ -30,226 +29,276 @@ function daysAgo(n: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-async function getAdminId(supabase: ReturnType<typeof createClient>): Promise<string> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('district_id', D)
-    .eq('role', 'admin')
-    .limit(1)
-    .single()
+type Supabase = ReturnType<typeof createClient>
+
+async function getAdminId(sb: Supabase): Promise<string> {
+  const { data, error } = await sb
+    .from('profiles').select('id').eq('district_id', D).eq('role', 'admin').limit(1).single()
   if (error || !data) throw new Error(`Admin lookup: ${error?.message}`)
   return data.id
 }
 
-async function wipe(supabase: ReturnType<typeof createClient>, adminId: string) {
-  // Get incident IDs
-  const { data: incRows } = await supabase.from('incidents').select('id').eq('district_id', D)
-  const incidentIds = (incRows || []).map((r: { id: string }) => r.id)
-
-  // Get transition plan IDs
-  const { data: tpRows } = await supabase.from('transition_plans').select('id').eq('district_id', D)
+async function wipe(sb: Supabase) {
+  const { data: tpRows } = await sb.from('transition_plans').select('id').eq('district_id', D)
   const tpIds = (tpRows || []).map((r: { id: string }) => r.id)
+  if (tpIds.length) await sb.from('transition_plan_reviews').delete().in('plan_id', tpIds)
 
-  if (tpIds.length) {
-    await supabase.from('transition_plan_reviews').delete().in('plan_id', tpIds)
+  await sb.from('transition_plans').delete().eq('district_id', D)
+  await sb.from('alerts').delete().eq('district_id', D)
+  await sb.from('daily_behavior_tracking').delete().eq('district_id', D)
+
+  const { data: incRows } = await sb.from('incidents').select('id').eq('district_id', D)
+  const incIds = (incRows || []).map((r: { id: string }) => r.id)
+  if (incIds.length) {
+    await sb.from('incidents').update({ compliance_checklist_id: null }).in('id', incIds)
+    await sb.from('incident_separations').delete().in('incident_id', incIds)
   }
-  await supabase.from('transition_plans').delete().eq('district_id', D)
-  await supabase.from('alerts').delete().eq('district_id', D)
-  await supabase.from('daily_behavior_tracking').delete().eq('district_id', D)
 
-  if (incidentIds.length) {
-    await supabase.from('incidents').update({ compliance_checklist_id: null }).in('id', incidentIds)
-    await supabase.from('incident_separations').delete().in('incident_id', incidentIds)
+  await sb.from('compliance_checklists').delete().eq('district_id', D)
+  await sb.from('incidents').delete().eq('district_id', D)
+  await sb.from('offense_codes').delete().eq('district_id', D)
+  await sb.from('students').delete().eq('district_id', D)
+
+  for (const t of ['navigator_supports', 'navigator_placements', 'navigator_referrals'] as const) {
+    await sb.from(t).delete().eq('district_id', D)
   }
-
-  await supabase.from('compliance_checklists').delete().eq('district_id', D)
-  await supabase.from('incidents').delete().eq('district_id', D)
-  await supabase.from('students').delete().eq('district_id', D)
-
-  for (const t of ['navigator_supports', 'navigator_placements', 'navigator_referrals']) {
-    await supabase.from(t).delete().eq('district_id', D)
-  }
-  for (const t of [
-    'meridian_cap_findings', 'meridian_dyslexia_screenings', 'meridian_folder_readiness',
-    'meridian_monitoring_logs', 'meridian_accommodation_plans', 'meridian_iep_goals',
-    'meridian_service_logs', 'meridian_timeline_events', 'meridian_students',
-  ]) {
-    await supabase.from(t).delete().eq('district_id', D)
+  for (const t of ['meridian_cap_findings', 'meridian_students'] as const) {
+    await sb.from(t).delete().eq('district_id', D)
   }
 }
 
-async function reseed(supabase: ReturnType<typeof createClient>, adminId: string) {
-  // ── Students ─────────────────────────────────────────────────────────────
-  const studentDefs = [
-    { student_id_number: 'EX-10001', first_name: 'Marcus',    last_name: 'Rivera',     grade_level: '10', campus_id: HS,   date_of_birth: '2008-03-15', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-10002', first_name: 'Aaliyah',   last_name: 'Thompson',   grade_level: '9',  campus_id: HS,   date_of_birth: '2009-07-22', special_ed_status: true,  section_504: false },
-    { student_id_number: 'EX-10003', first_name: 'DeShawn',   last_name: 'Williams',   grade_level: '11', campus_id: HS,   date_of_birth: '2007-11-03', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-10004', first_name: 'Sofia',     last_name: 'Gutierrez',  grade_level: '10', campus_id: HS,   date_of_birth: '2008-05-18', special_ed_status: false, section_504: true  },
-    { student_id_number: 'EX-10005', first_name: 'Jaylen',    last_name: 'Brooks',     grade_level: '12', campus_id: HS,   date_of_birth: '2006-09-09', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-20001', first_name: 'Imani',     last_name: 'Jackson',    grade_level: '7',  campus_id: MS,   date_of_birth: '2011-02-14', special_ed_status: true,  section_504: false },
-    { student_id_number: 'EX-20002', first_name: 'Carlos',    last_name: 'Mendoza',    grade_level: '8',  campus_id: MS,   date_of_birth: '2010-06-30', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-20003', first_name: 'Zoe',       last_name: 'Patterson',  grade_level: '6',  campus_id: MS,   date_of_birth: '2012-01-25', special_ed_status: false, section_504: true  },
-    { student_id_number: 'EX-20004', first_name: 'Tyrese',    last_name: 'Coleman',    grade_level: '7',  campus_id: MS,   date_of_birth: '2011-08-07', special_ed_status: true,  section_504: false },
-    { student_id_number: 'EX-20005', first_name: 'Valentina', last_name: 'Cruz',       grade_level: '8',  campus_id: MS,   date_of_birth: '2010-04-19', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-30001', first_name: 'Isaiah',    last_name: 'Foster',     grade_level: '4',  campus_id: EL,   date_of_birth: '2014-12-01', special_ed_status: true,  section_504: false },
-    { student_id_number: 'EX-30002', first_name: 'Nia',       last_name: 'Harris',     grade_level: '3',  campus_id: EL,   date_of_birth: '2015-03-27', special_ed_status: false, section_504: false },
-    { student_id_number: 'EX-30003', first_name: 'Elijah',    last_name: 'Moore',      grade_level: '5',  campus_id: EL,   date_of_birth: '2013-09-13', special_ed_status: false, section_504: true  },
-    { student_id_number: 'EX-40001', first_name: 'Destiny',   last_name: 'Washington', grade_level: '9',  campus_id: HS,   date_of_birth: '2009-11-05', special_ed_status: true,  section_504: false },
-    { student_id_number: 'EX-40002', first_name: 'Jordan',    last_name: 'Lee',        grade_level: '10', campus_id: HS,   date_of_birth: '2008-07-31', special_ed_status: false, section_504: false },
-  ]
-  const { data: insertedStudents, error: stuErr } = await supabase
-    .from('students')
-    .insert(studentDefs.map(s => ({ ...s, district_id: D })))
-    .select('id, student_id_number, special_ed_status, section_504, campus_id')
+async function reseed(sb: Supabase, adminId: string) {
+  const now = new Date()
+
+  // ── Offense codes ─────────────────────────────────────────────────────────
+  const { data: insertedCodes, error: codeErr } = await sb.from('offense_codes').insert([
+    { district_id: D, code: 'F001', category: 'violence',   title: 'Physical Altercation / Fighting',      severity: 'serious',  is_mandatory_daep: false, is_discretionary_daep: true  },
+    { district_id: D, code: 'F002', category: 'weapons',    title: 'Weapon Possession on Campus',           severity: 'severe',   is_mandatory_daep: true,  is_discretionary_daep: false },
+    { district_id: D, code: 'F003', category: 'drugs',      title: 'Controlled Substance / Drug Use',       severity: 'severe',   is_mandatory_daep: true,  is_discretionary_daep: false },
+    { district_id: D, code: 'F004', category: 'conduct',    title: 'Insubordination / Persistent Defiance', severity: 'moderate', is_mandatory_daep: false, is_discretionary_daep: true  },
+    { district_id: D, code: 'F005', category: 'harassment', title: 'Harassment / Bullying',                 severity: 'serious',  is_mandatory_daep: false, is_discretionary_daep: true  },
+  ]).select('id, code')
+  if (codeErr) throw new Error(`Offense codes: ${codeErr.message}`)
+  const c: Record<string, string> = {}
+  insertedCodes!.forEach((x: { id: string; code: string }) => { c[x.code] = x.id })
+
+  // ── Students — insert as non-SPED to avoid trigger conflict ───────────────
+  // trg_check_sped_compliance (BEFORE INSERT) reads student.is_sped at trigger
+  // time and tries to INSERT into compliance_checklists with incident_id=NEW.id
+  // before the incident exists → FK violation. Insert all as false, patch after.
+  const studentMeta: Record<string, { is_sped: boolean; is_504: boolean }> = {
+    'EX-10001': { is_sped: false, is_504: false },
+    'EX-10002': { is_sped: true,  is_504: false },
+    'EX-10003': { is_sped: false, is_504: false },
+    'EX-10004': { is_sped: false, is_504: true  },
+    'EX-10005': { is_sped: false, is_504: false },
+    'EX-20001': { is_sped: true,  is_504: false },
+    'EX-20002': { is_sped: false, is_504: false },
+    'EX-20003': { is_sped: false, is_504: true  },
+    'EX-20004': { is_sped: true,  is_504: false },
+    'EX-20005': { is_sped: false, is_504: false },
+    'EX-30001': { is_sped: true,  is_504: false },
+    'EX-30002': { is_sped: false, is_504: false },
+    'EX-30003': { is_sped: false, is_504: true  },
+    'EX-40001': { is_sped: true,  is_504: false },
+    'EX-40002': { is_sped: false, is_504: false },
+  }
+
+  const { data: insertedStudents, error: stuErr } = await sb.from('students').insert([
+    { district_id: D, campus_id: HS, student_id_number: 'EX-10001', first_name: 'Marcus',    last_name: 'Rivera',    grade_level: 10, date_of_birth: '2008-03-15', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-10002', first_name: 'Aaliyah',   last_name: 'Thompson',  grade_level:  9, date_of_birth: '2009-07-22', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-10003', first_name: 'DeShawn',   last_name: 'Williams',  grade_level: 11, date_of_birth: '2007-11-03', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-10004', first_name: 'Sofia',     last_name: 'Gutierrez', grade_level: 10, date_of_birth: '2008-05-18', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-10005', first_name: 'Jaylen',    last_name: 'Brooks',    grade_level: 12, date_of_birth: '2006-09-09', is_sped: false, is_504: false },
+    { district_id: D, campus_id: MS, student_id_number: 'EX-20001', first_name: 'Imani',     last_name: 'Jackson',   grade_level:  7, date_of_birth: '2011-02-14', is_sped: false, is_504: false },
+    { district_id: D, campus_id: MS, student_id_number: 'EX-20002', first_name: 'Carlos',    last_name: 'Mendoza',   grade_level:  8, date_of_birth: '2010-06-30', is_sped: false, is_504: false },
+    { district_id: D, campus_id: MS, student_id_number: 'EX-20003', first_name: 'Zoe',       last_name: 'Patterson', grade_level:  6, date_of_birth: '2012-01-25', is_sped: false, is_504: false },
+    { district_id: D, campus_id: MS, student_id_number: 'EX-20004', first_name: 'Tyrese',    last_name: 'Coleman',   grade_level:  7, date_of_birth: '2011-08-07', is_sped: false, is_504: false },
+    { district_id: D, campus_id: MS, student_id_number: 'EX-20005', first_name: 'Valentina', last_name: 'Cruz',      grade_level:  8, date_of_birth: '2010-04-19', is_sped: false, is_504: false },
+    { district_id: D, campus_id: EL, student_id_number: 'EX-30001', first_name: 'Isaiah',    last_name: 'Foster',    grade_level:  4, date_of_birth: '2014-12-01', is_sped: false, is_504: false },
+    { district_id: D, campus_id: EL, student_id_number: 'EX-30002', first_name: 'Nia',       last_name: 'Harris',    grade_level:  3, date_of_birth: '2015-03-27', is_sped: false, is_504: false },
+    { district_id: D, campus_id: EL, student_id_number: 'EX-30003', first_name: 'Elijah',    last_name: 'Moore',     grade_level:  5, date_of_birth: '2013-09-13', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-40001', first_name: 'Destiny',   last_name: 'Washington',grade_level:  9, date_of_birth: '2009-11-05', is_sped: false, is_504: false },
+    { district_id: D, campus_id: HS, student_id_number: 'EX-40002', first_name: 'Jordan',    last_name: 'Lee',       grade_level: 10, date_of_birth: '2008-07-31', is_sped: false, is_504: false },
+  ]).select('id, student_id_number, campus_id, first_name, last_name')
   if (stuErr) throw new Error(`Students: ${stuErr.message}`)
 
-  const byNum: Record<string, typeof insertedStudents[0]> = {}
-  insertedStudents!.forEach((s: typeof insertedStudents[0]) => { byNum[s.student_id_number] = s })
-
-  // ── Offense code lookup ──────────────────────────────────────────────────
-  const { data: offenseRows } = await supabase
-    .from('offense_codes').select('id').eq('district_id', D).limit(5)
-  const off = (n: number) => offenseRows?.[n]?.id || offenseRows?.[0]?.id
+  const s: Record<string, typeof insertedStudents[0] & { is_sped: boolean; is_504: boolean }> = {}
+  insertedStudents!.forEach((x: typeof insertedStudents[0]) => {
+    s[x.student_id_number] = { ...x, ...studentMeta[x.student_id_number] }
+  })
 
   // ── Incidents ─────────────────────────────────────────────────────────────
-  const incidentDefs = [
-    { num: 'EX-10002', d: 45, days: 30, status: 'active',    ps: 43, pe: 13, off: 0 },
-    { num: 'EX-20001', d: 20, days: 15, status: 'active',    ps: 18, pe: 3,  off: 3 },
-    { num: 'EX-40001', d: 10, days: 20, status: 'pending',   ps: -1, pe: -1, off: 4 },
-    { num: 'EX-20004', d: 5,  days: 10, status: 'pending',   ps: -1, pe: -1, off: 0 },
-    { num: 'EX-10004', d: 30, days: 10, status: 'active',    ps: 28, pe: 18, off: 3 },
-    { num: 'EX-20003', d: 15, days: 30, status: 'active',    ps: 13, pe: -17,off: 2 },
-    { num: 'EX-30003', d: 7,  days: 5,  status: 'pending',   ps: -1, pe: -1, off: 3 },
-    { num: 'EX-10001', d: 60, days: 30, status: 'completed', ps: 58, pe: 28, off: 0 },
-    { num: 'EX-10003', d: 40, days: 45, status: 'active',    ps: 38, pe: -5, off: 1 },
-    { num: 'EX-10005', d: 25, days: 20, status: 'active',    ps: 23, pe: 3,  off: 2 },
-    { num: 'EX-20002', d: 12, days: 10, status: 'active',    ps: 10, pe: 0,  off: 0 },
-    { num: 'EX-20005', d: 3,  days: 15, status: 'pending',   ps: -1, pe: -1, off: 4 },
-    { num: 'EX-40002', d: 55, days: 30, status: 'completed', ps: 53, pe: 23, off: 0 },
-  ]
-  const incRows = incidentDefs.map(i => {
-    const s = byNum[i.num]
-    return {
-      district_id:    D,
-      campus_id:      s.campus_id,
-      student_id:     s.id,
-      offense_code_id: off(i.off),
-      incident_date:  daysAgo(i.d),
-      days_daep:      i.days,
-      status:         i.status,
-      placement_start: i.ps >= 0 ? daysAgo(i.ps) : null,
-      placement_end:   i.pe >= 0 ? daysAgo(i.pe) : null,
-      daep_campus_id:  DAEP_C,
-      reported_by:     adminId,
-    }
-  }).filter(r => r.student_id)
+  interface IncDef {
+    student: typeof s[string]; code: string; days: number
+    status: string; cs: number; ce: number; desc: string
+  }
+  const incidentDefs: IncDef[] = [
+    { student: s['EX-10002'], code: 'F001', days: 30, status: 'active',       cs: 45, ce: 15, desc: 'Physical altercation in hallway. SPED student — manifestation determination required within 10 school days.' },
+    { student: s['EX-20001'], code: 'F004', days: 15, status: 'active',       cs: 20, ce:  5, desc: 'Repeated defiance of campus authority. IEP team meeting required. ARD must occur by Day 10.' },
+    { student: s['EX-40001'], code: 'F005', days: 20, status: 'under_review', cs: -1, ce: -1, desc: 'Peer harassment incident. Manifestation review pending — ARD within 10 school days of placement.' },
+    { student: s['EX-20004'], code: 'F001', days: 10, status: 'under_review', cs: -1, ce: -1, desc: 'Physical altercation. SPED student — compliance checklist auto-generated by Waypoint.' },
+    { student: s['EX-10004'], code: 'F004', days: 10, status: 'active',       cs: 30, ce: 20, desc: '504 student. Insubordination. Manifestation determination held — no causal relationship found.' },
+    { student: s['EX-20003'], code: 'F003', days: 30, status: 'active',       cs: 15, ce:-15, desc: '504 student. Controlled substance on campus. Extended removal — 504 meeting documented.' },
+    { student: s['EX-30003'], code: 'F004', days:  5, status: 'under_review', cs: -1, ce: -1, desc: '504 accommodation review required before placement can proceed.' },
+    { student: s['EX-10001'], code: 'F001', days: 30, status: 'completed',    cs: 60, ce: 30, desc: 'Completed 30-day DAEP placement. Student returned to Explorer High School.' },
+    { student: s['EX-10003'], code: 'F002', days: 45, status: 'active',       cs: 40, ce: -5, desc: 'Weapon possession on campus. Mandatory 45-day DAEP placement per TEC §37.007.' },
+    { student: s['EX-10005'], code: 'F003', days: 20, status: 'active',       cs: 25, ce:  5, desc: 'Controlled substance on campus. 20-day DAEP consequence assigned.' },
+    { student: s['EX-20002'], code: 'F001', days: 10, status: 'active',       cs: 12, ce:  2, desc: 'Physical altercation. 10-day DAEP — placement ends in 2 days. Transition review required.' },
+    { student: s['EX-20005'], code: 'F005', days: 15, status: 'under_review', cs: -1, ce: -1, desc: 'Harassment incident. Pending administrator review and parent notification.' },
+    { student: s['EX-40002'], code: 'F001', days: 30, status: 'completed',    cs: 55, ce: 25, desc: 'Completed DAEP placement. Second incident this school year — repeat offender alert active.' },
+  ].filter(r => r.student)
 
-  const { data: insertedInc, error: incErr } = await supabase
-    .from('incidents').insert(incRows).select('id, student_id, status')
+  const incRows = incidentDefs.map(r => ({
+    district_id:      D,
+    campus_id:        r.student.campus_id,
+    student_id:       r.student.id,
+    offense_code_id:  c[r.code],
+    incident_date:    daysAgo(r.cs > 0 ? r.cs + 2 : 7),
+    description:      r.desc,
+    consequence_type: 'daep',
+    consequence_days: r.days,
+    consequence_start: r.cs > 0 ? daysAgo(r.cs) : null,
+    consequence_end:   r.ce > 0 ? daysAgo(r.ce) : (r.ce < 0 ? daysAgo(r.ce) : null),
+    status:           r.status,
+    reported_by:      adminId,
+    notes:            r.desc,
+  }))
+
+  const { data: insertedInc, error: incErr } = await sb
+    .from('incidents').insert(incRows).select('id, student_id, status, campus_id')
   if (incErr) throw new Error(`Incidents: ${incErr.message}`)
 
-  // ── Compliance checklists — patch auto-created ones ───────────────────────
-  const { data: checklists } = await supabase
-    .from('compliance_checklists').select('id').eq('district_id', D)
-  if (checklists && checklists.length >= 1) {
-    await supabase.from('compliance_checklists').update({
-      manifestation_date: daysAgo(43),
-      manifestation_outcome: 'no_relationship',
-      manifestation_complete: true,
-      parent_notified: true,
-      parent_notification_date: daysAgo(44),
-    }).eq('id', checklists[0].id)
+  // ── Patch SPED/504 status back on students ────────────────────────────────
+  const spedIds = insertedStudents!
+    .filter((x: { student_id_number: string }) => studentMeta[x.student_id_number]?.is_sped)
+    .map((x: { id: string }) => x.id)
+  const s504Ids = insertedStudents!
+    .filter((x: { student_id_number: string }) => studentMeta[x.student_id_number]?.is_504)
+    .map((x: { id: string }) => x.id)
+  if (spedIds.length)  await sb.from('students').update({ is_sped: true }).in('id', spedIds)
+  if (s504Ids.length) await sb.from('students').update({ is_504: true }).in('id', s504Ids)
+
+  // ── Compliance checklists (manual) ────────────────────────────────────────
+  const spedIncidents = (insertedInc || [])
+    .filter((i: { student_id: string }) => spedIds.includes(i.student_id))
+  if (spedIncidents.length) {
+    const clRows = spedIncidents.map((inc: { id: string; student_id: string }, idx: number) => ({
+      district_id:       D,
+      incident_id:       inc.id,
+      student_id:        inc.student_id,
+      status:            idx === 0 ? 'completed' : 'incomplete',
+      placement_blocked: idx !== 0,
+      ...(idx === 0 ? {
+        parent_notified:             new Date(now.getTime() - 44 * 86400000).toISOString(),
+        ard_committee_notified:      new Date(now.getTime() - 43 * 86400000).toISOString(),
+        ard_committee_met:           new Date(now.getTime() - 42 * 86400000).toISOString(),
+        manifestation_determination: new Date(now.getTime() - 42 * 86400000).toISOString(),
+        manifestation_result:        'not_manifestation',
+      } : {}),
+    }))
+    const { error: clErr } = await sb.from('compliance_checklists').insert(clRows)
+    if (!clErr) {
+      await sb.from('incidents')
+        .update({ sped_compliance_required: true, compliance_cleared: false })
+        .in('id', spedIncidents.map((i: { id: string }) => i.id))
+    }
   }
 
   // ── Transition plans ──────────────────────────────────────────────────────
-  const activeInc = (insertedInc || []).filter((i: { status: string }) => i.status === 'active').slice(0, 3)
+  const activeInc = (insertedInc || [])
+    .filter((i: { status: string }) => i.status === 'active').slice(0, 3)
   if (activeInc.length) {
-    await supabase.from('transition_plans').insert(
+    await sb.from('transition_plans').insert(
       activeInc.map((inc: { id: string; student_id: string }, idx: number) => ({
         district_id:      D,
         incident_id:      inc.id,
         student_id:       inc.student_id,
+        plan_type:        'daep_entry',
+        offense_category: 'fighting',
+        start_date:       daysAgo(30 - idx * 8),
+        end_date:         daysAgo(-(30 - idx * 8)),
+        review_30_date:   daysAgo(30 - idx * 8 - 30),
+        review_60_date:   daysAgo(30 - idx * 8 - 60),
+        review_90_date:   daysAgo(30 - idx * 8 - 90),
+        status:           'active',
         created_by:       adminId,
-        academic_goals:   'Maintain grade-level work via campus packets and teacher check-ins.',
-        behavioral_goals: 'Practice conflict resolution strategies daily with campus counselor.',
-        review_30_day:    daysAgo(20 - idx * 5),
-        review_60_day:    daysAgo(-10 + idx * 3),
-        review_90_day:    daysAgo(-40 + idx * 3),
+        notes:            'Maintain grade-level work via campus packets. Practice conflict resolution daily.',
       }))
     )
   }
 
   // ── Behavior tracking ─────────────────────────────────────────────────────
-  const trackRows = activeInc.flatMap((inc: { id: string; student_id: string }) =>
-    Array.from({ length: 10 }, (_, i) => ({
-      district_id:   D,
-      incident_id:   inc.id,
-      student_id:    inc.student_id,
-      tracking_date: daysAgo(i + 1),
-      behavior_score: Math.floor(Math.random() * 3) + 3,
-      attendance:    true,
-      recorded_by:   adminId,
-    }))
+  const seen = new Set<string>()
+  const trackRows = activeInc.flatMap((inc: { student_id: string; campus_id: string }) =>
+    Array.from({ length: 10 }, (_, i) => {
+      const key = `${inc.student_id}-${daysAgo(i + 1)}`
+      if (seen.has(key)) return null
+      seen.add(key)
+      return {
+        district_id:   D,
+        campus_id:     inc.campus_id,
+        student_id:    inc.student_id,
+        tracking_date: daysAgo(i + 1),
+        checked_in:    true,
+        daily_total:   parseFloat((3 + Math.random() * 2).toFixed(1)),
+        daily_goal:    4.0,
+        goal_met:      Math.random() > 0.35,
+      }
+    }).filter(Boolean)
   )
-  if (trackRows.length) await supabase.from('daily_behavior_tracking').insert(trackRows)
+  if (trackRows.length) await sb.from('daily_behavior_tracking').insert(trackRows)
 
   // ── Alerts ────────────────────────────────────────────────────────────────
   const alertRows = [
     {
-      district_id:  D, campus_id: HS,
-      student_id:   byNum['EX-10002']?.id,
-      trigger_type: 'sped_manifestation_due', severity: 'red',
-      message:      'Manifestation determination overdue — SPED student in DAEP for 10+ days.',
-      resolved:     false,
+      district_id: D, campus_id: HS, student_id: s['EX-10002']?.id,
+      alert_level: 'red', trigger_type: 'sped_manifestation_due', status: 'active',
+      trigger_description: 'Manifestation determination overdue — Aaliyah Thompson has been in DAEP for 12 days. Federal 10-day ARD deadline has passed.',
     },
     {
-      district_id:  D, campus_id: HS,
-      student_id:   byNum['EX-40001']?.id,
-      trigger_type: 'sped_manifestation_due', severity: 'red',
-      message:      'ARD meeting required within 10 days. 3 days remaining.',
-      resolved:     false,
+      district_id: D, campus_id: HS, student_id: s['EX-40001']?.id,
+      alert_level: 'red', trigger_type: 'sped_manifestation_due', status: 'active',
+      trigger_description: 'Manifestation determination required — Destiny Washington placed 5 days ago. ARD meeting must occur by Day 10.',
     },
     {
-      district_id:  D, campus_id: MS,
-      student_id:   byNum['EX-20002']?.id,
-      trigger_type: 'placement_ending', severity: 'yellow',
-      message:      'DAEP placement ends today. Transition plan review required.',
-      resolved:     false,
+      district_id: D, campus_id: MS, student_id: s['EX-20002']?.id,
+      alert_level: 'yellow', trigger_type: 'placement_ending', status: 'active',
+      trigger_description: 'DAEP placement ends in 2 days for Carlos Mendoza. Transition plan review required before return to home campus.',
+    },
+    {
+      district_id: D, campus_id: HS, student_id: s['EX-40002']?.id,
+      alert_level: 'yellow', trigger_type: 'repeat_offender', status: 'resolved',
+      trigger_description: 'Second DAEP placement this school year for Jordan Lee. Consider behavior intervention plan.',
     },
   ].filter(a => a.student_id)
-  if (alertRows.length) await supabase.from('alerts').insert(alertRows)
+  if (alertRows.length) await sb.from('alerts').insert(alertRows)
 
   // ── Navigator referrals ───────────────────────────────────────────────────
   const navRows = [
-    { district_id: D, campus_id: HS, student_id: byNum['EX-10001']?.id, referral_type: 'iss', referral_date: daysAgo(70), reported_by: adminId, status: 'closed', reason: 'Chronic tardiness escalating to disruption.' },
-    { district_id: D, campus_id: MS, student_id: byNum['EX-20002']?.id, referral_type: 'oss', referral_date: daysAgo(15), reported_by: adminId, status: 'active', reason: 'Physical altercation.' },
-    { district_id: D, campus_id: HS, student_id: byNum['EX-10005']?.id, referral_type: 'iss', referral_date: daysAgo(30), reported_by: adminId, status: 'active', reason: 'Drug-related behavior.' },
+    { district_id: D, campus_id: HS, student_id: s['EX-10001']?.id, reported_by: adminId, referral_date: daysAgo(70), description: 'Chronic tardiness escalating to classroom disruption.',  status: 'closed',   outcome: 'iss' },
+    { district_id: D, campus_id: MS, student_id: s['EX-20002']?.id, reported_by: adminId, referral_date: daysAgo(15), description: 'Physical altercation. Out-of-school suspension assigned.', status: 'reviewed', outcome: 'oss' },
+    { district_id: D, campus_id: HS, student_id: s['EX-10005']?.id, reported_by: adminId, referral_date: daysAgo(30), description: 'Drug-related behavior. Pending referral to DAEP.',        status: 'pending',  outcome: null  },
   ].filter(r => r.student_id)
-  if (navRows.length) await supabase.from('navigator_referrals').insert(navRows)
+  if (navRows.length) await sb.from('navigator_referrals').insert(navRows)
 
-  // ── Meridian students + timeline events ──────────────────────────────────
-  const spedStudents = (insertedStudents || []).filter((s: { special_ed_status: boolean }) => s.special_ed_status).slice(0, 4)
+  // ── Meridian SPED students ────────────────────────────────────────────────
+  const spedStudents = insertedStudents!
+    .filter((x: { id: string }) => spedIds.includes(x.id))
+    .slice(0, 4)
   if (spedStudents.length) {
-    const { data: ms } = await supabase
-      .from('meridian_students')
-      .insert(spedStudents.map((s: { id: string; campus_id: string }) => ({
-        district_id: D, student_id: s.id, campus_id: s.campus_id,
-        disability_category: 'Emotional Disturbance',
-        eligibility_date: daysAgo(365),
-        next_annual_review: daysAgo(-30),
-        case_manager_id: adminId, iep_status: 'active',
-      })))
-      .select('id')
-
-    if (ms && ms.length) {
-      await supabase.from('meridian_timeline_events').insert(
-        ms.flatMap((m: { id: string }) => [
-          { district_id: D, meridian_student_id: m.id, event_type: 'iep_annual', event_date: daysAgo(365), due_date: daysAgo(335), status: 'completed', notes: 'Annual IEP meeting held.', created_by: adminId },
-          { district_id: D, meridian_student_id: m.id, event_type: 'iep_annual', event_date: daysAgo(-30),  due_date: daysAgo(-20),  status: 'upcoming',  notes: 'Annual review due.', created_by: adminId },
-        ])
-      )
-    }
+    await sb.from('meridian_students').insert(
+      spedStudents.map((x: { id: string; campus_id: string; first_name: string; last_name: string }) => ({
+        district_id:        D,
+        campus_id:          x.campus_id,
+        first_name:         x.first_name,
+        last_name:          x.last_name,
+        sped_status:        'eligible',
+        primary_disability: 'Emotional Disturbance',
+        plan_type:          'IEP',
+        waypoint_student_id: x.id,
+      }))
+    )
   }
 }
 
@@ -280,7 +329,7 @@ serve(async (req) => {
     })
 
     const adminId = await getAdminId(supabase)
-    await wipe(supabase, adminId)
+    await wipe(supabase)
     await reseed(supabase, adminId)
 
     const seeded_at = new Date().toISOString()
