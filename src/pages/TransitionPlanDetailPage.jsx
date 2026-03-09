@@ -13,6 +13,7 @@ import ReviewForm from '../components/plans/ReviewForm'
 import ReviewTimeline from '../components/plans/ReviewTimeline'
 import InterventionList from '../components/plans/InterventionList'
 import PlanProgressChart from '../components/plans/PlanProgressChart'
+import ReentryHub from '../components/reentry/ReentryHub'
 import {
   PLAN_STATUS_LABELS,
   PLAN_STATUS_COLORS,
@@ -293,6 +294,11 @@ export default function TransitionPlanDetailPage() {
             {/* Progress Chart */}
             {reviews.length > 0 && (
               <PlanProgressChart reviews={reviews} />
+            )}
+
+            {/* Re-entry Hub — shown for exit/reentry plans */}
+            {['daep_exit', 'iss_reentry'].includes(plan.plan_type) && isActive && (
+              <ReentryHub plan={plan} student={student} />
             )}
           </div>
 

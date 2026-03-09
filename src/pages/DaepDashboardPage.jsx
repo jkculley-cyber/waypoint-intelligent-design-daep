@@ -19,6 +19,7 @@ import {
   useDaepEnrollmentStats,
 } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
+import { useReturningThisWeek } from '../hooks/useReentry'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -67,6 +68,7 @@ export default function DaepDashboardPage() {
         <div className="p-6 space-y-6">
           <CapacityWarningBanner />
           <SummaryCards />
+          <ReturningThisWeekWidget />
           <ActiveEnrollmentsTable />
           <ApprovalFlowTable />
           <MissedOrientationsWidget />
@@ -1328,5 +1330,98 @@ function EnrollmentByGradeTable() {
         <span>Reserved = approved, not yet started</span>
       </div>
     </Card>
+  )
+}
+
+// =================== RETURNING THIS WEEK ===================
+
+function ReturningThisWeekWidget() {
+  const { plans, loading } = useReturningThisWeek()
+
+  if (loading) return null
+  const returning = plans?.returning || []
+  const needsCheckin = plans?.returned || []
+
+  if (!returning.length && !needsCheckin.length) return null
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Returning this week */}
+      {returning.length > 0 && (
+        <Card padding={false}>
+          <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <CardTitle>Returning This Week ({returning.length})</CardTitle>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {returning.map(p => {
+              const cl = p.reentry_checklist?.[0]
+              const isReady = cl?.is_ready
+              const briefSent = cl?.brief_sent_at
+              return (
+                <Link
+                  key={p.id}
+                  to={`/plans/${p.id}`}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {p.student?.first_name} {p.student?.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Returns {new Date(p.end_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!briefSent && (
+                      <span className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded-full font-medium">
+                        Brief not sent
+                      </span>
+                    )}
+                    {isReady ? (
+                      <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full font-medium">
+                        Ready
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full font-medium">
+                        Checklist incomplete
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Returned — check-in overdue */}
+      {needsCheckin.length > 0 && (
+        <Card padding={false}>
+          <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <CardTitle>Check-in Needed ({needsCheckin.length})</CardTitle>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {needsCheckin.map(p => (
+              <Link
+                key={p.id}
+                to={`/plans/${p.id}`}
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+              >
+                <p className="text-sm font-medium text-gray-900">
+                  {p.student?.first_name} {p.student?.last_name}
+                </p>
+                <span className="text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full font-medium">
+                  {p.daysSinceCheckin === null
+                    ? 'No check-ins yet'
+                    : `${p.daysSinceCheckin}d since check-in`}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
   )
 }

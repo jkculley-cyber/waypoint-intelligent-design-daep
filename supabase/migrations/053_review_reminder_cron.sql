@@ -8,10 +8,10 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Remove existing job if re-running
-SELECT cron.unschedule('check-review-reminders') WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'check-review-reminders'
-);
+-- Remove existing jobs with this name if re-running (handles duplicates safely)
+SELECT cron.unschedule(jobid)
+FROM cron.job
+WHERE jobname = 'check-review-reminders';
 
 -- Schedule daily at 6:00 AM CST (12:00 UTC)
 SELECT cron.schedule(
