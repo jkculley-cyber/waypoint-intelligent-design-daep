@@ -163,8 +163,34 @@ export function useIncidentActions() {
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .select()
+      .select(`*, student:students(id, first_name, last_name)`)
       .single()
+
+    // Auto-notify guardians (non-blocking)
+    if (!error && data?.student_id) {
+      supabase
+        .from('student_guardians')
+        .select('guardian:profiles!student_guardians_guardian_id_fkey(email, full_name)')
+        .eq('student_id', data.student_id)
+        .then(({ data: guardians }) => {
+          for (const g of guardians || []) {
+            const email = g.guardian?.email
+            if (email) {
+              supabase.functions.invoke('send-notification', {
+                body: {
+                  to: email,
+                  subject: 'A discipline record has been added for your child',
+                  template: 'parent_notice',
+                  data: {
+                    studentName: `${data.student?.first_name || ''} ${data.student?.last_name || ''}`.trim(),
+                    portalUrl: `${window.location.origin}/parent`,
+                  },
+                },
+              }).catch(() => {})
+            }
+          }
+        })
+    }
 
     return { data, error }
   }

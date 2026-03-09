@@ -1,7 +1,12 @@
+import { useState } from 'react'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
+
 export default function ImportStepConfirm({
   importing,
   importProgress,
   importResult,
+  importType,
   error,
   onReset,
 }) {
@@ -101,6 +106,10 @@ export default function ImportStepConfirm({
           </div>
         </div>
 
+        {importType === 'profiles' && successCount > 0 && (
+          <StaffInvitePanel successCount={successCount} />
+        )}
+
         <button
           type="button"
           onClick={onReset}
@@ -113,4 +122,67 @@ export default function ImportStepConfirm({
   }
 
   return null
+}
+
+function StaffInvitePanel({ successCount }) {
+  const { districtId } = useAuth()
+  const [inviting, setInviting] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function handleInvite() {
+    setInviting(true)
+    setResult(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-staff', {
+        body: { district_id: districtId },
+      })
+      if (error) throw error
+      setResult({ ok: true, ...data })
+    } catch (err) {
+      setResult({ ok: false, message: err.message || 'Failed to send invitations' })
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  if (result?.ok) {
+    return (
+      <div className="mt-6 max-w-sm mx-auto bg-green-50 border border-green-200 rounded-lg p-4 text-left">
+        <p className="text-sm font-medium text-green-900">Invitations sent</p>
+        <p className="text-xs text-green-700 mt-1">
+          {result.invited} new invitation{result.invited !== 1 ? 's' : ''} sent.
+          {result.already_active > 0 && ` ${result.already_active} staff already had accounts.`}
+        </p>
+        {result.errors?.length > 0 && (
+          <p className="text-xs text-yellow-700 mt-1">{result.errors.length} email(s) failed — check Import History.</p>
+        )}
+      </div>
+    )
+  }
+
+  if (result && !result.ok) {
+    return (
+      <div className="mt-6 max-w-sm mx-auto bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+        <p className="text-sm font-medium text-red-900">Invitation failed</p>
+        <p className="text-xs text-red-700 mt-1">{result.message}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-6 max-w-sm mx-auto bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+      <p className="text-sm font-semibold text-blue-900 mb-1">Send Login Invitations</p>
+      <p className="text-xs text-blue-700 mb-3">
+        {successCount} staff profile{successCount !== 1 ? 's' : ''} imported. Send each person an email invitation so they can set their password and log in.
+      </p>
+      <button
+        type="button"
+        onClick={handleInvite}
+        disabled={inviting}
+        className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+      >
+        {inviting ? 'Sending invitations…' : 'Send Login Invitations'}
+      </button>
+    </div>
+  )
 }

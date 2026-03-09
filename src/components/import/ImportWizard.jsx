@@ -62,6 +62,7 @@ export default function ImportWizard({ allowedTypes, defaultType }) {
           importing={wizard.importing}
           importProgress={wizard.importProgress}
           importResult={wizard.importResult}
+          importType={wizard.importType}
           error={wizard.error}
           onReset={wizard.reset}
         />

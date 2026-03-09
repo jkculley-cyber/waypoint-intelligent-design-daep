@@ -95,6 +95,10 @@ export default function UserManagementPage() {
           </div>
         )}
 
+        {districtId && (
+          <ParentRegistrationLinkCard districtId={districtId} />
+        )}
+
         {loading ? (
           <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
         ) : (
@@ -285,6 +289,43 @@ function InviteUserModal({ districtId, campuses, serviceRoleKey, supabaseUrl, on
             <Button type="submit" loading={loading}>Invite User</Button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function ParentRegistrationLinkCard({ districtId }) {
+  const [copied, setCopied] = useState(false)
+  const link = `${window.location.origin}/parent-register?d=${districtId}`
+
+  function handleCopy() {
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg className="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-orange-900">Parent Registration Link</p>
+          <p className="text-xs text-orange-700 mt-0.5">Share this link with parents so they can self-register and access their child's records.</p>
+          <div className="flex items-center gap-2 mt-2">
+            <code className="flex-1 text-xs bg-white border border-orange-200 rounded px-2 py-1.5 text-gray-700 truncate">{link}</code>
+            <button
+              onClick={handleCopy}
+              className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-orange-700 bg-white border border-orange-300 rounded hover:bg-orange-50"
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

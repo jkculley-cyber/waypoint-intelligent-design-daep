@@ -89,6 +89,7 @@ import TeacherReferralPage from './pages/TeacherReferralPage'
 import DaepScoringPage from './pages/DaepScoringPage'
 import CalendarPage from './pages/CalendarPage'
 import UserManagementPage from './pages/UserManagementPage'
+import ParentRegisterPage from './pages/ParentRegisterPage'
 
 // Constants
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, STAFF_ROLES, DAEP_ROLES } from './lib/constants'
@@ -207,6 +208,9 @@ function App() {
             <Route path="/parent/incidents/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentIncidentViewPage /></RequireTier></RequireRole>} />
             <Route path="/parent/plans/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentPlanViewPage /></RequireTier></RequireRole>} />
           </Route>
+
+          {/* Parent self-registration — public, no auth required */}
+          <Route path="/parent-register" element={<ParentRegisterPage />} />
 
           {/* Origins Family Portal — standalone, no auth required */}
           <Route path="/family" element={<OriginsFamilyEntryPage />} />
