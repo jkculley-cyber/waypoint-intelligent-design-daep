@@ -6,13 +6,14 @@ import Button from '../ui/Button'
 import Modal from '../ui/Modal'
 import { useApprovalChain, useApprovalChainActions } from '../../hooks/useApprovalChain'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { formatDateTime } from '../../lib/utils'
 import { APPROVAL_STEP_STATUS } from '../../lib/constants'
 
-export default function ApprovalChainTracker({ incidentId, onUpdate }) {
+export default function ApprovalChainTracker({ incidentId, incident, onUpdate }) {
   const { chain, steps, loading, refetch } = useApprovalChain(incidentId)
   const { approveStep, denyStep, returnStep, resubmitChain, loading: actionLoading } = useApprovalChainActions()
-  const { profile } = useAuth()
+  const { profile, districtId } = useAuth()
 
   const [modalType, setModalType] = useState(null) // 'deny' | 'return' | 'approve'
   const [modalStepId, setModalStepId] = useState(null)
@@ -69,6 +70,43 @@ export default function ApprovalChainTracker({ incidentId, onUpdate }) {
     } else {
       const labels = { approve: 'Step approved', deny: 'DAEP referral denied', return: 'Returned to submitter' }
       toast.success(labels[modalType])
+
+      // Notify the next approver in the chain (non-blocking)
+      if (modalType === 'approve' && districtId) {
+        const currentIdx = steps.findIndex(s => s.id === modalStepId)
+        const nextStep = steps[currentIdx + 1]
+        if (nextStep && nextStep.status !== APPROVAL_STEP_STATUS.APPROVED) {
+          const studentName = incident?.student
+            ? `${incident.student.first_name} ${incident.student.last_name}`
+            : 'a student'
+          const incidentUrl = `${window.location.origin}/incidents/${incidentId}`
+          supabase
+            .from('profiles')
+            .select('email')
+            .eq('district_id', districtId)
+            .eq('role', nextStep.step_role)
+            .then(({ data: nextApprovers }) => {
+              for (const a of nextApprovers || []) {
+                if (a.email) {
+                  supabase.functions.invoke('send-notification', {
+                    body: {
+                      to: a.email,
+                      subject: `DAEP Approval Needed — ${studentName}`,
+                      template: 'incident_submitted',
+                      data: {
+                        studentName,
+                        incidentDate: incident?.incident_date || '',
+                        offense: incident?.offense?.title || '',
+                        incidentUrl,
+                      },
+                    },
+                  }).catch(() => {})
+                }
+              }
+            })
+        }
+      }
+
       setModalType(null)
       refetch()
       onUpdate?.()

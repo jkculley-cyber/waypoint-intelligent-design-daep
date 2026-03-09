@@ -140,6 +140,37 @@ export function useIncidentActions() {
       `)
       .single()
 
+    // Notify approvers (admin, principal, AP, CBC, counselor) — non-blocking
+    if (!error && data) {
+      const studentName = `${data.student?.first_name || ''} ${data.student?.last_name || ''}`.trim()
+      const incidentUrl = `${window.location.origin}/incidents/${data.id}`
+      supabase
+        .from('profiles')
+        .select('email')
+        .eq('district_id', districtId)
+        .in('role', ['admin', 'principal', 'ap', 'cbc', 'counselor'])
+        .neq('id', user.id)
+        .then(({ data: approvers }) => {
+          for (const a of approvers || []) {
+            if (a.email) {
+              supabase.functions.invoke('send-notification', {
+                body: {
+                  to: a.email,
+                  subject: `New Incident Submitted — ${studentName}`,
+                  template: 'incident_submitted',
+                  data: {
+                    studentName,
+                    incidentDate: data.incident_date,
+                    offense: data.offense?.title || '',
+                    incidentUrl,
+                  },
+                },
+              }).catch(() => {})
+            }
+          }
+        })
+    }
+
     return { data, error }
   }
 
@@ -200,8 +231,36 @@ export function useIncidentActions() {
       .from('incidents')
       .update({ status: 'active' })
       .eq('id', id)
-      .select()
+      .select(`*, student:students(id, first_name, last_name)`)
       .single()
+
+    // Auto-notify guardians when placement is activated (non-blocking)
+    if (!error && data?.student_id) {
+      supabase
+        .from('student_guardians')
+        .select('guardian:profiles!student_guardians_guardian_id_fkey(email)')
+        .eq('student_id', data.student_id)
+        .then(({ data: guardians }) => {
+          for (const g of guardians || []) {
+            const email = g.guardian?.email
+            if (email) {
+              supabase.functions.invoke('send-notification', {
+                body: {
+                  to: email,
+                  subject: 'Your child\'s DAEP placement has been activated',
+                  template: 'placement_starting',
+                  data: {
+                    studentName: `${data.student?.first_name || ''} ${data.student?.last_name || ''}`.trim(),
+                    days: data.consequence_days || '',
+                    endDate: data.consequence_end || '',
+                    incidentUrl: `${window.location.origin}/parent`,
+                  },
+                },
+              }).catch(() => {})
+            }
+          }
+        })
+    }
 
     return { data, error }
   }

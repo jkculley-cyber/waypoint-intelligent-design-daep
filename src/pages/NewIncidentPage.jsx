@@ -272,6 +272,7 @@ export default function NewIncidentPage() {
         consequence_start: formData.consequence_start || null,
         consequence_end: formData.consequence_end || null,
         notes: buildFinalNotes(),
+        peims_action_code: selectedOffenseCode?.peims_action_code || null,
         ...(attachments.length > 0 ? { attachments } : {}),
       })
 

@@ -296,7 +296,7 @@ export default function IncidentDetailPage() {
           <div className="space-y-6">
             {/* DAEP Approval Chain */}
             {hasDaepChain && (
-              <ApprovalChainTracker incidentId={incident.id} onUpdate={refetch} />
+              <ApprovalChainTracker incidentId={incident.id} incident={incident} onUpdate={refetch} />
             )}
 
             {/* Referral Documents */}
