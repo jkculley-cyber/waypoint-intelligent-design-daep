@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-08 (Session AC — Company identity reframe, page reorder, explore modal role flow, session modal fix)
+> Last updated: 2026-03-09 (Session AD — P0 fixes, A+ notifications, Re-entry Intelligence System, seed data, marketing site typography)
 
 ---
 
@@ -12,7 +12,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–052 (production). All migrations applied. 044 (Origins schema), 049 (Meridian SPPI-13 + RDA tables), 050 (Navigator skill_gap + effectiveness) applied via SQL Editor 2026-03-01.
+- **Migrations applied:** 001–055 (production). All migrations applied. 044 (Origins schema), 049 (Meridian SPPI-13 + RDA tables), 050 (Navigator skill_gap + effectiveness) applied via SQL Editor 2026-03-01.
 - **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 28 placements (6 completed + 2 active + 20 prior year), 6 supports, 3 campus goals seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). 2 active placements (Marcus OSS, DeShawn ISS — no end_date) power the Active ISS/Active OSS tabs. `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -105,6 +105,7 @@
 ## Pending / Not Done
 
 1. ~~**Apply migration 044**~~ — ✅ Applied 2026-03-01 via SQL Editor. Run `node supabase/seed_origins_scenarios.mjs` to seed global scenarios if not yet done.
+10. **Re-entry Intelligence System** — live (migrations 054-055, hooks, ReentryHub, dashboard widget, seed data for demo + sandbox).
 1. **Set up `privacy@clearpathedgroup.com`** — referenced in all compliance docs; must exist before sharing docs with districts.
 2. **Google Search Console** — register clearpathedgroup.com (Sage owns this).
 3. ~~**Resend sender domain**~~ — ✅ Done (Session Z). clearpathedgroup.com confirmed correct. DKIM already set. Edge Function updated + redeployed. Secrets set.
