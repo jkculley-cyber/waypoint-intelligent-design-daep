@@ -291,6 +291,114 @@ async function run() {
   await q(`UPDATE incidents SET transition_plan_id = $1 WHERE id = $2`, [tpDeShawn.id, deshawnInc.id]);
   console.log('  ✓ DeShawn — 30-day: Feb 20 | 60-day: Mar 22\n');
 
+  // ─── 5b. Re-entry exit plans + checklists + check-ins ────────────────────
+  // Marcus — daep_exit plan returning this week (Return Ready, partial checklist)
+  // David  — daep_exit plan already returned 2 weeks ago (full checklist + check-ins)
+  console.log('Seeding re-entry plans...');
+
+  await q(`DELETE FROM reentry_checkins WHERE district_id = $1`, [DISTRICT_ID]);
+  await q(`DELETE FROM reentry_checklists WHERE district_id = $1`, [DISTRICT_ID]);
+  await q(`DELETE FROM transition_plans WHERE district_id = $1 AND plan_type IN ('daep_exit','iss_reentry')`, [DISTRICT_ID]);
+
+  // Marcus: returning this week — incomplete checklist (4/7 done)
+  const { rows: [tpMarcusExit] } = await q(`
+    INSERT INTO transition_plans (
+      district_id, student_id, plan_type, offense_category,
+      behavioral_supports, academic_supports,
+      start_date, end_date, status, created_by, notes
+    ) VALUES (
+      $1, $2, 'daep_exit', 'assault',
+      $3::jsonb, $4::jsonb,
+      '2026-02-22', '2026-03-12',
+      'active', $5,
+      'Return to home campus. Continue weekly counseling. Monitor peer interactions.'
+    ) RETURNING id
+  `, [
+    DISTRICT_ID, MARCUS_ID,
+    JSON.stringify([{ type: 'Weekly Counseling', provider: 'Home Campus Counselor', frequency: 'weekly' }]),
+    JSON.stringify([{ type: 'Grade-Level Support', provider: 'Home Campus Teachers', frequency: 'daily' }]),
+    ADMIN_ID,
+  ]);
+
+  await q(`
+    INSERT INTO reentry_checklists (
+      plan_id, district_id,
+      student_goals_met, student_commitment_signed, student_completed_at,
+      parent_plan_acknowledged, parent_contact_confirmed, parent_completed_at,
+      counselor_schedule_set, counselor_teachers_briefed,
+      admin_schedule_confirmed,
+      return_date, updated_at
+    ) VALUES (
+      $1, $2,
+      true, true, '2026-03-05T14:30:00Z',
+      true, true, '2026-03-06T09:15:00Z',
+      true, false,
+      false,
+      '2026-03-12', now()
+    )
+  `, [tpMarcusExit.id, DISTRICT_ID]);
+
+  console.log('  ✓ Marcus — daep_exit (returning Mar 12, 4/7 checklist)');
+
+  // David: returned 2 weeks ago — full checklist + post-return check-ins
+  const { rows: [tpDavidExit] } = await q(`
+    INSERT INTO transition_plans (
+      district_id, student_id, plan_type, offense_category,
+      behavioral_supports, academic_supports,
+      start_date, end_date, status, created_by, notes
+    ) VALUES (
+      $1, $2, 'daep_exit', 'drugs',
+      $3::jsonb, $4::jsonb,
+      '2026-02-19', '2026-02-24',
+      'active', $5,
+      'Return approved. Continue substance abuse education support. ESL teacher briefed.'
+    ) RETURNING id
+  `, [
+    DISTRICT_ID, DAVID_ID,
+    JSON.stringify([{ type: 'Substance Abuse Education', provider: 'Home Campus Counselor', frequency: 'biweekly' }]),
+    JSON.stringify([{ type: 'ESL/ELL Continuation', provider: 'Home Campus ESL Teacher', frequency: 'daily' }]),
+    ADMIN_ID,
+  ]);
+
+  await q(`
+    INSERT INTO reentry_checklists (
+      plan_id, district_id,
+      student_goals_met, student_commitment_signed, student_completed_at,
+      parent_plan_acknowledged, parent_contact_confirmed, parent_completed_at,
+      counselor_schedule_set, counselor_teachers_briefed, counselor_completed_at,
+      admin_schedule_confirmed, admin_completed_at,
+      brief_sent_at, brief_sent_by,
+      return_date, updated_at
+    ) VALUES (
+      $1, $2,
+      true, true, '2026-02-18T11:00:00Z',
+      true, true, '2026-02-18T14:30:00Z',
+      true, true, '2026-02-19T08:00:00Z',
+      true, '2026-02-19T07:45:00Z',
+      '2026-02-19T08:00:00Z', $3,
+      '2026-02-24', now()
+    )
+  `, [tpDavidExit.id, DISTRICT_ID, ADMIN_ID]);
+
+  // Post-return check-ins for David (last 2 weeks, mix of statuses)
+  const checkinRows = [
+    { days: 14, status: 'neutral',    notes: 'First day back — navigating schedule. Teachers report no issues.' },
+    { days: 11, status: 'positive',   notes: 'Engaged in class. ESL teacher reports strong participation.' },
+    { days:  8, status: 'concerning', notes: 'Tardy to 2nd period twice. Tension noted with peer in hallway.' },
+    { days:  5, status: 'neutral',    notes: 'Back on track. No tardy incidents. Counselor met briefly.' },
+    { days:  2, status: 'positive',   notes: 'Strong week. Goal-setting conversation was productive.' },
+  ];
+
+  for (const c of checkinRows) {
+    const checkinDate = new Date(Date.now() - c.days * 86400000).toISOString().slice(0, 10);
+    await q(`
+      INSERT INTO reentry_checkins (plan_id, student_id, district_id, counselor_id, checkin_date, status, notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [tpDavidExit.id, DAVID_ID, DISTRICT_ID, ADMIN_ID, checkinDate, c.status, c.notes]);
+  }
+
+  console.log('  ✓ David  — daep_exit (returned Feb 24, full checklist + 5 check-ins)\n');
+
   // ─── 6. Daily behavior tracking — 3 weeks (Feb 2 – Feb 27) ───────────────
   console.log('Seeding behavior tracking data...');
 

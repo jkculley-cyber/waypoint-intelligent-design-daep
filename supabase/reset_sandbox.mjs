@@ -51,13 +51,19 @@ async function wipe() {
   const { data: incRows } = await supabase.from('incidents').select('id').eq('district_id', D)
   const incIds = (incRows || []).map(r => r.id)
 
-  // Transition plan reviews
+  // Transition plan reviews + reentry tables
   const { data: tpRows } = await supabase.from('transition_plans').select('id').eq('district_id', D)
   const tpIds = (tpRows || []).map(r => r.id)
   if (tpIds.length) {
     const { error } = await supabase.from('transition_plan_reviews').delete().in('plan_id', tpIds)
     if (error) console.warn(`  Warn transition_plan_reviews: ${error.message}`)
     else console.log('  - transition_plan_reviews cleared')
+    const { error: ciErr } = await supabase.from('reentry_checkins').delete().in('plan_id', tpIds)
+    if (ciErr) console.warn(`  Warn reentry_checkins: ${ciErr.message}`)
+    else console.log('  - reentry_checkins cleared')
+    const { error: clErr } = await supabase.from('reentry_checklists').delete().in('plan_id', tpIds)
+    if (clErr) console.warn(`  Warn reentry_checklists: ${clErr.message}`)
+    else console.log('  - reentry_checklists cleared')
   }
 
   await del('transition_plans')
@@ -386,6 +392,77 @@ async function reseed(adminId) {
     .select('id')
   if (msErr) console.warn(`  Warn meridian_students: ${msErr.message}`)
   else console.log(`  + ${ms.length} meridian students inserted`)
+
+  // ── Re-entry checklists + check-ins ─────────────────────────────────────
+  console.log('\nInserting re-entry data...')
+
+  // Find the daep_entry plans we created (first 3 active incidents)
+  const { data: sandboxPlans } = await supabase
+    .from('transition_plans').select('id, student_id, end_date')
+    .eq('district_id', D).eq('status', 'active').order('end_date', { ascending: true })
+
+  if (sandboxPlans && sandboxPlans.length >= 2) {
+    // Plan 0: returning soon — partial checklist (4/7)
+    const planA = sandboxPlans[0]
+    await supabase.from('reentry_checklists').insert({
+      plan_id:                    planA.id,
+      district_id:                D,
+      student_goals_met:          true,
+      student_commitment_signed:  true,
+      student_completed_at:       new Date(Date.now() - 4 * 86400000).toISOString(),
+      parent_plan_acknowledged:   true,
+      parent_contact_confirmed:   true,
+      parent_completed_at:        new Date(Date.now() - 3 * 86400000).toISOString(),
+      counselor_schedule_set:     true,
+      counselor_teachers_briefed: false,
+      admin_schedule_confirmed:   false,
+      return_date:                daysAgo(-3),
+      updated_at:                 new Date().toISOString(),
+    })
+    console.log('  + Partial checklist (4/7) for plan A')
+
+    // Plan 1: already returned — full checklist + check-ins
+    const planB = sandboxPlans[1]
+    await supabase.from('reentry_checklists').insert({
+      plan_id:                    planB.id,
+      district_id:                D,
+      student_goals_met:          true,
+      student_commitment_signed:  true,
+      student_completed_at:       new Date(Date.now() - 18 * 86400000).toISOString(),
+      parent_plan_acknowledged:   true,
+      parent_contact_confirmed:   true,
+      parent_completed_at:        new Date(Date.now() - 17 * 86400000).toISOString(),
+      counselor_schedule_set:     true,
+      counselor_teachers_briefed: true,
+      counselor_completed_at:     new Date(Date.now() - 16 * 86400000).toISOString(),
+      admin_schedule_confirmed:   true,
+      admin_completed_at:         new Date(Date.now() - 16 * 86400000).toISOString(),
+      brief_sent_at:              new Date(Date.now() - 16 * 86400000).toISOString(),
+      brief_sent_by:              adminId,
+      return_date:                daysAgo(14),
+      updated_at:                 new Date().toISOString(),
+    })
+
+    const checkins = [
+      { days: 14, status: 'neutral',    notes: 'First day back. Schedule adjusted, no incidents.' },
+      { days: 11, status: 'positive',   notes: 'Strong participation in all classes. Teachers report good attitude.' },
+      { days:  8, status: 'concerning', notes: 'Tardy twice, minor tension with peer in hallway. Counselor notified.' },
+      { days:  5, status: 'neutral',    notes: 'Tardy issue resolved. Peer conflict de-escalated.' },
+      { days:  2, status: 'positive',   notes: 'Excellent week. Student met with counselor, positive self-report.' },
+    ]
+    await supabase.from('reentry_checkins').insert(
+      checkins.map(c => ({
+        plan_id:      planB.id,
+        student_id:   planB.student_id,
+        district_id:  D,
+        counselor_id: adminId,
+        checkin_date: daysAgo(c.days),
+        status:       c.status,
+        notes:        c.notes,
+      }))
+    )
+    console.log('  + Full checklist + 5 check-ins for plan B')
+  }
 
   console.log('\n✅ Explorer ISD sandbox reseeded successfully!')
   console.log(`   Students:  ${insertedStudents.length}`)
