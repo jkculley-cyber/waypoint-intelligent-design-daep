@@ -41,7 +41,11 @@ async function getAdminId(sb: Supabase): Promise<string> {
 async function wipe(sb: Supabase) {
   const { data: tpRows } = await sb.from('transition_plans').select('id').eq('district_id', D)
   const tpIds = (tpRows || []).map((r: { id: string }) => r.id)
-  if (tpIds.length) await sb.from('transition_plan_reviews').delete().in('plan_id', tpIds)
+  if (tpIds.length) {
+    await sb.from('transition_plan_reviews').delete().in('plan_id', tpIds)
+    await sb.from('reentry_checkins').delete().in('plan_id', tpIds)
+    await sb.from('reentry_checklists').delete().in('plan_id', tpIds)
+  }
 
   await sb.from('transition_plans').delete().eq('district_id', D)
   await sb.from('alerts').delete().eq('district_id', D)
