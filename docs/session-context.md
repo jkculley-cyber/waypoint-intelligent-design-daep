@@ -102,6 +102,12 @@
 ## GitHub Actions — CRITICAL NOTE
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` were blank in GitHub secrets since the Cloudflare migration (2026-02-21), causing blank app screens. Fixed by setting them via `gh secret set`. **Always verify both secrets are set after any repo migration.**
 
+## Next Session Priority
+
+**Navigator Polish** — bring Navigator up to Waypoint's level of completeness and UX quality. Do a full audit of every Navigator page vs. Waypoint equivalent, identify gaps in functionality, polish, and demo-readiness, then close them systematically. Goal: Navigator should be pitchable as a standalone upsell in any Waypoint demo.
+
+---
+
 ## Pending / Not Done
 
 1. ~~**Apply migration 044**~~ — ✅ Applied 2026-03-01 via SQL Editor. Run `node supabase/seed_origins_scenarios.mjs` to seed global scenarios if not yet done.
