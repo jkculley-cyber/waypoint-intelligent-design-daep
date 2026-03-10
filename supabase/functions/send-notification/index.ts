@@ -167,7 +167,7 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <table style="border-collapse:collapse;width:100%;margin:20px 0;">
       <tr>
         <td style="padding:10px 0;">
-          <a href="https://calendly.com/clearpathedgroup/30min" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule a 30-minute demo &rarr;</a>
+          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule a 30-minute demo &rarr;</a>
           <p style="margin:6px 0 0;font-size:0.82rem;color:#6b7280;">Pick a time that works for you. No prep needed.</p>
         </td>
       </tr>
@@ -211,7 +211,7 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <table style="border-collapse:collapse;width:100%;margin:20px 0;">
       <tr>
         <td style="padding:10px 0;">
-          <a href="https://calendly.com/clearpathedgroup/30min" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule your discovery call &rarr;</a>
+          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule your discovery call &rarr;</a>
           <p style="margin:6px 0 0;font-size:0.82rem;color:#6b7280;">Or reply to this email — we'll work around your schedule.</p>
         </td>
       </tr>
@@ -237,7 +237,7 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <table style="border-collapse:collapse;width:100%;margin:20px 0;">
       <tr>
         <td style="padding:10px 0;">
-          <a href="https://calendly.com/clearpathedgroup/30min" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Book a 30-minute walkthrough &rarr;</a>
+          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Book a 30-minute walkthrough &rarr;</a>
         </td>
       </tr>
     </table>
@@ -254,7 +254,7 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <table style="border-collapse:collapse;width:100%;margin:20px 0;">
       <tr>
         <td style="padding:10px 0;">
-          <a href="https://calendly.com/clearpathedgroup/30min" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Book a quick call &rarr;</a>
+          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Book a quick call &rarr;</a>
           <p style="margin:6px 0 0;font-size:0.82rem;color:#6b7280;">Or just reply to this email.</p>
         </td>
       </tr>
