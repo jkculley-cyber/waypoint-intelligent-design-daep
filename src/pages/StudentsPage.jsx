@@ -14,7 +14,7 @@ import { useAccessScope } from '../hooks/useAccessScope'
 import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { canImport, getImportTier } from '../lib/importPermissions'
-import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+// exportUtils loaded dynamically on first export click
 import { useStudentsRecidivismBatch } from '../hooks/useRecidivism'
 
 export default function StudentsPage() {
@@ -176,14 +176,16 @@ export default function StudentsPage() {
     ])
   }, [students, riskAssessments])
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback(async () => {
+    const { exportToPdf } = await import('../lib/exportUtils')
     exportToPdf('Students', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
       landscape: true,
     })
   }, [buildExportRows, profile])
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
+    const { exportToExcel } = await import('../lib/exportUtils')
     exportToExcel('Students', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })

@@ -20,7 +20,7 @@ import {
 } from '../lib/constants'
 import { useAccessScope } from '../hooks/useAccessScope'
 import { canImport, getImportTier } from '../lib/importPermissions'
-import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+// exportUtils loaded dynamically on first export click
 
 export default function IncidentsPage() {
   const navigate = useNavigate()
@@ -107,13 +107,15 @@ export default function IncidentsPage() {
     ])
   }, [campuses])
 
-  const handleBulkExportPdf = useCallback(() => {
+  const handleBulkExportPdf = useCallback(async () => {
+    const { exportToPdf } = await import('../lib/exportUtils')
     exportToPdf('Incidents (Selected)', exportHeaders, buildExportRowsForSelection(selectedIncidents), {
       generatedBy: profile?.full_name, landscape: true,
     })
   }, [buildExportRowsForSelection, selectedIncidents, profile])
 
-  const handleBulkExportExcel = useCallback(() => {
+  const handleBulkExportExcel = useCallback(async () => {
+    const { exportToExcel } = await import('../lib/exportUtils')
     exportToExcel('Incidents (Selected)', exportHeaders, buildExportRowsForSelection(selectedIncidents), {
       generatedBy: profile?.full_name,
     })
@@ -239,14 +241,16 @@ export default function IncidentsPage() {
     ])
   }, [incidents, campuses])
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback(async () => {
+    const { exportToPdf } = await import('../lib/exportUtils')
     exportToPdf('Incidents', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
       landscape: true,
     })
   }, [buildExportRows, profile])
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
+    const { exportToExcel } = await import('../lib/exportUtils')
     exportToExcel('Incidents', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })

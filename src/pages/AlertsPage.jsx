@@ -14,7 +14,7 @@ import { useNotifications } from '../contexts/NotificationContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAccessScope } from '../hooks/useAccessScope'
 import { ALERT_TRIGGER_LABELS, INCIDENT_STATUS_LABELS } from '../lib/constants'
-import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+// exportUtils loaded dynamically on first export click
 import { formatStudentName, formatDate } from '../lib/utils'
 
 // =================== SEPARATION ORDERS HOT BOX ===================
@@ -174,13 +174,15 @@ export default function AlertsPage() {
     ])
   }, [alerts])
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback(async () => {
+    const { exportToPdf } = await import('../lib/exportUtils')
     exportToPdf('Repeat Offender Alerts', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })
   }, [buildExportRows, profile])
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
+    const { exportToExcel } = await import('../lib/exportUtils')
     exportToExcel('Repeat Offender Alerts', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })

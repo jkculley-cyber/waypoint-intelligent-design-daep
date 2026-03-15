@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAccessScope } from '../hooks/useAccessScope'
 import { formatStudentName, formatDate, formatDateTime } from '../lib/utils'
 import { CONSEQUENCE_TYPE_LABELS } from '../lib/constants'
-import { exportToPdf, exportToExcel } from '../lib/exportUtils'
+// exportUtils loaded dynamically on first export click
 
 export default function CompliancePage() {
   const navigate = useNavigate()
@@ -163,13 +163,15 @@ export default function CompliancePage() {
     })
   }, [checklists])
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback(async () => {
+    const { exportToPdf } = await import('../lib/exportUtils')
     exportToPdf('SPED Compliance', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })
   }, [buildExportRows, profile])
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
+    const { exportToExcel } = await import('../lib/exportUtils')
     exportToExcel('SPED Compliance', exportHeaders, buildExportRows(), {
       generatedBy: profile?.full_name,
     })
