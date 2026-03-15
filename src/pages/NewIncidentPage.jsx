@@ -32,7 +32,9 @@ const OVERRIDE_VALUE = '__override__'
 export default function NewIncidentPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { campusIds } = useAuth()
+  const { campusIds, profile, districtId } = useAuth()
+  const isTeacher = profile?.role === 'teacher'
+  const DRAFT_KEY = `incident_draft_${districtId || 'local'}`
   const { createIncident } = useIncidentActions()
   const { offenseCodes } = useOffenseCodes()
   const { interventions: interventionCatalog } = useInterventions()
@@ -41,6 +43,9 @@ export default function NewIncidentPage() {
   const [submitting, setSubmitting] = useState(false)
   const [matrixEntry, setMatrixEntry] = useState(null)
   const [isMatrixOverride, setIsMatrixOverride] = useState(false)
+  const [showDraftBanner, setShowDraftBanner] = useState(() => {
+    try { return !!localStorage.getItem(`incident_draft_${districtId || 'local'}`) } catch { return false }
+  })
   const tempIncidentId = useRef(crypto.randomUUID()).current
   const [formData, setFormData] = useState({
     student: null,
@@ -110,29 +115,40 @@ export default function NewIncidentPage() {
   const enteredDays = parseInt(formData.consequence_days) || 0
   const projectedTotal = cumulativeDays + enteredDays
 
+  // Consequences teachers cannot assign — must be escalated to admin/principal
+  const TEACHER_BLOCKED = ['daep', 'expulsion']
+
   // Build filtered consequence options based on matrix
   const consequenceOptions = useMemo(() => {
+    const applyTeacherFilter = (options) =>
+      isTeacher ? options.filter(o => !TEACHER_BLOCKED.includes(o.value)) : options
+
     if (!matrixEntry) {
-      // No matrix data — show all options
-      return Object.entries(CONSEQUENCE_TYPE_LABELS).map(([val, label]) => ({ value: val, label }))
+      // No matrix data — show all options (minus teacher restrictions)
+      return applyTeacherFilter(
+        Object.entries(CONSEQUENCE_TYPE_LABELS).map(([val, label]) => ({ value: val, label }))
+      )
     }
 
     const minIdx = CONSEQUENCE_ORDER.indexOf(matrixEntry.min_consequence)
     const maxIdx = CONSEQUENCE_ORDER.indexOf(matrixEntry.max_consequence)
 
     if (minIdx === -1 || maxIdx === -1) {
-      return Object.entries(CONSEQUENCE_TYPE_LABELS).map(([val, label]) => ({ value: val, label }))
+      return applyTeacherFilter(
+        Object.entries(CONSEQUENCE_TYPE_LABELS).map(([val, label]) => ({ value: val, label }))
+      )
     }
 
     const filtered = CONSEQUENCE_ORDER
       .filter((_, i) => i >= minIdx && i <= maxIdx)
+      .filter(val => !isTeacher || !TEACHER_BLOCKED.includes(val))
       .map(val => ({ value: val, label: CONSEQUENCE_TYPE_LABELS[val] }))
 
-    // Add override option at the bottom
+    // Add override option at the bottom (teachers can override within their allowed types)
     filtered.push({ value: OVERRIDE_VALUE, label: 'Other (Override Policy)' })
 
     return filtered
-  }, [matrixEntry])
+  }, [matrixEntry, isTeacher])
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -158,6 +174,39 @@ export default function NewIncidentPage() {
   const handleCancelOverride = () => {
     setIsMatrixOverride(false)
     setFormData(prev => ({ ...prev, consequence_type: '', override_justification: '' }))
+  }
+
+  // Auto-save draft to localStorage (debounced 1s, skip documents — File objects can't serialize)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const { documents, ...saveable } = formData
+        // Only save if there's meaningful data entered
+        if (saveable.student || saveable.offense_code_id || saveable.description) {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ formData: saveable, step }))
+        }
+      } catch {}
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [formData, step, DRAFT_KEY])
+
+  const handleRestoreDraft = () => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      const { formData: saved, step: savedStep } = JSON.parse(raw)
+      setFormData(prev => ({ ...prev, ...saved, documents: { transcript: null, schedule: null, mdr: null } }))
+      setStep(savedStep || 0)
+      setShowDraftBanner(false)
+      toast.success('Draft restored')
+    } catch {
+      setShowDraftBanner(false)
+    }
+  }
+
+  const discardDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY) } catch {}
+    setShowDraftBanner(false)
   }
 
   const handleMatrixLoaded = useCallback((entry) => {
@@ -278,6 +327,8 @@ export default function NewIncidentPage() {
 
       if (error) throw error
 
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+
       if (data.sped_compliance_required) {
         toast.success('Incident created. SPED compliance review required before placement.', { duration: 5000 })
       } else {
@@ -331,6 +382,22 @@ export default function NewIncidentPage() {
           ))}
         </div>
 
+        {/* Draft restore banner */}
+        {showDraftBanner && (
+          <div className="mb-4 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-sm text-orange-800">
+            <svg className="w-4 h-4 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <span className="flex-1">You have an unsaved draft. Restore it?</span>
+            <button onClick={handleRestoreDraft} className="font-semibold text-orange-700 hover:text-orange-900 underline">
+              Restore
+            </button>
+            <button onClick={discardDraft} className="text-orange-500 hover:text-orange-700 ml-1">
+              Discard
+            </button>
+          </div>
+        )}
+
         {/* Step content */}
         <Card>
           {/* Step 1: Select Student */}
@@ -371,6 +438,14 @@ export default function NewIncidentPage() {
           {step === 2 && (
             <div className="space-y-4">
               <CardTitle>Assign Consequence</CardTitle>
+
+              {/* Teacher restriction notice */}
+              {isTeacher && (
+                <AlertBanner variant="warning" title="DAEP & Expulsion Require Admin Referral">
+                  Teachers may not assign DAEP or expulsion directly. Select ISS, OSS, detention, or warning.
+                  For serious offenses, submit this referral and an administrator will assign the appropriate consequence.
+                </AlertBanner>
+              )}
 
               {/* SPED warning if selecting DAEP/expulsion */}
               {spedRequired && (

@@ -8,4 +8,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react-is'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react':    ['react', 'react-dom', 'react-router-dom', 'react-is', 'react-hot-toast'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-charts':   ['recharts'],
+          'vendor-export':   ['jspdf', 'jspdf-autotable', 'xlsx'],
+          'vendor-dates':    ['date-fns'],
+        },
+      },
+    },
+  },
 })
