@@ -19,7 +19,7 @@ export function useNavigatorReferrals(filters = {}) {
         .from('navigator_referrals')
         .select(`
           *,
-          students(id, first_name, last_name, grade_level),
+          students(id, first_name, last_name, grade_level, is_sped, is_504),
           campuses(id, name),
           reporter:profiles!navigator_referrals_reported_by_fkey(id, full_name),
           reviewer:profiles!navigator_referrals_reviewed_by_fkey(id, full_name),
@@ -66,7 +66,7 @@ export function useNavigatorPlacements(filters = {}) {
         .from('navigator_placements')
         .select(`
           *,
-          students(id, first_name, last_name, grade_level),
+          students(id, first_name, last_name, grade_level, is_sped, is_504),
           campuses(id, name),
           assigner:profiles!navigator_placements_assigned_by_fkey(id, full_name),
           notifier:profiles!navigator_placements_parent_notified_by_fkey(id, full_name),

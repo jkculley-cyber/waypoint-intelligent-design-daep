@@ -409,6 +409,19 @@ export default function NavigatorGoalsPage() {
 
   const currentWeek = weeksIntoYear(schoolYear)
 
+  // ── Campuses behind trajectory (>1.2× expected) ──
+  const behindCampuses = useMemo(() => {
+    if (!goals.length) return []
+    return goals.filter(goal => {
+      const campusPlacements = yearPlacements.filter(p => p.campus_id === goal.campus_id)
+      const issYTD = campusPlacements.filter(p => p.placement_type === 'iss').length
+      const ossYTD = campusPlacements.filter(p => p.placement_type === 'oss').length
+      const issTraj = expectedByWeek(goal.iss_baseline, goal.iss_reduction_pct, currentWeek)
+      const ossTraj = expectedByWeek(goal.oss_baseline, goal.oss_reduction_pct, currentWeek)
+      return (issTraj > 0 && issYTD / issTraj > 1.2) || (ossTraj > 0 && ossYTD / ossTraj > 1.2)
+    })
+  }, [goals, yearPlacements, currentWeek])
+
   // ── YOY chart data ──
   const yoyChartData = currentYear.map((cur, i) => {
     const prior = priorYear[i] || { iss: 0, oss: 0, total: 0 }
@@ -507,6 +520,21 @@ export default function NavigatorGoalsPage() {
       />
 
       <div className="p-6 space-y-6">
+
+        {/* ── Behind-trajectory alert banner ──────────────────────────────── */}
+        {behindCampuses.length > 0 && (
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+            <div>
+              <p className="text-sm font-semibold text-red-800">
+                {behindCampuses.length} campus{behindCampuses.length !== 1 ? 'es are' : ' is'} behind trajectory
+              </p>
+              <p className="text-xs text-red-700 mt-0.5">
+                {behindCampuses.map(g => g.campuses?.name || 'Unknown').join(', ')} — placements exceed 120% of expected week {currentWeek} target. Review interventions.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Year-Over-Year Chart ─────────────────────────────────────────── */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">

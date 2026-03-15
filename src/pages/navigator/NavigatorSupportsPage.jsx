@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
@@ -32,12 +32,25 @@ const STATUS_COLORS = {
 }
 
 export default function NavigatorSupportsPage() {
+  const { districtId } = useAuth()
   const [typeFilter, setTypeFilter] = useState('')
+  const [campusFilter, setCampusFilter] = useState('')
+  const [campuses, setCampuses] = useState([])
   const [showDrawer, setShowDrawer] = useState(false)
   const [editingSupport, setEditingSupport] = useState(null)
   const { supports, loading, refetch } = useNavigatorSupports()
 
-  const filtered = typeFilter ? supports.filter(s => s.support_type === typeFilter) : supports
+  useEffect(() => {
+    if (!districtId) return
+    supabase.from('campuses').select('id, name').eq('district_id', districtId).order('name')
+      .then(({ data }) => setCampuses(data || []))
+  }, [districtId])
+
+  const filtered = supports.filter(s => {
+    if (typeFilter && s.support_type !== typeFilter) return false
+    if (campusFilter && s.campus_id !== campusFilter) return false
+    return true
+  })
   const activeSupports = filtered.filter(s => s.status === 'active')
   const pastSupports = filtered.filter(s => s.status !== 'active')
 
@@ -57,21 +70,33 @@ export default function NavigatorSupportsPage() {
       />
 
       <div className="p-6 space-y-4">
-        {/* Type filter tabs */}
-        <div className="flex flex-wrap gap-2">
-          {SUPPORT_TYPES.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTypeFilter(t.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                typeFilter === t.key
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2">
+            {SUPPORT_TYPES.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTypeFilter(t.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  typeFilter === t.key
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <select
+            value={campusFilter}
+            onChange={e => setCampusFilter(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none focus:border-orange-400"
+          >
+            <option value="">All Campuses</option>
+            {campuses.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
         {/* Active supports */}

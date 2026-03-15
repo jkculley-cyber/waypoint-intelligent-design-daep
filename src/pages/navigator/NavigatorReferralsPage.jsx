@@ -227,7 +227,7 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
     if (q.length < 2) { setStudents([]); return }
     const { data } = await supabase
       .from('students')
-      .select('id, first_name, last_name, grade_level')
+      .select('id, first_name, last_name, grade_level, is_sped, is_504')
       .eq('district_id', districtId)
       .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
       .limit(8)
@@ -277,8 +277,10 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
       <div className="flex-1 bg-black/30" onClick={onClose} />
       <div className="w-full max-w-lg bg-white shadow-2xl overflow-y-auto flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 flex items-center flex-wrap gap-1.5">
             {isNew ? 'New Referral' : `Review — ${referral.students ? `${referral.students.first_name} ${referral.students.last_name}` : 'Referral'}`}
+            {!isNew && referral.students?.is_sped && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700">SPED</span>}
+            {!isNew && referral.students?.is_504 && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700">504</span>}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -292,9 +294,21 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Student *</label>
                 {selectedStudent ? (
-                  <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded-lg">
-                    <span className="text-sm font-medium text-gray-900">{selectedStudent.first_name} {selectedStudent.last_name}</span>
-                    <button onClick={() => { setSelectedStudent(null); setStudents([]) }} className="text-xs text-gray-400 hover:text-gray-600">Change</button>
+                  <div>
+                    <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                      <span className="text-sm font-medium text-gray-900">
+                        {selectedStudent.first_name} {selectedStudent.last_name}
+                        {selectedStudent.is_sped && <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700">SPED</span>}
+                        {selectedStudent.is_504 && <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700">504</span>}
+                      </span>
+                      <button onClick={() => { setSelectedStudent(null); setStudents([]) }} className="text-xs text-gray-400 hover:text-gray-600">Change</button>
+                    </div>
+                    {selectedStudent.is_sped && (
+                      <div className="mt-2 flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">
+                        <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                        <span><strong>SPED student</strong> — IDEA protections apply. If suspension (ISS/OSS) exceeds 10 cumulative days, an IEP/manifestation review is required before DAEP placement.</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="relative">

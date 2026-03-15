@@ -1,4 +1,5 @@
-import { useParams, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorStudentHistory } from '../../hooks/useNavigator'
@@ -20,6 +21,8 @@ const RISK_STYLES = {
 
 export default function NavigatorStudentPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const [showEscalateModal, setShowEscalateModal] = useState(false)
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
 
   if (loading) {
@@ -44,6 +47,25 @@ export default function NavigatorStudentPage() {
   const level = riskLevel || 'low'
   const riskStyle = RISK_STYLES[level]
 
+  // OSS count in last 90 days
+  const oss90 = placements.filter(p => {
+    if (p.placement_type !== 'oss') return false
+    const d = new Date(p.start_date)
+    return (Date.now() - d.getTime()) <= 90 * 24 * 60 * 60 * 1000
+  }).length
+
+  const handleEscalate = () => {
+    const params = new URLSearchParams({
+      student: id,
+      from: 'navigator',
+      risk: riskScore,
+      referrals: referrals.length,
+      oss_90d: oss90,
+    })
+    if (student?.is_sped) params.set('sped', '1')
+    navigate(`/incidents/new?${params.toString()}`)
+  }
+
   // Build chronological timeline from referrals, placements, AND supports
   const timelineItems = [
     ...referrals.map(r => ({ type: 'referral', date: r.referral_date, data: r })),
@@ -57,12 +79,12 @@ export default function NavigatorStudentPage() {
         title="Navigator — Student History"
         subtitle={student.first_name + ' ' + student.last_name}
         actions={
-          <Link
-            to={`/incidents/new?student=${id}`}
+          <button
+            onClick={() => setShowEscalateModal(true)}
             className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
           >
             Escalate to Waypoint DAEP →
-          </Link>
+          </button>
         }
       />
 
@@ -73,7 +95,11 @@ export default function NavigatorStudentPage() {
             {student.first_name?.charAt(0)}{student.last_name?.charAt(0)}
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-semibold text-gray-900">{student.first_name} {student.last_name}</h2>
+            <div className="flex items-center flex-wrap gap-2">
+              <h2 className="text-xl font-semibold text-gray-900">{student.first_name} {student.last_name}</h2>
+              {student.is_sped && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">SPED</span>}
+              {student.is_504 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">504</span>}
+            </div>
             <p className="text-sm text-gray-500 mt-1">
               Grade {student.grade_level || '—'} · {student.campuses?.name || '—'}
             </p>
@@ -213,6 +239,62 @@ export default function NavigatorStudentPage() {
           </div>
         </div>
       </div>
+
+      {/* Escalation confirmation modal */}
+      {showEscalateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowEscalateModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Escalate to Waypoint DAEP?</h2>
+            <p className="text-sm text-gray-500 mb-4">This will open a new DAEP incident pre-filled with this student's Navigator context.</p>
+
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-4">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Student</span>
+                <span className="font-medium text-gray-900">{student.first_name} {student.last_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Risk Score</span>
+                <span className={`font-semibold ${level === 'high' ? 'text-red-600' : level === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{riskScore} ({riskStyle.label})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Total Referrals</span>
+                <span className="font-medium text-gray-900">{referrals.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">OSS in last 90 days</span>
+                <span className="font-medium text-gray-900">{oss90}</span>
+              </div>
+              {(student.is_sped || student.is_504) && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Eligibility</span>
+                  <span className="font-medium">
+                    {student.is_sped && <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 mr-1">SPED</span>}
+                    {student.is_504 && <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700">504</span>}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {student.is_sped && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800 mb-4">
+                <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                <span><strong>SPED student</strong> — A Manifestation Determination Review (MDR) is required before DAEP placement. Ensure the IEP team has been notified.</span>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowEscalateModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+              <button
+                onClick={() => { setShowEscalateModal(false); handleEscalate() }}
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Continue to DAEP →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

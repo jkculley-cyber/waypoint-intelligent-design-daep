@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
@@ -14,13 +14,23 @@ const TABS = [
 ]
 
 export default function NavigatorPlacementsPage() {
+  const { districtId } = useAuth()
   const [activeTab, setActiveTab] = useState('active_iss')
+  const [campusFilter, setCampusFilter] = useState('')
+  const [campuses, setCampuses] = useState([])
   const [showDrawer, setShowDrawer] = useState(false)
   const [editingPlacement, setEditingPlacement] = useState(null)
+
+  useEffect(() => {
+    if (!districtId) return
+    supabase.from('campuses').select('id, name').eq('district_id', districtId).order('name')
+      .then(({ data }) => setCampuses(data || []))
+  }, [districtId])
 
   const filters = {
     placement_type: activeTab === 'history' ? '' : activeTab === 'active_iss' ? 'iss' : 'oss',
     active_only: activeTab !== 'history',
+    campus_id: campusFilter,
   }
   const { placements, loading, refetch } = useNavigatorPlacements(filters)
 
@@ -63,19 +73,31 @@ export default function NavigatorPlacementsPage() {
       />
 
       <div className="p-6 space-y-4">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Tabs + campus filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {TABS.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <select
+            value={campusFilter}
+            onChange={e => setCampusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-orange-400"
+          >
+            <option value="">All Campuses</option>
+            {campuses.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
         {/* Table */}
@@ -201,7 +223,7 @@ function NewPlacementDrawer({ onClose, onSaved }) {
     if (q.length < 2) { setStudents([]); return }
     const { data } = await supabase
       .from('students')
-      .select('id, first_name, last_name, grade_level')
+      .select('id, first_name, last_name, grade_level, is_sped, is_504')
       .eq('district_id', districtId)
       .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
       .limit(8)
@@ -211,6 +233,10 @@ function NewPlacementDrawer({ onClose, onSaved }) {
   const handleSave = async () => {
     if (!selectedStudent || !form.campus_id || !form.placement_type || !form.start_date) {
       setError('Student, campus, type, and start date are required.')
+      return
+    }
+    if (form.placement_type === 'oss' && !form.reentry_plan.trim()) {
+      setError('Re-entry plan is required for OSS placements.')
       return
     }
     setSaving(true); setError(null)
@@ -250,9 +276,21 @@ function NewPlacementDrawer({ onClose, onSaved }) {
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Student *</label>
             {selectedStudent ? (
-              <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded-lg">
-                <span className="text-sm font-medium text-gray-900">{selectedStudent.first_name} {selectedStudent.last_name}</span>
-                <button onClick={() => { setSelectedStudent(null); setStudents([]) }} className="text-xs text-gray-400">Change</button>
+              <div>
+                <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                  <span className="text-sm font-medium text-gray-900">
+                    {selectedStudent.first_name} {selectedStudent.last_name}
+                    {selectedStudent.is_sped && <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700">SPED</span>}
+                    {selectedStudent.is_504 && <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700">504</span>}
+                  </span>
+                  <button onClick={() => { setSelectedStudent(null); setStudents([]) }} className="text-xs text-gray-400">Change</button>
+                </div>
+                {selectedStudent.is_sped && (
+                  <div className="mt-2 flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">
+                    <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <span><strong>SPED student</strong> — IDEA protections apply. Track cumulative suspension days. 10+ days requires IEP review. MDR required before DAEP.</span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="relative">
@@ -318,8 +356,20 @@ function NewPlacementDrawer({ onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Re-entry Plan</label>
-            <textarea className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 resize-none" rows={2} value={form.reentry_plan} onChange={e => setForm(f => ({ ...f, reentry_plan: e.target.value }))} />
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Re-entry Plan {form.placement_type === 'oss' && <span className="text-red-500">*</span>}
+            </label>
+            <textarea
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none resize-none ${
+                form.placement_type === 'oss' && !form.reentry_plan
+                  ? 'border-amber-400 focus:border-amber-500'
+                  : 'border-gray-300 focus:border-orange-400'
+              }`}
+              rows={2}
+              placeholder={form.placement_type === 'oss' ? 'Required for OSS — describe conditions for student re-entry...' : 'Optional re-entry notes...'}
+              value={form.reentry_plan}
+              onChange={e => setForm(f => ({ ...f, reentry_plan: e.target.value }))}
+            />
           </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
@@ -365,6 +415,10 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
   }
 
   const handleSave = async () => {
+    if (placement.placement_type === 'oss' && !form.reentry_plan.trim()) {
+      setError('Re-entry plan is required for OSS placements.')
+      return
+    }
     setSaving(true); setError(null)
     const updates = {
       end_date: form.end_date || null,
