@@ -276,5 +276,21 @@ export function useIncidentActions() {
     return { data, error }
   }
 
-  return { createIncident, updateIncident, approveIncident, activateIncident, completeIncident }
+  const denyIncident = async (id, reason) => {
+    const { data, error } = await supabase
+      .from('incidents')
+      .update({
+        status: 'denied',
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        notes: reason ? `[DENIED] ${reason}` : null,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    return { data, error }
+  }
+
+  return { createIncident, updateIncident, approveIncident, activateIncident, completeIncident, denyIncident }
 }

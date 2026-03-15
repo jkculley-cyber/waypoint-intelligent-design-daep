@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import OrientationStudentForm from '../components/daep/OrientationStudentForm'
 import { useOrientationSchedule } from '../hooks/useDaepDashboard'
+import { useIncidentActions } from '../hooks/useIncidents'
 import { formatStudentName } from '../lib/utils'
 import { formatTime12h } from '../lib/orientationUtils'
 
@@ -13,6 +15,21 @@ export default function OrientationSchedulePage() {
   const { orientations, loading, refetch } = useOrientationSchedule(showPast)
   const navigate = useNavigate()
   const [selectedScheduling, setSelectedScheduling] = useState(null)
+  const [activatingId, setActivatingId] = useState(null)
+  const { activateIncident } = useIncidentActions()
+
+  const handleActivate = async (e, incidentId) => {
+    e.stopPropagation()
+    setActivatingId(incidentId)
+    const { error } = await activateIncident(incidentId)
+    setActivatingId(null)
+    if (error) {
+      toast.error('Failed to activate placement')
+    } else {
+      toast.success('Placement activated — student is now active in DAEP')
+      refetch()
+    }
+  }
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -224,8 +241,9 @@ export default function OrientationSchedulePage() {
                       <th className="px-4 py-2">Student</th>
                       <th className="px-4 py-2">ID</th>
                       <th className="px-4 py-2">Orientation Completed</th>
-                      <th className="px-4 py-2">Days Since Completion</th>
+                      <th className="px-4 py-2">Days Since</th>
                       <th className="px-4 py-2">Home Campus</th>
+                      <th className="px-4 py-2"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-amber-100">
@@ -234,6 +252,7 @@ export default function OrientationSchedulePage() {
                       const daysSince = row.orientation_completed_date
                         ? Math.max(0, Math.floor((Date.now() - new Date(row.orientation_completed_date + 'T00:00:00').getTime()) / 86400000))
                         : null
+                      const isActivating = activatingId === inc?.id
                       return (
                         <tr
                           key={row.id}
@@ -258,6 +277,17 @@ export default function OrientationSchedulePage() {
                           </td>
                           <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
                             {inc?.campus?.name || '—'}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            {inc?.id && (
+                              <button
+                                onClick={e => handleActivate(e, inc.id)}
+                                disabled={isActivating}
+                                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                {isActivating ? 'Activating…' : 'Activate Placement'}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       )

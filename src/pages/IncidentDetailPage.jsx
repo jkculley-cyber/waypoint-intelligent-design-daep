@@ -39,7 +39,7 @@ import {
 export default function IncidentDetailPage() {
   const { id } = useParams()
   const { incident, loading, refetch } = useIncident(id)
-  const { approveIncident, activateIncident, completeIncident } = useIncidentActions()
+  const { approveIncident, activateIncident, completeIncident, denyIncident } = useIncidentActions()
   const { hasRole, profile, districtId } = useAuth()
 
   // Fetch check-in count for this placement — hooks must be before any early return
@@ -62,6 +62,14 @@ export default function IncidentDetailPage() {
   }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
 
   const capacityInfo = useCapacityCount()
+
+  // Modal state — deny + complete-early confirmation
+  const [showDenyModal, setShowDenyModal] = useState(false)
+  const [denyReason, setDenyReason] = useState('')
+  const [denySubmitting, setDenySubmitting] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [earlyJustification, setEarlyJustification] = useState('')
+  const [completing, setCompleting] = useState(false)
 
   if (loading) return <PageLoader message="Loading incident..." />
   if (!incident) {
@@ -89,8 +97,11 @@ export default function IncidentDetailPage() {
   const mdrBlocked = mdrRequired && !mdrCleared
   // For DAEP incidents with approval chain, don't show the single approve button — the chain handles it
   const canApprove = hasRole(['admin', 'principal', 'ap']) && incident.status === 'submitted' && !hasDaepChain
+  const canDeny = hasRole(['admin', 'principal', 'ap']) && incident.status === 'submitted' && !hasDaepChain
   const canActivate = hasRole(['admin', 'principal', 'ap']) && incident.status === 'approved' && !mdrBlocked
   const canComplete = hasRole(['admin', 'principal', 'ap']) && incident.status === 'active'
+  const daysAssigned = incident.consequence_days || 0
+  const isEarlyComplete = daysAssigned > 0 && daysServed < daysAssigned
 
   const handleApprove = async () => {
     const { error } = await approveIncident(incident.id)
@@ -120,12 +131,36 @@ export default function IncidentDetailPage() {
     }
   }
 
-  const handleComplete = async () => {
+  const handleCompleteClick = () => {
+    setEarlyJustification('')
+    setShowCompleteModal(true)
+  }
+
+  const handleCompleteConfirm = async () => {
+    if (isEarlyComplete && !earlyJustification.trim()) return
+    setCompleting(true)
     const { error } = await completeIncident(incident.id)
+    setCompleting(false)
+    setShowCompleteModal(false)
     if (error) {
       toast.error('Failed to complete incident')
     } else {
       toast.success('Incident completed')
+      refetch()
+    }
+  }
+
+  const handleDenySubmit = async () => {
+    if (!denyReason.trim()) return
+    setDenySubmitting(true)
+    const { error } = await denyIncident(incident.id, denyReason.trim())
+    setDenySubmitting(false)
+    setShowDenyModal(false)
+    if (error) {
+      toast.error('Failed to deny incident')
+    } else {
+      toast.success('Incident denied')
+      setDenyReason('')
       refetch()
     }
   }
@@ -137,6 +172,11 @@ export default function IncidentDetailPage() {
         subtitle={`${offense?.title || 'Unknown Offense'} | ${formatDate(incident.incident_date)}`}
         actions={
           <div className="flex items-center gap-2">
+            {canDeny && (
+              <Button size="sm" variant="danger" onClick={() => { setDenyReason(''); setShowDenyModal(true) }}>
+                Deny
+              </Button>
+            )}
             {canApprove && (
               <Button size="sm" variant="success" onClick={handleApprove}>
                 Approve
@@ -148,7 +188,7 @@ export default function IncidentDetailPage() {
               </Button>
             )}
             {canComplete && (
-              <Button size="sm" variant="secondary" onClick={handleComplete}>
+              <Button size="sm" variant="secondary" onClick={handleCompleteClick}>
                 Mark Complete
               </Button>
             )}
@@ -424,6 +464,102 @@ export default function IncidentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Deny Incident Modal ─────────────────────────────────────────── */}
+      {showDenyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDenyModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Deny Incident</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              This will set the incident status to <strong>Denied</strong> and notify the submitter. A reason is required.
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Reason for Denial *</label>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                rows={4}
+                placeholder="Describe why this incident is being denied (insufficient evidence, wrong offense code, procedural issue, etc.)"
+                value={denyReason}
+                onChange={e => setDenyReason(e.target.value)}
+                autoFocus
+              />
+              {!denyReason.trim() && (
+                <p className="text-xs text-red-500 mt-1">Reason is required before denying.</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDenyModal(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDenySubmit}
+                disabled={!denyReason.trim() || denySubmitting}
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {denySubmitting ? 'Denying…' : 'Deny Incident'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mark Complete Confirmation Modal ───────────────────────────── */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCompleteModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Mark Incident Complete?</h2>
+            {isEarlyComplete ? (
+              <>
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-800 mb-4">
+                  <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                  <span>
+                    <strong>Early completion:</strong> Only <strong>{daysServed} of {daysAssigned} days</strong> served.
+                    A justification is required to complete this placement early.
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Justification for Early Completion *</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+                    rows={3}
+                    placeholder="e.g. Student successfully completed all program requirements early, parent request approved by principal, medical withdrawal..."
+                    value={earlyJustification}
+                    onChange={e => setEarlyJustification(e.target.value)}
+                    autoFocus
+                  />
+                  {!earlyJustification.trim() && (
+                    <p className="text-xs text-red-500 mt-1">Justification is required for early completion.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 mb-4">
+                <strong>{daysServed} of {daysAssigned} days</strong> served. This will mark the incident as completed and remove it from the active dashboard.
+              </p>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowCompleteModal(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteConfirm}
+                disabled={completing || (isEarlyComplete && !earlyJustification.trim())}
+                className="px-5 py-2 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {completing ? 'Completing…' : 'Confirm Complete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
