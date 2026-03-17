@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-17 (Session AK — Apex: pg_cron verified, sent walkthrough access fixed, recent observations on dashboard, trial banner suppressed for demo accounts, simplify fixes)
+> Last updated: 2026-03-17 (Session AL — Apex: trial lead capture, notify-new-trial edge function, saveProfile returns ID, simplify fixes)
 
 ---
 
@@ -155,6 +155,12 @@
 - clearpathedgroup.com updated — "Start Free 14-Day Trial" CTA, tagline copy
 - `/try` route added to App.jsx
 - Simplify fixes: removed `sent` state (derived from `obs.status`), parallelized Resend calls in both edge functions
+
+**Built Session AL:**
+- Trial lead capture — `notify-new-trial` edge function deployed: sets `trial_started_at`, notifies Kim instantly (name/school/district/city/trial dates), sends principal a welcome email from Kim with first-obs CTA
+- `saveProfile()` now returns inserted ID via `.select('id').single()` — eliminates separate SELECT query
+- `notify-new-trial` accepts only `principal_id`, fetches its own data from DB — removed 6-param sprawl
+- DB update + emails run in parallel via `Promise.all`
 
 **Built Session AK:**
 - pg_cron verified: morning brief firing daily (last run 2026-03-17, 3 principals, succeeded). Duplicate cron (jobid 2) removed. Drip email cron (jobid 3 → 4) confirmed active, fires 6 AM CST daily.
