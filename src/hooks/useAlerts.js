@@ -28,6 +28,7 @@ export function useAlerts(filters = {}) {
           campus:campuses(id, name),
           resolved_by_profile:profiles!resolved_by(id, full_name)
         `)
+        .not('student_id', 'is', null)
         .eq('district_id', districtId)
         .order('created_at', { ascending: false })
 
@@ -42,6 +43,8 @@ export function useAlerts(filters = {}) {
 
       if (fetchError) throw fetchError
       let results = data || []
+      // Filter out orphaned alerts whose student record no longer exists
+      results = results.filter(a => a.student !== null)
       // SPED-only scope: only show alerts for SPED/504 students
       if (filters._spedOnly) {
         results = results.filter(a => a.student?.is_sped || a.student?.is_504)

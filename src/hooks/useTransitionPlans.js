@@ -134,6 +134,26 @@ export function useTransitionPlan(id) {
 }
 
 /**
+ * Fetch all transition plans linked to a specific incident
+ */
+export function useTransitionPlansByIncident(incidentId) {
+  const [plans, setPlans] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!incidentId) { setLoading(false); return }
+    supabase
+      .from('transition_plans')
+      .select('id, status, plan_type, start_date, end_date, created_at')
+      .eq('incident_id', incidentId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setPlans(data || []); setLoading(false) })
+  }, [incidentId])
+
+  return { plans, loading }
+}
+
+/**
  * Transition plan CRUD actions
  */
 export function useTransitionPlanActions() {

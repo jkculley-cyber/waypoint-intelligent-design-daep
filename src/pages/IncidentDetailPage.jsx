@@ -15,6 +15,7 @@ import PolicyMismatchBanner from '../components/incidents/PolicyMismatchBanner'
 import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
 import PlacementScheduler from '../components/daep/PlacementScheduler'
 import { useIncident, useIncidentActions, useIncidentAuditLog } from '../hooks/useIncidents'
+import { useTransitionPlansByIncident, useTransitionPlanActions } from '../hooks/useTransitionPlans'
 import { useSeparations, useStudentSearch } from '../hooks/useSeparations'
 import { useCapacityCount } from '../hooks/useDaepDashboard'
 import { useAuth } from '../contexts/AuthContext'
@@ -63,6 +64,8 @@ export default function IncidentDetailPage() {
   }, [incident?.student?.id, incident?.consequence_start, incident?.consequence_end])
 
   const capacityInfo = useCapacityCount()
+  const { plans: linkedPlans, loading: plansLoading } = useTransitionPlansByIncident(incident?.id)
+  const { completePlan } = useTransitionPlanActions()
 
   // Modal state — deny + complete-early confirmation
   const [showDenyModal, setShowDenyModal] = useState(false)
@@ -495,6 +498,74 @@ export default function IncidentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Transition Plan ─────────────────────────────────────────────── */}
+      {isDaep && (
+        <div className="px-6 pb-4">
+          <Card>
+            <CardTitle>Transition Plan</CardTitle>
+            <div className="mt-4">
+              {plansLoading ? (
+                <p className="text-sm text-gray-400">Loading…</p>
+              ) : linkedPlans.length === 0 ? (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">No transition plan linked to this placement.</p>
+                  <Link
+                    to={`/plans/new?incident_id=${incident.id}`}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-orange-300 bg-orange-50 text-orange-700 text-sm font-semibold hover:bg-orange-100"
+                  >
+                    + Create Transition Plan
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {linkedPlans.map(plan => {
+                    const isPlanComplete = plan.status === 'completed'
+                    const statusColors = {
+                      draft: 'gray', active: 'blue', completed: 'green', failed: 'red'
+                    }
+                    return (
+                      <div key={plan.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50">
+                        <div>
+                          <Badge color={statusColors[plan.status] || 'gray'} size="sm" dot>
+                            {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                          </Badge>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {plan.plan_type || 'Transition Plan'}
+                            {plan.start_date && ` · Started ${new Date(plan.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                            {plan.end_date && ` · End ${new Date(plan.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!isPlanComplete && incident.status === 'completed' && hasRole(['admin', 'principal', 'ap']) && (
+                            <Button
+                              size="sm"
+                              variant="success"
+                              onClick={async () => {
+                                const { error } = await completePlan(plan.id)
+                                if (error) toast.error('Failed to complete plan')
+                                else toast.success('Transition plan marked complete')
+                              }}
+                            >
+                              Complete Plan
+                            </Button>
+                          )}
+                          <Link
+                            to={`/plans/${plan.id}`}
+                            className="text-sm text-orange-600 hover:underline font-medium"
+                          >
+                            View Plan →
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* ── Activity Log ────────────────────────────────────────────────── */}
       {auditLog.length > 0 && (

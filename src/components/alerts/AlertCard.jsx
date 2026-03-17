@@ -19,7 +19,17 @@ import {
 import {
   ALERT_LEVEL_LABELS,
   ALERT_TRIGGER_LABELS,
+  ALERT_TRIGGERS,
 } from '../../lib/constants'
+
+// Alert trigger types that require navigating to the incident for action
+const INCIDENT_ACTION_TRIGGERS = new Set([
+  'sped_cumulative_mdr',
+  'sped_manifestation_review_needed',
+  'compliance_overdue',
+  'placement_not_started',
+  'orientation_missed',
+])
 
 export default function AlertCard({ alert, onUpdate, expanded = false }) {
   const [isExpanded, setIsExpanded] = useState(expanded)
@@ -186,6 +196,15 @@ export default function AlertCard({ alert, onUpdate, expanded = false }) {
                 <Button size="sm" onClick={handleStartProgress}>
                   Start Review
                 </Button>
+              )}
+              {INCIDENT_ACTION_TRIGGERS.has(alert.trigger_type) && alert.incident_id && (
+                <Link
+                  to={`/incidents/${alert.incident_id}`}
+                  onClick={e => e.stopPropagation()}
+                  className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100"
+                >
+                  Go to Incident →
+                </Link>
               )}
               <Button
                 size="sm"
