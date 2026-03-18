@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resources — Clear Path Education Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple:#1a0a2e; --dark-bg:#0e0618; --mid-purple:#2d1054;
+    --purple:#6b2fa0; --purple-light:#9b5fd4; --amber:#e8862a;
+    --amber-light:#f5b050; --amber-glow:#ffcc66; --orange:#d4541a;
+    --text:#f0e6d3; --text-muted:rgba(240,230,211,0.6);
+    --border:rgba(232,134,42,0.2); --border-purple:rgba(107,47,160,0.35);
+    --card-bg:rgba(26,10,46,0.7);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Raleway',sans-serif;background:var(--dark-bg);color:var(--text);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 20%,rgba(107,47,160,.15) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(212,84,26,.1) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(26,10,46,1) 0%,#0e0618 100%);
+    pointer-events:none}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:200;background:rgba(14,6,24,.92);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:70px}
+  .nav-logo{display:flex;align-items:center;gap:14px;text-decoration:none}
+  .nav-logo img{height:44px;width:44px;object-fit:contain;border-radius:8px}
+  .nav-logo-text .name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;
+    background:linear-gradient(90deg,var(--amber-light),var(--amber-glow));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    line-height:1.2;display:block}
+  .nav-logo-text .sub{font-size:.6rem;font-weight:600;color:var(--text-muted);
+    letter-spacing:.12em;text-transform:uppercase;display:block}
+  .nav-back{font-size:.8rem;font-weight:600;color:var(--text-muted);text-decoration:none;
+    letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+  .nav-back:hover{color:var(--amber-light)}
+
+  /* PAGE */
+  .page{position:relative;z-index:1;padding:110px 5% 80px;max-width:1100px;margin:0 auto}
+  .page-eyebrow{display:inline-flex;align-items:center;gap:8px;
+    background:rgba(232,134,42,.1);border:1px solid rgba(232,134,42,.3);
+    color:var(--amber-light);padding:6px 16px;border-radius:4px;
+    font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+  .page-eyebrow span{width:5px;height:5px;background:var(--amber);border-radius:50%;box-shadow:0 0 8px var(--amber)}
+  .page-title{font-family:'Cinzel',serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;
+    line-height:1.15;margin-bottom:16px;
+    background:linear-gradient(160deg,var(--amber-glow) 0%,var(--amber-light) 50%,var(--text) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .page-sub{font-size:1rem;color:var(--text-muted);line-height:1.75;max-width:560px;margin-bottom:48px}
+
+  /* CATEGORY TABS */
+  .cat-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px}
+  .cat-tab{padding:10px 22px;border-radius:6px;font-weight:700;font-size:.8rem;
+    text-transform:uppercase;letter-spacing:.07em;cursor:pointer;border:none;
+    background:rgba(26,10,46,.6);color:var(--text-muted);
+    border:1px solid var(--border-purple);transition:all .2s}
+  .cat-tab:hover{border-color:var(--amber);color:var(--amber-light)}
+  .cat-tab.active{background:linear-gradient(135deg,var(--amber),var(--orange));
+    color:white;border-color:transparent;box-shadow:0 0 20px rgba(232,134,42,.35)}
+
+  /* RESOURCE GRID */
+  .resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+  .resource-card{background:var(--card-bg);border:1px solid var(--border-purple);
+    border-radius:14px;padding:28px;position:relative;overflow:hidden;
+    transition:transform .25s,border-color .25s,box-shadow .25s;backdrop-filter:blur(8px)}
+  .resource-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--amber),var(--orange))}
+  .resource-card:hover{transform:translateY(-5px);border-color:var(--amber);
+    box-shadow:0 0 30px rgba(232,134,42,.3)}
+  .resource-type-badge{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:12px;display:block}
+  .resource-card h3{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;
+    color:var(--text);margin-bottom:10px;line-height:1.4}
+  .resource-card p{font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:20px}
+  .resource-link{display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(135deg,var(--amber),var(--orange));
+    color:white;padding:10px 20px;border-radius:6px;font-weight:700;
+    font-size:.78rem;text-decoration:none;letter-spacing:.05em;text-transform:uppercase;
+    transition:transform .2s,box-shadow .2s}
+  .resource-link:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(232,134,42,.4)}
+
+  /* EMPTY STATE */
+  .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;
+    color:var(--text-muted);font-size:.95rem}
+  .empty-icon{font-size:2.5rem;margin-bottom:16px;opacity:.4}
+
+  /* LOADING */
+  .loading-state{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:.9rem}
+  .loading-dot{display:inline-block;animation:pulse 1.4s infinite}
+  .loading-dot:nth-child(2){animation-delay:.2s}
+  .loading-dot:nth-child(3){animation-delay:.4s}
+  @keyframes pulse{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+  /* FOOTER */
+  footer{position:relative;z-index:1;background:#060310;
+    border-top:1px solid var(--border-purple);padding:40px 5%;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+  footer p{font-size:.78rem;color:rgba(240,230,211,.25)}
+  footer a{font-size:.78rem;color:var(--text-muted);text-decoration:none}
+  footer a:hover{color:var(--amber-light)}
+
+  @media(max-width:768px){.page{padding:100px 5% 60px}.cat-tabs{gap:8px}.cat-tab{padding:8px 16px;font-size:.74rem}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Clear Path" />
+    <div class="nav-logo-text">
+      <span class="name">Clear Path Education Group</span>
+      <span class="sub">Pathways to Student Success</span>
+    </div>
+  </a>
+  <a class="nav-back" href="/">← Back to Home</a>
+</nav>
+
+<div class="page">
+  <div class="page-eyebrow"><span></span> Clear Path Education Group</div>
+  <h1 class="page-title">Resources</h1>
+  <p class="page-sub">Practical tools, guides, and professional learning materials for educators across Texas.</p>
+
+  <div class="cat-tabs" id="cat-tabs">
+    <button class="cat-tab" data-cat="all" onclick="setCategory('all', this)">All Resources</button>
+    <button class="cat-tab" data-cat="teacher" onclick="setCategory('teacher', this)">Teacher Resources</button>
+    <button class="cat-tab" data-cat="principal" onclick="setCategory('principal', this)">Principal Resources</button>
+    <button class="cat-tab" data-cat="ib" onclick="setCategory('ib', this)">IB Resources</button>
+    <button class="cat-tab" data-cat="pd" onclick="setCategory('pd', this)">Professional Development</button>
+  </div>
+
+  <div id="resource-container">
+    <div class="loading-state">
+      <div class="loading-dot">●</div>
+      <div class="loading-dot">●</div>
+      <div class="loading-dot">●</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 Clear Path Education Group, LLC · All rights reserved</p>
+  <a href="/">clearpathedgroup.com</a>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+const TYPE_LABELS = { link: 'Article / Link', pdf: 'PDF', video: 'Video', doc: 'Document', tool: 'Tool' };
+const CAT_LABELS = { teacher: 'Teacher', principal: 'Principal', ib: 'IB', pd: 'Professional Development' };
+
+let allResources = [];
+let currentCat = 'all';
+
+async function loadResources() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/resources?active=eq.true&order=display_order.asc,created_at.desc`, { headers: HEADERS });
+    allResources = r.ok ? await r.json() : [];
+  } catch(e) {
+    allResources = [];
+  }
+  renderResources();
+}
+
+function setCategory(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // Update URL param without reload
+  const url = new URL(window.location);
+  if (cat === 'all') url.searchParams.delete('cat'); else url.searchParams.set('cat', cat);
+  history.replaceState(null, '', url);
+  renderResources();
+}
+
+function renderResources() {
+  const filtered = currentCat === 'all' ? allResources : allResources.filter(r => r.category === currentCat);
+  const container = document.getElementById('resource-container');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="resource-grid"><div class="empty-state"><div class="empty-icon">📂</div>No resources in this category yet.<br><span style="font-size:.8rem;margin-top:8px;display:block">Check back soon — we're adding new materials regularly.</span></div></div>`;
+    return;
+  }
+  container.innerHTML = `<div class="resource-grid">${filtered.map(res => `
+    <div class="resource-card">
+      <span class="resource-type-badge">${TYPE_LABELS[res.resource_type] || res.resource_type} · ${CAT_LABELS[res.category] || res.category}</span>
+      <h3>${escHtml(res.title)}</h3>
+      ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
+      ${res.url ? `<a href="${escHtml(res.url)}" class="resource-link" target="_blank" rel="noopener">View Resource →</a>` : ''}
+    </div>`).join('')}</div>`;
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// On load: read ?cat= param and activate tab
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('cat') || 'all';
+  currentCat = cat;
+  const tab = document.querySelector(`.cat-tab[data-cat="${cat}"]`);
+  if (tab) tab.classList.add('active');
+  else document.querySelector('.cat-tab[data-cat="all"]').classList.add('active');
+  loadResources();
+});
+</script>
+</body>
+</html>

@@ -81,6 +81,33 @@
   }
   .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(232,134,42,0.5); }
 
+  /* RESOURCES DROPDOWN */
+  .nav-has-dropdown { position: relative; }
+  .nav-dropdown {
+    display: none; position: absolute; top: calc(100% + 10px); left: 50%;
+    transform: translateX(-50%);
+    background: rgba(14,6,24,0.98); border: 1px solid var(--border);
+    border-radius: 8px; min-width: 230px; list-style: none;
+    padding: 6px 0; z-index: 300;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+    backdrop-filter: blur(16px);
+  }
+  .nav-has-dropdown:hover .nav-dropdown { display: block; }
+  .nav-dropdown::before {
+    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 10px; height: 10px; background: rgba(14,6,24,0.98);
+    border-left: 1px solid var(--border); border-top: 1px solid var(--border);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .nav-dropdown li a {
+    display: block; padding: 10px 20px;
+    font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-dropdown li a:hover { color: var(--amber-light); background: rgba(232,134,42,0.08); }
+  .nav-dropdown li:not(:last-child) a { border-bottom: 1px solid rgba(255,255,255,0.04); }
+
   /* HERO */
   .hero {
     position: relative; z-index: 1;
@@ -523,6 +550,15 @@
     <li><a href="#compass">Compass</a></li>
     <li><a href="#cornerstone">Apex</a></li>
     <li><a href="#about">About</a></li>
+    <li class="nav-has-dropdown">
+      <a href="/resources.html">Resources ▾</a>
+      <ul class="nav-dropdown">
+        <li><a href="/resources.html?cat=teacher">Teacher Resources</a></li>
+        <li><a href="/resources.html?cat=principal">Principal Resources</a></li>
+        <li><a href="/resources.html?cat=ib">IB Resources</a></li>
+        <li><a href="/resources.html?cat=pd">Professional Development</a></li>
+      </ul>
+    </li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <a href="#contact" class="nav-cta">Connect With Us</a>
