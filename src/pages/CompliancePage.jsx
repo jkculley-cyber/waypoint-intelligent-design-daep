@@ -29,26 +29,24 @@ export default function CompliancePage() {
 
   const { checklists: allChecklists, loading } = useComplianceChecklists(filters)
 
-  // Stats — mutually exclusive categories
-  // Priority: Blocked > Overridden > Completed > In Progress
-  const isBlocked = c => c.placement_blocked && !c.block_overridden
-  const isOverridden = c => c.block_overridden
-  const isCompleted = c => !isBlocked(c) && !isOverridden(c) && c.status === 'completed'
-  const isInProgress = c => !isBlocked(c) && !isOverridden(c) && c.status !== 'completed'
+  // Determine each checklist's display category (mutually exclusive)
+  // Priority: Overridden > Blocked > Completed > In Progress
+  function getCategory(c) {
+    if (c.block_overridden) return 'overridden'
+    if (c.placement_blocked) return 'blocked'
+    if (c.status === 'completed') return 'completed'
+    return 'in_progress'
+  }
 
-  const blocked = allChecklists.filter(isBlocked).length
-  const inProgress = allChecklists.filter(isInProgress).length
-  const completed = allChecklists.filter(isCompleted).length
-  const overridden = allChecklists.filter(isOverridden).length
+  const blocked = allChecklists.filter(c => getCategory(c) === 'blocked').length
+  const inProgress = allChecklists.filter(c => getCategory(c) === 'in_progress').length
+  const completed = allChecklists.filter(c => getCategory(c) === 'completed').length
+  const overridden = allChecklists.filter(c => getCategory(c) === 'overridden').length
 
   // Client-side filter based on which stat card is active
   const checklists = useMemo(() => {
-    if (!activeCard) return allChecklists
-    if (activeCard === 'blocked') return allChecklists.filter(isBlocked)
-    if (activeCard === 'in_progress') return allChecklists.filter(isInProgress)
-    if (activeCard === 'completed') return allChecklists.filter(isCompleted)
-    if (activeCard === 'overridden') return allChecklists.filter(isOverridden)
-    return allChecklists
+    if (!activeCard || activeCard === 'all') return allChecklists
+    return allChecklists.filter(c => getCategory(c) === activeCard)
   }, [allChecklists, activeCard])
 
   const columns = [
@@ -120,24 +118,12 @@ export default function CompliancePage() {
       key: 'status',
       header: 'Status',
       render: (val, row) => {
-        if (row.block_overridden) {
-          return <Badge color="yellow" size="sm" dot>Overridden</Badge>
-        }
-        const colors = {
-          incomplete: 'red',
-          in_progress: 'yellow',
-          completed: 'green',
-          waived: 'gray',
-        }
-        const labels = {
-          incomplete: 'Blocked',
-          in_progress: 'In Progress',
-          completed: 'Cleared',
-          waived: 'Waived',
-        }
+        const cat = getCategory(row)
+        const colors = { blocked: 'red', in_progress: 'yellow', completed: 'green', overridden: 'orange' }
+        const labels = { blocked: 'Blocked', in_progress: 'In Progress', completed: 'Cleared', overridden: 'Overridden' }
         return (
-          <Badge color={colors[val] || 'gray'} size="sm" dot>
-            {labels[val] || val}
+          <Badge color={colors[cat] || 'gray'} size="sm" dot>
+            {labels[cat] || val}
           </Badge>
         )
       },
@@ -211,7 +197,8 @@ export default function CompliancePage() {
 
       <div className="p-3 md:p-6">
         {/* Stats — click to filter table */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <StatCard label="All Students" value={allChecklists.length} color="gray" active={!activeCard || activeCard === 'all'} onClick={() => setActiveCard('')} />
           <StatCard label="Blocked Placements" value={blocked} color="red" active={activeCard === 'blocked'} onClick={() => setActiveCard(activeCard === 'blocked' ? '' : 'blocked')} />
           <StatCard label="In Progress" value={inProgress} color="yellow" active={activeCard === 'in_progress'} onClick={() => setActiveCard(activeCard === 'in_progress' ? '' : 'in_progress')} />
           <StatCard label="Completed" value={completed} color="green" active={activeCard === 'completed'} onClick={() => setActiveCard(activeCard === 'completed' ? '' : 'completed')} />
@@ -242,18 +229,21 @@ export default function CompliancePage() {
 
 function StatCard({ label, value, color, active, onClick }) {
   const bgColors = {
+    gray: 'bg-gray-50 border-gray-200',
     red: 'bg-red-50 border-red-200',
     yellow: 'bg-yellow-50 border-yellow-200',
     green: 'bg-green-50 border-green-200',
     orange: 'bg-orange-50 border-orange-200',
   }
   const activeRings = {
+    gray: 'ring-2 ring-gray-400 ring-offset-2',
     red: 'ring-2 ring-red-400 ring-offset-2',
     yellow: 'ring-2 ring-yellow-400 ring-offset-2',
     green: 'ring-2 ring-green-400 ring-offset-2',
     orange: 'ring-2 ring-orange-400 ring-offset-2',
   }
   const textColors = {
+    gray: 'text-gray-700',
     red: 'text-red-700',
     yellow: 'text-yellow-700',
     green: 'text-green-700',
