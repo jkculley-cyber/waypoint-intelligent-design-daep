@@ -571,6 +571,38 @@ function renderProducts() {
 }
 
 function renderProductCard(p) {
+  const hasImages = p.images && p.images.length > 0;
+  const hasSheets = p.preview && p.preview.length > 0;
+
+  let previewHtml = '';
+  if (hasImages || hasSheets) {
+    // If product has images, show preview section open by default. Otherwise, toggle.
+    const openClass = hasImages ? ' open' : '';
+    previewHtml += `<div class="pc-preview${openClass}" id="preview-${p.id}">`;
+
+    if (hasImages) {
+      previewHtml += `<h4>Product Preview — click to enlarge</h4>
+      <div class="preview-gallery">
+        ${p.images.map((img, i) => `<div class="preview-img-wrap" onclick="openLightbox('${p.id}',${i})">
+          <img src="${esc(img.src)}" alt="${esc(img.label)}" loading="lazy">
+          <div class="preview-img-label">${esc(img.label)}</div>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    if (hasSheets) {
+      previewHtml += `<h4>What's Inside — Sheet by Sheet</h4>
+      <div class="pc-preview-grid">
+        ${p.preview.map(s => `<div class="pc-preview-sheet">
+          <div class="sheet-name">${esc(s.name)}</div>
+          <div class="sheet-desc">${esc(s.desc)}</div>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    previewHtml += `</div>`;
+  }
+
   return `<div class="product-card" id="card-${p.id}">
     <div class="pc-layout">
       <div class="pc-main">
@@ -583,26 +615,11 @@ function renderProductCard(p) {
       <div class="pc-sidebar">
         <span class="pc-price">$${p.price}</span>
         <button class="pc-buy" onclick="openCheckout('${p.id}')">Buy Now →</button>
-        <button class="pc-preview-btn" id="preview-btn-${p.id}" onclick="togglePreview('${p.id}')">Preview What's Inside ▾</button>
+        ${!hasImages ? `<button class="pc-preview-btn" id="preview-btn-${p.id}" onclick="togglePreview('${p.id}')">Preview What's Inside ▾</button>` : ''}
         <div class="pc-note">Instant delivery to your email.<br>Excel + Google Sheets ready.</div>
       </div>
     </div>
-    ${(p.images || p.preview) ? `<div class="pc-preview" id="preview-${p.id}">
-      ${p.images ? `<h4>Product Preview</h4>
-      <div class="preview-gallery">
-        ${p.images.map((img, i) => `<div class="preview-img-wrap" onclick="openLightbox('${p.id}',${i})">
-          <img src="${esc(img.src)}" alt="${esc(img.label)}" loading="lazy">
-          <div class="preview-img-label">${esc(img.label)}</div>
-        </div>`).join('')}
-      </div>` : ''}
-      <h4>What's Inside — Sheet by Sheet</h4>
-      <div class="pc-preview-grid">
-        ${(p.preview||[]).map(s => `<div class="pc-preview-sheet">
-          <div class="sheet-name">${esc(s.name)}</div>
-          <div class="sheet-desc">${esc(s.desc)}</div>
-        </div>`).join('')}
-      </div>
-    </div>` : ''}
+    ${previewHtml}
   </div>`;
 }
 
