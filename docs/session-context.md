@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-19 (Session AO — TPT calendar mapping, product file hosting, ops audit, Admin Command Toolkit TPT-ready, listing copy domain fix)
+> Last updated: 2026-03-19 (Session AP — store page real spreadsheet previews, resources table, checkout modal, ops Chart Paper linkify)
 
 ---
 
@@ -104,11 +104,11 @@
 
 ## Next Session Priority
 
-1. **Post Admin Command Toolkit to TPT** — listing copy ready (`TPT/TpT-Listing-Copy-All-Products-CORRECTED.txt`, Listing 6). Only blocker: preview images need domain fix in Canva (`clearpatheg.com` → `clearpathedgroup.com`).
-2. **Fix remaining TPT product xlsx files** — DAEP Tracker, Navigator, Meridian likely have wrong domains (only Admin Toolkit fixed so far).
-3. **Navigator MVP** — Disproportionality by demographics, SIS import mappers, real-time alerts.
-4. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
-5. **Resources table** — create `resources` table in ops Supabase.
+1. **Waypoint development** — user's stated next focus.
+2. **Navigator MVP** — Disproportionality by demographics, SIS import mappers, real-time alerts.
+3. **Fix remaining TPT product xlsx files** — DAEP Tracker, Navigator, Meridian likely have wrong domains (only Admin Toolkit fixed so far).
+4. **Stripe Payment Links** — `STRIPE_LINKS` in store.html needs real URLs.
+5. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
 
 ---
 
