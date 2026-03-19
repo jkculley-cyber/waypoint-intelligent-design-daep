@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-19 (Session AP — store page real spreadsheet previews, resources table, checkout modal, ops Chart Paper linkify)
+> Last updated: 2026-03-19 (Session AQ — DAEP campus picker, clickable stat cards, Apex OTP auth fix, email templates)
 
 ---
 
@@ -12,7 +12,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–058 (production). Migration 058: `incident_audit_log` table with RLS.
+- **Migrations applied:** 001–058 (production). Migration 058: `incident_audit_log` table with RLS. Migration 059 written but **NOT YET APPLIED** (`daep_campus_id` on incidents).
 - **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 28 placements (6 completed + 2 active + 20 prior year), 6 supports, 3 campus goals seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). 2 active placements (Marcus OSS, DeShawn ISS — no end_date) power the Active ISS/Active OSS tabs. `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -104,11 +104,14 @@
 
 ## Next Session Priority
 
-1. **Waypoint development** — user's stated next focus.
-2. **Navigator MVP** — Disproportionality by demographics, SIS import mappers, real-time alerts.
-3. **Fix remaining TPT product xlsx files** — DAEP Tracker, Navigator, Meridian likely have wrong domains (only Admin Toolkit fixed so far).
-4. **Stripe Payment Links** — `STRIPE_LINKS` in store.html needs real URLs.
-5. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
+1. **Apply migration 059** — `daep_campus_id` column on incidents (SQL Editor). Required for DAEP campus picker.
+2. **Refresh Supabase PAT** — current token expired. Run `npx supabase login` for edge function deploys.
+3. **Verify Apex auth flow end-to-end** — confirm new users receive 6-digit code and can sign in.
+4. **Waypoint development** — user's stated next focus.
+5. **Navigator MVP** — Disproportionality by demographics, SIS import mappers, real-time alerts.
+6. **Fix remaining TPT product xlsx files** — DAEP Tracker, Navigator, Meridian likely have wrong domains (only Admin Toolkit fixed so far).
+7. **Stripe Payment Links** — `STRIPE_LINKS` in store.html needs real URLs.
+8. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
 
 ---
 
@@ -140,7 +143,7 @@
 - **Repo:** `jkculley-cyber/clearpath-apex` (branch: master)
 - **Supabase ref:** `jvjsotlyvrzhsbgcsdfw` (separate project — different auth pool from Waypoint)
 - **DB password:** `ApexClearPath2025!`
-- **Auth:** Magic link only, Resend SMTP configured
+- **Auth:** OTP code entry (6-digit) — magic link kept as fallback. Resend SMTP configured
 - **Migrations applied:** 001 (core schema), 002 (pg_cron morning brief scheduler) + `marketing_sends` table (SQL Editor)
 - **Edge Functions deployed:** `transcribe-observation`, `generate-coaching-draft`, `send-observation-feedback`, `generate-morning-brief`, `send-marketing-blast`, `send-welcome-email`
 - **Secrets set:** `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`
