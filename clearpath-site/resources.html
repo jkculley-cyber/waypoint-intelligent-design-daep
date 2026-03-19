@@ -130,7 +130,6 @@
 
   <div class="cat-tabs" id="cat-tabs">
     <button class="cat-tab" data-cat="all" onclick="setCategory('all', this)">All Resources</button>
-    <button class="cat-tab" data-cat="tpt" onclick="setCategory('tpt', this)">TpT Store Products</button>
     <button class="cat-tab" data-cat="teacher" onclick="setCategory('teacher', this)">Teacher Resources</button>
     <button class="cat-tab" data-cat="principal" onclick="setCategory('principal', this)">Principal Resources</button>
     <button class="cat-tab" data-cat="ib" onclick="setCategory('ib', this)">IB Resources</button>
@@ -191,20 +190,44 @@ function renderResources() {
     return;
   }
   container.innerHTML = `<div class="resource-grid">${filtered.map(res => {
-    const isTpt = res.category === 'tpt';
-    const isBundle = isTpt && /bundle/i.test(res.title);
-    const cta = isTpt ? 'View on TpT →' : 'View Resource →';
+    const isProduct = res.price && res.price.startsWith('$');
+    const isBundle = isProduct && /bundle/i.test(res.title);
+    const storeId = isProduct ? titleToStoreId(res.title) : '';
+    const cta = isProduct ? 'View Product →' : 'View Resource →';
+    const href = isProduct ? '/store.html#' + storeId : escHtml(res.url);
     return `<div class="resource-card${isBundle ? ' bundle' : ''}">
-      <span class="resource-type-badge">${isTpt ? 'TpT Store' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
+      <span class="resource-type-badge">${isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
       <h3>${escHtml(res.title)}${res.price ? ` <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:var(--amber);margin-left:6px">${escHtml(res.price)}</span>` : ''}</h3>
       ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
-      ${res.url ? `<a href="${escHtml(res.url)}" class="resource-link" target="_blank" rel="noopener">${cta}</a>` : ''}
+      ${href ? `<a href="${href}" class="resource-link"${isProduct ? '' : ' target="_blank" rel="noopener"'}>${cta}</a>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
 
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Maps resource titles to store.html product IDs for deep linking
+function titleToStoreId(title) {
+  const map = {
+    "Administrator's Command Toolkit": 'command-toolkit',
+    'DAEP Student Tracker': 'daep-tracker',
+    'ISS Engagement': 'iss-tracker',
+    'TEC Consequence': 'tec-matrix',
+    'Navigator': 'navigator-tracker',
+    'Meridian': 'meridian-sped',
+    'Investigation Templates': 'investigation-templates',
+    'Digital Investigation': 'digital-intake',
+    'DAEP & Discipline Complete': 'bundle-daep',
+    'Behavior Intervention System': 'bundle-behavior',
+    "Administrator's Investigation Kit": 'bundle-investigation',
+    'Campus Leadership Complete': 'bundle-flagship',
+  };
+  for (const [key, id] of Object.entries(map)) {
+    if (title.includes(key)) return id;
+  }
+  return '';
 }
 
 // On load: read ?cat= param and activate tab
