@@ -659,7 +659,7 @@ export function useDaepEnrollmentStats() {
         let query = supabase
           .from('incidents')
           .select(`
-            id, status,
+            id, status, daep_campus_id,
             student:students(id, grade_level, is_sped, is_504, is_ell,
               is_homeless, is_foster_care, is_military_connected, is_gifted)
           `)
@@ -710,6 +710,16 @@ export function useDaepEnrollmentStats() {
           Object.keys(counts).forEach(k => { target[k] += counts[k] })
         })
 
+        // Per-campus breakdown
+        const byCampus = {}
+        rows.forEach(r => {
+          const cid = r.daep_campus_id || 'unassigned'
+          if (!byCampus[cid]) byCampus[cid] = { occupied: 0, reserved: 0, total: 0 }
+          byCampus[cid].total++
+          if (r.status === 'active') byCampus[cid].occupied++
+          if (r.status === 'approved') byCampus[cid].reserved++
+        })
+
         // District-wide sub-pop totals (active + reserved)
         const subPopTotals = rows.reduce((acc, r) => {
           const s = r.student
@@ -728,6 +738,7 @@ export function useDaepEnrollmentStats() {
           reserved,
           byGrade,
           byLevel: { middle, high, elementary },
+          byCampus,
           subPopTotals,
           total: rows.length,
         })

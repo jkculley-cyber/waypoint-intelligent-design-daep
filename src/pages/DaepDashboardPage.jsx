@@ -18,6 +18,7 @@ import {
   usePendingPlacementStart,
   useDaepEnrollmentStats,
 } from '../hooks/useDaepDashboard'
+import { useCampuses } from '../hooks/useCampuses'
 import { useAuth } from '../contexts/AuthContext'
 import { useReturningThisWeek } from '../hooks/useReentry'
 import CampusReceptionScoreCard from '../components/reentry/CampusReceptionScoreCard'
@@ -69,6 +70,7 @@ export default function DaepDashboardPage() {
         <div className="p-6 space-y-6">
           <CapacityWarningBanner />
           <SummaryCards />
+          <CapacityTrackerWidget />
           <ReturningThisWeekWidget />
           <ActiveEnrollmentsTable />
           <ApprovalFlowTable />
@@ -103,29 +105,24 @@ function SummaryCards() {
   }
 
   const cards = [
-    { label: 'Active Enrolled', value: stats?.activeEnrollments, color: 'text-orange-600', href: null },
-    { label: 'Pending Placement', value: stats?.pendingPlacements, color: 'text-orange-600', href: null },
-    { label: 'Completed YTD', value: stats?.completedYtd, color: 'text-green-600', href: null },
+    { label: 'Active Enrolled', value: stats?.activeEnrollments, color: 'text-orange-600', href: '/incidents?status=active&consequence=daep' },
+    { label: 'Pending Placement', value: stats?.pendingPlacements, color: 'text-orange-600', href: '/incidents?status=submitted,under_review&consequence=daep' },
+    { label: 'Completed YTD', value: stats?.completedYtd, color: 'text-green-600', href: '/incidents?status=completed&consequence=daep' },
     { label: 'Compliance Holds', value: stats?.complianceHolds, color: 'text-red-600', href: '/compliance' },
   ]
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {cards.map(card => {
-        const content = (
-          <div className={`bg-white border border-gray-200 rounded-lg px-4 py-3 ${card.href ? 'hover:border-orange-300 hover:shadow-md transition-all cursor-pointer' : ''}`}>
+      {cards.map(card => (
+        <Link key={card.label} to={card.href} className="block">
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer">
             <p className="text-xs text-gray-500 truncate">{card.label}</p>
             <p className={`text-2xl font-bold mt-0.5 ${card.color}`}>
               {card.value ?? '--'}
             </p>
           </div>
-        )
-        return card.href ? (
-          <Link key={card.label} to={card.href} className="block">{content}</Link>
-        ) : (
-          <div key={card.label}>{content}</div>
-        )
-      })}
+        </Link>
+      ))}
     </div>
   )
 }
@@ -1023,20 +1020,17 @@ function SubPopulationCharts() {
 // =================== CAPACITY WARNING BANNER ===================
 
 function CapacityWarningBanner() {
-  const { district } = useAuth()
   const { stats, loading } = useDaepEnrollmentStats()
+  const { campuses, loading: campusesLoading } = useCampuses()
 
-  const capacity = district?.settings?.daep_capacity || null
-  if (!capacity || loading) return null
+  if (loading || campusesLoading) return null
 
-  const occupied = stats?.occupied?.length ?? 0
-  const reserved = stats?.reserved?.length ?? 0
-  const committed = occupied + reserved
-  const total = capacity.mode === 'total'
-    ? capacity.total
-    : (capacity.by_level?.middle || 0) + (capacity.by_level?.high || 0)
+  const daepCampuses = campuses.filter(c => c.campus_type === 'daep')
+  const totalSeats = daepCampuses.reduce((sum, c) => sum + (c.settings?.daep_seats || 0), 0)
+  if (!totalSeats) return null
 
-  if (!total || committed <= total) return null
+  const committed = (stats?.occupied?.length ?? 0) + (stats?.reserved?.length ?? 0)
+  if (committed <= totalSeats) return null
 
   return (
     <div className="flex items-center gap-3 bg-red-50 border border-red-300 rounded-lg px-4 py-3">
@@ -1045,10 +1039,10 @@ function CapacityWarningBanner() {
       </svg>
       <div className="flex-1">
         <p className="text-sm font-semibold text-red-800">
-          DAEP Over Capacity — {committed} committed of {total} total seats
+          DAEP Over Capacity — {committed} committed of {totalSeats} total seats
         </p>
         <p className="text-xs text-red-600 mt-0.5">
-          New placements should be paused. Review the Analytics tab for a full capacity breakdown.
+          New placements should be paused. Review the capacity tracker below for a per-campus breakdown.
         </p>
       </div>
     </div>
@@ -1058,31 +1052,22 @@ function CapacityWarningBanner() {
 // =================== CAPACITY TRACKER WIDGET ===================
 
 function CapacityTrackerWidget() {
-  const { district, districtId, profile } = useAuth()
+  const { districtId, profile } = useAuth()
   const { stats, loading } = useDaepEnrollmentStats()
+  const { campuses, loading: campusesLoading } = useCampuses()
   const [modalOpen, setModalOpen] = useState(false)
 
-  const capacity = district?.settings?.daep_capacity || null
   const canEdit = ['admin', 'principal', 'waypoint_admin'].includes(profile?.role)
+  const daepCampuses = campuses.filter(c => c.campus_type === 'daep')
+  const byCampus = stats?.byCampus || {}
 
+  // District totals
   const occupied = stats?.occupied?.length ?? 0
   const reserved = stats?.reserved?.length ?? 0
   const committed = occupied + reserved
-
-  const getCapacityNumbers = () => {
-    if (!capacity) return null
-    if (capacity.mode === 'total') {
-      return { total: capacity.total, middleTotal: null, highTotal: null }
-    }
-    return {
-      total: (capacity.by_level?.middle || 0) + (capacity.by_level?.high || 0),
-      middleTotal: capacity.by_level?.middle || 0,
-      highTotal: capacity.by_level?.high || 0,
-    }
-  }
-
-  const cap = getCapacityNumbers()
-  const overCapacity = cap ? committed > cap.total : false
+  const totalSeats = daepCampuses.reduce((sum, c) => sum + (c.settings?.daep_seats || 0), 0)
+  const anyConfigured = daepCampuses.some(c => c.settings?.daep_seats > 0)
+  const overCapacity = anyConfigured && committed > totalSeats
 
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden">
@@ -1093,45 +1078,38 @@ function CapacityTrackerWidget() {
             onClick={() => setModalOpen(true)}
             className="text-xs text-orange-100 hover:text-white underline"
           >
-            {capacity ? 'Edit Capacity' : 'Set Up Capacity'}
+            {anyConfigured ? 'Edit Capacity' : 'Set Up Capacity'}
           </button>
         )}
       </div>
 
       <div className="p-4 bg-white">
-        {loading ? (
+        {(loading || campusesLoading) ? (
           <div className="flex justify-center py-4"><LoadingSpinner /></div>
-        ) : !capacity ? (
+        ) : daepCampuses.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm text-gray-500">No capacity configured.</p>
-            {canEdit && (
-              <button
-                onClick={() => setModalOpen(true)}
-                className="mt-2 text-sm text-orange-600 hover:underline font-medium"
-              >
-                Set Up Capacity
-              </button>
-            )}
+            <p className="text-sm text-gray-500">No DAEP campuses configured.</p>
+            <p className="text-xs text-gray-400 mt-1">Add a campus with type "DAEP" in Settings → Campuses.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Counters */}
+            {/* District totals */}
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-orange-600">{occupied}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Occupied (Active)</p>
+                <p className="text-xs text-gray-500 mt-0.5">Active</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-amber-500">{reserved}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Reserved (Approved)</p>
+                <p className="text-xs text-gray-500 mt-0.5">Approved</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-gray-700">{committed}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Total Committed</p>
+                <p className="text-xs text-gray-500 mt-0.5">Committed</p>
               </div>
               <div className="text-center">
                 <p className={`text-2xl font-bold ${overCapacity ? 'text-red-600' : 'text-green-600'}`}>
-                  {cap.total - committed}
+                  {anyConfigured ? totalSeats - committed : '—'}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Remaining</p>
               </div>
@@ -1142,33 +1120,55 @@ function CapacityTrackerWidget() {
                 <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
-                <p className="text-xs text-red-700 font-medium">Over capacity — committed seats exceed configured total</p>
+                <p className="text-xs text-red-700 font-medium">Over capacity — committed seats exceed total available</p>
               </div>
             )}
 
-            {/* Progress bar(s) */}
-            {capacity.mode === 'total' ? (
-              <CapacityBar occupied={occupied} reserved={reserved} total={cap.total} label={`${committed} of ${cap.total} seats committed`} />
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-600 mb-1">Middle School (6–8) — {cap.middleTotal} seats</p>
-                  <CapacityBar
-                    occupied={stats?.byLevel?.middle?.occupied ?? 0}
-                    reserved={stats?.byLevel?.middle?.reserved ?? 0}
-                    total={cap.middleTotal}
-                  />
+            {/* Per-campus rows */}
+            <div className="space-y-3">
+              {daepCampuses.map(campus => {
+                const seats = campus.settings?.daep_seats || 0
+                const campusStats = byCampus[campus.id] || { occupied: 0, reserved: 0, total: 0 }
+                const unassigned = byCampus['unassigned'] || { occupied: 0, reserved: 0, total: 0 }
+                const campusCommitted = campusStats.occupied + campusStats.reserved
+                const campusOver = seats > 0 && campusCommitted > seats
+
+                return (
+                  <div key={campus.id} className={`rounded-lg border p-3 ${campusOver ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-gray-900">{campus.name}</p>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span><strong className="text-orange-600">{campusStats.occupied}</strong> active</span>
+                        <span><strong className="text-amber-500">{campusStats.reserved}</strong> approved</span>
+                        <span>
+                          {seats > 0
+                            ? <><strong className={campusOver ? 'text-red-600' : 'text-green-600'}>{seats - campusCommitted}</strong> of {seats} remaining</>
+                            : <span className="text-gray-400 italic">No capacity set</span>
+                          }
+                        </span>
+                      </div>
+                    </div>
+                    {seats > 0 && (
+                      <CapacityBar occupied={campusStats.occupied} reserved={campusStats.reserved} total={seats} />
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Unassigned students */}
+              {(byCampus['unassigned']?.total > 0) && (
+                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-yellow-800">Unassigned to DAEP Campus</p>
+                    <div className="flex items-center gap-3 text-xs text-yellow-700">
+                      <span><strong>{byCampus['unassigned'].occupied}</strong> active</span>
+                      <span><strong>{byCampus['unassigned'].reserved}</strong> approved</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-yellow-600 mt-1">These students need a DAEP campus assignment on their incident record.</p>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600 mb-1">High School (9–12) — {cap.highTotal} seats</p>
-                  <CapacityBar
-                    occupied={stats?.byLevel?.high?.occupied ?? 0}
-                    reserved={stats?.byLevel?.high?.reserved ?? 0}
-                    total={cap.highTotal}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1178,7 +1178,7 @@ function CapacityTrackerWidget() {
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           districtId={districtId}
-          currentCapacity={capacity}
+          daepCampuses={daepCampuses}
         />
       )}
     </div>
