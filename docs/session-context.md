@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-19 (Session AR — Apex OTP auth fix deployed, site restored, email templates, DAEP campus picker)
+> Last updated: 2026-03-20 (Session AS — Store checkout dual-option, hero carousel, Apex Buy Now, ops URLs+PD tabs)
 
 ---
 
@@ -8,7 +8,7 @@
 - **Development phase:** Pre-pilot — product feature-complete, ready for first district pitch
 - **Waypoint app URL:** `https://waypoint.clearpathedgroup.com` (also `app.clearpathedgroup.com`)
 - **Company website:** `https://clearpathedgroup.com` (marketing site, static HTML in `clearpath-site/`)
-- **Marketing site features:** Company-level site for Clear Path Education Group. Technology Suite (Waypoint live, Navigator + Meridian coming 2026) + Clear Path Suite bundle. **Interactive pricing calculator**. **Free Compliance Checklist** lead magnet. Google Slides embed + narrated video. SEO/sitemap/robots.txt. Cloudflare Web Analytics. Security page `/security.html`. Research page `/research.html`. **4 lead capture channels** all → Formspree `xpqjngpp`: demo form (`source=demo_request`), pilot application form at `#pilot` (`source=pilot_application`), floating widget (`source=chat_widget`), whitepaper email gate (`source=whitepaper_gate`). **Floating "Talk to Our Team" widget** with 7 personalised auto-replies by compliance challenge. **Dedicated pilot application form** at `#pilot` (district name, role, size, DAEP volume, urgency). **Nav has "Apply for Pilot Spot" button**. **clearpath-logo.svg** — SVG compass logo, transparent bg, sharp at all sizes. Page order: Hero → Stats bar → Compliance gap → Products → Intro to Waypoint → Differentiators → Simulation → Pilot Application → Who We Are → Pricing → Demo CTA → Footer. ⚠️ Site must remain company-level — not a Waypoint product page (see DECISIONS.md 2026-02-28).
+- **Marketing site features:** Company-level site for Clear Path Education Group. **Hero carousel** cycling Waypoint + Apex every 5 seconds. Technology Suite (Waypoint + Apex live, Navigator + Meridian coming 2026). **Apex pricing section** with Zelle QR + Buy Now CTA. **Interactive pricing calculator**. **Free Compliance Checklist** lead magnet. Google Slides embed + narrated video. SEO/sitemap/robots.txt. Cloudflare Web Analytics. Security page `/security.html`. Research page `/research.html`. **Store** (`/store.html`) with TpT + Zelle dual purchase options. **4 lead capture channels** all → Formspree `xpqjngpp`: demo form (`source=demo_request`), pilot application form at `#pilot` (`source=pilot_application`), floating widget (`source=chat_widget`), whitepaper email gate (`source=whitepaper_gate`). **Floating "Talk to Our Team" widget** with 7 personalised auto-replies by compliance challenge. **Dedicated pilot application form** at `#pilot` (district name, role, size, DAEP volume, urgency). **Nav has "Apply for Pilot Spot" button**. **clearpath-logo.svg** — SVG compass logo, transparent bg, sharp at all sizes. ⚠️ Site must remain company-level — not a Waypoint product page (see DECISIONS.md 2026-02-28).
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
@@ -104,14 +104,12 @@
 
 ## Next Session Priority
 
-1. **Apply migration 059** — `daep_campus_id` column on incidents (SQL Editor). Required for DAEP campus picker.
-2. **Refresh Supabase PAT** — current token expired. Run `npx supabase login` for edge function deploys.
-3. **Verify Apex auth flow end-to-end** — confirm new users receive 6-digit code and can sign in.
-4. **Waypoint development** — user's stated next focus.
+1. **Apply Apex migrations 009 + 010** — framework columns + subscription columns (SQL Editor on `jvjsotlyvrzhsbgcsdfw`).
+2. **Build Kim admin panel** — mark principals as `active` with `paid_through` date after Zelle payment confirmation.
+3. **Apply migration 059** — `daep_campus_id` column on incidents (SQL Editor). Required for DAEP campus picker.
+4. **Remaining audit bugs** — #9 (generate-communication no auth), #10 (CORS too permissive), #11 (password verify).
 5. **Navigator MVP** — Disproportionality by demographics, SIS import mappers, real-time alerts.
-6. **Fix remaining TPT product xlsx files** — DAEP Tracker, Navigator, Meridian likely have wrong domains (only Admin Toolkit fixed so far).
-7. **Stripe Payment Links** — `STRIPE_LINKS` in store.html needs real URLs.
-8. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
+6. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
 
 ---
 
@@ -144,7 +142,7 @@
 - **Supabase ref:** `jvjsotlyvrzhsbgcsdfw` (separate project — different auth pool from Waypoint)
 - **DB password:** `ApexClearPath2025!`
 - **Auth:** OTP code entry (6-digit) — magic link kept as fallback. Resend SMTP configured. `shouldCreateUser` removed so new users get auth accounts on first sign-in.
-- **Migrations applied:** 001 (core schema), 002 (pg_cron morning brief scheduler) + `marketing_sends` table (SQL Editor)
+- **Migrations applied:** 001 (core schema), 002 (pg_cron morning brief scheduler), `marketing_sends` table (SQL Editor). **009 + 010 NOT YET APPLIED** (framework columns + subscription columns)
 - **Edge Functions deployed:** `transcribe-observation`, `generate-coaching-draft`, `send-observation-feedback`, `generate-morning-brief`, `send-marketing-blast`, `send-welcome-email`, `approve-access` (redeployed Session AR — OTP code instructions)
 - **Secrets set:** `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`
 - **Supabase PAT:** Refreshed via `npx supabase login` (Session AR) — CLI authenticated locally
@@ -190,7 +188,7 @@
 - Partner briefing doc — `docs/partner-briefing-03182026.md` for Melissa.
 - Clearpath website resources feature — dropdown nav + `resources.html` page.
 
-**Apex Pending:** CSV roster import · Mobile optimization · Quick capture · SPF record (manual, needs DNS:Edit CF token)
+**Apex Pending:** Apply migration 009+010 (framework+subscription columns) · Build Kim admin panel for Zelle payment activation · CSV roster import · Mobile optimization · Quick capture · SPF record (manual, needs DNS:Edit CF token)
 
 ---
 
