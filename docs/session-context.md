@@ -104,11 +104,9 @@
 
 ## Next Session Priority
 
-1. **Deploy updated Apex edge functions** — 7 app-facing functions need redeployment for CORS + auth changes from Session AS.
-2. **CSV roster import** for Apex — teachers bulk upload.
-3. **Mobile optimization** for Apex.
-4. **Navigator enhancements** — Disproportionality by demographics, SIS import mappers.
-5. **SPF record** — add `include:spf.resend.com` to clearpathedgroup.com DNS.
+1. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
+2. **Quick capture** for Apex — fast informal walkthrough mode.
+3. **First pilot district** — product is sales-ready, Nova owns strategy.
 
 ---
 
@@ -187,7 +185,7 @@
 - Partner briefing doc — `docs/partner-briefing-03182026.md` for Melissa.
 - Clearpath website resources feature — dropdown nav + `resources.html` page.
 
-**Apex Pending:** ~~Build Kim admin panel for Zelle payment activation~~ ✅ Done (Session AT) · Deploy edge functions (CORS+auth) · CSV roster import · Mobile optimization · Quick capture · SPF record (manual, needs DNS:Edit CF token)
+**Apex Pending:** ~~Build Kim admin panel for Zelle payment activation~~ ✅ Done (Session AT) · ~~Deploy edge functions (CORS+auth)~~ ✅ Deployed · ~~CSV roster import~~ ✅ · ~~Mobile optimization~~ ✅ · ~~Navigator enhancements~~ ✅ · ~~SPF record~~ ✅ · Quick capture
 
 ---
 
