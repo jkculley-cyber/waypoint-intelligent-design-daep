@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-21 (Session AV — Docs suite, Product Hub on ops command center, /simplify review)
+> Last updated: 2026-03-21 (Session AW — Apex production audit, 5 bug fixes deployed)
 
 ---
 
@@ -187,7 +187,16 @@
 - Partner briefing doc — `docs/partner-briefing-03182026.md` for Melissa.
 - Clearpath website resources feature — dropdown nav + `resources.html` page.
 
-**Apex Pending:** ~~Build Kim admin panel for Zelle payment activation~~ ✅ Done (Session AT) · ~~Deploy edge functions (CORS+auth)~~ ✅ Deployed · ~~CSV roster import~~ ✅ · ~~Mobile optimization~~ ✅ · ~~Navigator enhancements~~ ✅ · ~~SPF record~~ ✅ · Quick capture
+**Built Session AW:**
+- Full production audit of all 11 routes + every component
+- Fixed React hooks violation (crash bug) in ObservePage + CommunicatePage — soft-gate return was before hooks
+- Fixed CommunicatePage mobile layout — added responsive grid with isMobile state
+- Fixed SettingsPage password form — replaced broken "Change Password" (required current pw OTP users don't have) with "Set Password" flow
+- Wrapped Dashboard Notification constructor in try/catch
+- Dashboard Watch List "Visit" button now passes teacherId to Observe page
+- All fixes committed + pushed to master → Cloudflare auto-deploy
+
+**Apex Pending:** ~~Build Kim admin panel for Zelle payment activation~~ ✅ Done (Session AT) · ~~Deploy edge functions (CORS+auth)~~ ✅ Deployed · ~~CSV roster import~~ ✅ · ~~Mobile optimization~~ ✅ · ~~Navigator enhancements~~ ✅ · ~~SPF record~~ ✅ · ~~Production audit~~ ✅ Done (Session AW) · Quick capture
 
 ---
 
