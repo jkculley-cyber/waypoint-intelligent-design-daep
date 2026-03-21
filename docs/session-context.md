@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-20 (Session AT — Zelle admin dashboard, edit modal, subscription gating fixes)
+> Last updated: 2026-03-21 (Session AU — License system for Beacon + Toolkit, FERPA dual-mode, Google Form referrals)
 
 ---
 
@@ -104,9 +104,11 @@
 
 ## Next Session Priority
 
-1. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
-2. **Quick capture** for Apex — fast informal walkthrough mode.
-3. **First pilot district** — product is sales-ready, Nova owns strategy.
+1. **Vera + Nova: Customer onboarding materials** — format license guide for store/email from `clearpath-beacon/docs/license-operations-guide.md`.
+2. **Cloudflare Pages: Deploy Beacon + Toolkit** — connect repos, set custom domains.
+3. **Store listings** — add Beacon ($8/mo, $79/yr) and Toolkit ($5/mo, $49/yr) to clearpathedgroup.com store.
+4. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
+5. **Quick capture** for Apex — fast informal walkthrough mode.
 
 ---
 
@@ -186,6 +188,35 @@
 - Clearpath website resources feature — dropdown nav + `resources.html` page.
 
 **Apex Pending:** ~~Build Kim admin panel for Zelle payment activation~~ ✅ Done (Session AT) · ~~Deploy edge functions (CORS+auth)~~ ✅ Deployed · ~~CSV roster import~~ ✅ · ~~Mobile optimization~~ ✅ · ~~Navigator enhancements~~ ✅ · ~~SPF record~~ ✅ · Quick capture
+
+---
+
+## Beacon — Elementary Counselor Command Center (NEW PRODUCT, Session AU)
+
+- **Repo:** `clearpath-beacon` (C:\Users\jkcul\clearpath-beacon)
+- **Supabase ref:** Separate project (see project_beacon.md memory)
+- **Data mode:** Defaults to **local mode** (IndexedDB on-device) for FERPA compliance. Cloud mode requires district DPA.
+- **License enforcement:** License keys checked against ops Supabase `product_licenses` table. 5-min cache, 7-day offline grace. Soft gate: view data but can't create new records.
+- **Pricing:** $8/mo or $79/yr via Zelle on clearpathedgroup.com
+- **Built:** Dual-mode data layer (IndexedDB/Supabase), local setup wizard, license check system, CSV referral import, Google Form integration, 35 bundled lessons, 14 communication templates
+- **License ops guide:** `docs/license-operations-guide.md`
+- **Pending:** Cloudflare Pages deployment, store listing on clearpathedgroup.com, customer email templates (Vera/Nova)
+
+## Investigator Toolkit — Campus Investigation PWA (NEW PRODUCT, Session AU)
+
+- **Repo:** `investigator-toolkit` (C:\Users\jkcul\investigator-toolkit)
+- **Data mode:** 100% on-device (IndexedDB). No cloud. No student data touches any server.
+- **License enforcement:** Same system as Beacon (ops Supabase `product_licenses`). License entry screen required before first use.
+- **Pricing:** $5/mo or $49/yr via Zelle on clearpathedgroup.com
+- **Key generator:** `scripts/generate-license-key.mjs`
+- **Pending:** Connect to Cloudflare Pages at `investigatortoolkit.clearpathedgroup.com`, store listing
+
+## Shared License Infrastructure
+
+- **Ops Supabase:** `xbpuqaqpcbixxodblaes` — `product_licenses` table (shared authority for Beacon + Toolkit)
+- **RLS:** Anon can only SELECT. Kim manages via SQL Editor or Table Editor.
+- **Key format:** `BCN-XXXXXX-XXXX` (Beacon), `INV-XXXXXX-XXXX` (Toolkit)
+- **Kim's test keys:** `BCN-YNJRVF-KRC3`, `INV-E5KZ2X-RNCP` (active until 2027-06-01)
 
 ---
 
