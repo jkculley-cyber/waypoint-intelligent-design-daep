@@ -324,6 +324,7 @@ function ApexPanel() {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null) // { msg, type: 'success'|'error' }
+  const [activatingId, setActivatingId] = useState(null)
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -333,12 +334,76 @@ function ApexPanel() {
   async function load() {
     setLoading(true)
     const [p, r] = await Promise.all([
-      apexFetch('principals?select=id,name,email,school_name,district_name,created_at,onboarding_complete&order=created_at.desc&limit=50'),
+      apexFetch('principals?select=id,name,email,school_name,district_name,created_at,onboarding_complete,subscription_status,paid_through,trial_started_at&order=created_at.desc&limit=50'),
       apexFetch('access_requests?select=id,name,email,school_name,district,title,status,created_at&order=created_at.desc'),
     ])
     setPrincipals(p || [])
     setRequests(r || [])
     setLoading(false)
+  }
+
+  function getSubStatus(p) {
+    if (p.subscription_status === 'active' && p.paid_through) {
+      const paidThrough = new Date(p.paid_through)
+      if (paidThrough > new Date()) return 'active'
+      return 'expired'
+    }
+    if (p.subscription_status === 'extended') return 'extended'
+    if (p.trial_started_at) {
+      const trialEnd = new Date(new Date(p.trial_started_at).getTime() + 14 * 86400000)
+      if (trialEnd > new Date()) return 'trial'
+      return 'gated'
+    }
+    return 'trial'
+  }
+
+  const SUB_BADGE = {
+    active: 'bg-green-900/40 text-green-400',
+    trial: 'bg-blue-900/40 text-blue-400',
+    gated: 'bg-red-900/40 text-red-400',
+    expired: 'bg-red-900/40 text-red-400',
+    extended: 'bg-yellow-900/30 text-yellow-500',
+  }
+
+  async function activateMonthly(principalId) {
+    setActivatingId(principalId)
+    const paidThrough = new Date()
+    paidThrough.setMonth(paidThrough.getMonth() + 1)
+    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
+      method: 'PATCH',
+      headers: APEX_HEADERS,
+      body: JSON.stringify({ subscription_status: 'active', paid_through: paidThrough.toISOString().slice(0, 10) }),
+    })
+    showToast('Activated — 1 month')
+    setActivatingId(null)
+    load()
+  }
+
+  async function activateAnnual(principalId) {
+    setActivatingId(principalId)
+    // School year: paid through June 30 of current or next year
+    const now = new Date()
+    const june30 = new Date(now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear(), 5, 30)
+    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
+      method: 'PATCH',
+      headers: APEX_HEADERS,
+      body: JSON.stringify({ subscription_status: 'active', paid_through: june30.toISOString().slice(0, 10) }),
+    })
+    showToast('Activated — through ' + june30.toLocaleDateString())
+    setActivatingId(null)
+    load()
+  }
+
+  async function deactivate(principalId) {
+    setActivatingId(principalId)
+    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
+      method: 'PATCH',
+      headers: APEX_HEADERS,
+      body: JSON.stringify({ subscription_status: 'trial', paid_through: null }),
+    })
+    showToast('Deactivated — reverted to trial')
+    setActivatingId(null)
+    load()
   }
 
   useEffect(() => { load() }, [])
@@ -417,12 +482,20 @@ function ApexPanel() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Principals', value: principals.length, color: 'text-violet-400' },
-          { label: 'New This Week', value: newThisWeek, color: 'text-blue-400' },
-          { label: 'Pending Approval', value: pending.length, color: pending.length > 0 ? 'text-orange-400' : 'text-gray-400' },
-        ].map(m => (
+      <div className="grid grid-cols-6 gap-4">
+        {(() => {
+          const paid = principals.filter(p => getSubStatus(p) === 'active').length
+          const trial = principals.filter(p => getSubStatus(p) === 'trial').length
+          const gated = principals.filter(p => ['gated', 'expired'].includes(getSubStatus(p))).length
+          return [
+            { label: 'Total Principals', value: principals.length, color: 'text-violet-400' },
+            { label: 'Paid / Active', value: paid, color: 'text-green-400' },
+            { label: 'Trial', value: trial, color: 'text-blue-400' },
+            { label: 'Gated / Expired', value: gated, color: gated > 0 ? 'text-red-400' : 'text-gray-400' },
+            { label: 'New This Week', value: newThisWeek, color: 'text-blue-400' },
+            { label: 'Pending Approval', value: pending.length, color: pending.length > 0 ? 'text-orange-400' : 'text-gray-400' },
+          ]
+        })().map(m => (
           <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{m.label}</p>
             <p className={`text-3xl font-bold ${m.color}`}>{m.value}</p>
@@ -504,26 +577,65 @@ function ApexPanel() {
                   <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">School</th>
                   <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">District</th>
                   <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Onboarded</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paid Through</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {principals.map(p => (
-                  <tr key={p.id} className="hover:bg-gray-800/40 transition-colors">
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-white">{p.name}</p>
-                      <p className="text-xs text-gray-400">{p.email}</p>
-                    </td>
-                    <td className="px-5 py-3 text-gray-300">{p.school_name || '—'}</td>
-                    <td className="px-5 py-3 text-gray-300">{p.district_name || '—'}</td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.onboarding_complete ? 'bg-green-900/40 text-green-400' : 'bg-yellow-900/30 text-yellow-500'}`}>
-                        {p.onboarding_complete ? 'Yes' : 'Pending'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {principals.map(p => {
+                  const status = getSubStatus(p)
+                  const isActing = activatingId === p.id
+                  return (
+                    <tr key={p.id} className="hover:bg-gray-800/40 transition-colors">
+                      <td className="px-5 py-3">
+                        <p className="font-medium text-white">{p.name}</p>
+                        <p className="text-xs text-gray-400">{p.email}</p>
+                      </td>
+                      <td className="px-5 py-3 text-gray-300">{p.school_name || '—'}</td>
+                      <td className="px-5 py-3 text-gray-300">{p.district_name || '—'}</td>
+                      <td className="px-5 py-3 text-gray-400 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SUB_BADGE[status] || 'bg-gray-800 text-gray-400'}`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-gray-400 text-xs">
+                        {p.paid_through ? new Date(p.paid_through).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {status !== 'active' ? (
+                            <>
+                              <button
+                                onClick={() => activateMonthly(p.id)}
+                                disabled={isActing}
+                                className="px-2 py-1 text-xs font-medium bg-green-900/40 border border-green-700 text-green-300 rounded hover:bg-green-800 transition-colors disabled:opacity-50"
+                              >
+                                {isActing ? '…' : '$10/mo'}
+                              </button>
+                              <button
+                                onClick={() => activateAnnual(p.id)}
+                                disabled={isActing}
+                                className="px-2 py-1 text-xs font-medium bg-green-900/40 border border-green-700 text-green-300 rounded hover:bg-green-800 transition-colors disabled:opacity-50"
+                              >
+                                {isActing ? '…' : '$100/yr'}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => deactivate(p.id)}
+                              disabled={isActing}
+                              className="px-2 py-1 text-xs font-medium bg-red-900/30 border border-red-800 text-red-400 rounded hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                            >
+                              {isActing ? '…' : 'Deactivate'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
