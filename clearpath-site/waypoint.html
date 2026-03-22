@@ -113,22 +113,46 @@
   </div>
 </div>
 
-<!-- VIDEO -->
+<!-- VIDEO + SLIDES -->
 <section>
   <div class="section-label" style="text-align:center">See It In Action</div>
-  <div class="section-title" style="text-align:center;margin-bottom:24px">Watch a 3-minute walkthrough</div>
-  <div class="video-wrap">
-    <div class="video-placeholder">Demo video coming soon — <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo" style="color:var(--amber-light);font-weight:600">request a live demo</a></div>
-  </div>
-</section>
+  <div class="section-title" style="text-align:center;margin-bottom:8px">Watch the walkthrough or browse the deck</div>
+  <p style="text-align:center;font-size:.88rem;color:var(--text-muted);margin-bottom:28px">Either way, you'll see exactly how Waypoint works before you ever talk to us.</p>
 
-<!-- SLIDES -->
-<section>
-  <div class="section-label" style="text-align:center">Product Overview</div>
-  <div class="section-title" style="text-align:center;margin-bottom:24px">Browse the full feature deck</div>
-  <div class="slides-wrap">
-    <div class="video-placeholder">Slides deck coming soon — <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Deck%20Request" style="color:var(--amber-light);font-weight:600">request the deck via email</a></div>
+  <!-- Tab toggle -->
+  <div style="display:flex;justify-content:center;gap:0;margin-bottom:20px">
+    <button onclick="showWpTab('video')" id="wp-tab-video" style="padding:10px 24px;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border-purple);border-radius:8px 0 0 8px;background:var(--amber);color:white;font-family:inherit;transition:all .2s">&#9654; Watch Demo · 3 min</button>
+    <button onclick="showWpTab('slides')" id="wp-tab-slides" style="padding:10px 24px;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border-purple);border-left:none;border-radius:0 8px 8px 0;background:transparent;color:var(--text-muted);font-family:inherit;transition:all .2s">📊 Slide Deck</button>
   </div>
+
+  <!-- Video -->
+  <div id="wp-panel-video" class="video-wrap">
+    <video controls preload="metadata" style="width:100%;display:block;border-radius:14px;background:#000">
+      <source src="/Waypoint__Safety_and_Growth.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <!-- Slides -->
+  <div id="wp-panel-slides" class="slides-wrap" style="display:none">
+    <iframe
+      src="https://docs.google.com/presentation/d/1nQHIEbh-nBX7SUVkxiCV8HHO0rOzaQEm/embed?start=false&loop=false&delayms=5000"
+      allowfullscreen
+      title="Waypoint — Texas DAEP Compliance Presentation"
+      style="width:100%;aspect-ratio:16/9;border:none;display:block;border-radius:14px">
+    </iframe>
+  </div>
+
+  <script>
+  function showWpTab(tab) {
+    document.getElementById('wp-panel-video').style.display = tab === 'video' ? '' : 'none';
+    document.getElementById('wp-panel-slides').style.display = tab === 'slides' ? '' : 'none';
+    document.getElementById('wp-tab-video').style.background = tab === 'video' ? 'var(--amber)' : 'transparent';
+    document.getElementById('wp-tab-video').style.color = tab === 'video' ? 'white' : 'var(--text-muted)';
+    document.getElementById('wp-tab-slides').style.background = tab === 'slides' ? 'var(--amber)' : 'transparent';
+    document.getElementById('wp-tab-slides').style.color = tab === 'slides' ? 'white' : 'var(--text-muted)';
+  }
+  </script>
 </section>
 
 <!-- FEATURES -->
