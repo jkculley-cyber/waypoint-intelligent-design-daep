@@ -67,6 +67,7 @@ const NavigatorSkillMapPage         = lazy(() => import('./pages/navigator/Navig
 const NavigatorEffectivenessPage    = lazy(() => import('./pages/navigator/NavigatorEffectivenessPage'))
 const NavigatorDisproportionalityPage = lazy(() => import('./pages/navigator/NavigatorDisproportionalityPage'))
 const NavigatorPilotPage            = lazy(() => import('./pages/navigator/NavigatorPilotPage'))
+const ISSKioskPage                  = lazy(() => import('./pages/navigator/ISSKioskPage'))
 
 // Meridian
 const MeridianDashboardPage     = lazy(() => import('./pages/meridian/MeridianDashboardPage'))
@@ -212,6 +213,7 @@ function App() {
             {/* Kiosk - standalone full-screen layout (no AppShell) */}
             <Route path="/kiosk" element={<RequireTier feature="kiosk"><KioskPage /></RequireTier>} />
             <Route path="/orientation-kiosk" element={<RequireTier feature="orientation_kiosk"><OrientationKioskPage /></RequireTier>} />
+            <Route path="/navigator/iss-kiosk" element={<RequireProduct product="navigator"><ISSKioskPage /></RequireProduct>} />
 
             {/* Waypoint Internal Admin */}
             <Route path="/waypoint-admin" element={
