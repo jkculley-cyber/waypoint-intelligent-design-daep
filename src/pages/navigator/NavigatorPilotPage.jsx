@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorPilotSummary, currentSchoolYear, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
 
 const SCHOOL_YEARS = ['2025-26', '2024-25', '2023-24']
 
 export default function NavigatorPilotPage() {
+  const navigate = useNavigate()
   const defaultYear = currentSchoolYear()
   const [schoolYear, setSchoolYear] = useState(defaultYear)
   const { summary, loading, error, refetch } = useNavigatorPilotSummary(schoolYear)
@@ -51,17 +53,17 @@ export default function NavigatorPilotPage() {
           <>
             {/* Top headline metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <BigMetric label="Total Referrals" value={summary.totalReferrals} color="text-blue-700" bg="bg-blue-50" />
-              <BigMetric label="Students Served" value={summary.uniqueStudents} color="text-indigo-700" bg="bg-indigo-50" />
-              <BigMetric label="Diverted from DAEP" value={summary.diverted} color="text-emerald-700" bg="bg-emerald-50" />
-              <BigMetric label="Escalated to DAEP" value={summary.escalated} color={summary.escalated > 0 ? 'text-red-700' : 'text-gray-500'} bg={summary.escalated > 0 ? 'bg-red-50' : 'bg-gray-50'} />
+              <BigMetric label="Total Referrals" value={summary.totalReferrals} color="text-blue-700" bg="bg-blue-50" onClick={() => navigate('/navigator/referrals')} />
+              <BigMetric label="Students Served" value={summary.uniqueStudents} color="text-indigo-700" bg="bg-indigo-50" onClick={() => navigate('/navigator')} />
+              <BigMetric label="Diverted from DAEP" value={summary.diverted} color="text-emerald-700" bg="bg-emerald-50" onClick={() => navigate('/navigator/effectiveness')} />
+              <BigMetric label="Escalated to DAEP" value={summary.escalated} color={summary.escalated > 0 ? 'text-red-700' : 'text-gray-500'} bg={summary.escalated > 0 ? 'bg-red-50' : 'bg-gray-50'} onClick={() => navigate('/navigator/escalation')} />
             </div>
 
             {/* ISS / OSS row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <MetricCard label="ISS Placements" value={summary.issCount} />
-              <MetricCard label="OSS Placements" value={summary.ossCount} />
-              <MetricCard label="Total Days Removed" value={summary.totalDaysRemoved} />
+              <MetricCard label="ISS Placements" value={summary.issCount} onClick={() => navigate('/navigator/placements')} />
+              <MetricCard label="OSS Placements" value={summary.ossCount} onClick={() => navigate('/navigator/placements')} />
+              <MetricCard label="Total Days Removed" value={summary.totalDaysRemoved} onClick={() => navigate('/navigator/placements')} />
               <MetricCard
                 label="Diversion Rate"
                 value={summary.totalReferrals > 0
@@ -69,24 +71,26 @@ export default function NavigatorPilotPage() {
                   : '—'
                 }
                 highlight
+                onClick={() => navigate('/navigator/effectiveness')}
               />
             </div>
 
             {/* Supports */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <MetricCard label="Active Supports" value={summary.activeSupports} />
-              <MetricCard label="Completed Supports" value={summary.completedSupports} />
+              <MetricCard label="Active Supports" value={summary.activeSupports} onClick={() => navigate('/navigator/supports')} />
+              <MetricCard label="Completed Supports" value={summary.completedSupports} onClick={() => navigate('/navigator/supports')} />
               <MetricCard
                 label="Avg. Incident Reduction"
                 value={summary.avgReduction != null ? `${summary.avgReduction}%` : 'Not tracked'}
                 highlight={summary.avgReduction != null && summary.avgReduction > 0}
+                onClick={() => navigate('/navigator/effectiveness')}
               />
             </div>
 
             {/* Top Skill Gaps */}
             {summary.topGaps.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-sm font-semibold text-gray-900 mb-4">Top Skill Gaps This Year</h2>
+              <div className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:border-blue-300 transition-colors" onClick={() => navigate('/navigator/skill-map')}>
+                <h2 className="text-sm font-semibold text-gray-900 mb-4">Top Skill Gaps This Year <span className="text-xs text-blue-500 font-normal ml-2">View Skill Map →</span></h2>
                 <div className="space-y-3">
                   {summary.topGaps.map(({ gap, label, count }, i) => {
                     const max = summary.topGaps[0].count
@@ -111,7 +115,7 @@ export default function NavigatorPilotPage() {
             )}
 
             {/* Narrative Summary */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 cursor-pointer hover:border-blue-300 transition-colors" onClick={() => navigate('/navigator/reports')}>
               <h2 className="text-sm font-semibold text-blue-900 mb-2">Leadership Narrative — {schoolYear}</h2>
               <p className="text-sm text-blue-800 leading-relaxed">
                 Navigator served <strong>{summary.uniqueStudents}</strong> students
@@ -148,18 +152,19 @@ export default function NavigatorPilotPage() {
   )
 }
 
-function BigMetric({ label, value, color, bg }) {
+function BigMetric({ label, value, color, bg, onClick }) {
   return (
-    <div className={`${bg} rounded-xl border border-gray-100 p-6`}>
+    <div className={`${bg} rounded-xl border border-gray-100 p-6 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all`} onClick={onClick}>
       <p className="text-sm font-medium text-gray-600 mb-2">{label}</p>
       <p className={`text-4xl font-bold ${color}`}>{value}</p>
+      <p className="text-xs text-gray-400 mt-2">Click to view details →</p>
     </div>
   )
 }
 
-function MetricCard({ label, value, highlight }) {
+function MetricCard({ label, value, highlight, onClick }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className={`bg-white rounded-xl border border-gray-200 p-5 ${onClick ? 'cursor-pointer hover:shadow-md hover:border-blue-200 transition-all' : ''}`} onClick={onClick}>
       <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
       <p className={`text-2xl font-bold ${highlight ? 'text-emerald-600' : 'text-gray-800'}`}>{value ?? '—'}</p>
     </div>
