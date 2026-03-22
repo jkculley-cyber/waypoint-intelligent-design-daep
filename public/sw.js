@@ -1,55 +1,71 @@
 // Waypoint Service Worker
-// Strategy: network-first for API, cache-first for static shell
+// Strategy: network-first everywhere, cache only as offline fallback
+// Vite hashes JS/CSS bundles per deploy, so network-first always gets the latest
 
-const CACHE_NAME = 'waypoint-v1'
-const SHELL = ['/index.html', '/manifest.json']
+const CACHE_NAME = 'waypoint-cache-v1'
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL))
-  )
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      )
-    )
+      Promise.all(keys.map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
   )
-  self.clients.claim()
 })
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Skip non-GET and cross-origin API calls (Supabase, Resend, etc.)
+  // Skip non-GET and cross-origin (Supabase, Resend, etc.)
   if (request.method !== 'GET') return
   if (url.hostname !== self.location.hostname) return
 
-  // For navigation requests (HTML), serve cached shell and let React Router handle routing
+  // Navigation — network-first, cache fallback for offline
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put('/', clone))
+          return response
+        })
+        .catch(() => caches.match('/'))
     )
     return
   }
 
-  // For static assets (JS/CSS/images), cache-first
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached
-      return fetch(request).then((response) => {
-        // Only cache successful same-origin responses
-        if (response.ok && url.hostname === self.location.hostname) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-        }
-        return response
-      }).catch(() => caches.match('/index.html'))
-    })
-  )
+  // JS/CSS — network-first, cache fallback
+  if (url.pathname.match(/\.(js|css)$/)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
+          return response
+        })
+        .catch(() => caches.match(request))
+    )
+    return
+  }
+
+  // Images/fonts — stale-while-revalidate
+  if (url.pathname.match(/\.(png|svg|ico|jpg|jpeg|webp|woff2?)$/)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request)
+        const networkFetch = fetch(request).then((response) => {
+          if (response.ok) cache.put(request, response.clone())
+          return response
+        }).catch(() => null)
+        return cached || networkFetch
+      })
+    )
+    return
+  }
 })
