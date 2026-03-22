@@ -515,9 +515,8 @@ function closeCheckout() {
 }
 
 // Close modal on overlay click
-document.getElementById('checkout-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeCheckout();
-});
+var cm = document.getElementById('checkout-modal');
+if (cm) cm.addEventListener('click', function(e) { if (e.target === this) closeCheckout(); });
 
 function renderProducts() {
   const container = document.getElementById('products-container');
@@ -727,8 +726,10 @@ function openBeaconRequestModal() {
 function closeBeaconModal() {
   document.getElementById('beacon-modal').classList.remove('open');
 }
-document.getElementById('beacon-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeBeaconModal();
+// Defer beacon modal listener until DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  var bm = document.getElementById('beacon-modal');
+  if (bm) bm.addEventListener('click', function(e) { if (e.target === this) closeBeaconModal(); });
 });
 
 async function submitBeaconRequest(e) {
