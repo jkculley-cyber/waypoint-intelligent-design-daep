@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waypoint — Texas DAEP Compliance Platform | Clear Path Education Group</title>
+<meta name="description" content="Waypoint is the only discipline management platform built specifically for Texas TEC Chapter 37 compliance — SPED/504 blocking, approval chains, parent portals, and PEIMS export.">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple:#1a0a2e; --dark-bg:#0e0618; --mid-purple:#2d1054;
+    --purple:#6b2fa0; --purple-light:#9b5fd4; --amber:#e8862a;
+    --amber-light:#f5b050; --amber-glow:#ffcc66; --orange:#d4541a;
+    --text:#f0e6d3; --text-muted:rgba(240,230,211,0.6);
+    --border:rgba(232,134,42,0.2); --border-purple:rgba(107,47,160,0.35);
+    --card-bg:rgba(26,10,46,0.7);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Raleway',sans-serif;background:var(--dark-bg);color:var(--text);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 20%,rgba(107,47,160,.15) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(212,84,26,.1) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(26,10,46,1) 0%,#0e0618 100%);
+    pointer-events:none}
+
+  nav{position:fixed;top:0;width:100%;z-index:200;background:rgba(14,6,24,.92);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:70px}
+  .nav-logo{display:flex;align-items:center;gap:14px;text-decoration:none}
+  .nav-logo img{height:44px;width:44px;object-fit:contain;border-radius:8px}
+  .nav-logo-text .name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;
+    background:linear-gradient(90deg,var(--amber-light),var(--amber-glow));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;display:block}
+  .nav-logo-text .sub{font-size:.6rem;font-weight:600;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;display:block}
+  .nav-back{font-size:.8rem;font-weight:600;color:var(--text-muted);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+  .nav-back:hover{color:var(--amber-light)}
+
+  .hero{position:relative;z-index:1;padding:120px 5% 60px;text-align:center;max-width:900px;margin:0 auto}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(232,134,42,.1);border:1px solid rgba(232,134,42,.3);color:var(--amber-light);padding:6px 16px;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
+  .hero-badge span{width:6px;height:6px;background:var(--amber);border-radius:50%;box-shadow:0 0 8px var(--amber)}
+  .hero h1{font-family:'Cinzel',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;margin-bottom:16px;
+    background:linear-gradient(160deg,var(--amber-glow),var(--amber-light),var(--text));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{font-size:1rem;color:var(--text-muted);line-height:1.7;max-width:640px;margin:0 auto 32px}
+  .hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.88rem;text-decoration:none;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--amber),var(--orange));color:white;font-family:'Raleway',sans-serif;letter-spacing:.04em;transition:transform .2s,box-shadow .2s}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(232,134,42,.5)}
+  .btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-weight:600;font-size:.88rem;text-decoration:none;
+    background:transparent;border:1px solid var(--border-purple);color:var(--purple-light);font-family:'Raleway',sans-serif;letter-spacing:.04em;transition:all .2s}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amber-light);background:rgba(232,134,42,.06)}
+
+  section{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:60px 5%}
+  .section-label{font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:10px}
+  .section-title{font-family:'Cinzel',serif;font-size:clamp(1.3rem,3vw,1.8rem);font-weight:700;color:var(--text);margin-bottom:16px}
+
+  .video-wrap{position:relative;width:100%;max-width:720px;margin:0 auto 40px;border-radius:14px;overflow:hidden;border:1px solid var(--border-purple);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .video-wrap iframe{width:100%;aspect-ratio:16/9;border:none;display:block}
+  .video-placeholder{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#1e0a3c,#2d1054);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.9rem}
+
+  .slides-wrap{width:100%;max-width:720px;margin:0 auto 40px;border-radius:14px;overflow:hidden;border:1px solid var(--border-purple);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .slides-wrap iframe{width:100%;aspect-ratio:16/9;border:none;display:block}
+
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:40px}
+  .feature-card{background:var(--card-bg);border:1px solid var(--border-purple);border-radius:12px;padding:22px;backdrop-filter:blur(8px);transition:border-color .2s}
+  .feature-card:hover{border-color:var(--amber)}
+  .feature-card h3{font-size:.9rem;font-weight:700;color:var(--text);margin:0 0 6px}
+  .feature-card p{font-size:.82rem;color:var(--text-muted);line-height:1.6;margin:0}
+
+  .founding-card{background:linear-gradient(135deg,rgba(232,134,42,.08),rgba(26,10,46,.7));border:2px solid rgba(232,134,42,.3);border-radius:16px;padding:40px;text-align:center;margin-bottom:40px}
+  .founding-card h2{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:800;color:var(--text);margin:0 0 12px}
+  .founding-card p{font-size:.9rem;color:var(--text-muted);line-height:1.7;max-width:560px;margin:0 auto 24px}
+
+  .pricing-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:600px;margin:0 auto 32px}
+  .price-card{border:1px solid var(--border-purple);border-radius:12px;padding:24px;text-align:center;background:rgba(0,0,0,.15)}
+  .price-card .amount{font-family:'Cinzel',serif;font-size:1.8rem;font-weight:900;color:var(--text)}
+  .price-card .period{font-size:.82rem;color:var(--text-muted);margin-top:4px}
+
+  footer{position:relative;z-index:1;background:#060310;border-top:1px solid var(--border-purple);padding:32px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  footer p{font-size:.75rem;color:rgba(240,230,211,.25)}
+  footer a{font-size:.75rem;color:var(--text-muted);text-decoration:none}
+  footer a:hover{color:var(--amber-light)}
+
+  @media(max-width:768px){
+    .hero{padding:100px 5% 40px}
+    .features{grid-template-columns:1fr}
+    .pricing-row{grid-template-columns:1fr}
+    .hero-actions{flex-direction:column;align-items:center}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Clear Path" />
+    <div class="nav-logo-text">
+      <span class="name">Clear Path Education Group</span>
+      <span class="sub">Pathways to Student Success</span>
+    </div>
+  </a>
+  <a class="nav-back" href="/">← Back to Home</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span></span> Live Product · Texas Districts</div>
+  <h1>The only discipline platform built for Texas TEC compliance.</h1>
+  <p>Waypoint manages the entire DAEP lifecycle — from incident documentation through SPED compliance blocking, multi-role approval chains, parent portals, and PEIMS export. Built by Texas administrators who've lived the process.</p>
+  <div class="hero-actions">
+    <a href="#founding" class="btn-primary">Become a Founding District →</a>
+    <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo%20Request" class="btn-ghost">Request a Demo →</a>
+  </div>
+</div>
+
+<!-- VIDEO -->
+<section>
+  <div class="section-label" style="text-align:center">See It In Action</div>
+  <div class="section-title" style="text-align:center;margin-bottom:24px">Watch a 3-minute walkthrough</div>
+  <div class="video-wrap">
+    <div class="video-placeholder">Demo video coming soon — <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo" style="color:var(--amber-light);font-weight:600">request a live demo</a></div>
+  </div>
+</section>
+
+<!-- SLIDES -->
+<section>
+  <div class="section-label" style="text-align:center">Product Overview</div>
+  <div class="section-title" style="text-align:center;margin-bottom:24px">Browse the full feature deck</div>
+  <div class="slides-wrap">
+    <div class="video-placeholder">Slides deck coming soon — <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Deck%20Request" style="color:var(--amber-light);font-weight:600">request the deck via email</a></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <div class="section-label" style="text-align:center">What Waypoint Does</div>
+  <div class="section-title" style="text-align:center;margin-bottom:28px">Every step of the discipline lifecycle, covered.</div>
+  <div class="features">
+    <div class="feature-card">
+      <h3>Incident Management</h3>
+      <p>Create, route, and track discipline incidents with role-based workflows. Teachers document, administrators decide.</p>
+    </div>
+    <div class="feature-card">
+      <h3>SPED/504 Compliance Blocking</h3>
+      <p>Automatically blocks DAEP placement until manifestation determination is complete. Prevents TEA violations before they happen.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Multi-Role Approval Chain</h3>
+      <p>Sequential 6-role approval: CBC → Counselor → SPED → 504 → SSS → Director. Each step documented with timestamps.</p>
+    </div>
+    <div class="feature-card">
+      <h3>10-Day Removal Tracking</h3>
+      <p>Cumulative removal days tracked per SPED student with auto-alerts at day 7, 9, and 10. IDEA §300.536 compliance built in.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Parent Portal</h3>
+      <p>Parents view incidents, acknowledge notices, and track DAEP placement status. Documented proof of notification for due process.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Transition Plans & Reviews</h3>
+      <p>Structured re-entry plans with 30/60/90-day review cycles. 4-party readiness checklist ensures nothing is missed.</p>
+    </div>
+    <div class="feature-card">
+      <h3>PEIMS Export</h3>
+      <p>One-click export in TEA PEIMS format. SIS integration presets for Skyward, PowerSchool, Infinite Campus, and TxEIS.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Daily Behavior Kiosk</h3>
+      <p>DAEP campus staff track daily behavior, orientation completion, and attendance via a shared kiosk — no individual logins needed.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Compliance Dashboard</h3>
+      <p>District-wide view of every campus: overdue MDRs, approaching 10-day limits, pending checklists — all in one place.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOUNDING DISTRICT -->
+<section id="founding">
+  <div class="founding-card">
+    <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:14px">Limited Availability</div>
+    <h2>Become a Founding District</h2>
+    <p>We're onboarding a small number of founding districts for the 2026–2027 school year. Founding districts get priority support, direct input on the product roadmap, and locked-in pricing.</p>
+    <div class="pricing-row">
+      <div class="price-card">
+        <div class="amount">$4,500</div>
+        <div class="period">per year · Essential</div>
+      </div>
+      <div class="price-card" style="border-color:var(--amber)">
+        <div class="amount">$10,000</div>
+        <div class="period">per year · Professional</div>
+      </div>
+      <div class="price-card">
+        <div class="amount">$18,000</div>
+        <div class="period">per year · Enterprise</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="mailto:support@clearpathedgroup.com?subject=Founding%20District%20Application&body=I'm%20interested%20in%20becoming%20a%20founding%20Waypoint%20district%20for%202026-2027.%0A%0ADistrict:%0ARole:%0AEmail:%0A%0APlease%20send%20me%20more%20information." class="btn-primary" style="font-size:.92rem;padding:14px 28px">Apply to Become a Founding District →</a>
+      <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo%20Request" class="btn-ghost">Request a Demo →</a>
+    </div>
+    <p style="font-size:.75rem;color:var(--text-muted);margin-top:16px">Questions? <a href="mailto:support@clearpathedgroup.com" style="color:var(--amber-light);text-decoration:none;font-weight:600">support@clearpathedgroup.com</a></p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 Clear Path Education Group, LLC · All rights reserved</p>
+  <div style="display:flex;gap:20px">
+    <a href="/">clearpathedgroup.com</a>
+    <a href="/store.html">Store</a>
+    <a href="mailto:support@clearpathedgroup.com">support@clearpathedgroup.com</a>
+  </div>
+</footer>
+
+</body>
+</html>
