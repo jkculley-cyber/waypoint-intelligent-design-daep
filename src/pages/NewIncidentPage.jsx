@@ -25,7 +25,8 @@ import {
   DAEP_DOCUMENT_TYPES,
 } from '../lib/constants'
 
-const STEPS = ['Student', 'Offense', 'Consequence', 'Details', 'Review']
+const STEPS_FULL = ['Student', 'Offense', 'Consequence', 'Details', 'Review']
+const STEPS_TEACHER = ['Student', 'Offense', 'Details', 'Review']
 const CONSEQUENCE_ORDER = ['warning', 'detention', 'iss', 'oss', 'daep', 'expulsion']
 const OVERRIDE_VALUE = '__override__'
 
@@ -34,6 +35,9 @@ export default function NewIncidentPage() {
   const [searchParams] = useSearchParams()
   const { campusIds, profile, districtId } = useAuth()
   const isTeacher = profile?.role === 'teacher'
+  const STEPS = isTeacher ? STEPS_TEACHER : STEPS_FULL
+  // Map visible step index to content step for teachers (skip consequence)
+  const contentStep = isTeacher && step >= 2 ? step + 1 : step
   const DRAFT_KEY = `incident_draft_${districtId || 'local'}`
   const { createIncident } = useIncidentActions()
   const { offenseCodes } = useOffenseCodes()
@@ -115,13 +119,12 @@ export default function NewIncidentPage() {
   const enteredDays = parseInt(formData.consequence_days) || 0
   const projectedTotal = cumulativeDays + enteredDays
 
-  // Consequences teachers cannot assign — must be escalated to admin/principal
-  const TEACHER_BLOCKED = ['daep', 'expulsion']
+  // Teachers cannot assign ANY consequences — they only document the incident.
+  // Consequence assignment is done by admin/principal on the incident detail page.
 
   // Build filtered consequence options based on matrix
   const consequenceOptions = useMemo(() => {
-    const applyTeacherFilter = (options) =>
-      isTeacher ? options.filter(o => !TEACHER_BLOCKED.includes(o.value)) : options
+    const applyTeacherFilter = (options) => options // Teachers skip consequence step entirely
 
     if (!matrixEntry) {
       // No matrix data — show all options (minus teacher restrictions)
@@ -141,7 +144,7 @@ export default function NewIncidentPage() {
 
     const filtered = CONSEQUENCE_ORDER
       .filter((_, i) => i >= minIdx && i <= maxIdx)
-      .filter(val => !isTeacher || !TEACHER_BLOCKED.includes(val))
+      .filter(Boolean)
       .map(val => ({ value: val, label: CONSEQUENCE_TYPE_LABELS[val] }))
 
     // Add override option at the bottom (teachers can override within their allowed types)
@@ -241,7 +244,7 @@ export default function NewIncidentPage() {
     formData.incident_date > today
 
   const canProceed = () => {
-    switch (step) {
+    switch (contentStep) {
       case 0: return !!formData.student
       case 1: return !!formData.offense_code_id
       case 2: {
@@ -401,7 +404,7 @@ export default function NewIncidentPage() {
         {/* Step content */}
         <Card>
           {/* Step 1: Select Student */}
-          {step === 0 && (
+          {contentStep === 0 && (
             <div className="space-y-4">
               <CardTitle>Select Student</CardTitle>
               <StudentSearch
@@ -424,7 +427,7 @@ export default function NewIncidentPage() {
           )}
 
           {/* Step 2: Select Offense */}
-          {step === 1 && (
+          {contentStep === 1 && (
             <div className="space-y-4">
               <CardTitle>Select Offense</CardTitle>
               <OffenseCodeSelector
@@ -435,17 +438,11 @@ export default function NewIncidentPage() {
           )}
 
           {/* Step 3: Consequence */}
-          {step === 2 && (
+          {contentStep === 2 && (
             <div className="space-y-4">
               <CardTitle>Assign Consequence</CardTitle>
 
-              {/* Teacher restriction notice */}
-              {isTeacher && (
-                <AlertBanner variant="warning" title="DAEP & Expulsion Require Admin Referral">
-                  Teachers may not assign DAEP or expulsion directly. Select ISS, OSS, detention, or warning.
-                  For serious offenses, submit this referral and an administrator will assign the appropriate consequence.
-                </AlertBanner>
-              )}
+              {/* Teachers never see this step — consequence is assigned by admin */}
 
               {/* SPED warning if selecting DAEP/expulsion */}
               {spedRequired && (
@@ -627,7 +624,7 @@ export default function NewIncidentPage() {
           )}
 
           {/* Step 4: Details */}
-          {step === 3 && (
+          {contentStep === 3 && (
             <div className="space-y-4">
               <CardTitle>Incident Details</CardTitle>
 
@@ -686,7 +683,7 @@ export default function NewIncidentPage() {
           )}
 
           {/* Step 5: Review */}
-          {step === 4 && (
+          {contentStep === 4 && (
             <div className="space-y-4">
               <CardTitle>Review & Submit</CardTitle>
 
