@@ -20,7 +20,7 @@ import { formatStudentNameShort, formatDate, daysRemaining, getSchoolYearLabel }
 import { format } from 'date-fns'
 
 export default function ParentDashboardPage() {
-  const { profile, user } = useAuth()
+  const { profile, user, districtId } = useAuth()
   const [children, setChildren] = useState([])
   const [incidents, setIncidents] = useState([])
   const [plans, setPlans] = useState([])
@@ -51,6 +51,7 @@ export default function ParentDashboardPage() {
         parent_acknowledged_offense: ackModal.offense,
       })
       .eq('id', incidentId)
+      .eq('district_id', districtId)
     if (error) {
       toast.error('Failed to acknowledge. Please try again.')
     } else {
@@ -65,7 +66,7 @@ export default function ParentDashboardPage() {
 
   useEffect(() => {
     const fetchParentData = async () => {
-      if (!user?.id) return
+      if (!user?.id || !districtId) return
       setLoading(true)
 
       try {
@@ -74,6 +75,7 @@ export default function ParentDashboardPage() {
           .from('students')
           .select('*')
           .eq('parent_user_id', user.id)
+          .eq('district_id', districtId)
           .eq('is_active', true)
 
         const kids = studentData || []
@@ -97,6 +99,7 @@ export default function ParentDashboardPage() {
             offense_codes (id, name)
           `)
           .in('student_id', studentIds)
+          .eq('district_id', districtId)
           .order('incident_date', { ascending: false })
           .limit(10)
 
@@ -140,7 +143,7 @@ export default function ParentDashboardPage() {
     }
 
     fetchParentData()
-  }, [user?.id])
+  }, [user?.id, districtId])
 
   if (loading) {
     return (

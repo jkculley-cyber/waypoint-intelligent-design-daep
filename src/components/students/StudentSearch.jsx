@@ -9,7 +9,7 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
   const [results, setResults] = useState([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const wrapperRef = useRef(null)
 
   useEffect(() => {
@@ -30,13 +30,16 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
 
     const debounceTimer = setTimeout(async () => {
       setLoading(true)
-      const { data } = await supabase
+      let q = supabase
         .from('students')
         .select('id, first_name, last_name, middle_name, student_id_number, grade_level, is_sped, is_504, is_ell, is_homeless, is_foster_care, sped_eligibility, campus_id')
         .eq('district_id', districtId)
         .eq('is_active', true)
         .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,student_id_number.ilike.%${query}%`)
-        .limit(10)
+      if (!isAdmin() && campusIds && campusIds.length > 0) {
+        q = q.in('campus_id', campusIds)
+      }
+      const { data } = await q.limit(10)
 
       setResults(data || [])
       setIsOpen(true)

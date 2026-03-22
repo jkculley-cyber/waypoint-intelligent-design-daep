@@ -22,13 +22,13 @@ import {
 
 export default function ParentIncidentViewPage() {
   const { id } = useParams()
-  const { user } = useAuth()
+  const { user, districtId } = useAuth()
   const { incident, loading } = useIncident(id)
 
   // FERPA ownership check: verify this incident belongs to one of the parent's children
   const [authorized, setAuthorized] = useState(null) // null=checking, true=ok, false=denied
   useEffect(() => {
-    if (!incident || !user?.id) return
+    if (!incident || !user?.id || !districtId) return
     const studentId = incident.student?.id
     if (!studentId) { setAuthorized(false); return }
     supabase
@@ -36,8 +36,9 @@ export default function ParentIncidentViewPage() {
       .select('id', { count: 'exact', head: true })
       .eq('id', studentId)
       .eq('parent_user_id', user.id)
+      .eq('district_id', districtId)
       .then(({ count }) => setAuthorized((count || 0) > 0))
-  }, [incident, user?.id])
+  }, [incident, user?.id, districtId])
 
   // Fetch check-in count for this placement
   const [daysServed, setDaysServed] = useState(0)

@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 // ─── Referrals ─────────────────────────────────────────────────────────────────
 
 export function useNavigatorReferrals(filters = {}) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [referrals, setReferrals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -29,6 +29,7 @@ export function useNavigatorReferrals(filters = {}) {
         .order('referral_date', { ascending: false })
         .order('created_at', { ascending: false })
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
       if (filters.status) q = q.eq('status', filters.status)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
       if (filters.date_from) q = q.gte('referral_date', filters.date_from)
@@ -42,7 +43,7 @@ export function useNavigatorReferrals(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.status, filters.campus_id, filters.date_from, filters.date_to])
+  }, [districtId, isAdmin, campusIds, filters.status, filters.campus_id, filters.date_from, filters.date_to])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -52,7 +53,7 @@ export function useNavigatorReferrals(filters = {}) {
 // ─── Placements ────────────────────────────────────────────────────────────────
 
 export function useNavigatorPlacements(filters = {}) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [placements, setPlacements] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -75,6 +76,7 @@ export function useNavigatorPlacements(filters = {}) {
         .eq('district_id', districtId)
         .order('start_date', { ascending: false })
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
       if (filters.placement_type) q = q.eq('placement_type', filters.placement_type)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
       if (filters.active_only) q = q.is('end_date', null).lte('start_date', 'now()')
@@ -87,7 +89,7 @@ export function useNavigatorPlacements(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters.placement_type, filters.campus_id, filters.active_only])
+  }, [districtId, isAdmin, campusIds, filters.placement_type, filters.campus_id, filters.active_only])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -97,7 +99,7 @@ export function useNavigatorPlacements(filters = {}) {
 // ─── Supports ──────────────────────────────────────────────────────────────────
 
 export function useNavigatorSupports(studentId = null) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [supports, setSupports] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -119,6 +121,7 @@ export function useNavigatorSupports(studentId = null) {
         .eq('district_id', districtId)
         .order('start_date', { ascending: false })
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
       if (studentId) q = q.eq('student_id', studentId)
 
       const { data, error: err } = await q
@@ -129,7 +132,7 @@ export function useNavigatorSupports(studentId = null) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, studentId])
+  }, [districtId, isAdmin, campusIds, studentId])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -139,7 +142,7 @@ export function useNavigatorSupports(studentId = null) {
 // ─── Dashboard Stats ───────────────────────────────────────────────────────────
 
 export function useNavigatorDashboardStats() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [stats, setStats] = useState(null)
   const [recentReferrals, setRecentReferrals] = useState([])
   const [escalationAlerts, setEscalationAlerts] = useState([])
@@ -153,52 +156,70 @@ export function useNavigatorDashboardStats() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
     const ninetyDaysAgo = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
+    // Helper to apply campus scoping to a query builder
+    const scopeCampus = (q) => {
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      return q
+    }
+
     const [referralsThisMonth, activeISS, activeOSS, activeSupports, recentRes, ossStudents] = await Promise.all([
-      supabase
-        .from('navigator_referrals')
-        .select('id', { count: 'exact', head: true })
-        .eq('district_id', districtId)
-        .gte('referral_date', monthStart),
+      scopeCampus(
+        supabase
+          .from('navigator_referrals')
+          .select('id', { count: 'exact', head: true })
+          .eq('district_id', districtId)
+          .gte('referral_date', monthStart)
+      ),
 
-      supabase
-        .from('navigator_placements')
-        .select('id', { count: 'exact', head: true })
-        .eq('district_id', districtId)
-        .eq('placement_type', 'iss')
-        .is('end_date', null),
+      scopeCampus(
+        supabase
+          .from('navigator_placements')
+          .select('id', { count: 'exact', head: true })
+          .eq('district_id', districtId)
+          .eq('placement_type', 'iss')
+          .is('end_date', null)
+      ),
 
-      supabase
-        .from('navigator_placements')
-        .select('id', { count: 'exact', head: true })
-        .eq('district_id', districtId)
-        .eq('placement_type', 'oss')
-        .is('end_date', null),
+      scopeCampus(
+        supabase
+          .from('navigator_placements')
+          .select('id', { count: 'exact', head: true })
+          .eq('district_id', districtId)
+          .eq('placement_type', 'oss')
+          .is('end_date', null)
+      ),
 
-      supabase
-        .from('navigator_supports')
-        .select('id', { count: 'exact', head: true })
-        .eq('district_id', districtId)
-        .eq('status', 'active'),
+      scopeCampus(
+        supabase
+          .from('navigator_supports')
+          .select('id', { count: 'exact', head: true })
+          .eq('district_id', districtId)
+          .eq('status', 'active')
+      ),
 
-      supabase
-        .from('navigator_referrals')
-        .select(`
-          id, referral_date, description, status,
-          students(first_name, last_name),
-          campuses(name),
-          offense_codes(code, description)
-        `)
-        .eq('district_id', districtId)
-        .order('created_at', { ascending: false })
-        .limit(10),
+      scopeCampus(
+        supabase
+          .from('navigator_referrals')
+          .select(`
+            id, referral_date, description, status,
+            students(first_name, last_name),
+            campuses(name),
+            offense_codes(code, description)
+          `)
+          .eq('district_id', districtId)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ),
 
       // Students with 3+ OSS in rolling 90 days — escalation alert
-      supabase
-        .from('navigator_placements')
-        .select('student_id, students(first_name, last_name)')
-        .eq('district_id', districtId)
-        .eq('placement_type', 'oss')
-        .gte('start_date', ninetyDaysAgo),
+      scopeCampus(
+        supabase
+          .from('navigator_placements')
+          .select('student_id, students(first_name, last_name)')
+          .eq('district_id', districtId)
+          .eq('placement_type', 'oss')
+          .gte('start_date', ninetyDaysAgo)
+      ),
     ])
 
     // Count OSS per student for escalation
@@ -222,7 +243,7 @@ export function useNavigatorDashboardStats() {
     setRecentReferrals(recentRes.data || [])
     setEscalationAlerts(escalations)
     setLoading(false)
-  }, [districtId])
+  }, [districtId, isAdmin, campusIds])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -312,7 +333,7 @@ export function getSchoolYearBounds(schoolYear) {
 // ─── Goals ─────────────────────────────────────────────────────────────────────
 
 export function useNavigatorGoals(schoolYear) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -322,13 +343,16 @@ export function useNavigatorGoals(schoolYear) {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: err } = await supabase
+      let q = supabase
         .from('navigator_campus_goals')
         .select(`*, campuses(id, name, tea_campus_id)`)
         .eq('district_id', districtId)
         .eq('school_year', schoolYear)
         .order('created_at', { ascending: true })
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+
+      const { data, error: err } = await q
       if (err) throw err
       setGoals(data || [])
     } catch (err) {
@@ -336,7 +360,7 @@ export function useNavigatorGoals(schoolYear) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, schoolYear])
+  }, [districtId, isAdmin, campusIds, schoolYear])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -353,7 +377,7 @@ export async function saveNavigatorGoal(goalData) {
 // ─── Year-Over-Year Data ────────────────────────────────────────────────────────
 
 export function useNavigatorYOYData(schoolYear) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [currentYear, setCurrentYear] = useState([])
   const [priorYear, setPriorYear] = useState([])
   const [loading, setLoading] = useState(true)
@@ -361,7 +385,7 @@ export function useNavigatorYOYData(schoolYear) {
   useEffect(() => {
     if (!districtId) return
     loadYOYData()
-  }, [districtId, schoolYear])
+  }, [districtId, isAdmin, campusIds, schoolYear])
 
   async function loadYOYData() {
     setLoading(true)
@@ -372,19 +396,29 @@ export function useNavigatorYOYData(schoolYear) {
     const priorSY = `${parseInt(startY) - 1}-${startY.slice(-2)}`
     const { start: priorStart, end: priorEnd } = getSchoolYearBounds(priorSY)
 
+    // Helper to apply campus scoping
+    const scopeCampus = (q) => {
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      return q
+    }
+
     const [curRes, priorRes] = await Promise.all([
-      supabase
-        .from('navigator_placements')
-        .select('placement_type, start_date')
-        .eq('district_id', districtId)
-        .gte('start_date', curStart)
-        .lte('start_date', curEnd),
-      supabase
-        .from('navigator_placements')
-        .select('placement_type, start_date')
-        .eq('district_id', districtId)
-        .gte('start_date', priorStart)
-        .lte('start_date', priorEnd),
+      scopeCampus(
+        supabase
+          .from('navigator_placements')
+          .select('placement_type, start_date')
+          .eq('district_id', districtId)
+          .gte('start_date', curStart)
+          .lte('start_date', curEnd)
+      ),
+      scopeCampus(
+        supabase
+          .from('navigator_placements')
+          .select('placement_type, start_date')
+          .eq('district_id', districtId)
+          .gte('start_date', priorStart)
+          .lte('start_date', priorEnd)
+      ),
     ])
 
     setCurrentYear(aggregateByMonth(curRes.data || [], curStart))
@@ -437,7 +471,7 @@ export function riskLevel(score) {
 }
 
 export function useEscalationRisk() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -449,25 +483,31 @@ export function useEscalationRisk() {
     try {
       const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
 
-      const [refRes, placRes, supRes] = await Promise.all([
-        supabase
-          .from('navigator_referrals')
-          .select('id, student_id, referral_date, outcome, students(id, first_name, last_name, grade_level), campuses(id, name)')
-          .eq('district_id', districtId)
-          .gte('referral_date', d90),
+      let refQ = supabase
+        .from('navigator_referrals')
+        .select('id, student_id, referral_date, outcome, students(id, first_name, last_name, grade_level), campuses(id, name)')
+        .eq('district_id', districtId)
+        .gte('referral_date', d90)
 
-        supabase
-          .from('navigator_placements')
-          .select('id, student_id, placement_type, start_date')
-          .eq('district_id', districtId)
-          .gte('start_date', d90),
+      let placQ = supabase
+        .from('navigator_placements')
+        .select('id, student_id, placement_type, start_date')
+        .eq('district_id', districtId)
+        .gte('start_date', d90)
 
-        supabase
-          .from('navigator_supports')
-          .select('id, student_id')
-          .eq('district_id', districtId)
-          .eq('status', 'active'),
-      ])
+      let supQ = supabase
+        .from('navigator_supports')
+        .select('id, student_id')
+        .eq('district_id', districtId)
+        .eq('status', 'active')
+
+      if (!isAdmin && campusIds?.length) {
+        refQ = refQ.in('campus_id', campusIds)
+        placQ = placQ.in('campus_id', campusIds)
+        supQ = supQ.in('campus_id', campusIds)
+      }
+
+      const [refRes, placRes, supRes] = await Promise.all([refQ, placQ, supQ])
 
       if (refRes.error) throw refRes.error
       if (placRes.error) throw placRes.error
@@ -513,7 +553,7 @@ export function useEscalationRisk() {
     } finally {
       setLoading(false)
     }
-  }, [districtId])
+  }, [districtId, isAdmin, campusIds])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -541,7 +581,7 @@ const SKILL_INTERVENTIONS = {
 }
 
 export function useSkillGapData() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -551,12 +591,15 @@ export function useSkillGapData() {
     setLoading(true)
     setError(null)
     try {
-      const { data: rows, error: err } = await supabase
+      let q = supabase
         .from('navigator_referrals')
         .select('skill_gap, student_id, students(id, first_name, last_name, grade_level), campuses(name)')
         .eq('district_id', districtId)
         .not('skill_gap', 'is', null)
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+
+      const { data: rows, error: err } = await q
       if (err) throw err
 
       const counts = {}
@@ -584,7 +627,7 @@ export function useSkillGapData() {
     } finally {
       setLoading(false)
     }
-  }, [districtId])
+  }, [districtId, isAdmin, campusIds])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -594,7 +637,7 @@ export function useSkillGapData() {
 // ─── Intervention Effectiveness ───────────────────────────────────────────────
 
 export function useInterventionEffectiveness() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [supports, setSupports] = useState([])
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -605,7 +648,7 @@ export function useInterventionEffectiveness() {
     setLoading(true)
     setError(null)
     try {
-      const { data: rows, error: err } = await supabase
+      let q = supabase
         .from('navigator_supports')
         .select(`
           *,
@@ -619,6 +662,9 @@ export function useInterventionEffectiveness() {
         .not('incidents_after', 'is', null)
         .order('end_date', { ascending: false })
 
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+
+      const { data: rows, error: err } = await q
       if (err) throw err
       const data = rows || []
 
@@ -653,7 +699,7 @@ export function useInterventionEffectiveness() {
     } finally {
       setLoading(false)
     }
-  }, [districtId])
+  }, [districtId, isAdmin, campusIds])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -663,7 +709,7 @@ export function useInterventionEffectiveness() {
 // ─── Disproportionality ───────────────────────────────────────────────────────
 
 export function useDisproportionality() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [campusData, setCampusData] = useState([])
   const [gradeData, setGradeData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -676,19 +722,24 @@ export function useDisproportionality() {
     try {
       const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
 
-      const [refRes, studRes] = await Promise.all([
-        supabase
-          .from('navigator_referrals')
-          .select('campus_id, student_id, students(grade_level), campuses(id, name)')
-          .eq('district_id', districtId)
-          .gte('referral_date', d90),
+      let refQ = supabase
+        .from('navigator_referrals')
+        .select('campus_id, student_id, students(grade_level), campuses(id, name)')
+        .eq('district_id', districtId)
+        .gte('referral_date', d90)
 
-        supabase
-          .from('students')
-          .select('id, grade_level, campus_id')
-          .eq('district_id', districtId)
-          .eq('status', 'active'),
-      ])
+      let studQ = supabase
+        .from('students')
+        .select('id, grade_level, campus_id')
+        .eq('district_id', districtId)
+        .eq('status', 'active')
+
+      if (!isAdmin && campusIds?.length) {
+        refQ = refQ.in('campus_id', campusIds)
+        studQ = studQ.in('campus_id', campusIds)
+      }
+
+      const [refRes, studRes] = await Promise.all([refQ, studQ])
 
       if (refRes.error) throw refRes.error
 
@@ -749,7 +800,7 @@ export function useDisproportionality() {
     } finally {
       setLoading(false)
     }
-  }, [districtId])
+  }, [districtId, isAdmin, campusIds])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -759,7 +810,7 @@ export function useDisproportionality() {
 // ─── Pilot Summary ────────────────────────────────────────────────────────────
 
 export function useNavigatorPilotSummary(schoolYear) {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -771,27 +822,39 @@ export function useNavigatorPilotSummary(schoolYear) {
     try {
       const { start, end } = getSchoolYearBounds(schoolYear)
 
+      // Helper to apply campus scoping
+      const scopeCampus = (q) => {
+        if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+        return q
+      }
+
       const [refRes, placRes, supRes] = await Promise.all([
-        supabase
-          .from('navigator_referrals')
-          .select('id, student_id, status, outcome, skill_gap')
-          .eq('district_id', districtId)
-          .gte('referral_date', start)
-          .lte('referral_date', end),
+        scopeCampus(
+          supabase
+            .from('navigator_referrals')
+            .select('id, student_id, status, outcome, skill_gap')
+            .eq('district_id', districtId)
+            .gte('referral_date', start)
+            .lte('referral_date', end)
+        ),
 
-        supabase
-          .from('navigator_placements')
-          .select('id, student_id, placement_type, days')
-          .eq('district_id', districtId)
-          .gte('start_date', start)
-          .lte('start_date', end),
+        scopeCampus(
+          supabase
+            .from('navigator_placements')
+            .select('id, student_id, placement_type, days')
+            .eq('district_id', districtId)
+            .gte('start_date', start)
+            .lte('start_date', end)
+        ),
 
-        supabase
-          .from('navigator_supports')
-          .select('id, student_id, support_type, status, incidents_before, incidents_after')
-          .eq('district_id', districtId)
-          .gte('start_date', start)
-          .lte('start_date', end),
+        scopeCampus(
+          supabase
+            .from('navigator_supports')
+            .select('id, student_id, support_type, status, incidents_before, incidents_after')
+            .eq('district_id', districtId)
+            .gte('start_date', start)
+            .lte('start_date', end)
+        ),
       ])
 
       if (refRes.error) throw refRes.error
@@ -839,7 +902,7 @@ export function useNavigatorPilotSummary(schoolYear) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, schoolYear])
+  }, [districtId, isAdmin, campusIds, schoolYear])
 
   useEffect(() => { fetch() }, [fetch])
 
