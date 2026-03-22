@@ -5,10 +5,14 @@ import { useAccessScope } from './useAccessScope'
 import { applyCampusScope } from '../lib/accessControl'
 
 /**
- * Fetch incidents with optional filters
+ * Fetch incidents with optional filters and pagination
+ * @param {object} filters - Filter options
+ * @param {number} [filters.page] - Page number (1-based). When set, enables pagination with PAGE_SIZE rows.
+ * @param {number} [filters.pageSize] - Rows per page (default 50 when page is set).
  */
 export function useIncidents(filters = {}) {
   const [incidents, setIncidents] = useState([])
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const { districtId } = useAuth()
@@ -19,6 +23,9 @@ export function useIncidents(filters = {}) {
     setError(null)
 
     try {
+      const paginated = typeof filters.page === 'number' && filters.page > 0
+      const pageSize = filters.pageSize || 50
+
       let query = supabase
         .from('incidents')
         .select(`
@@ -30,7 +37,7 @@ export function useIncidents(filters = {}) {
           reviewer:profiles!incidents_reviewed_by_fkey(id, full_name),
           compliance:compliance_checklists!fk_incidents_compliance(id, status, placement_blocked),
           approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, chain_status, current_step)
-        `)
+        `, paginated ? { count: 'exact' } : undefined)
         .eq('district_id', districtId)
         .order('incident_date', { ascending: false })
 
@@ -47,23 +54,33 @@ export function useIncidents(filters = {}) {
       if (filters.dateFrom) query = query.gte('incident_date', filters.dateFrom)
       if (filters.dateTo)   query = query.lte('incident_date', filters.dateTo)
 
-      const { data, error: fetchError } = await query
+      // Apply pagination range
+      if (paginated) {
+        const from = (filters.page - 1) * pageSize
+        const to = from + pageSize - 1
+        query = query.range(from, to)
+      }
+
+      const { data, error: fetchError, count } = await query
 
       if (fetchError) throw fetchError
       setIncidents(data || [])
+      if (paginated && typeof count === 'number') {
+        setTotalCount(count)
+      }
     } catch (err) {
       console.error('Error fetching incidents:', err)
       setError(err)
     } finally {
       setLoading(false)
     }
-  }, [districtId, filters._campusScope, filters._spedOnly, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required, filters.dateFrom, filters.dateTo])
+  }, [districtId, filters._campusScope, filters._spedOnly, filters.campus_id, filters.status, filters.student_id, filters.consequence_type, filters.sped_compliance_required, filters.dateFrom, filters.dateTo, filters.page, filters.pageSize])
 
   useEffect(() => {
     fetchIncidents()
   }, [fetchIncidents])
 
-  return { incidents, loading, error, refetch: fetchIncidents }
+  return { incidents, totalCount, loading, error, refetch: fetchIncidents }
 }
 
 /**

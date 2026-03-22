@@ -6,53 +6,37 @@ import { useAuth } from '../../contexts/AuthContext'
 const STEPS = [
   {
     key: 'campuses',
-    label: 'Campuses configured',
-    detail: 'Add your campuses so staff and students can be assigned.',
+    label: 'Add your campuses',
+    detail: 'Add at least 2 campuses so staff and students can be assigned.',
     href: '/settings',
-    table: 'campuses',
-  },
-  {
-    key: 'offenseCodes',
-    label: 'Offense codes set up',
-    detail: 'Configure the offenses and consequences used in your district.',
-    href: '/offense-codes',
-    table: 'offense_codes',
-  },
-  {
-    key: 'staff',
-    label: 'Staff imported',
-    detail: 'Import staff accounts so they can access the platform.',
-    href: '/users',
-    table: 'profiles',
+    threshold: 2,
   },
   {
     key: 'students',
-    label: 'Students imported',
-    detail: 'Import your student roster to begin logging incidents.',
-    href: '/students',
-    table: 'students',
+    label: 'Import your students',
+    detail: 'Import your student roster (10+ students) to begin logging incidents.',
+    href: '/import',
+    threshold: 11,
   },
   {
-    key: 'capacity',
-    label: 'DAEP capacity configured',
-    detail: 'Set available seats at each DAEP campus.',
-    href: '/daep',
-    table: null, // checked via districts.settings
+    key: 'offenseCodes',
+    label: 'Configure your discipline matrix',
+    detail: 'Set up the offense codes and consequences used in your district.',
+    href: '/matrix',
+    threshold: 1,
   },
   {
-    key: 'notifications',
-    label: 'Email notifications enabled',
-    detail: 'Set your RESEND_API_KEY secret in Supabase so emails reach staff and guardians.',
-    href: null, // manual confirm — admin sets Supabase secret externally
-    table: null,
-    manual: true,
+    key: 'staff',
+    label: 'Invite your staff',
+    detail: 'Add staff accounts so your team can access the platform.',
+    href: '/settings',
+    threshold: 3,
   },
   {
-    key: 'firstIncident',
-    label: 'First incident logged',
-    detail: 'Your team is ready. Log your first incident to go live.',
-    href: '/incidents/new',
-    table: 'incidents',
+    key: 'sisType',
+    label: 'Select your SIS',
+    detail: 'Choose your Student Information System for data integration.',
+    href: '/settings',
   },
 ]
 
@@ -63,28 +47,32 @@ export default function SetupChecklist({ onDismiss }) {
   const [dismissed, setDismissed] = useState(() =>
     localStorage.getItem(`setup_dismissed_${districtId}`) === '1'
   )
+  // Only show for new districts (fewer than 2 campuses OR fewer than 5 students)
+  const [isNewDistrict, setIsNewDistrict] = useState(false)
 
   useEffect(() => {
     if (!districtId) return
     async function run() {
       setLoading(true)
-      const [campusRes, offenseRes, profileRes, studentRes, incidentRes] = await Promise.all([
+      const [campusRes, offenseRes, profileRes, studentRes] = await Promise.all([
         supabase.from('campuses').select('id', { count: 'exact', head: true }).eq('district_id', districtId),
         supabase.from('offense_codes').select('id', { count: 'exact', head: true }).eq('district_id', districtId),
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('district_id', districtId).neq('role', 'student').neq('role', 'parent'),
         supabase.from('students').select('id', { count: 'exact', head: true }).eq('district_id', districtId),
-        supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('district_id', districtId),
       ])
-      const capacitySet = !!(district?.settings?.daep_capacity || district?.settings?.capacity)
-      const notificationsConfirmed = localStorage.getItem(`notifications_confirmed_${districtId}`) === '1'
+      const campusCount = campusRes.count || 0
+      const studentCount = studentRes.count || 0
+      const staffCount = profileRes.count || 0
+      const offenseCount = offenseRes.count || 0
+      const hasSis = !!district?.settings?.sis_type
+
+      setIsNewDistrict(campusCount < 2 || studentCount < 5)
       setChecks({
-        campuses:      (campusRes.count   || 0) > 0,
-        offenseCodes:  (offenseRes.count  || 0) > 0,
-        staff:         (profileRes.count  || 0) > 1, // > 1 because admin themselves counts
-        students:      (studentRes.count  || 0) > 0,
-        capacity:      capacitySet,
-        notifications: notificationsConfirmed,
-        firstIncident: (incidentRes.count || 0) > 0,
+        campuses:     campusCount >= 2,
+        students:     studentCount > 10,
+        offenseCodes: offenseCount > 0,
+        staff:        staffCount > 2,
+        sisType:      hasSis,
       })
       setLoading(false)
     }
@@ -103,6 +91,7 @@ export default function SetupChecklist({ onDismiss }) {
 
   if (dismissed || (allDone && completedCount > 0)) return null
   if (loading) return null // don't flash loading state
+  if (!isNewDistrict && !allDone) return null // only show for new districts
 
   return (
     <div className="mb-6 bg-gray-900 border border-orange-700/40 rounded-xl p-5">

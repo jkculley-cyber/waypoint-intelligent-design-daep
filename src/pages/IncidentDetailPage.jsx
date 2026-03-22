@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { exportIncidentToSIS, getSISName, downloadCSV } from '../lib/sisExport'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
@@ -43,7 +44,7 @@ export default function IncidentDetailPage() {
   const { incident, loading, refetch } = useIncident(id)
   const { approveIncident, activateIncident, completeIncident, denyIncident, returnIncident } = useIncidentActions()
   const { log: auditLog, refetch: refetchLog } = useIncidentAuditLog(id)
-  const { hasRole, profile, districtId } = useAuth()
+  const { hasRole, profile, districtId, district } = useAuth()
 
   // Fetch check-in count for this placement — hooks must be before any early return
   const [daysServed, setDaysServed] = useState(0)
@@ -217,6 +218,24 @@ export default function IncidentDetailPage() {
     }
   }
 
+  const sisType = district?.settings?.sis_type || 'other'
+  const sisName = getSISName(sisType)
+
+  const handleExportSIS = useCallback(() => {
+    const campus = incident.campus || null
+    const reporter = incident.reporter || null
+    const csv = exportIncidentToSIS(sisType, incident, student, campus, reporter)
+    // Copy to clipboard
+    navigator.clipboard.writeText(csv).then(() => {
+      toast.success(`Copied to clipboard — paste into ${sisName}`)
+    }).catch(() => {
+      toast.success(`SIS export ready — downloading file`)
+    })
+    // Also offer download
+    const dateStr = new Date().toISOString().slice(0, 10)
+    downloadCSV(csv, `waypoint-sis-export-${dateStr}.csv`)
+  }, [sisType, sisName, incident, student])
+
   return (
     <div>
       <Topbar
@@ -224,6 +243,16 @@ export default function IncidentDetailPage() {
         subtitle={`${offense?.title || 'Unknown Offense'} | ${formatDate(incident.incident_date)}`}
         actions={
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportSIS}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              title={`Export to ${sisName}`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Export to {sisName}
+            </button>
             {canReturn && (
               <Button size="sm" variant="secondary" onClick={() => { setReturnReason(''); setShowReturnModal(true) }}>
                 Return for Revision

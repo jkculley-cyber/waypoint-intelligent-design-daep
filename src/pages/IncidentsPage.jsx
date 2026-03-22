@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import DataTable from '../components/ui/DataTable'
@@ -20,20 +20,53 @@ import {
 } from '../lib/constants'
 import { useAccessScope } from '../hooks/useAccessScope'
 import { canImport, getImportTier } from '../lib/importPermissions'
+import { exportIncidentBatchToSIS, getSISName, downloadCSV } from '../lib/sisExport'
 // exportUtils loaded dynamically on first export click
+
+const PAGE_SIZE = 50
 
 export default function IncidentsPage() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [campusFilter, setCampusFilter] = useState('')
-  const [consequenceFilter, setConsequenceFilter] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [myApprovalsOnly, setMyApprovalsOnly] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Feature 3: Read filters from URL search params
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '')
+  const [campusFilter, setCampusFilter] = useState(searchParams.get('campus') || '')
+  const [consequenceFilter, setConsequenceFilter] = useState(searchParams.get('consequence') || '')
+  const [dateFrom, setDateFrom] = useState(searchParams.get('dateFrom') || '')
+  const [dateTo, setDateTo] = useState(searchParams.get('dateTo') || '')
+  const [myApprovalsOnly, setMyApprovalsOnly] = useState(searchParams.get('myApprovals') === '1')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const { scope } = useAccessScope()
-  const { profile, hasRole } = useAuth()
+  const { profile, hasRole, districtId, district } = useAuth()
+
+  // Feature 2: Pagination state
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get('page'), 10)
+    return p > 0 ? p : 1
+  })
+  // totalCount comes from useIncidents hook as serverTotalCount
+
+  // Feature 3: Sync filter state to URL search params
+  useEffect(() => {
+    const params = {}
+    if (search) params.search = search
+    if (statusFilter) params.status = statusFilter
+    if (campusFilter) params.campus = campusFilter
+    if (consequenceFilter) params.consequence = consequenceFilter
+    if (dateFrom) params.dateFrom = dateFrom
+    if (dateTo) params.dateTo = dateTo
+    if (myApprovalsOnly) params.myApprovals = '1'
+    if (page > 1) params.page = String(page)
+    setSearchParams(params, { replace: true })
+  }, [search, statusFilter, campusFilter, consequenceFilter, dateFrom, dateTo, myApprovalsOnly, page])
+
+  // Reset to page 1 when any filter changes
+  const filterKey = `${statusFilter}|${campusFilter}|${consequenceFilter}|${dateFrom}|${dateTo}`
+  useEffect(() => {
+    setPage(1)
+  }, [filterKey])
 
   const filters = useMemo(() => {
     const f = {}
@@ -46,10 +79,12 @@ export default function IncidentsPage() {
     if (consequenceFilter) f.consequence_type = consequenceFilter
     if (dateFrom) f.dateFrom = dateFrom
     if (dateTo)   f.dateTo   = dateTo
+    f.page = page
+    f.pageSize = PAGE_SIZE
     return f
-  }, [statusFilter, campusFilter, consequenceFilter, dateFrom, dateTo, scope])
+  }, [statusFilter, campusFilter, consequenceFilter, dateFrom, dateTo, scope, page])
 
-  const { incidents: rawIncidents, loading } = useIncidents(filters)
+  const { incidents: rawIncidents, totalCount: serverTotalCount, loading } = useIncidents(filters)
   const { campuses } = useCampuses()
 
   // Client-side search and "My Pending Approvals" filter
@@ -256,11 +291,24 @@ export default function IncidentsPage() {
     })
   }, [buildExportRows, profile])
 
+  const sisType = district?.settings?.sis_type || 'other'
+  const sisName = getSISName(sisType)
+
+  const handleExportSIS = useCallback(() => {
+    const campusMap = Object.fromEntries(campuses.map(c => [c.id, c]))
+    const csv = exportIncidentBatchToSIS(sisType, incidents, campusMap, {})
+    const dateStr = new Date().toISOString().slice(0, 10)
+    downloadCSV(csv, `waypoint-sis-export-${dateStr}.csv`)
+  }, [sisType, incidents, campuses])
+
   return (
     <div>
       <Topbar
         title="Incidents"
-        subtitle={`${incidents.length} incident${incidents.length !== 1 ? 's' : ''}`}
+        subtitle={serverTotalCount > 0
+          ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, serverTotalCount)} of ${serverTotalCount} incident${serverTotalCount !== 1 ? 's' : ''}`
+          : `${incidents.length} incident${incidents.length !== 1 ? 's' : ''}`
+        }
         actions={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -269,6 +317,12 @@ export default function IncidentsPage() {
               </button>
               <button onClick={handleExportExcel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title="Export Excel">
                 Excel
+              </button>
+              <button onClick={handleExportSIS} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50" title={`Export to ${sisName}`}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Export to {sisName}
               </button>
             </div>
             {canImport({ role: scope.role, importType: 'incidents', tier: getImportTier() }).allowed && (
@@ -398,7 +452,7 @@ export default function IncidentsPage() {
               </button>
               {(search || statusFilter || campusFilter || consequenceFilter || dateFrom || dateTo || myApprovalsOnly) && (
                 <button
-                  onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter(''); setDateFrom(''); setDateTo(''); setMyApprovalsOnly(false) }}
+                  onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter(''); setDateFrom(''); setDateTo(''); setMyApprovalsOnly(false); setPage(1) }}
                   className="text-sm text-gray-500 hover:text-gray-700 font-medium"
                 >
                   Clear Filters
@@ -409,7 +463,7 @@ export default function IncidentsPage() {
           {!['cbc', 'counselor', 'sped_coordinator', 'section_504_coordinator', 'sss'].includes(profile?.role) && (search || statusFilter || campusFilter || consequenceFilter || dateFrom || dateTo) && (
             <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
               <button
-                onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter(''); setDateFrom(''); setDateTo('') }}
+                onClick={() => { setSearch(''); setStatusFilter(''); setCampusFilter(''); setConsequenceFilter(''); setDateFrom(''); setDateTo(''); setPage(1) }}
                 className="text-sm text-gray-500 hover:text-gray-700 font-medium"
               >
                 Clear Filters
@@ -428,6 +482,53 @@ export default function IncidentsPage() {
             emptyMessage="No incidents found. Create a new incident to get started."
           />
         </Card>
+
+        {/* Pagination Controls */}
+        {serverTotalCount > PAGE_SIZE && (() => {
+          const totalPages = Math.ceil(serverTotalCount / PAGE_SIZE)
+          const rangeStart = (page - 1) * PAGE_SIZE + 1
+          const rangeEnd = Math.min(page * PAGE_SIZE, serverTotalCount)
+          return (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Showing {rangeStart}-{rangeEnd} of {serverTotalCount} incidents
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                    page <= 1
+                      ? 'text-gray-300 border-gray-200 cursor-not-allowed'
+                      : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600 px-2">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                    page >= totalPages
+                      ? 'text-gray-300 border-gray-200 cursor-not-allowed'
+                      : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Next
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Floating Bulk Action Bar */}

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
+import { SIS_OPTIONS } from '../lib/sisExport'
 
 const SETTINGS_SECTIONS = [
   {
@@ -66,6 +67,8 @@ const SETTINGS_SECTIONS = [
 ]
 
 export default function SettingsPage() {
+  const { hasRole } = useAuth()
+
   return (
     <div>
       <Topbar
@@ -79,6 +82,9 @@ export default function SettingsPage() {
             <SettingsCard key={section.title} {...section} />
           ))}
         </div>
+
+        {/* SIS Integration — admin only */}
+        {hasRole(['admin']) && <SISIntegrationSection />}
       </div>
     </div>
   )
@@ -185,6 +191,72 @@ export function NotificationPreferencesPage() {
           </Card>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─── SIS Integration Section (admin only) ──────────────────────────
+
+function SISIntegrationSection() {
+  const { district, districtId } = useAuth()
+  const [sisType, setSisType] = useState(district?.settings?.sis_type || '')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setSisType(district?.settings?.sis_type || '')
+  }, [district?.settings?.sis_type])
+
+  const handleSave = async () => {
+    if (!districtId) return
+    setSaving(true)
+    const { error } = await supabase
+      .from('districts')
+      .update({ settings: { ...district.settings, sis_type: sisType } })
+      .eq('id', districtId)
+    setSaving(false)
+    if (error) {
+      toast.error('Failed to save SIS setting')
+    } else {
+      toast.success('SIS integration saved')
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">Student Information System</h2>
+      <p className="text-sm text-gray-500 mb-4">Configure your district&apos;s SIS to format discipline exports correctly.</p>
+      <Card className="max-w-lg">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="sis-type" className="block text-sm font-medium text-gray-700 mb-1">
+              Which SIS does your district use?
+            </label>
+            <select
+              id="sis-type"
+              value={sisType}
+              onChange={(e) => setSisType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value="">Select your SIS...</option>
+              {SIS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-gray-400">
+              This determines the format used when exporting incidents to your SIS.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={saving || !sisType}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

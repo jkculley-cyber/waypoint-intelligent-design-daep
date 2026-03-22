@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
@@ -9,12 +11,12 @@ import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import SetupChecklist from '../components/ui/SetupChecklist'
 import { ROLE_LABELS, ROLES, APPROVAL_CHAIN_STEPS, INCIDENT_STATUS_COLORS } from '../lib/constants'
-import { getSchoolYearLabel, formatDate } from '../lib/utils'
+import { getSchoolYearLabel, getSchoolYearStart, formatDate } from '../lib/utils'
 
 const APPROVAL_ROLES = APPROVAL_CHAIN_STEPS.map(s => s.role)
 
 export default function DashboardPage() {
-  const { profile, hasRole, districtId } = useAuth()
+  const { profile, hasRole, districtId, district } = useAuth()
   const { redCount, yellowCount, alertCount } = useNotifications()
   const { scope, loading: scopeLoading } = useAccessScope()
   const isAdmin = hasRole([ROLES.ADMIN])
@@ -117,6 +119,186 @@ export default function DashboardPage() {
     fetchPending()
   }, [districtId, profile?.role, isApprovalRole, scope])
 
+  // ── Compliance ROI Widget ──────────────────────────────────────────────────
+  const [roiStats, setRoiStats] = useState({ blocked: 0, approaching: 0, spedIncidents: 0 })
+  const [roiLoaded, setRoiLoaded] = useState(false)
+  useEffect(() => {
+    if (!districtId || scopeLoading) return
+    const schoolYearStart = getSchoolYearStart().toISOString()
+    const fetchRoi = async () => {
+      // 1. Placements blocked by compliance
+      const { count: blockedCount } = await supabase
+        .from('compliance_checklists')
+        .select('id', { count: 'exact', head: true })
+        .eq('district_id', districtId)
+        .eq('placement_blocked', true)
+        .gte('created_at', schoolYearStart)
+
+      // 2. Students at 7+ cumulative removal days this school year
+      const { data: removalIncidents } = await supabase
+        .from('incidents')
+        .select('student_id, consequence_days')
+        .eq('district_id', districtId)
+        .in('consequence_type', ['oss', 'iss', 'daep', 'expulsion'])
+        .gte('incident_date', schoolYearStart)
+      const daysByStudent = {}
+      ;(removalIncidents || []).forEach(inc => {
+        if (!inc.consequence_days) return
+        daysByStudent[inc.student_id] = (daysByStudent[inc.student_id] || 0) + inc.consequence_days
+      })
+      const approachingCount = Object.values(daysByStudent).filter(d => d >= 7).length
+
+      // 3. SPED/504 students with DAEP incidents this school year
+      const { data: spedInc } = await supabase
+        .from('incidents')
+        .select('student_id, students!inner(is_sped, is_504)')
+        .eq('district_id', districtId)
+        .in('consequence_type', ['daep', 'expulsion'])
+        .gte('incident_date', schoolYearStart)
+      const spedStudentIds = new Set()
+      ;(spedInc || []).forEach(inc => {
+        if (inc.students?.is_sped || inc.students?.is_504) {
+          spedStudentIds.add(inc.student_id)
+        }
+      })
+
+      setRoiStats({
+        blocked: blockedCount ?? 0,
+        approaching: approachingCount,
+        spedIncidents: spedStudentIds.size,
+      })
+      setRoiLoaded(true)
+    }
+    fetchRoi()
+  }, [districtId, scopeLoading])
+
+  const roiTotal = roiStats.blocked + roiStats.approaching + roiStats.spedIncidents
+
+  // ── District Impact Report PDF ─────────────────────────────────────────────
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const generateImpactReport = useCallback(async () => {
+    if (!districtId) return
+    setPdfGenerating(true)
+    try {
+      const schoolYearStart = getSchoolYearStart().toISOString()
+      const districtName = district?.name || 'District'
+
+      // Fetch metrics
+      const [totalRes, blockedRes, alertsRes, approvedRes, ackRes, campusesRes, incidentsCampusRes] = await Promise.all([
+        supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('district_id', districtId).gte('incident_date', schoolYearStart),
+        supabase.from('compliance_checklists').select('id', { count: 'exact', head: true }).eq('district_id', districtId).eq('placement_blocked', true).gte('created_at', schoolYearStart),
+        supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('district_id', districtId).gte('created_at', schoolYearStart),
+        supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('district_id', districtId).eq('status', 'approved').gte('incident_date', schoolYearStart),
+        supabase.from('notification_log').select('id', { count: 'exact', head: true }).eq('district_id', districtId).eq('channel', 'parent_ack').gte('created_at', schoolYearStart),
+        supabase.from('campuses').select('id, name').eq('district_id', districtId),
+        supabase.from('incidents').select('id, campus_id, consequence_type, students!inner(is_sped, is_504)').eq('district_id', districtId).gte('incident_date', schoolYearStart),
+      ])
+
+      const campuses = campusesRes.data || []
+      const allInc = incidentsCampusRes.data || []
+
+      // Per-campus breakdown
+      const campusMap = {}
+      campuses.forEach(c => { campusMap[c.id] = { name: c.name, total: 0, daep: 0, sped: 0 } })
+      allInc.forEach(inc => {
+        const entry = campusMap[inc.campus_id]
+        if (!entry) return
+        entry.total++
+        if (inc.consequence_type === 'daep') entry.daep++
+        if (inc.students?.is_sped || inc.students?.is_504) entry.sped++
+      })
+
+      // Build PDF
+      const FERPA_NOTICE = 'CONFIDENTIAL \u2014 FERPA Protected Student Records \u2014 Authorized Personnel Only'
+      const doc = new jsPDF()
+      const pw = doc.internal.pageSize.width
+      const ph = doc.internal.pageSize.height
+
+      // FERPA banner
+      doc.setFillColor(220, 38, 38)
+      doc.rect(0, 0, pw, 8, 'F')
+      doc.setFontSize(7)
+      doc.setTextColor(255, 255, 255)
+      doc.text(FERPA_NOTICE, pw / 2, 5.5, { align: 'center' })
+      doc.setTextColor(0)
+
+      // Title
+      doc.setFontSize(18)
+      doc.setFont(undefined, 'bold')
+      doc.text('Waypoint \u2014 District Impact Report', 14, 20)
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(11)
+      doc.setTextColor(80)
+      doc.text(`${districtName}  |  ${getSchoolYearLabel()} School Year  |  Generated ${new Date().toLocaleDateString()}`, 14, 28)
+      doc.setTextColor(0)
+
+      // Key metrics
+      doc.setFontSize(13)
+      doc.setFont(undefined, 'bold')
+      doc.text('Key Metrics', 14, 40)
+      doc.setFont(undefined, 'normal')
+      const metrics = [
+        ['Total Incidents', String(totalRes.count ?? 0)],
+        ['SPED/504 Compliance Blocks', String(blockedRes.count ?? 0)],
+        ['Alerts Triggered', String(alertsRes.count ?? 0)],
+        ['Approved Placements', String(approvedRes.count ?? 0)],
+        ['Parent Acknowledgments', String(ackRes.count ?? 0)],
+      ]
+      autoTable(doc, {
+        startY: 44,
+        head: [['Metric', 'Value']],
+        body: metrics,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: 'bold' },
+        theme: 'grid',
+        columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } },
+      })
+
+      // Per-campus breakdown
+      const campusRows = Object.values(campusMap)
+        .filter(c => c.total > 0)
+        .sort((a, b) => b.total - a.total)
+        .map(c => [c.name, String(c.total), String(c.daep), String(c.sped)])
+
+      if (campusRows.length > 0) {
+        const afterMetrics = doc.lastAutoTable?.finalY ?? 90
+        doc.setFontSize(13)
+        doc.setFont(undefined, 'bold')
+        doc.text('Per-Campus Breakdown', 14, afterMetrics + 12)
+        doc.setFont(undefined, 'normal')
+        autoTable(doc, {
+          startY: afterMetrics + 16,
+          head: [['Campus', 'Total Incidents', 'DAEP', 'SPED/504']],
+          body: campusRows,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          theme: 'grid',
+        })
+      }
+
+      // Footer on every page
+      const pageCount = doc.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFillColor(31, 41, 55)
+        doc.rect(0, ph - 14, pw, 14, 'F')
+        doc.setFontSize(8)
+        doc.setTextColor(255, 255, 255)
+        doc.text('Generated by Waypoint \u2014 Campus Discipline Command Center  |  clearpathedgroup.com', pw / 2, ph - 7, { align: 'center' })
+        doc.setFontSize(7)
+        doc.text(`Page ${i} of ${pageCount}`, pw - 14, ph - 3, { align: 'right' })
+        doc.setTextColor(0)
+      }
+
+      doc.save(`Waypoint_Impact_Report_${getSchoolYearLabel()}_${new Date().toISOString().split('T')[0]}.pdf`)
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+    } finally {
+      setPdfGenerating(false)
+    }
+  }, [districtId, district])
+
   return (
     <div>
       <Topbar
@@ -125,6 +307,9 @@ export default function DashboardPage() {
       />
 
       <div className="p-3 md:p-6">
+        {/* Onboarding Checklist — admin only, shown at top for new districts */}
+        {isAdmin && <SetupChecklist />}
+
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
@@ -189,8 +374,64 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Setup Checklist — admin only, hides when all steps done or dismissed */}
-        {isAdmin && <SetupChecklist />}
+        {/* Compliance Protection ROI Widget — shown when any count > 0 */}
+        {roiLoaded && roiTotal > 0 && (
+          <div className="mb-6">
+            <div className="border-l-4 border-green-500 bg-green-50 rounded-r-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  </svg>
+                  <h3 className="text-sm font-bold text-green-800 uppercase tracking-wide">Compliance Protection</h3>
+                  <span className="text-xs text-green-600 font-medium">{getSchoolYearLabel()} School Year</span>
+                </div>
+                {isAdmin && (
+                  <Link to="/compliance-dashboard" className="text-xs text-green-700 hover:text-green-900 font-medium">
+                    View details &rarr;
+                  </Link>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                {roiStats.blocked > 0 && (
+                  <p className="text-sm text-green-900 flex items-center gap-2">
+                    <span className="text-base">&#x1F6E1;&#xFE0F;</span>
+                    <span><strong>{roiStats.blocked}</strong> placement{roiStats.blocked !== 1 ? 's' : ''} blocked until compliance met</span>
+                  </p>
+                )}
+                {roiStats.approaching > 0 && (
+                  <p className="text-sm text-green-900 flex items-center gap-2">
+                    <span className="text-base">&#x26A0;&#xFE0F;</span>
+                    <span><strong>{roiStats.approaching}</strong> student{roiStats.approaching !== 1 ? 's' : ''} flagged at 7+ removal days</span>
+                  </p>
+                )}
+                {roiStats.spedIncidents > 0 && (
+                  <p className="text-sm text-green-900 flex items-center gap-2">
+                    <span className="text-base">&#x1F4CB;</span>
+                    <span><strong>{roiStats.spedIncidents}</strong> SPED/504 incident{roiStats.spedIncidents !== 1 ? 's' : ''} with auto-checklists</span>
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-green-700 mt-3 italic">These protections are not available in your SIS.</p>
+            </div>
+          </div>
+        )}
+
+        {/* District Impact Report PDF — admin only */}
+        {isAdmin && (
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={generateImpactReport}
+              disabled={pdfGenerating}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              {pdfGenerating ? 'Generating...' : 'District Impact Report'}
+            </button>
+          </div>
+        )}
 
         {/* Role-specific quick-start guidance — non-admin staff only */}
         {!isAdmin && profile?.role && <StaffQuickStart role={profile.role} name={profile.full_name?.split(' ')[0]} />}

@@ -25,6 +25,7 @@ import CompliancePage from './pages/CompliancePage'
 
 // ── Lazy pages (load on first navigation to that route) ────────────────────
 // Waypoint
+const ComplianceDashboardPage   = lazy(() => import('./pages/ComplianceDashboardPage'))
 const TransitionPlansPage       = lazy(() => import('./pages/TransitionPlansPage'))
 const TransitionPlanDetailPage  = lazy(() => import('./pages/TransitionPlanDetailPage'))
 const NewTransitionPlanPage     = lazy(() => import('./pages/NewTransitionPlanPage'))
@@ -131,6 +132,7 @@ function App() {
                 <Route path="/incidents/:id" element={<RequireRole roles={STAFF_ROLES}><IncidentDetailPage /></RequireRole>} />
 
                 <Route path="/compliance" element={<RequireRole roles={COMPLIANCE_ROLES}><RequireTier feature="compliance"><CompliancePage /></RequireTier></RequireRole>} />
+                <Route path="/compliance-dashboard" element={<RequireRole roles={[ROLES.ADMIN]}><RequireTier feature="compliance"><ComplianceDashboardPage /></RequireTier></RequireRole>} />
                 <Route path="/alerts" element={<RequireRole roles={ALERT_ROLES}><RequireTier feature="alerts"><AlertsPage /></RequireTier></RequireRole>} />
 
                 <Route path="/plans" element={<RequireRole roles={STAFF_ROLES}><RequireTier feature="transition_plans"><TransitionPlansPage /></RequireTier></RequireRole>} />
