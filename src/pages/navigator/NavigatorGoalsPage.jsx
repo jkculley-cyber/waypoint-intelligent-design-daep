@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import Topbar from '../../components/layout/Topbar'
 import Modal from '../../components/ui/Modal'
@@ -98,7 +98,7 @@ function CampusGoalCard({ goal, placements, currentWeek, onEdit, isAdmin }) {
       }
     })
     return weeks
-  }, [campusPlacements, currentWeek, goal.school_year])
+  }, [placements, campusId, currentWeek, goal.school_year])
 
   const statusBorderClass = {
     green: 'border-l-green-400',
@@ -399,13 +399,10 @@ export default function NavigatorGoalsPage() {
 
   // All placements for current school year (for campus cards + weekly chart)
   const { start: syStart, end: syEnd } = getSchoolYearBounds(schoolYear)
-  const { placements, loading: placementsLoading } = useNavigatorPlacements({})
-
-  // Filter placements to current school year
-  const yearPlacements = useMemo(() =>
-    placements.filter(p => p.start_date >= syStart && p.start_date <= syEnd),
-    [placements, syStart, syEnd]
-  )
+  const { placements: yearPlacements, loading: placementsLoading } = useNavigatorPlacements({
+    date_from: syStart,
+    date_to: syEnd,
+  })
 
   const currentWeek = weeksIntoYear(schoolYear)
 

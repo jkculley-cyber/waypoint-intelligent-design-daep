@@ -80,6 +80,8 @@ export function useNavigatorPlacements(filters = {}) {
       if (filters.placement_type) q = q.eq('placement_type', filters.placement_type)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
       if (filters.active_only) q = q.is('end_date', null).lte('start_date', new Date().toISOString())
+      if (filters.date_from) q = q.gte('start_date', filters.date_from)
+      if (filters.date_to) q = q.lte('start_date', filters.date_to)
 
       const { data, error: err } = await q
       if (err) throw err
@@ -89,7 +91,7 @@ export function useNavigatorPlacements(filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [districtId, isAdmin, campusIds, filters.placement_type, filters.campus_id, filters.active_only])
+  }, [districtId, isAdmin, campusIds, filters.placement_type, filters.campus_id, filters.active_only, filters.date_from, filters.date_to])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -382,11 +384,6 @@ export function useNavigatorYOYData(schoolYear) {
   const [priorYear, setPriorYear] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!districtId) return
-    loadYOYData()
-  }, [districtId, isAdmin, campusIds, schoolYear])
-
   async function loadYOYData() {
     setLoading(true)
 
@@ -425,6 +422,11 @@ export function useNavigatorYOYData(schoolYear) {
     setPriorYear(aggregateByMonth(priorRes.data || [], priorStart))
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (!districtId) return
+    loadYOYData()
+  }, [districtId, isAdmin, campusIds, schoolYear])
 
   return { currentYear, priorYear, loading }
 }

@@ -46,7 +46,7 @@ function getPresetRange(key) {
 }
 
 export default function NavigatorReportsPage() {
-  const { districtId } = useAuth()
+  const { districtId, campusIds, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   const [trendData, setTrendData] = useState([])
   const [issOssData, setIssOssData] = useState([])
@@ -86,15 +86,21 @@ export default function NavigatorReportsPage() {
       cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
     }
 
+    // Campus scoping helper — non-admins only see assigned campuses
+    const scope = (q, campusCol = 'campus_id') => {
+      if (!isAdmin && campusIds?.length) q = q.in(campusCol, campusIds)
+      return q
+    }
+
     const [referralsRes, placementsRes, offenseRes, campusRes] = await Promise.all([
-      supabase.from('navigator_referrals').select('referral_date').eq('district_id', districtId)
-        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
-      supabase.from('navigator_placements').select('start_date, placement_type').eq('district_id', districtId)
-        .gte('start_date', dateRange.from).lte('start_date', dateRange.to),
-      supabase.from('navigator_referrals').select('offense_codes(code, description)').eq('district_id', districtId)
-        .not('offense_code_id', 'is', null).gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
-      supabase.from('navigator_referrals').select('campus_id, campuses(name)').eq('district_id', districtId)
-        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
+      scope(supabase.from('navigator_referrals').select('referral_date').eq('district_id', districtId)
+        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
+      scope(supabase.from('navigator_placements').select('start_date, placement_type').eq('district_id', districtId)
+        .gte('start_date', dateRange.from).lte('start_date', dateRange.to)),
+      scope(supabase.from('navigator_referrals').select('offense_codes(code, description)').eq('district_id', districtId)
+        .not('offense_code_id', 'is', null).gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
+      scope(supabase.from('navigator_referrals').select('campus_id, campuses(name)').eq('district_id', districtId)
+        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
     ])
 
     // Trend: referrals by month

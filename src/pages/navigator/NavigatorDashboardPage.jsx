@@ -134,7 +134,7 @@ export default function NavigatorDashboardPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {r.status?.replace('_', ' ') || '—'}
+                          {r.status?.replace(/_/g, ' ') || '—'}
                         </span>
                       </td>
                     </tr>

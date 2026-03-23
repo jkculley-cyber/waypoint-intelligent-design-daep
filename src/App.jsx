@@ -213,7 +213,7 @@ function App() {
             {/* Kiosk - standalone full-screen layout (no AppShell) */}
             <Route path="/kiosk" element={<RequireTier feature="kiosk"><KioskPage /></RequireTier>} />
             <Route path="/orientation-kiosk" element={<RequireTier feature="orientation_kiosk"><OrientationKioskPage /></RequireTier>} />
-            <Route path="/navigator/iss-kiosk" element={<RequireProduct product="navigator"><ISSKioskPage /></RequireProduct>} />
+            <Route path="/navigator/iss-kiosk" element={<RequireAuth><RequireProduct product="navigator"><ISSKioskPage /></RequireProduct></RequireAuth>} />
 
             {/* Waypoint Internal Admin */}
             <Route path="/waypoint-admin" element={

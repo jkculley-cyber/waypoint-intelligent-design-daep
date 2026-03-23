@@ -152,6 +152,7 @@ export default function ISSKioskPage() {
 
   async function handleSaveAll() {
     setSaving(true)
+    let saveErrors = 0
     for (const student of students) {
       const t = tracking[student.id]
       if (!t) continue
@@ -171,9 +172,11 @@ export default function ISSKioskPage() {
       }
 
       if (t.id) {
-        await supabase.from('iss_daily_tracking').update(record).eq('id', t.id)
+        const { error } = await supabase.from('iss_daily_tracking').update(record).eq('id', t.id)
+        if (error) saveErrors++
       } else {
-        const { data } = await supabase.from('iss_daily_tracking').insert(record).select('id').single()
+        const { data, error } = await supabase.from('iss_daily_tracking').insert(record).select('id').single()
+        if (error) { saveErrors++; continue }
         if (data) {
           setTracking(prev => ({
             ...prev,
@@ -183,8 +186,12 @@ export default function ISSKioskPage() {
       }
     }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    if (saveErrors > 0) {
+      alert(`${saveErrors} record(s) failed to save. Check your connection and try again.`)
+    } else {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    }
   }
 
   // Compute summary stats
