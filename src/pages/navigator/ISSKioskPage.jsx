@@ -192,6 +192,14 @@ export default function ISSKioskPage() {
   const presentCount = students.filter(s => tracking[s.id]?.attendance === 'present').length
   const periodsLogged = students.reduce((sum, s) => sum + Object.keys(tracking[s.id]?.periods || {}).length, 0)
 
+  // Period completion: count periods where both behavior AND work are set
+  const totalPossiblePeriods = totalStudents * PERIODS.length
+  const completedPeriods = students.reduce((sum, s) => {
+    const periods = tracking[s.id]?.periods || {}
+    return sum + PERIODS.filter(p => periods[p]?.behavior && periods[p]?.work).length
+  }, 0)
+  const completionPct = totalPossiblePeriods > 0 ? Math.round((completedPeriods / totalPossiblePeriods) * 100) : 0
+
   if (loading) {
     return (
       <div style={styles.loading}>
@@ -217,6 +225,24 @@ export default function ISSKioskPage() {
           </button>
         </div>
       </div>
+
+      {/* Period Completion Summary Bar */}
+      {totalStudents > 0 && (
+        <div style={{ margin: '0 24px', padding: '10px 16px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>
+            Period completion: {completionPct}% ({completedPeriods}/{totalPossiblePeriods} periods logged)
+          </span>
+          <div style={{ flex: 1, height: 8, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{
+              width: `${completionPct}%`,
+              height: '100%',
+              borderRadius: 4,
+              background: completionPct >= 80 ? '#22c55e' : completionPct >= 50 ? '#f59e0b' : '#ef4444',
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {students.length === 0 ? (

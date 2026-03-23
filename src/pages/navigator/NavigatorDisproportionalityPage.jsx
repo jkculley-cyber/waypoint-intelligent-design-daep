@@ -138,9 +138,12 @@ export default function NavigatorDisproportionalityPage() {
             {/* Grade Section */}
             {gradeData.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900">Referral Rate by Grade</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Identifies grade bands with elevated incident rates</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900">Referral Rate by Grade Level</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Identifies grade bands with elevated incident rates (K-12)</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">90-day window</span>
                 </div>
 
                 <ResponsiveContainer width="100%" height={200}>
@@ -159,6 +162,42 @@ export default function NavigatorDisproportionalityPage() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+
+                {/* Grade detail table */}
+                <table className="w-full text-sm mt-2">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left">
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Grade</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Referrals</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Enrollment</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Rate</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">vs. Avg</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {gradeData.map(g => {
+                      const avgGradeRate = gradeData.length > 0
+                        ? gradeData.reduce((s, x) => s + (x.rate || 0), 0) / gradeData.length
+                        : 0
+                      const diff = g.rate != null ? (g.rate - avgGradeRate).toFixed(1) : null
+                      return (
+                        <tr key={g.grade} className="hover:bg-gray-50">
+                          <td className="py-2 font-medium text-gray-800">{g.label}</td>
+                          <td className="py-2 text-right text-gray-600">{g.referrals}</td>
+                          <td className="py-2 text-right text-gray-500">{g.enrollment || '\u2014'}</td>
+                          <td className="py-2 text-right font-semibold text-gray-800">{g.rate != null ? `${g.rate}%` : '\u2014'}</td>
+                          <td className="py-2 text-right text-xs">
+                            {diff != null && (
+                              <span className={parseFloat(diff) > 0 ? 'text-red-500 font-semibold' : 'text-emerald-600'}>
+                                {parseFloat(diff) > 0 ? `+${diff}` : diff}%
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 

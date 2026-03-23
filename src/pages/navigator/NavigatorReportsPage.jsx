@@ -1,15 +1,49 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { format, subMonths, startOfMonth } from 'date-fns'
+import { format, subMonths, subDays, startOfMonth } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { exportToPdf, exportToExcel } from '../../lib/exportUtils'
 
 const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6', '#f59e0b']
+
+const DATE_PRESETS = [
+  { key: '30d', label: 'Last 30 Days' },
+  { key: '90d', label: 'Last 90 Days' },
+  { key: 'semester', label: 'This Semester' },
+  { key: 'year', label: 'This Year' },
+  { key: 'custom', label: 'Custom' },
+]
+
+function getPresetRange(key) {
+  const today = new Date()
+  const todayStr = format(today, 'yyyy-MM-dd')
+  switch (key) {
+    case '30d':
+      return { from: format(subDays(today, 30), 'yyyy-MM-dd'), to: todayStr }
+    case '90d':
+      return { from: format(subDays(today, 90), 'yyyy-MM-dd'), to: todayStr }
+    case 'semester': {
+      const month = today.getMonth()
+      const y = today.getFullYear()
+      // Fall semester: Aug-Dec, Spring semester: Jan-May
+      if (month >= 7) return { from: `${y}-08-01`, to: `${y}-12-31` }
+      return { from: `${y}-01-01`, to: `${y}-05-31` }
+    }
+    case 'year': {
+      const month = today.getMonth()
+      const y = today.getFullYear()
+      if (month >= 7) return { from: `${y}-08-01`, to: `${y + 1}-07-31` }
+      return { from: `${y - 1}-08-01`, to: `${y}-07-31` }
+    }
+    default:
+      return { from: format(subMonths(today, 6), 'yyyy-MM-dd'), to: todayStr }
+  }
+}
 
 export default function NavigatorReportsPage() {
   const { districtId } = useAuth()
@@ -18,26 +52,49 @@ export default function NavigatorReportsPage() {
   const [issOssData, setIssOssData] = useState([])
   const [offenseData, setOffenseData] = useState([])
   const [campusData, setCampusData] = useState([])
+  const [rangePreset, setRangePreset] = useState('90d')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+
+  const dateRange = useMemo(() => {
+    if (rangePreset === 'custom' && customFrom && customTo) {
+      return { from: customFrom, to: customTo }
+    }
+    return getPresetRange(rangePreset)
+  }, [rangePreset, customFrom, customTo])
 
   useEffect(() => {
     if (!districtId) return
     loadReportData()
-  }, [districtId])
+  }, [districtId, dateRange.from, dateRange.to])
 
   async function loadReportData() {
     setLoading(true)
 
-    // Build 6-month date range
-    const months = Array.from({ length: 6 }, (_, i) => {
-      const d = subMonths(new Date(), 5 - i)
-      return { label: format(d, 'MMM yy'), start: format(startOfMonth(d), 'yyyy-MM-dd'), end: format(new Date(d.getFullYear(), d.getMonth() + 1, 0), 'yyyy-MM-dd') }
-    })
+    // Build monthly buckets from date range
+    const rangeStart = new Date(dateRange.from)
+    const rangeEnd = new Date(dateRange.to)
+    const months = []
+    let cursor = startOfMonth(rangeStart)
+    while (cursor <= rangeEnd) {
+      const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)
+      months.push({
+        label: format(cursor, 'MMM yy'),
+        start: format(cursor, 'yyyy-MM-dd'),
+        end: format(monthEnd, 'yyyy-MM-dd'),
+      })
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+    }
 
     const [referralsRes, placementsRes, offenseRes, campusRes] = await Promise.all([
-      supabase.from('navigator_referrals').select('referral_date').eq('district_id', districtId),
-      supabase.from('navigator_placements').select('start_date, placement_type').eq('district_id', districtId),
-      supabase.from('navigator_referrals').select('offense_codes(code, description)').eq('district_id', districtId).not('offense_code_id', 'is', null),
-      supabase.from('navigator_referrals').select('campus_id, campuses(name)').eq('district_id', districtId),
+      supabase.from('navigator_referrals').select('referral_date').eq('district_id', districtId)
+        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
+      supabase.from('navigator_placements').select('start_date, placement_type').eq('district_id', districtId)
+        .gte('start_date', dateRange.from).lte('start_date', dateRange.to),
+      supabase.from('navigator_referrals').select('offense_codes(code, description)').eq('district_id', districtId)
+        .not('offense_code_id', 'is', null).gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
+      supabase.from('navigator_referrals').select('campus_id, campuses(name)').eq('district_id', districtId)
+        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to),
     ])
 
     // Trend: referrals by month
@@ -81,10 +138,14 @@ export default function NavigatorReportsPage() {
     setLoading(false)
   }
 
+  const rangeLabel = rangePreset === 'custom'
+    ? `${customFrom || '?'} to ${customTo || '?'}`
+    : DATE_PRESETS.find(p => p.key === rangePreset)?.label || ''
+
   const handleExportPdf = () => {
     const headers = ['Month', 'Referrals']
     const rows = trendData.map(d => [d.month, d.referrals])
-    exportToPdf('Navigator — Referral Trend Report', headers, rows, { subtitle: 'Last 6 months', filename: 'navigator_trend_report' })
+    exportToPdf('Navigator — Referral Trend Report', headers, rows, { subtitle: rangeLabel, filename: 'navigator_trend_report' })
   }
 
   const handleExportExcel = () => {
@@ -116,9 +177,46 @@ export default function NavigatorReportsPage() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Date Range Picker */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 mr-1">Date Range:</span>
+            {DATE_PRESETS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setRangePreset(p.key)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  rangePreset === p.key
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+            {rangePreset === 'custom' && (
+              <div className="flex items-center gap-2 ml-2">
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={e => setCustomFrom(e.target.value)}
+                  className="px-2 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none focus:border-orange-400"
+                />
+                <span className="text-xs text-gray-400">to</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={e => setCustomTo(e.target.value)}
+                  className="px-2 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none focus:border-orange-400"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Referral Trend */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Referral Trend (Last 6 Months)</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Referral Trend ({rangeLabel})</h2>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={trendData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />

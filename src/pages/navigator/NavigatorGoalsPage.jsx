@@ -651,12 +651,12 @@ export default function NavigatorGoalsPage() {
           ) : goals.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 border-dashed p-10 text-center">
               <TargetIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 font-medium">No goals set for {schoolYear}</p>
-              {isAdmin && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Click <strong>Set Goals</strong> to configure campus reduction targets.
-                </p>
-              )}
+              <p className="text-sm text-gray-500 font-medium">No campus goals set yet</p>
+              <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+                {isAdmin
+                  ? 'Click Set Goals above or the \u270E button on any campus card to set ISS/OSS reduction targets for the year. Goals enable trajectory tracking and progress alerts.'
+                  : 'No ISS/OSS reduction targets have been configured for this school year. Contact your administrator to set campus goals.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

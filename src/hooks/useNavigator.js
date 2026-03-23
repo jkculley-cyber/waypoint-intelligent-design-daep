@@ -79,7 +79,7 @@ export function useNavigatorPlacements(filters = {}) {
       if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
       if (filters.placement_type) q = q.eq('placement_type', filters.placement_type)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
-      if (filters.active_only) q = q.is('end_date', null).lte('start_date', 'now()')
+      if (filters.active_only) q = q.is('end_date', null).lte('start_date', new Date().toISOString())
 
       const { data, error: err } = await q
       if (err) throw err

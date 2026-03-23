@@ -22,6 +22,15 @@ const OUTCOME_LABELS = {
   escalated_to_daep: 'Escalated to DAEP',
 }
 
+const OUTCOME_COLORS = {
+  iss: 'bg-blue-100 text-blue-700',
+  oss: 'bg-red-100 text-red-700',
+  conference: 'bg-green-100 text-green-700',
+  support_assigned: 'bg-purple-100 text-purple-700',
+  no_action: 'bg-gray-100 text-gray-600',
+  escalated_to_daep: 'bg-red-100 text-red-700',
+}
+
 const SKILL_GAP_LABELS = {
   emotional_regulation: 'Emotional Regulation',
   executive_functioning: 'Executive Functioning',
@@ -150,8 +159,14 @@ export default function NavigatorReferralsPage() {
                           {r.status?.replace(/_/g, ' ') || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">
-                        {OUTCOME_LABELS[r.outcome] || '—'}
+                      <td className="px-4 py-3">
+                        {r.outcome ? (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${OUTCOME_COLORS[r.outcome] || 'bg-gray-100 text-gray-600'}`}>
+                            {OUTCOME_LABELS[r.outcome] || r.outcome}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <button
@@ -237,6 +252,10 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
   const handleSubmitNew = async () => {
     if (!selectedStudent || !form.campus_id) {
       setError('Student and campus are required.')
+      return
+    }
+    if (new Date(form.referral_date) > new Date()) {
+      setError('Referral date cannot be in the future.')
       return
     }
     setSaving(true); setError(null)
