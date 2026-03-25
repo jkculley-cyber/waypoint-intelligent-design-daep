@@ -734,7 +734,7 @@ export function useDisproportionality() {
         .from('students')
         .select('id, grade_level, campus_id')
         .eq('district_id', districtId)
-        .eq('status', 'active')
+        .eq('is_active', true)
 
       if (!isAdmin && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)

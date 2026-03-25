@@ -574,10 +574,12 @@ export function useMissedOrientations() {
           .eq('orientation_status', 'missed')
           .order('orientation_scheduled_date', { ascending: true })
 
-        query = applyCampusScope(query, scope)
+        // Campus scope via joined incident.campus_id (daep_placement_scheduling has no campus_id)
         const { data, error } = await query
         if (error) throw error
-        setMissed(data || [])
+        const filtered = scope.isDistrictWide ? (data || [])
+          : (data || []).filter(d => scope.scopedCampusIds.includes(d.incident?.campus_id))
+        setMissed(filtered)
       } catch (err) {
         console.error('Error fetching missed orientations:', err)
       } finally {
@@ -618,13 +620,14 @@ export function usePendingPlacementStart() {
           .eq('orientation_status', 'completed')
           .order('orientation_completed_date', { ascending: true })
 
-        query = applyCampusScope(query, scope)
+        // Campus scope via joined incident.campus_id (daep_placement_scheduling has no campus_id)
         const { data, error } = await query
         if (error) throw error
 
-        // Filter client-side: only those where the linked incident is still 'approved' (not yet active)
+        // Filter client-side: campus scope + only those where the linked incident is still 'approved'
         const filtered = (data || []).filter(o => {
           const inc = Array.isArray(o.incident) ? o.incident[0] : o.incident
+          if (!scope.isDistrictWide && !scope.scopedCampusIds.includes(inc?.campus_id)) return false
           return inc?.status === 'approved'
         })
         setPending(filtered)

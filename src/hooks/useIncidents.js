@@ -92,10 +92,10 @@ export function useIncident(incidentId) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const { districtId } = useAuth()
-  const { scope } = useAccessScope()
+  const { scope, loading: scopeLoading } = useAccessScope()
 
   const fetchIncident = useCallback(async () => {
-    if (!incidentId || !districtId) {
+    if (!incidentId || !districtId || scopeLoading) {
       setLoading(false)
       return
     }
@@ -128,7 +128,7 @@ export function useIncident(incidentId) {
     } finally {
       setLoading(false)
     }
-  }, [incidentId, districtId, scope])
+  }, [incidentId, districtId, scope, scopeLoading])
 
   useEffect(() => {
     fetchIncident()
@@ -338,13 +338,20 @@ export function useIncidentActions() {
   }
 
   const returnIncident = async (id, reason) => {
+    // Fetch existing notes to append, not overwrite
+    const { data: existing } = await supabase.from('incidents').select('notes').eq('id', id).single()
+    const existingNotes = existing?.notes || ''
+    const newNotes = reason
+      ? `${existingNotes}${existingNotes ? '\n\n' : ''}[RETURNED ${new Date().toLocaleDateString()}] ${reason}`
+      : existingNotes || null
+
     const { data, error } = await supabase
       .from('incidents')
       .update({
         status: 'returned',
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
-        notes: reason ? `[RETURNED] ${reason}` : null,
+        notes: newNotes,
       })
       .eq('id', id)
       .select()
@@ -355,13 +362,19 @@ export function useIncidentActions() {
   }
 
   const denyIncident = async (id, reason) => {
+    const { data: existing } = await supabase.from('incidents').select('notes').eq('id', id).single()
+    const existingNotes = existing?.notes || ''
+    const newNotes = reason
+      ? `${existingNotes}${existingNotes ? '\n\n' : ''}[DENIED ${new Date().toLocaleDateString()}] ${reason}`
+      : existingNotes || null
+
     const { data, error } = await supabase
       .from('incidents')
       .update({
         status: 'denied',
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
-        notes: reason ? `[DENIED] ${reason}` : null,
+        notes: newNotes,
       })
       .eq('id', id)
       .select()

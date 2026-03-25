@@ -61,13 +61,12 @@ export default function CalendarPage() {
       let reviewQuery = supabase
         .from('transition_plan_reviews')
         .select(`
-          id, review_type, scheduled_date,
-          plan:transition_plans(id, student:students(first_name, last_name))
+          id, review_type, review_date,
+          plan:transition_plans!fk_tpr_plan(id, student:students(first_name, last_name))
         `)
         .eq('district_id', districtId)
-        .gte('scheduled_date', monthStart)
-        .lte('scheduled_date', monthEnd)
-        .in('status', ['scheduled', 'pending'])
+        .gte('review_date', monthStart)
+        .lte('review_date', monthEnd)
 
       const [incRes, reviewRes] = await Promise.all([incidentQuery, reviewQuery])
 
@@ -101,7 +100,7 @@ export default function CalendarPage() {
           : 'Student'
         calEvents.push({
           id: `review-${rev.id}`,
-          date: rev.scheduled_date,
+          date: rev.review_date,
           type: 'review',
           label: `${studentName} — ${rev.review_type?.replace('_', ' ')} Review`,
           href: rev.plan?.id ? `/plans/${rev.plan.id}` : '/plans',
