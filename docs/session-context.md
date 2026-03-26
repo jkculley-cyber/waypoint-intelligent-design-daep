@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-25 (Session BC — Beacon pages, TpT fixes, Waypoint audit, deploy fix discovery)
+> Last updated: 2026-03-26 (Session BD — Deploy pipeline fixed, full multi-role audit, Waypoint grade A)
 
 ---
 
@@ -104,12 +104,11 @@
 
 ## Next Session Priority
 
-1. **⚠️ BLOCKER: Fix Cloudflare deploy pipeline** — manual upload dist/ to waypoint-avt, update API token, update GitHub secret. NONE of today's Waypoint fixes are live until this is done.
-2. **⚠️ BLOCKER: Add DNS records** — Google DKIM, fix SPF/DMARC. Emails going to spam.
-3. **Meridian module audit** — never audited, SPED compliance product with legal risk.
-4. **Origins module audit** — never audited.
-5. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
-6. **Test PWA icons on iPhone** for all apps.
+1. **⚠️ BLOCKER: Add DNS records** — Google DKIM, fix SPF/DMARC. Emails going to spam.
+2. **Meridian deep audit** — surface audit done (A grade), but escalation persistence + demo data labeling needed.
+3. **Origins deep audit** — not yet done.
+4. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
+5. **Test PWA icons on iPhone** for all apps.
 
 ---
 
