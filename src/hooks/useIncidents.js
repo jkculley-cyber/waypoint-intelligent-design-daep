@@ -62,7 +62,22 @@ export function useIncidents(filters = {}) {
       const { data, error: fetchError, count } = await query
 
       if (fetchError) throw fetchError
-      setIncidents(data || [])
+
+      // Load approval chain data separately (avoids FK hint failures)
+      const incidents = data || []
+      const chainIds = [...new Set(incidents.map(i => i.approval_chain_id).filter(Boolean))]
+      if (chainIds.length > 0) {
+        const { data: chains } = await supabase
+          .from('daep_approval_chains')
+          .select('id, chain_status, current_step')
+          .in('id', chainIds)
+        const chainMap = Object.fromEntries((chains || []).map(c => [c.id, c]))
+        for (const inc of incidents) {
+          if (inc.approval_chain_id) inc.approval_chain = chainMap[inc.approval_chain_id] || null
+        }
+      }
+
+      setIncidents(incidents)
       if (paginated && typeof count === 'number') {
         setTotalCount(count)
       }

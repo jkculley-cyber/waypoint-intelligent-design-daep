@@ -103,6 +103,23 @@ export default function IncidentDetailPage() {
   const [earlyJustification, setEarlyJustification] = useState('')
   const [completing, setCompleting] = useState(false)
 
+  // SIS export hook — must be before early returns to satisfy Rules of Hooks
+  const sisType = district?.settings?.sis_type || 'other'
+  const sisName = getSISName(sisType)
+  const handleExportSIS = useCallback(() => {
+    if (!incident) return
+    const campus = incident.campus || null
+    const reporter = incident.reporter || null
+    const csv = exportIncidentToSIS(sisType, incident, incident.student, campus, reporter)
+    navigator.clipboard.writeText(csv).then(() => {
+      toast.success(`Copied to clipboard — paste into ${sisName}`)
+    }).catch(() => {
+      toast.success(`SIS export ready — downloading file`)
+    })
+    const dateStr = new Date().toISOString().slice(0, 10)
+    downloadCSV(csv, `waypoint-sis-export-${dateStr}.csv`)
+  }, [sisType, sisName, incident])
+
   if (loading) return <PageLoader message="Loading incident..." />
   if (!incident) {
     return (
@@ -221,24 +238,6 @@ export default function IncidentDetailPage() {
       refetchLog()
     }
   }
-
-  const sisType = district?.settings?.sis_type || 'other'
-  const sisName = getSISName(sisType)
-
-  const handleExportSIS = useCallback(() => {
-    const campus = incident.campus || null
-    const reporter = incident.reporter || null
-    const csv = exportIncidentToSIS(sisType, incident, student, campus, reporter)
-    // Copy to clipboard
-    navigator.clipboard.writeText(csv).then(() => {
-      toast.success(`Copied to clipboard — paste into ${sisName}`)
-    }).catch(() => {
-      toast.success(`SIS export ready — downloading file`)
-    })
-    // Also offer download
-    const dateStr = new Date().toISOString().slice(0, 10)
-    downloadCSV(csv, `waypoint-sis-export-${dateStr}.csv`)
-  }, [sisType, sisName, incident, student])
 
   return (
     <div>

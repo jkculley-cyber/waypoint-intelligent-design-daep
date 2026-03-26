@@ -320,7 +320,7 @@ export default function NewIncidentPage() {
         incident_time: formData.incident_time || null,
         location: formData.location,
         description: formData.description,
-        consequence_type: formData.consequence_type || null,
+        consequence_type: formData.consequence_type || 'pending',
         consequence_days: formData.consequence_days ? parseInt(formData.consequence_days) : null,
         consequence_start: formData.consequence_start || null,
         consequence_end: formData.consequence_end || null,
