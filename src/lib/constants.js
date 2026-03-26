@@ -50,14 +50,14 @@ export const ROLE_LABELS = {
   [ROLES.WAYPOINT_ADMIN]: 'Waypoint Admin',
 }
 
-// Staff roles (can access the main app shell)
+// Staff roles (can access the main app shell — administrative roles only)
+// Teachers use standalone /referral form. Parents are notified via email.
 export const STAFF_ROLES = [
   ROLES.ADMIN,
   ROLES.PRINCIPAL,
   ROLES.AP,
   ROLES.COUNSELOR,
   ROLES.SPED_COORDINATOR,
-  ROLES.TEACHER,
   ROLES.CBC,
   ROLES.SSS,
   ROLES.SECTION_504_COORDINATOR,
@@ -71,7 +71,6 @@ export const DAEP_ROLES = [
   ROLES.AP,
   ROLES.COUNSELOR,
   ROLES.SPED_COORDINATOR,
-  ROLES.TEACHER,
   ROLES.CBC,
   ROLES.SSS,
   ROLES.SECTION_504_COORDINATOR,
@@ -83,6 +82,7 @@ export const COMPLIANCE_ROLES = [
   ROLES.ADMIN,
   ROLES.PRINCIPAL,
   ROLES.AP,
+  ROLES.COUNSELOR,
   ROLES.SPED_COORDINATOR,
 ]
 

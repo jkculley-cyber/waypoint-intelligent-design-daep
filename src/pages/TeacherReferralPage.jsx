@@ -109,8 +109,8 @@ export default function TeacherReferralPage() {
           location: form.location || null,
           description: form.description,
           severity: form.severity,
-          consequence_type: form.consequence_type || null,
-          status: 'draft',
+          consequence_type: 'pending',
+          status: 'submitted',
           reported_by: profile.id,
           referred_by_teacher: true,
         })

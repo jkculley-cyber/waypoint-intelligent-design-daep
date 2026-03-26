@@ -24,11 +24,11 @@ export default function LoginPage() {
     if (profile && !authLoading) {
       if (profile.role === 'waypoint_admin') {
         navigate('/waypoint-admin', { replace: true })
-      } else if (profile.role === 'parent') {
-        const safe = from && !from.startsWith('/waypoint-admin') ? from : '/parent'
-        navigate(safe, { replace: true })
+      } else if (profile.role === 'teacher' || profile.role === 'parent' || profile.role === 'student') {
+        // Teachers use /referral, parents/students don't have app access
+        navigate('/referral', { replace: true })
       } else {
-        // Smart default: first licensed product wins
+        // Administrative staff — route to licensed product
         let defaultPath = '/dashboard'
         if (hasProduct('waypoint'))        defaultPath = '/dashboard'
         else if (hasProduct('navigator')) defaultPath = '/navigator'

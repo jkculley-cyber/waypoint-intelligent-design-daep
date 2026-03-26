@@ -384,22 +384,22 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Your Action Items</h2>
             <div className="space-y-2">
               {actionItems.pendingApproval > 0 && (
-                <a href="/incidents?status=pending_approval&myApprovals=1" className="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors no-underline">
+                <Link to="/incidents?status=pending_approval&myApprovals=1" className="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors no-underline">
                   <span className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{actionItems.pendingApproval}</span>
                   <span className="text-sm font-medium text-gray-800">incident{actionItems.pendingApproval !== 1 ? 's' : ''} awaiting your approval</span>
-                </a>
+                </Link>
               )}
               {actionItems.teacherDrafts > 0 && (
-                <a href="/incidents?status=draft" className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 transition-colors no-underline">
+                <Link to="/incidents?status=draft" className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 transition-colors no-underline">
                   <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{actionItems.teacherDrafts}</span>
                   <span className="text-sm font-medium text-gray-800">teacher referral{actionItems.teacherDrafts !== 1 ? 's' : ''} need consequence assignment</span>
-                </a>
+                </Link>
               )}
               {actionItems.returned > 0 && (
-                <a href="/incidents?status=returned" className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 transition-colors no-underline">
+                <Link to="/incidents?status=returned" className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 transition-colors no-underline">
                   <span className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{actionItems.returned}</span>
                   <span className="text-sm font-medium text-gray-800">returned incident{actionItems.returned !== 1 ? 's' : ''} — update required</span>
-                </a>
+                </Link>
               )}
             </div>
           </div>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
 
         {/* Teacher Quick Report card */}
         {profile?.role === 'teacher' && (
-          <a href="/quick-report" className="block mb-6 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow no-underline">
+          <Link to="/referral" className="block mb-6 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow no-underline">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-white font-semibold text-sm">Report an incident</div>
@@ -415,7 +415,7 @@ export default function DashboardPage() {
               </div>
               <span className="text-white text-lg">→</span>
             </div>
-          </a>
+          </Link>
         )}
 
         {/* Summary Stats */}

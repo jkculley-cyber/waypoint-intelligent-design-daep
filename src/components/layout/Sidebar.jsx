@@ -45,7 +45,7 @@ const staffNavigation = [
   { name: 'Compliance',       path: '/compliance',                      icon: ComplianceIcon,  roles: COMPLIANCE_ROLES, feature: 'compliance',          product: 'waypoint', group: 'discipline' },
   { name: 'Compliance Overview', path: '/compliance-dashboard',         icon: ComplianceIcon,  roles: [ROLES.ADMIN],    feature: 'compliance',          product: 'waypoint', group: 'discipline' },
   { name: 'Alerts',           path: '/alerts',                          icon: AlertsIcon,      roles: ALERT_ROLES,      feature: 'alerts',              product: 'waypoint', group: 'discipline' },
-  { name: 'Submit Referral',  path: '/referral',                        icon: ReferralIcon,    roles: [ROLES.TEACHER],                                   product: 'waypoint', group: 'discipline' },
+  // Teacher referral removed from sidebar — teachers use standalone /referral page without logging in
   { name: 'My Referrals',     path: '/incidents?filter=cbc_queue',      icon: IncidentsIcon,   roles: [ROLES.CBC],                                       product: 'waypoint', group: 'discipline' },
   { name: 'My Cases',         path: '/incidents?filter=sss_queue',      icon: IncidentsIcon,   roles: [ROLES.SSS],                                       product: 'waypoint', group: 'discipline' },
   { name: '504 Reviews',      path: '/incidents?filter=504_queue',      icon: ComplianceIcon,  roles: [ROLES.SECTION_504_COORDINATOR],                   product: 'waypoint', group: 'discipline' },

@@ -220,15 +220,8 @@ function App() {
               <RequireAuth><RequireRole roles={[ROLES.WAYPOINT_ADMIN]}><WaypointAdminPage /></RequireRole></RequireAuth>
             } />
 
-            {/* Parent Portal */}
-            <Route element={<RequireAuth><AppShell /></RequireAuth>}>
-              <Route path="/parent" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentDashboardPage /></RequireTier></RequireRole>} />
-              <Route path="/parent/incidents/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentIncidentViewPage /></RequireTier></RequireRole>} />
-              <Route path="/parent/plans/:id" element={<RequireRole roles={[ROLES.PARENT]}><RequireTier feature="parent_portal"><ParentPlanViewPage /></RequireTier></RequireRole>} />
-            </Route>
-
-            {/* Parent self-registration */}
-            <Route path="/parent-register" element={<ParentRegisterPage />} />
+            {/* Parent portal removed — parents are notified via email, not app login */}
+            {/* Parent self-registration removed — not needed for admin-only tool */}
 
             {/* Origins Family Portal */}
             <Route path="/family" element={<OriginsFamilyEntryPage />} />
