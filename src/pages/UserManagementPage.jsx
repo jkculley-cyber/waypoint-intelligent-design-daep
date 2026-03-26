@@ -19,7 +19,6 @@ export default function UserManagementPage() {
   const [showInvite, setShowInvite] = useState(false)
   const [showBulkImport, setShowBulkImport] = useState(false)
   const [editingRole, setEditingRole] = useState(null) // profileId
-  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
   const fetchProfiles = useCallback(async () => {
     if (!districtId) return
@@ -84,22 +83,16 @@ export default function UserManagementPage() {
         actions={
           <div className="flex items-center gap-2">
             <Link to="/settings" className="text-sm text-gray-500 hover:text-gray-700">← Settings</Link>
-            <Button size="sm" variant="secondary" onClick={() => setShowBulkImport(true)} disabled={!serviceRoleKey}>
+            <Button size="sm" variant="secondary" onClick={() => setShowBulkImport(true)}>
               Import Staff
             </Button>
-            <Button size="sm" onClick={() => setShowInvite(true)} disabled={!serviceRoleKey}>
+            <Button size="sm" onClick={() => setShowInvite(true)}>
               + Invite User
             </Button>
           </div>
         }
       />
       <div className="p-3 md:p-6">
-        {!serviceRoleKey && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-            <strong>Note:</strong> VITE_SUPABASE_SERVICE_ROLE_KEY is not set — user invitations are disabled. Add it to .env.local to enable.
-          </div>
-        )}
-
         {districtId && (
           <ParentRegistrationLinkCard districtId={districtId} />
         )}
@@ -178,8 +171,6 @@ export default function UserManagementPage() {
         <InviteUserModal
           districtId={districtId}
           campuses={campuses}
-          serviceRoleKey={serviceRoleKey}
-          supabaseUrl={import.meta.env.VITE_SUPABASE_URL}
           onClose={() => setShowInvite(false)}
           onSuccess={() => { setShowInvite(false); fetchProfiles() }}
         />
@@ -190,8 +181,6 @@ export default function UserManagementPage() {
           districtId={districtId}
           campuses={campuses}
           existingEmails={profiles.map(p => p.email?.toLowerCase())}
-          serviceRoleKey={serviceRoleKey}
-          supabaseUrl={import.meta.env.VITE_SUPABASE_URL}
           onClose={() => setShowBulkImport(false)}
           onSuccess={() => { setShowBulkImport(false); fetchProfiles() }}
         />
@@ -201,7 +190,7 @@ export default function UserManagementPage() {
 }
 
 /* ── Bulk Staff Import Modal ── */
-function BulkStaffImportModal({ districtId, campuses, existingEmails, serviceRoleKey, supabaseUrl, onClose, onSuccess }) {
+function BulkStaffImportModal({ districtId, campuses, existingEmails, onClose, onSuccess }) {
   const [csv, setCsv] = useState('')
   const [rows, setRows] = useState([])
   const [headers, setHeaders] = useState([])
@@ -279,31 +268,21 @@ function BulkStaffImportModal({ districtId, campuses, existingEmails, serviceRol
     setImporting(true)
     setError('')
     let success = 0, skipped = 0, failures = []
-    const headers = { 'Content-Type': 'application/json', 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` }
 
     for (const row of validated) {
       if (!row.valid) { skipped++; continue }
       try {
-        // Create auth user
-        const authRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
-          method: 'POST', headers,
-          body: JSON.stringify({ email: row.email, password: 'TempPass123!', email_confirm: true, user_metadata: { full_name: row.name } }),
+        const { data, error: fnError } = await supabase.functions.invoke('invite-user', {
+          body: {
+            email: row.email,
+            fullName: row.name,
+            role: row.role,
+            districtId,
+            campusIds: row.campusId ? [row.campusId] : [],
+          },
         })
-        const authData = await authRes.json()
-        if (!authRes.ok) throw new Error(authData.msg || authData.message || 'Auth failed')
-        const userId = authData.id
-
-        // Create profile
-        await supabase.from('profiles').insert({
-          id: userId, email: row.email, full_name: row.name, role: row.role,
-          district_id: districtId, is_active: true,
-        })
-
-        // Campus assignment
-        if (row.campusId) {
-          await supabase.from('profile_campus_assignments').insert({ profile_id: userId, campus_id: row.campusId })
-        }
-
+        if (fnError) throw new Error(fnError.message || 'User invite requires server setup. Contact your administrator.')
+        if (data?.error) throw new Error(data.error)
         success++
       } catch (err) {
         failures.push(`${row.name}: ${err.message}`)
@@ -369,56 +348,34 @@ function BulkStaffImportModal({ districtId, campuses, existingEmails, serviceRol
   )
 }
 
-function InviteUserModal({ districtId, campuses, serviceRoleKey, supabaseUrl, onClose, onSuccess }) {
+function InviteUserModal({ districtId, campuses, onClose, onSuccess }) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('teacher')
   const [campusId, setCampusId] = useState(campuses[0]?.id || '')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!fullName.trim() || !email.trim() || password.length < 8) {
-      setError('Please fill all fields. Password must be at least 8 characters.')
+    if (!fullName.trim() || !email.trim()) {
+      setError('Please fill all required fields.')
       return
     }
     setLoading(true)
     setError(null)
     try {
-      // Create auth user via Admin API
-      const res = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
-        method: 'POST',
-        headers: {
-          'apikey': serviceRoleKey,
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json',
+      const { data, error: fnError } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: email.trim(),
+          fullName: fullName.trim(),
+          role,
+          districtId,
+          campusIds: campusId ? [campusId] : [],
         },
-        body: JSON.stringify({ email: email.trim(), password, email_confirm: true }),
       })
-      const userData = await res.json()
-      if (!res.ok) throw new Error(userData.message || userData.error || 'Auth creation failed')
-
-      // Create profile
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: userData.id,
-        district_id: districtId,
-        full_name: fullName.trim(),
-        email: email.trim(),
-        role,
-        is_active: true,
-      })
-      if (profileError) throw new Error(profileError.message)
-
-      // Campus assignment
-      if (campusId) {
-        await supabase.from('profile_campus_assignments').insert({
-          profile_id: userData.id,
-          campus_id: campusId,
-          district_id: districtId,
-        })
-      }
+      if (fnError) throw new Error('User invite requires server setup. Contact your administrator.')
+      if (data?.error) throw new Error(data.error)
 
       toast.success(`${fullName} invited successfully`)
       onSuccess()
@@ -463,11 +420,6 @@ function InviteUserModal({ districtId, campuses, serviceRoleKey, supabaseUrl, on
                 {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Temporary Password * (min 8 chars)</label>
-            <input type="text" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" required />
-            <p className="text-xs text-gray-400 mt-1">User should change their password after first login.</p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">

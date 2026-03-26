@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { useOriginsScenarios } from '../../hooks/useOrigins'
 import { Card, SectionHeader, SkillBadge, EmptyState, PATHWAYS } from './OriginsUI'
 
@@ -86,7 +87,10 @@ function ScenarioLibrarySettings({ scenarios, loading }) {
         <p className="text-sm text-gray-600">
           Manage district-specific scenarios. Global (Waypoint-provided) scenarios cannot be edited here.
         </p>
-        <button className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">
+        <button
+          onClick={() => toast('Custom scenario creation coming soon', { icon: '\uD83D\uDD1C' })}
+          className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+        >
           + Add Scenario
         </button>
       </div>

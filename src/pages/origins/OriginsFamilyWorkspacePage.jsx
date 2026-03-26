@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { useOriginsStudents, useOriginsFamilyWorkspace } from '../../hooks/useOrigins'
 import { Card, SectionHeader, EmptyState, StatusBadge } from './OriginsUI'
 
@@ -27,7 +28,10 @@ export default function OriginsFamilyWorkspacePage() {
           <h1 className="text-2xl font-semibold text-gray-900">Family Workspace</h1>
           <p className="text-sm text-gray-500 mt-1">Conversation starters, micro-activities, and family check-ins</p>
         </div>
-        <button className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">
+        <button
+          onClick={() => toast('Activity assignment coming soon', { icon: '\uD83D\uDD1C' })}
+          className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+        >
           + Assign Activity
         </button>
       </div>
@@ -110,6 +114,7 @@ function StudentActivities({ studentId, students }) {
       <SectionHeader
         title={student ? `${student.first_name} ${student.last_name} — Family Activities` : 'Family Activities'}
         action="+ Assign"
+        onAction={() => toast('Activity assignment coming soon', { icon: '\uD83D\uDD1C' })}
       />
       {loading ? (
         <div className="p-4 space-y-2">

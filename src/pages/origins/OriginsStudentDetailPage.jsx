@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useOriginsStudent } from '../../hooks/useOrigins'
 import { Card, SectionHeader, SkillBadge, StatusBadge, ProgressBar, EmptyState, PATHWAYS } from './OriginsUI'
 
@@ -103,7 +104,7 @@ export default function OriginsStudentDetailPage() {
 
       {/* Sessions list */}
       <Card>
-        <SectionHeader title="Response Moment Sessions" action="+ Assign Scenario" />
+        <SectionHeader title="Response Moment Sessions" action="+ Assign Scenario" onAction={() => toast('Scenario assignment coming soon', { icon: '\uD83D\uDD1C' })} />
         {!sessions.length ? (
           <EmptyState title="No sessions assigned" description="Assign a scenario from the Response Moments library." />
         ) : (
@@ -131,7 +132,7 @@ export default function OriginsStudentDetailPage() {
 
       {/* Replay sessions */}
       <Card>
-        <SectionHeader title="Replay Tool Sessions" action="+ Assign Replay" />
+        <SectionHeader title="Replay Tool Sessions" action="+ Assign Replay" onAction={() => toast('Replay assignment coming soon', { icon: '\uD83D\uDD1C' })} />
         {!replaySessions.length ? (
           <EmptyState title="No replay sessions" description="Use the Replay Tool after a Waypoint incident to guide structured reflection." />
         ) : (

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { useWaypointLinked } from '../../hooks/useMeridian'
 import { Skeleton, Card } from './MeridianUI'
 
@@ -10,6 +11,7 @@ const SYNC_LOG = [
 ]
 
 export default function MeridianWaypointSyncPage() {
+  const navigate = useNavigate()
   const { data: linked, loading } = useWaypointLinked()
 
   const issueCount = linked?.filter(s => {
@@ -91,7 +93,10 @@ export default function MeridianWaypointSyncPage() {
                         {isOverdue ? `Annual Review ${daysOverdue}d Overdue` : 'IEP Current'}
                       </span>
                     </div>
-                    <button className="text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1 rounded hover:bg-purple-50">
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/meridian/students/${s.id}`) }}
+                      className="text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1 rounded hover:bg-purple-50"
+                    >
                       Open →
                     </button>
                   </Card>

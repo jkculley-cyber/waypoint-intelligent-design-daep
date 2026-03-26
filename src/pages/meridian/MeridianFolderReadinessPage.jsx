@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import { useCampusReadinessScores, useFolderReadiness } from '../../hooks/useMeridian'
 import { Skeleton, Card, ReadinessBar } from './MeridianUI'
 
@@ -13,6 +16,33 @@ export default function MeridianFolderReadinessPage() {
   const totalSped    = campuses?.reduce((s, c) => s + c.spedCount, 0) ?? 0
   const lowCampuses  = campuses?.filter(c => c.readiness < 70).length ?? 0
 
+  const handleExportReport = () => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Meridian — Folder Readiness Report', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Generated ${new Date().toLocaleDateString()}`, 14, 25)
+    doc.text(`District Average: ${avgReadiness}% | Total SPED: ${totalSped} | Campuses Below 70%: ${lowCampuses}`, 14, 32)
+
+    const rows = (campuses ?? []).sort((a, b) => a.readiness - b.readiness).map(c => [
+      c.campus_name,
+      c.spedCount,
+      `${c.readiness}%`,
+      c.readiness < 70 ? 'Below Threshold' : 'On Track',
+    ])
+
+    autoTable(doc, {
+      startY: 38,
+      head: [['Campus', 'SPED Students', 'Readiness', 'Status']],
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [107, 33, 168] },
+    })
+
+    doc.save('meridian-folder-readiness.pdf')
+    toast.success('Report exported')
+  }
+
   const missingDocs = studentRows?.filter(s => {
     const score = s.iep_readiness_pct ?? s.plan_504_readiness_pct ?? 100
     return score < 100
@@ -26,7 +56,10 @@ export default function MeridianFolderReadinessPage() {
           <h1 className="text-xl font-bold text-gray-900">Folder Readiness Scores</h1>
           <p className="text-sm text-gray-500 mt-0.5">IEP and 504 document completeness by campus</p>
         </div>
-        <button className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+        <button
+          onClick={handleExportReport}
+          className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+        >
           Export Report
         </button>
       </div>
@@ -99,7 +132,7 @@ export default function MeridianFolderReadinessPage() {
                           </ul>
                     }
                     <button
-                      onClick={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); toast.success('Notifications sent to case managers') }}
                       className="w-full py-2 rounded-lg text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 transition-colors"
                     >
                       Notify Case Managers

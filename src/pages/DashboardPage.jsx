@@ -195,20 +195,26 @@ export default function DashboardPage() {
     const schoolYearStart = getSchoolYearStart().toISOString()
     const fetchRoi = async () => {
       // 1. Placements blocked by compliance
-      const { count: blockedCount } = await supabase
+      let blockedQuery = supabase
         .from('compliance_checklists')
-        .select('id', { count: 'exact', head: true })
+        .select('id, incidents!fk_incidents_compliance!inner(campus_id)', { count: 'exact', head: true })
         .eq('district_id', districtId)
         .eq('placement_blocked', true)
         .gte('created_at', schoolYearStart)
+      if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+        blockedQuery = blockedQuery.in('incidents.campus_id', scope.scopedCampusIds)
+      }
+      const { count: blockedCount } = await blockedQuery
 
       // 2. Students at 7+ cumulative removal days this school year
-      const { data: removalIncidents } = await supabase
+      let removalQuery = supabase
         .from('incidents')
         .select('student_id, consequence_days')
         .eq('district_id', districtId)
         .in('consequence_type', ['oss', 'iss', 'daep', 'expulsion'])
         .gte('incident_date', schoolYearStart)
+      removalQuery = applyCampusScope(removalQuery, scope)
+      const { data: removalIncidents } = await removalQuery
       const daysByStudent = {}
       ;(removalIncidents || []).forEach(inc => {
         if (!inc.consequence_days) return
@@ -217,12 +223,14 @@ export default function DashboardPage() {
       const approachingCount = Object.values(daysByStudent).filter(d => d >= 7).length
 
       // 3. SPED/504 students with DAEP incidents this school year
-      const { data: spedInc } = await supabase
+      let spedQuery = supabase
         .from('incidents')
         .select('student_id, students!inner(is_sped, is_504)')
         .eq('district_id', districtId)
         .in('consequence_type', ['daep', 'expulsion'])
         .gte('incident_date', schoolYearStart)
+      spedQuery = applyCampusScope(spedQuery, scope)
+      const { data: spedInc } = await spedQuery
       const spedStudentIds = new Set()
       ;(spedInc || []).forEach(inc => {
         if (inc.students?.is_sped || inc.students?.is_504) {
@@ -238,7 +246,7 @@ export default function DashboardPage() {
       setRoiLoaded(true)
     }
     fetchRoi()
-  }, [districtId, scopeLoading])
+  }, [districtId, scopeLoading, scope])
 
   const roiTotal = roiStats.blocked + roiStats.approaching + roiStats.spedIncidents
 
