@@ -186,7 +186,7 @@ export default function TransitionPlansPage() {
     <div>
       <Topbar
         title="Transition Plans"
-        subtitle="Student transition and re-entry plans"
+        subtitle="Campus re-entry and transition plans for returning students"
         actions={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">

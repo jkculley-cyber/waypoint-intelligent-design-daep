@@ -291,8 +291,8 @@ export const PLAN_TYPE = {
 }
 
 export const PLAN_TYPE_LABELS = {
-  [PLAN_TYPE.DAEP_ENTRY]: 'DAEP Entry Plan',
-  [PLAN_TYPE.DAEP_EXIT]: 'DAEP Exit/Transition Plan',
+  [PLAN_TYPE.DAEP_ENTRY]: 'Campus Re-Entry Transition Plan',
+  [PLAN_TYPE.DAEP_EXIT]: 'DAEP Exit Transition Plan',
   [PLAN_TYPE.ISS_REENTRY]: 'ISS Re-Entry Plan',
   [PLAN_TYPE.BEHAVIORAL]: 'Behavioral Support Plan',
   [PLAN_TYPE.CUSTOM]: 'Custom Plan',
