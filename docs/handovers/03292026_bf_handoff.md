@@ -1,75 +1,106 @@
 # Session BF Handover
 **Date:** 2026-03-29
 **Agent:** Archer (CTO)
-**Focus:** IB Hub — edge function, storage, deep audit, 5 demo-blocker fixes
+**Focus:** IB Hub wiring + audit, Investigator Toolkit audit, Apex + Beacon conversion fixes
 
 ---
 
 ## What Was Done
 
-### IB Coaching Edge Function — DEPLOYED
-- `ib-coaching-draft` Edge Function created and deployed to Supabase
-- IB-specific system prompt: references IB practices, Learner Profile, ATL skills, programme context
-- Returns: coaching summary, strengths, growth areas, next steps, LP attributes observed, ATL skills observed
-- IBObservationsPage wired to call it during observation flow
-- Fallback: if AI fails, observation still saved with basic summary
+### Apex IB Hub — Wired to Real Data
+- Created src/hooks/useIBHub.js (18 hooks/functions for all 7 IB tables)
+- All 8 IB pages wired to real Supabase data
+- IBAuthChecklistPage: full 28-item checklist with evidence, PDF export
+- IBStaffRosterPage: real teacher data with PD + observation aggregation
+- AppShell: purple IB sidebar with 12 nav items when isIBRole
+- Self-Study + Auth Checklist: authorization/evaluation modes + multiple evidence entries
+- PD Creator: resource links (Google Docs/Slides/PDFs/videos), 6 templates
+- Student Projects: CSV import, 5-stage completion tracker, at-risk detection
 
-### Supabase Storage for IB Documents — DEPLOYED
-- Migration 013: `ib-documents` storage bucket with authenticated RLS
-- `uploadIBDocument()` + `deleteIBDocumentFile()` hooks added
-- IBDocumentsPage: real file upload (PDF, DOC, PPT, XLS, images), signed URL downloads
-- IBPDCreatorPage: optional file upload in resource form
+### Apex IB Hub — Edge Function + Storage
+- `ib-coaching-draft` Edge Function deployed — IB-specific AI coaching summaries
+- Supabase Storage bucket `ib-documents` for real file upload/download
+- IBDocumentsPage + IBPDCreatorPage wired to storage with signed URLs
 
-### Deep Audit — IB Hub Grade: B+ → A- (after fixes)
-5 demo-blocking issues found and fixed:
+### Apex IB Hub — Deep Audit (Grade B+ → A-)
+5 demo-blockers found and fixed:
+1. Staff Roster wired to real DB (was hardcoded fake data)
+2. Projects persisted to localStorage (was lost on refresh)
+3. PD Creator persisted to localStorage (was lost on refresh)
+4. Policy file upload wired to Supabase Storage (was capturing filename only)
+5. Alignment Report queries both observations + ib_observations tables
+- Voice recording hidden until Whisper integration
 
-1. **Staff Roster** — was showing hardcoded fake teachers. Now wired to real DB (useTeachers + useIBPDRecords + useIBObservations)
-2. **Projects** — data lost on refresh. Now persisted to localStorage
-3. **PD Creator** — data lost on refresh. Now persisted to localStorage
-4. **Policy file upload** — captured filename only. Now uploads to Supabase Storage with signed URL downloads
-5. **Alignment Report** — only read from observations table. Now queries BOTH observations + ib_observations and merges results
+### Investigator Toolkit — Deep Audit (Grade B+ → A)
+8 issues found and fixed:
+1. Service worker created (PWA now works offline)
+2. PDF export field name mismatches fixed (Sections 3, 5, 7)
+3. License check product filter added
+4. Evidence log legal hold filter fixed
+5. Dashboard export button functional
+6. Section 1 Edit button functional
+7. businessDaysBetween consistency
+8. Meta description added
 
-Bonus: Voice recording hidden in observations (type-only until Whisper integration added for IB Hub)
+### Apex Texas — Conversion Fix (ROOT CAUSE of zero signups)
+- Root URL now sends new users to trial form (was sign-in form)
+- Landing page CTAs go to ?mode=trial
+- CTA text: "Request Access" → "Start Free 14-Day Trial"
+- "Early access" language removed
+- Texas onboarding cut from 6 steps to 3
 
-### Apex Texas Fixes
-- Returning users → sign-in page (not trial landing)
-- Forgot password visible on trial page
+### Beacon — Conversion Fixes
+- Backup banner suppressed for first 48 hours after signup
+- Pricing added to landing page ($100/school year)
+- "Sign in" link fixed for returning users
+- Beacon pricing corrected to $100/school year ($10/mo) everywhere
+
+### Team Briefing Written
+- Comprehensive handover for Vera (COO), Sage (CMO), Nova (CRO)
+- Covers all products, pricing, URLs, demo credentials, action items
 
 ---
 
-## IB Hub Final State
+## Decisions Made
 
-| Page | Grade | Persistence |
-|------|-------|-------------|
-| IB Dashboard | A- | Real DB hooks |
-| IB Observations | A- | Real DB + edge function |
-| Self-Study | A | Real DB + debounce |
-| Documents | A | Real DB + Supabase Storage |
-| PD Tracker | A- | Real DB |
-| PD Creator | B+ | localStorage (DB table needed) |
-| Policies | A- | Real DB + Storage |
-| Projects | B+ | localStorage (DB table needed) |
-| Auth Checklist | A- | Real DB (partial seeding) |
-| Staff Roster | B+ | Real DB (with demo fallback) |
-| Alignment Report | A- | Real DB (both tables) |
-| AppShell Sidebar | A | N/A |
-
----
-
-## What's Next
-
-1. Create `ib_student_projects` + `ib_pd_workshops` DB tables to replace localStorage
-2. Add IB route guard (non-IB users can currently URL-navigate to IB pages)
-3. Whisper integration for IB voice observations
-4. PYP Exhibition stage definitions (currently generic)
-5. Meridian deep audit
-6. Beacon final verification
+1. Beacon pricing: $100/school year ($10/month)
+2. Apex root URL sends new users to trial (not sign-in)
+3. Texas onboarding: 3 steps (profile → goal → teachers), skipping framework + IB
+4. Student Projects portal = separate future product
+5. Voice recording hidden in IB Hub until Whisper integrated
 
 ---
 
 ## Commits This Session
 
-### clearpath-apex
-- `b9fed9d` feat: IB coaching edge function — real AI for IB observations
-- `22e35c3` feat: Supabase Storage for IB document uploads
-- `ad96004` fix: 5 IB Hub demo-blockers resolved
+### clearpath-apex (8 commits)
+- IB Hub wired to real data + Auth Checklist + Staff Roster + sidebar
+- IB coaching edge function
+- Supabase Storage for documents
+- 5 IB demo-blockers fixed
+- Conversion fix (trial form as default)
+
+### clearpath-beacon (2 commits)
+- Backup banner suppressed + pricing + sign-in link
+- Pricing corrected to $100/school year
+
+### investigator-toolkit (2 commits)
+- 3 critical fixes (SW, PDF, license)
+- 5 remaining fixes (evidence, export, edit, consistency, meta)
+
+### waypoint (2 commits)
+- Team brief for Vera/Sage/Nova
+- Pricing correction in all docs
+
+---
+
+## What's Next
+
+1. Re-send Apex marketing emails (conversion is now fixed)
+2. IB outreach — Kim contacts former IB colleagues with demo
+3. Create ib_student_projects + ib_pd_workshops DB tables
+4. Add IB route guard (non-IB users can URL-navigate to IB pages)
+5. Whisper integration for IB voice observations
+6. Custom SMTP sender in Supabase Auth (emails from clearpathedgroup.com)
+7. Meridian deep audit when ready
+8. Connect Investigator Toolkit to Cloudflare Pages

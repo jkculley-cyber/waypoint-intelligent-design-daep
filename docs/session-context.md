@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-29 (Session BF — IB Hub audit + 5 demo-blockers fixed, edge function + storage deployed)
+> Last updated: 2026-03-29 (Session BF — IB Hub wired + audit, Toolkit audit, Apex/Beacon conversion fixes)
 
 ---
 
@@ -104,11 +104,13 @@
 
 ## Next Session Priority
 
-1. **⚠️ BLOCKER: Add DNS records** — Google DKIM, fix SPF/DMARC. Emails going to spam.
-2. **Meridian deep audit** — surface audit done (A grade), but escalation persistence + demo data labeling needed.
-3. **Origins deep audit** — not yet done.
-4. **Parent Communication Hub** — #1 pain point: timestamped call log for due process hearings.
-5. **Test PWA icons on iPhone** for all apps.
+1. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
+2. **IB outreach** — Kim contacts former IB colleagues with demo link.
+3. **Custom SMTP sender** in Supabase Auth — emails from clearpathedgroup.com instead of supabase.io.
+4. **IB DB tables** for Projects + PD Workshops (replace localStorage).
+5. **Connect Investigator Toolkit to Cloudflare Pages.**
+6. **Meridian deep audit** when ready to launch.
+7. **Parent Communication Hub** for Waypoint.
 
 ---
 
