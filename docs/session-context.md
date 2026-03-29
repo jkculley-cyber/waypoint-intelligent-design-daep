@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-29 (Session BF — IB Hub wired + audit, Toolkit audit, Apex/Beacon conversion fixes)
+> Last updated: 2026-03-29 (Session BG — Website fixes, SMTP, downloadable apps, Toolkit employee investigations)
 
 ---
 
@@ -106,9 +106,9 @@
 
 1. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
 2. **IB outreach** — Kim contacts former IB colleagues with demo link.
-3. **Custom SMTP sender** in Supabase Auth — emails from clearpathedgroup.com instead of supabase.io.
-4. **IB DB tables** for Projects + PD Workshops (replace localStorage).
-5. **Connect Investigator Toolkit to Cloudflare Pages.**
+3. **IB DB tables** for Projects + PD Workshops (replace localStorage).
+4. **IB route guard** (non-IB users can URL-navigate to IB pages).
+5. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
 6. **Meridian deep audit** when ready to launch.
 7. **Parent Communication Hub** for Waypoint.
 
