@@ -152,7 +152,7 @@ Same Apex codebase, same Supabase project. Role-based routing: IB roles see purp
 **Repo:** jkculley-cyber/clearpath-beacon (branch: main)
 **Supabase:** cghhabcbgyoqwqjzunfo
 **Status:** ✅ Grade A- — audited, 3 new pages added
-**Pricing:** $999/yr ($8/mo) via Zelle. 14-day free trial.
+**Pricing:** $100/school year ($10/mo) via Zelle. 14-day free trial.
 **Data mode:** Local-first (IndexedDB). Cloud requires district DPA.
 
 ### What's Live
@@ -257,7 +257,7 @@ Plus 6 FREE lead magnets (Excel + PDF):
 | Apex Texas | Individual principals | $100/school year | Zelle, 14-day trial |
 | Apex IB Hub | IB campuses | $1,800/yr | Zelle, 14-day pilot |
 | Apex IB + Texas bundle | Both IB + T-TESS | $2,800/yr | Discount |
-| Beacon | Individual counselors | $999/yr ($8/mo) | Zelle, 14-day trial |
+| Beacon | Individual counselors | $100/school year ($10/mo) | Zelle, 14-day trial |
 | Investigator Toolkit | Individual admins | $49/yr ($5/mo) | Zelle |
 | TpT Spreadsheets | Individual educators | $10-28 each | TpT + Zelle |
 

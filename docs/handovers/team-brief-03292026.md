@@ -83,7 +83,7 @@ In the last 7 sessions, we shipped 4 major things:
 
 Beacon's conversion is strong (estimated 72-78% from email to active trial). One fix was made:
 - Backup warning banner suppressed for first 48 hours (was scaring new users with "your data will be permanently lost" 3 seconds after signup)
-- Pricing added to landing page ($999/year after trial)
+- Pricing added to landing page ($100/school year after trial)
 - "Sign in" link fixed for returning users
 
 ### New Marketing Assets Created
@@ -135,7 +135,7 @@ Key talking points:
 | **Apex IB Hub** | **$1,800/yr per campus** | **Zelle** | **14-day free pilot** |
 | Apex IB + Texas bundle | $2,800/yr | Zelle | 14-day free |
 | IB District Director | $4,500/yr (up to 10 campuses) | Custom | Demo on request |
-| Beacon | $999/yr ($8/mo) | Zelle | 14-day free |
+| Beacon | $100/school year ($10/mo) | Zelle | 14-day free |
 | Investigator Toolkit | $49/yr ($5/mo) | Zelle | License key |
 | TpT Spreadsheets | $10-28 each | TpT + Zelle | N/A |
 
