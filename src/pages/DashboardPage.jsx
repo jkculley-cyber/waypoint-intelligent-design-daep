@@ -77,7 +77,7 @@ export default function DashboardPage() {
           id, incident_date, status,
           student:students(id, first_name, last_name),
           offense:offense_codes(id, title),
-          approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, current_step)
+          approval_chain:daep_approval_chains(id, current_step)
         `)
         .eq('district_id', districtId)
         .eq('consequence_type', 'daep')
@@ -104,7 +104,7 @@ export default function DashboardPage() {
         .select(`
           id, incident_date,
           student:students(id, first_name, last_name),
-          approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, current_step, chain_status)
+          approval_chain:daep_approval_chains(id, current_step, chain_status)
         `)
         .eq('district_id', districtId)
         .eq('status', 'pending_approval')
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         const p = (async () => {
           let q = supabase
             .from('incidents')
-            .select('id, approval_chain:daep_approval_chains!fk_incidents_approval_chain(id, current_step)')
+            .select('id, approval_chain:daep_approval_chains(id, current_step)')
             .eq('district_id', districtId)
             .eq('status', 'pending_approval')
           q = applyCampusScope(q, scope)
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       // 1. Placements blocked by compliance
       let blockedQuery = supabase
         .from('compliance_checklists')
-        .select('id, incidents!fk_incidents_compliance!inner(campus_id)', { count: 'exact', head: true })
+        .select('id, incidents!inner(campus_id)', { count: 'exact', head: true })
         .eq('district_id', districtId)
         .eq('placement_blocked', true)
         .gte('created_at', schoolYearStart)

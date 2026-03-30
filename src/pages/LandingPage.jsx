@@ -7,7 +7,7 @@ export default function LandingPage() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Waypoint" className="h-10 w-10 object-contain" />
+            <img src="/logo.png" alt="Waypoint" className="h-12 w-12 object-contain" />
             <h1 className="text-2xl font-bold">
               <span className="text-orange-600">Way</span><span className="text-purple-600">point</span>
             </h1>
@@ -26,6 +26,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-purple-50 to-white py-16 sm:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <img src="/logo.png" alt="Waypoint" className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 mx-auto mb-6 object-contain" />
           <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-1 text-sm text-orange-700 font-medium mb-6">
             Texas TEC Chapter 37 Compliant
           </div>

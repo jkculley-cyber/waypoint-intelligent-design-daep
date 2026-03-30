@@ -23,12 +23,12 @@ export default function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
 
-  if (!hasFeature('ai_chat')) return null
-
   // Clear unread indicator when opening
   useEffect(() => {
     if (isOpen) setHasUnread(false)
   }, [isOpen])
+
+  if (!hasFeature('ai_chat')) return null
 
   return (
     <>
