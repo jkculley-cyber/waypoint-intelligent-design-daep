@@ -60,8 +60,8 @@ export function useChat() {
         {
           role: 'assistant',
           content:
-            "I'm sorry, the AI assistant is not configured yet. In the meantime, try asking common questions — many are answered instantly from our built-in FAQ!",
-          source: 'ai',
+            "I didn't find an exact match for that question. Try asking about:\n\n• **DAEP** — placement process, days, mandatory vs discretionary\n• **Compliance** — SPED 10-day rule, MDR, 504 protections\n• **Incidents** — how to create, edit, or approve\n• **Transition plans** — creating and managing re-entry plans\n• **Reports** — running reports and exporting data\n• **Roles** — what each role can access\n\nOr rephrase your question with specific keywords.",
+          source: 'faq',
         },
       ])
       return

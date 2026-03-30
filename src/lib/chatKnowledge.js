@@ -76,7 +76,7 @@ const faqEntries = [
   // --- Platform Usage: Incidents ---
   {
     question: 'How do I create an incident?',
-    keywords: ['create', 'new', 'incident', 'add', 'report', 'how'],
+    keywords: ['create', 'new', 'incident', 'add', 'report', 'log', 'document'],
     answer: 'To create an incident: 1) Go to the Incidents page from the sidebar, 2) Click the "New Incident" button, 3) Select the student, 4) Choose the offense code, 5) Fill in the incident details (date, description, location), 6) Assign a consequence and DAEP days if applicable, 7) Click Save. The system will automatically generate a compliance checklist based on the student\'s characteristics.',
   },
   {
@@ -139,7 +139,7 @@ const faqEntries = [
   },
   {
     question: 'What are alerts?',
-    keywords: ['alert', 'notification', 'warning', 'attention', 'flag'],
+    keywords: ['alert', 'alerts', 'notification', 'warning', 'attention', 'flag'],
     answer: 'Alerts notify you of items requiring attention, such as: approaching SPED cumulative day thresholds, overdue compliance checklist items, expiring DAEP placements, and transition plan review deadlines. You can view and manage alerts from the Alerts page. Resolving the underlying issue will clear the alert.',
   },
 
@@ -151,7 +151,7 @@ const faqEntries = [
   },
   {
     question: 'What can principals and assistant principals do?',
-    keywords: ['principal', 'ap', 'assistant', 'role', 'permission'],
+    keywords: ['principal', 'principals', 'ap', 'assistant', 'role', 'permission', 'can'],
     answer: 'Principals and Assistant Principals can: create and edit incidents for their campus, approve incidents in the approval chain, view campus-level reports, manage compliance checklists, and create transition plans. Their access is scoped to their assigned campus(es).',
   },
   {
@@ -202,6 +202,17 @@ const faqEntries = [
  * Find the best FAQ match for a user message.
  * Returns the FAQ entry if the keyword overlap score exceeds the threshold, otherwise null.
  */
+// Common words that appear across many FAQ entries — low signal, don't count toward matching
+const STOP_WORDS = new Set([
+  'what', 'how', 'do', 'does', 'is', 'are', 'the', 'can', 'where', 'when',
+  'who', 'which', 'my', 'to', 'in', 'for', 'of', 'an', 'on', 'it',
+])
+
+function tokenMatch(token, kw) {
+  if (kw.length <= 3) return token === kw
+  return token.includes(kw) || kw.includes(token)
+}
+
 export function findFaqMatch(userMessage) {
   if (!userMessage || typeof userMessage !== 'string') return null
 
@@ -213,14 +224,24 @@ export function findFaqMatch(userMessage) {
 
   if (tokens.length === 0) return null
 
+  // Separate meaningful tokens from stop words
+  const meaningful = tokens.filter((t) => !STOP_WORDS.has(t))
+
   let bestMatch = null
   let bestScore = 0
 
   for (const entry of faqEntries) {
+    // Count how many of the entry's keywords match user tokens
     const matchedKeywords = entry.keywords.filter((kw) =>
-      tokens.some((token) => token.includes(kw) || kw.includes(token))
+      tokens.some((token) => tokenMatch(token, kw))
     )
-    const score = matchedKeywords.length / entry.keywords.length
+    // Count meaningful (non-stop-word) matches — these are worth more
+    const meaningfulMatches = entry.keywords.filter((kw) =>
+      meaningful.some((token) => tokenMatch(token, kw))
+    )
+
+    // Score: meaningful matches count double
+    const score = meaningfulMatches.length * 2 + matchedKeywords.length
 
     if (score > bestScore) {
       bestScore = score
@@ -228,7 +249,14 @@ export function findFaqMatch(userMessage) {
     }
   }
 
-  return bestScore > 0.4 ? bestMatch : null
+  if (!bestMatch) return null
+
+  // Require at least 1 meaningful keyword match
+  const meaningfulCount = bestMatch.keywords.filter((kw) =>
+    meaningful.some((token) => tokenMatch(token, kw))
+  ).length
+
+  return meaningfulCount >= 1 ? bestMatch : null
 }
 
 export default faqEntries
