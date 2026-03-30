@@ -274,7 +274,7 @@ export default function Sidebar() {
     showWaypoint  && 'waypoint',
     showNavigator && 'navigator',
     showMeridian  && 'meridian',
-  ].filter(Boolean)
+  ].filter(k => k && PRODUCTS[k])
 
   const showRail = activeProducts.length > 1
 
