@@ -6,8 +6,10 @@ import FormField from '../components/ui/FormField'
 import AlertBanner from '../components/ui/AlertBanner'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const searchParams = new URLSearchParams(window.location.search)
+  const isDemo = searchParams.get('demo') === '1'
+  const [email, setEmail] = useState(isDemo ? 'admin@lonestar-isd.org' : '')
+  const [password, setPassword] = useState(isDemo ? 'Password123!' : '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOauthLoading] = useState(null)
