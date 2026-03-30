@@ -13,6 +13,7 @@ import RequireProduct from './components/auth/RequireProduct'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import DemoGatePage from './pages/DemoGatePage'
 import NotFoundPage from './pages/NotFoundPage'
 import DashboardPage from './pages/DashboardPage'
 import StudentsPage from './pages/StudentsPage'
@@ -116,6 +117,7 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/demo" element={<DemoGatePage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Authenticated routes - Staff only (AppShell layout with sidebar) */}

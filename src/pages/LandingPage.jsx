@@ -44,7 +44,7 @@ export default function LandingPage() {
             <Link to="/login" className="bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors text-base">
               Sign In →
             </Link>
-            <Link to="/login?demo=1" className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-base">
+            <Link to="/demo" className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-base">
               Explore Demo →
             </Link>
             <a href="#features" className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-base">
@@ -171,7 +171,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <Link to="/login" className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-base">
+          <Link to="/demo" className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-base">
             Open Waypoint Demo →
           </Link>
           <p className="text-xs text-gray-400 mt-4">Sample data includes 12 incidents, 6 transition plans, SPED compliance scenarios, and Navigator behavioral tracking.</p>
