@@ -73,7 +73,7 @@
     pointer-events: none;
   }
 
-  /* ── NAV ── */
+  /* -- NAV -- */
   nav {
     position: fixed; top: 0; width: 100%; z-index: 200;
     background: rgba(14,6,24,0.92);
@@ -126,7 +126,7 @@
   }
   .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(232,134,42,0.5); }
 
-  /* ── HERO ── */
+  /* -- HERO -- */
   .hero {
     position: relative; z-index: 1;
     min-height: 88vh;
@@ -256,7 +256,7 @@
   .badge-active { background:rgba(232,134,42,0.15); border:1px solid rgba(232,134,42,0.4); color:var(--amber-light); }
   .badge-soon { background:rgba(107,47,160,0.2); border:1px solid rgba(107,47,160,0.4); color:var(--purple-light); }
 
-  /* ── STATS BAR ── */
+  /* -- STATS BAR -- */
   .stats-bar {
     background: linear-gradient(135deg, #140820, #1a0a2e);
     border-top: 1px solid var(--border-purple);
@@ -282,7 +282,7 @@
     letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; display: block;
   }
 
-  /* ── SHARED SECTION ── */
+  /* -- SHARED SECTION -- */
   section { padding: 64px 5%; position: relative; z-index: 1; }
   .section-label {
     text-align:center; font-size:0.76rem; font-weight:700;
@@ -306,99 +306,20 @@
     box-shadow: 0 0 12px rgba(232,134,42,0.5);
   }
 
-  /* ── PRODUCTS SECTION ── */
+  /* -- PRODUCTS SECTION -- */
   #products {
     background: linear-gradient(135deg, #140820, #1a0a2e);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
   }
 
-  /* Waypoint flagship card */
-  .product-main {
-    background: rgba(14,6,24,0.75);
-    border: 1px solid var(--border);
-    border-radius: 16px; padding: 40px;
-    margin-bottom: 24px;
-    position: relative; overflow: hidden;
-    backdrop-filter: blur(10px);
-  }
-  .product-main::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--amber), var(--orange));
-  }
-  .product-main-inner {
-    display: block;
-  }
-  .product-main-header {
-    display: flex; align-items: center; gap: 16px; margin-bottom: 18px;
-  }
   .product-card-icon {
     width: 46px; height: 46px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem; flex-shrink: 0;
     background: rgba(232,134,42,0.1); border: 1px solid rgba(232,134,42,0.2);
   }
-  .product-name {
-    font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700;
-    color: var(--amber-light); display: block;
-  }
-  .product-price-tag {
-    font-size: 0.82rem; font-weight: 700; color: var(--amber);
-    letter-spacing: 0.04em; margin-top: 2px; display: block;
-  }
-  .product-main-info > p {
-    font-size: 0.97rem; color: var(--text-muted); line-height: 1.75; margin-bottom: 20px;
-  }
-  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .feature-list li {
-    font-size: 0.9rem; color: var(--text-muted);
-    display: flex; align-items: flex-start; gap: 10px;
-  }
-  .feature-list li::before {
-    content: '◆'; color: var(--amber); font-size: 0.7rem; margin-top: 4px; flex-shrink: 0;
-  }
-  .product-main-actions {
-    display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;
-  }
 
-  /* Demo tabs */
-  .demo-tabs-nav { display: flex; gap: 8px; margin-bottom: 14px; }
-  .demo-tab {
-    padding: 8px 20px;
-    border: 1px solid var(--border-purple);
-    background: transparent; color: var(--text-muted);
-    border-radius: 6px;
-    font-family: 'Raleway', sans-serif; font-size: 0.86rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em;
-  }
-  .demo-tab:hover { border-color: var(--amber); color: var(--amber-light); }
-  .demo-tab.active {
-    background: linear-gradient(135deg, var(--amber), var(--orange));
-    border-color: transparent; color: white;
-    box-shadow: var(--glow-amber);
-  }
-  .slides-embed {
-    position: relative; width: 100%;
-    padding-top: 56.25%;
-    border-radius: 8px; overflow: hidden;
-    border: 1px solid rgba(232,134,42,0.15);
-  }
-  .slides-embed iframe {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
-  }
-  .demo-video {
-    width: 100%; border-radius: 8px;
-    border: 1px solid var(--border); background: #000;
-    display: block;
-  }
-
-  /* Navigator + Meridian row */
-  .products-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 24px;
-  }
   .product-card {
     background: rgba(14,6,24,0.7); border: 1px solid var(--border-purple);
     border-radius: 14px; padding: 30px;
@@ -419,66 +340,6 @@
     font-size: 0.94rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 16px;
   }
 
-  /* Suite + Guide 2-col row */
-  .bottom-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 24px;
-  }
-  .suite-callout {
-    background: linear-gradient(135deg, rgba(107,47,160,0.15), rgba(232,134,42,0.08));
-    border: 1px solid rgba(232,134,42,0.25);
-    border-radius: 16px; padding: 32px 30px;
-    position: relative; overflow: hidden;
-  }
-  .suite-callout::before {
-    content: 'CLEAR PATH SUITE';
-    position: absolute; top: -12px; left: 28px;
-    background: linear-gradient(90deg, var(--amber), var(--orange));
-    color: white; font-size: 0.7rem; font-weight: 700;
-    padding: 3px 16px; border-radius: 3px; letter-spacing: 0.12em;
-    white-space: nowrap;
-  }
-  .suite-callout h3 {
-    font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700;
-    color: var(--text); margin-bottom: 10px;
-  }
-  .suite-callout > p { color: var(--text-muted); font-size: 0.94rem; line-height: 1.7; margin-bottom: 18px; }
-  .suite-products { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .suite-badge {
-    font-size: 0.86rem; font-weight: 700; padding: 5px 14px; border-radius: 6px;
-    border: 1px solid rgba(232,134,42,0.4); color: var(--amber-light);
-    background: rgba(232,134,42,0.1);
-  }
-  .compliance-guide-card {
-    background: linear-gradient(135deg, rgba(107,47,160,0.12), rgba(26,10,46,0.6));
-    border: 1px solid rgba(232,134,42,0.28); border-radius: 14px;
-    padding: 32px 30px;
-    display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .compliance-guide-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
-  .compliance-guide-icon {
-    width: 50px; height: 50px; flex-shrink: 0; border-radius: 10px;
-    background: rgba(232,134,42,0.1); border: 1px solid rgba(232,134,42,0.25);
-    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
-  }
-  .compliance-guide-text h4 {
-    font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700;
-    color: var(--amber-light); margin-bottom: 8px;
-  }
-  .compliance-guide-text p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.65; }
-
-  /* Coming pathways strip */
-  .coming-pathways {
-    background: rgba(107,47,160,0.06);
-    border: 1px dashed rgba(107,47,160,0.25);
-    border-radius: 10px; padding: 16px 24px;
-    text-align: center; font-size: 0.86rem;
-    color: var(--text-muted); letter-spacing: 0.03em; line-height: 1.7;
-  }
-  .coming-pathways strong { color: var(--purple-light); }
-
   /* Waypoint app link style */
   a.waypoint-link {
     color: inherit; text-decoration: none;
@@ -487,7 +348,7 @@
   }
   a.waypoint-link:hover { color: var(--amber-light); border-color: var(--amber-light); }
 
-  /* ── PRICING CALCULATOR ── */
+  /* -- PRICING CALCULATOR -- */
   #pricing { background: transparent; }
   .calc-box {
     max-width: 720px; margin: 0 auto;
@@ -562,7 +423,7 @@
     border-color: transparent;
   }
   .check-label input:checked ~ .check-box::after {
-    content: '✓'; position: absolute; top: -1px; left: 3px;
+    content: '\2713'; position: absolute; top: -1px; left: 3px;
     font-size: 0.78rem; color: white; font-weight: 700;
   }
   .calc-results { margin-bottom: 28px; padding-top: 24px; border-top: 1px solid var(--border-purple); }
@@ -598,7 +459,7 @@
   .empty-notice { padding:20px; text-align:center; color:var(--text-muted); font-size:0.94rem; }
   .calc-disclaimer { font-size:0.76rem; color:var(--text-muted); text-align:center; margin-top:18px; opacity:0.65; line-height:1.5; }
 
-  /* ── CTA ── */
+  /* -- CTA -- */
   .cta-banner {
     background: linear-gradient(135deg, #1a0535, #0e0618);
     border-top: 1px solid var(--border);
@@ -635,7 +496,7 @@
     max-width: 480px; margin: 0 auto 32px; position: relative;
   }
 
-  /* ── Demo Request Form ── */
+  /* -- Demo Request Form -- */
   .demo-form-wrap {
     position: relative; max-width: 540px; margin: 0 auto;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(232,134,42,0.2);
@@ -691,7 +552,7 @@
   }
   .demo-form-success strong { color: var(--amber-light); }
 
-  /* ── FOOTER ── */
+  /* -- FOOTER -- */
   footer {
     background: #060310; border-top: 1px solid var(--border-purple);
     padding: 60px 5% 30px; position: relative; z-index: 1;
@@ -725,14 +586,99 @@
   .footer-bottom p { font-size: 0.86rem; color: rgba(240,230,211,0.25); }
   .footer-note { font-size: 0.78rem; color: var(--amber); font-weight: 600; letter-spacing: 0.06em; }
 
-  /* ── ANIMATIONS ── */
+  /* -- ANIMATIONS -- */
   .fade-up {
     opacity: 0; transform: translateY(16px);
     transition: opacity 1s ease, transform 1s ease;
   }
   .fade-up.visible { opacity: 1; transform: translateY(0); }
 
-  /* ── RESPONSIVE ── */
+  /* -- FEATURE GRID (NEW) -- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .feature-card {
+    background: rgba(14,6,24,0.7);
+    border: 1px solid var(--border-purple);
+    border-radius: 14px;
+    padding: 30px 26px;
+    transition: transform 0.25s, border-color 0.25s;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--amber);
+  }
+  .feature-card-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 18px;
+    background: rgba(232,134,42,0.1); border: 1px solid rgba(232,134,42,0.2);
+  }
+  .feature-card h3 {
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+    color: var(--amber-light); margin-bottom: 10px;
+  }
+  .feature-card p {
+    font-size: 0.9rem; color: var(--text-muted); line-height: 1.7;
+  }
+
+  /* -- HOW IT WORKS (NEW) -- */
+  .steps-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .step-card {
+    text-align: center;
+    padding: 32px 24px;
+  }
+  .step-number {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    color: white; margin-bottom: 20px;
+    box-shadow: 0 0 24px rgba(232,134,42,0.4);
+  }
+  .step-card h3 {
+    font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700;
+    color: var(--amber-light); margin-bottom: 10px;
+  }
+  .step-card p {
+    font-size: 0.9rem; color: var(--text-muted); line-height: 1.7;
+  }
+
+  /* -- ABOUT FACTS (NEW) -- */
+  .about-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    max-width: 700px;
+    margin: 36px auto 0;
+  }
+  .about-fact {
+    text-align: center;
+    padding: 20px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(107,47,160,0.25);
+    border-radius: 10px;
+  }
+  .about-fact .af-val {
+    font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700;
+    color: var(--amber-light); display: block; margin-bottom: 4px;
+  }
+  .about-fact .af-label {
+    font-size: 0.76rem; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* -- RESPONSIVE -- */
   @media (max-width: 960px) {
     .hero { grid-template-columns: 1fr; padding-top: 100px; min-height: auto; padding-bottom: 60px; gap: 30px; }
     .hero-visual { display: none; }
@@ -744,15 +690,14 @@
     .stats-bar-item:nth-child(2) { border-right: none; }
     .stats-bar-item:nth-child(3) { border-top: 1px solid rgba(107,47,160,0.2); }
     .stats-bar-item:nth-child(4) { border-top: 1px solid rgba(107,47,160,0.2); border-right: none; }
-    .product-main-inner { display: block; }
-    .products-row { grid-template-columns: 1fr; }
-    .bottom-cards { grid-template-columns: 1fr; }
     .nav-links { display: none; }
     .nav-logo-text .sub { display: none; }
     .nav-cta { padding: 8px 16px; font-size: 0.78rem; }
     section { padding: 50px 5%; }
     .audience-mini { gap: 28px; }
     .calc-box { padding: 32px 24px; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .steps-row { grid-template-columns: 1fr; gap: 20px; }
   }
   @media (max-width: 600px) {
     nav { height: 60px; padding: 0 4%; }
@@ -763,10 +708,7 @@
     section { padding: 44px 4%; }
     .section-title { font-size: 1.4rem; }
     .section-subtitle { font-size: 0.94rem; margin-bottom: 32px; }
-    .product-main { padding: 24px 18px; }
     .product-card { padding: 22px 18px; }
-    .suite-callout { padding: 28px 20px; }
-    .compliance-guide-card { padding: 24px 18px; }
     .cta-banner { padding: 48px 4%; }
     .cta-banner h2 { font-size: 1.6rem; }
     .audience-mini { gap: 20px; }
@@ -776,6 +718,7 @@
     .footer-bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
     .btn-primary { padding: 13px 24px; font-size: 0.9rem; }
     .btn-ghost { padding: 13px 24px; font-size: 0.9rem; }
+    .features-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -788,6 +731,8 @@
   </a>
   <ul class="nav-links">
     <li><a href="#products">Products</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#about">About</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="/store.html">Store</a></li>
     <li class="nav-dropdown-parent">
@@ -799,8 +744,6 @@
         <li><a href="/resources.html?cat=pd">Professional Development</a></li>
       </ul>
     </li>
-    <li><a href="/research.html">Research</a></li>
-    <li><a href="mailto:support@clearpathedgroup.com">Contact</a></li>
     <li><a href="security.html">Security</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -816,7 +759,7 @@
   <div class="hero-content">
     <div class="hero-eyebrow"><span></span> Clear Path Education Group &mdash; Texas K&ndash;12</div>
     <h1>Every District Deserves a Clear Path Forward.</h1>
-    <p>Clear Path Education Group envisions schools equipped with clear systems, innovative tools, and collaborative supports that empower educators. Five products live today — Waypoint, Navigator, Apex, Beacon, and Investigator Toolkit.</p>
+    <p>Compliance technology built by Texas educators, for Texas educators. Five live products that cover discipline, behavior tracking, instructional leadership, counseling, and campus investigations &mdash; so you can focus on students instead of spreadsheets.</p>
     <div class="hero-buttons">
       <a href="#contact" class="btn-primary">Request a Demo &#8594;</a>
       <a href="#products" class="btn-ghost">See Our Suite</a>
@@ -913,15 +856,15 @@
 <!-- STATS BAR -->
 <div class="stats-bar">
   <div class="stats-bar-item">
+    <span class="snum">5</span>
+    <span class="slabel">Products Live</span>
+  </div>
+  <div class="stats-bar-item">
     <span class="snum">100%</span>
     <span class="slabel">Texas-Focused</span>
   </div>
   <div class="stats-bar-item">
-    <span class="snum">2</span>
-    <span class="slabel">Products Live</span>
-  </div>
-  <div class="stats-bar-item">
-    <span class="snum">K–12</span>
+    <span class="snum">K&ndash;12</span>
     <span class="slabel">All Grade Levels</span>
   </div>
   <div class="stats-bar-item">
@@ -930,43 +873,58 @@
   </div>
 </div>
 
-<!-- THE COMPLIANCE GAP IS REAL -->
-<section style="background:linear-gradient(180deg,#0d0516 0%,#0a0414 100%);padding:72px 5%;border-bottom:1px solid rgba(107,47,160,0.2);">
-  <div style="max-width:900px;margin:0 auto;text-align:center;">
-    <p style="font-size:0.76rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#f97316;margin:0 0 12px;">The Compliance Gap Is Real</p>
-    <h2 style="font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:800;color:#f4a84a;margin:0 0 48px;line-height:1.3;">The stakes aren't hypothetical. They're in the data.</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;text-align:left;margin-bottom:40px;">
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:28px;">
-        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 8px;">90,000+</p>
-        <p style="font-size:0.97rem;font-weight:600;color:#f4a84a;margin:0 0 6px;">DAEP placements in Texas in 2023–24</p>
-        <p style="font-size:0.82rem;color:rgba(240,230,211,0.4);margin:0;">Source: <a href="https://tea.texas.gov/reports-and-data/school-data/discipline-data-products" target="_blank" rel="noopener" style="color:rgba(240,230,211,0.4);">TEA PEIMS Public Data</a></p>
+<!-- THE PROBLEM -->
+<section id="problem" style="background:linear-gradient(180deg,#0d0516 0%,#0a0414 100%);padding:80px 5%;border-bottom:1px solid rgba(107,47,160,0.2);">
+  <div style="max-width:800px;margin:0 auto;text-align:center;">
+    <p style="font-size:0.76rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#f97316;margin:0 0 14px;">The Problem</p>
+    <h2 style="font-family:'Cinzel',serif;font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:900;margin:0 0 32px;line-height:1.3;background:linear-gradient(135deg,var(--amber-glow),var(--amber-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Compliance shouldn't depend on spreadsheets and memory.</h2>
+    <p style="font-size:1.05rem;color:var(--text-muted);line-height:1.9;margin:0 0 28px;">Texas campus administrators spend 40% of their time on discipline documentation. Spreadsheets. Paper forms. Email chains. Manual compliance tracking. Meanwhile, SPED students hit removal limits without warning. Transition plans go unreviewed. Due process gaps become legal liabilities.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;text-align:center;margin-bottom:36px;">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:24px;">
+        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 6px;">90,000+</p>
+        <p style="font-size:0.86rem;color:var(--text-muted);margin:0;">DAEP placements in Texas per year</p>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:28px;">
-        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 8px;">#1 Finding</p>
-        <p style="font-size:0.97rem;font-weight:600;color:#f4a84a;margin:0 0 6px;">Failure to conduct a Manifestation Determination Review is among the most common IDEA findings in federal OCR complaints</p>
-        <p style="font-size:0.82rem;color:rgba(240,230,211,0.4);margin:0;">Source: <a href="https://www2.ed.gov/about/offices/list/ocr/index.html" target="_blank" rel="noopener" style="color:rgba(240,230,211,0.4);">U.S. Department of Education OCR</a></p>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:24px;">
+        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 6px;">#1</p>
+        <p style="font-size:0.86rem;color:var(--text-muted);margin:0;">OCR finding: missed Manifestation Determinations</p>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:28px;">
-        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 8px;">$40–60K</p>
-        <p style="font-size:0.97rem;font-weight:600;color:#f4a84a;margin:0 0 6px;">Estimated cost of a single corrective action process in legal fees, auditor time, and staff hours</p>
-        <p style="font-size:0.82rem;color:rgba(240,230,211,0.4);margin:0;">Estimated based on national district data — verify with your legal counsel</p>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:24px;">
+        <p style="font-size:2rem;font-weight:800;color:#f97316;margin:0 0 6px;">$40&ndash;60K</p>
+        <p style="font-size:0.86rem;color:var(--text-muted);margin:0;">Cost of a single corrective action</p>
       </div>
     </div>
-    <p style="font-size:0.97rem;color:rgba(240,230,211,0.5);font-style:italic;max-width:580px;margin:0 auto;">Waypoint was built by people who watched this happen in Texas districts. Every feature exists because a real director asked for it.</p>
+    <p style="font-size:1.15rem;font-weight:700;color:var(--amber-light);margin:0;">Clear Path builds the tools that fix this.</p>
   </div>
+</section>
+
+<!-- SEE IT IN ACTION — VIDEO -->
+<section id="demo-video" class="fade-up" style="padding:60px 5% 40px;">
+  <p class="section-label" style="text-align:center;">See It In Action</p>
+  <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Watch Waypoint in 2 Minutes</h2>
+  <p style="text-align:center;font-size:.88rem;color:rgba(240,230,211,0.6);margin-bottom:28px;max-width:560px;margin-left:auto;margin-right:auto;">See how a campus administrator creates an incident, triggers compliance checks, and manages a DAEP placement — all in one workflow.</p>
+  <div style="position:relative;width:100%;max-width:720px;margin:0 auto;border-radius:14px;overflow:hidden;border:1px solid rgba(107,47,160,0.35);box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <video controls preload="metadata" poster="" style="width:100%;display:block;border-radius:14px;background:#000;aspect-ratio:16/9;">
+      <source src="/Waypoint__Safety_and_Growth.mp4" type="video/mp4">
+      Your browser does not support video playback.
+    </video>
+  </div>
+  <p style="text-align:center;margin-top:16px;font-size:.78rem;color:rgba(240,230,211,0.4);">
+    Want to try it yourself? <a href="https://waypoint.clearpathedgroup.com" target="_blank" style="color:#f4a84a;font-weight:600;text-decoration:none;">Explore the demo &rarr;</a>
+    &nbsp;&middot;&nbsp; Login: admin@lonestar-isd.org / Password123!
+  </p>
 </section>
 
 <!-- PRODUCTS -->
 <section id="products">
   <p class="section-label">Our Technology Suite</p>
-  <h2 class="section-title">Five live products. Built for Texas educators.</h2>
+  <h2 class="section-title">Five Products. One Mission. Built for Texas.</h2>
   <div class="divider"></div>
+  <p class="section-subtitle">Every product was built because a real educator asked for it. No feature bloat. No generic solutions. Texas compliance, Texas workflows, Texas language.</p>
 
-  <!-- Compact product grid -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:40px;" class="fade-up">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:1100px;margin:0 auto;" class="fade-up">
 
     <!-- Waypoint -->
-    <div onclick="window.location='/waypoint.html'" style="cursor:pointer;background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #f4a84a;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#f4a84a'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+    <div style="background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #f4a84a;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#f4a84a'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img src="Waypoint_Behavioral_Solutions_logo_design.jpeg" alt="Waypoint" style="width:48px;height:48px;border-radius:10px;object-fit:contain;">
         <div>
@@ -974,16 +932,17 @@
           <div style="font-size:0.68rem;font-weight:600;color:#16a34a;text-transform:uppercase;letter-spacing:0.08em;">Live Now</div>
         </div>
       </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Texas DAEP compliance — incident management, SPED/504 blocking, approval chains, parent portals, transition plans, and PEIMS export.</p>
-      <div style="font-size:0.78rem;color:rgba(244,168,74,0.7);font-weight:600;margin-bottom:14px;">Starting at $4,500/yr · District License</div>
+      <p style="font-size:0.92rem;font-weight:600;color:var(--amber-light);margin:0 0 10px;">DAEP &amp; Discipline Compliance</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Automates TEC Chapter 37 workflows, SPED/504 blocking, approval chains, transition plans, parent portals, and PEIMS export. The compliance engine your district needs.</p>
+      <div style="font-size:0.78rem;color:rgba(244,168,74,0.7);font-weight:600;margin-bottom:14px;">Starting at $4,500/yr &middot; District License</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="/waypoint.html" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;">Learn More</a>
-        <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;">Request Demo</a>
+        <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(244,168,74,0.4);color:#f4a84a;">Explore Demo</a>
       </div>
     </div>
 
     <!-- Navigator -->
-    <div onclick="window.location='/navigator.html'" style="cursor:pointer;background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #3b82f6;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#3b82f6'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+    <div style="background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #3b82f6;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#3b82f6'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img src="/navigator-icon.png" alt="Navigator" style="width:48px;height:48px;border-radius:10px;object-fit:cover;">
         <div>
@@ -991,8 +950,9 @@
           <div style="font-size:0.68rem;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:0.08em;">Live Now</div>
         </div>
       </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">ISS/OSS behavior tracking — referrals, placements, risk scoring, escalation engine, skill gap analysis, and disproportionality radar.</p>
-      <div style="font-size:0.78rem;color:rgba(59,130,246,0.7);font-weight:600;margin-bottom:14px;">Starting at $2,500/yr · Campus or District</div>
+      <p style="font-size:0.92rem;font-weight:600;color:#60a5fa;margin:0 0 10px;">ISS/OSS Tracking &amp; Behavioral Supports</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Risk scoring, referral pipeline, skill gap analysis, and disproportionality radar. Track every placement, every support, every outcome.</p>
+      <div style="font-size:0.78rem;color:rgba(59,130,246,0.7);font-weight:600;margin-bottom:14px;">Starting at $2,500/yr &middot; Campus or District</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="/navigator.html" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#1e40af,#3b82f6);">Learn More</a>
         <a href="mailto:support@clearpathedgroup.com?subject=Navigator%20Demo" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(59,130,246,0.3);color:#3b82f6;">Request Demo</a>
@@ -1000,7 +960,7 @@
     </div>
 
     <!-- Apex -->
-    <div onclick="window.location='/apex.html'" style="cursor:pointer;background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #f97316;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#f97316'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+    <div style="background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #f97316;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#f97316'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img src="/apex-icon.png" alt="Apex" style="width:48px;height:48px;border-radius:10px;object-fit:cover;">
         <div>
@@ -1008,16 +968,17 @@
           <div style="font-size:0.68rem;font-weight:600;color:#f97316;text-transform:uppercase;letter-spacing:0.08em;">Live Now</div>
         </div>
       </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">AI-powered walkthroughs for principals — voice recording, T-TESS/Danielson scoring, coaching drafts in 60 seconds, teacher growth tracking.</p>
-      <div style="font-size:0.78rem;color:rgba(249,115,22,0.7);font-weight:600;margin-bottom:14px;">$10/mo or $100/yr · 14-Day Free Trial</div>
+      <p style="font-size:0.92rem;font-weight:600;color:#fb923c;margin:0 0 10px;">AI Instructional Leadership</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Voice-to-coaching-email in 60 seconds. T-TESS scoring, morning briefs, teacher growth tracking. What took 45 minutes now takes one.</p>
+      <div style="font-size:0.78rem;color:rgba(249,115,22,0.7);font-weight:600;margin-bottom:14px;">$10/mo or $100/yr &middot; 14-Day Free Trial</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <a href="/apex.html" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#ea580c,#f97316);">Learn More</a>
-        <a href="https://clearpath-apex.pages.dev" target="_blank" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(249,115,22,0.3);color:#f97316;">Free Trial</a>
+        <a href="https://clearpath-apex.pages.dev" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#ea580c,#f97316);">Start Free Trial</a>
+        <a href="/apex.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(249,115,22,0.3);color:#f97316;">Learn More</a>
       </div>
     </div>
 
     <!-- Beacon -->
-    <div onclick="window.location='/beacon-product.html'" style="cursor:pointer;background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #2A9D8F;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#2A9D8F'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+    <div style="background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #2A9D8F;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#2A9D8F'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img src="/beacon-icon.png" alt="Beacon" style="width:48px;height:48px;border-radius:10px;object-fit:cover;">
         <div>
@@ -1025,17 +986,17 @@
           <div style="font-size:0.68rem;font-weight:600;color:#2A9D8F;text-transform:uppercase;letter-spacing:0.08em;">Live Now</div>
         </div>
       </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Elementary counselor command center — SB 179 compliance, caseload management, session tracking, small groups, and MTSS documentation.</p>
-      <div style="font-size:0.78rem;color:rgba(42,157,143,0.7);font-weight:600;margin-bottom:14px;">$8/mo or $79/yr · 14-Day Free Trial</div>
+      <p style="font-size:0.92rem;font-weight:600;color:#5eead4;margin:0 0 10px;">Elementary Counselor Command Center</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Caseload tracking, SB 179 80/20 compliance, session documentation, referral management. Replaces CountSel and runs 100% on your device.</p>
+      <div style="font-size:0.78rem;color:rgba(42,157,143,0.7);font-weight:600;margin-bottom:14px;">$8/mo or $79/yr &middot; 14-Day Free Trial</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <a href="/beacon-product.html" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#0d3b2e,#2A9D8F);">Learn More</a>
-        <a href="https://beacon.clearpathedgroup.com" target="_blank" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(42,157,143,0.3);color:#2A9D8F;">Free Trial</a>
+        <a href="https://beacon.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#0d3b2e,#2A9D8F);">Download Free Trial</a>
+        <a href="/beacon-product.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(42,157,143,0.3);color:#2A9D8F;">Learn More</a>
       </div>
     </div>
-  </div>
 
     <!-- Investigator Toolkit -->
-    <div onclick="window.location='/investigator.html'" style="cursor:pointer;background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #6366f1;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#6366f1'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+    <div style="background:var(--card-bg);border:1px solid var(--border-purple);border-radius:14px;padding:28px;backdrop-filter:blur(8px);border-top:3px solid #6366f1;transition:transform 0.2s,border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#6366f1'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img src="/investigator-icon.png" alt="Investigator Toolkit" style="width:48px;height:48px;border-radius:10px;object-fit:cover;">
         <div>
@@ -1043,20 +1004,187 @@
           <div style="font-size:0.68rem;font-weight:600;color:#6366f1;text-transform:uppercase;letter-spacing:0.08em;">Live Now</div>
         </div>
       </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">Campus investigation case management — 10-section templates for every offense type, evidence tracking, witness statements, and chain of custody. 100% on-device, FERPA safe.</p>
-      <div style="font-size:0.78rem;color:rgba(99,102,241,0.7);font-weight:600;margin-bottom:14px;">$5/mo or $49/yr · 14-Day Free Trial</div>
+      <p style="font-size:0.92rem;font-weight:600;color:#a5b4fc;margin:0 0 10px;">Campus Investigation Case Management</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.65;margin:0 0 14px;">10-section investigation workflow, evidence tracking, witness statements, chain of custody, and PDF reports. Five offense-specific templates. 100% on-device, FERPA safe.</p>
+      <div style="font-size:0.78rem;color:rgba(99,102,241,0.7);font-weight:600;margin-bottom:14px;">$5/mo or $49/yr &middot; 14-Day Free Trial</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <a href="/investigator.html" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#4338ca,#6366f1);">Learn More</a>
-        <a href="https://investigatortoolkit.clearpathedgroup.com" target="_blank" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(99,102,241,0.3);color:#6366f1;">Free Trial</a>
+        <a href="https://investigatortoolkit.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;background:linear-gradient(135deg,#4338ca,#6366f1);">Download Free Trial</a>
+        <a href="/investigator.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;text-decoration:none;display:inline-flex;border-color:rgba(99,102,241,0.3);color:#6366f1;">Learn More</a>
       </div>
     </div>
-  </div>
 
-  <!-- Single consolidated pricing section -->
-  <div id="pricing-section" class="fade-up" style="background:linear-gradient(135deg,rgba(107,47,160,0.06),rgba(26,10,46,0.7));border:1px solid var(--border-purple);border-radius:16px;padding:36px;text-align:center;margin-bottom:32px;">
-    <p style="font-size:0.72rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--purple-light);margin:0 0 8px;">Individual Products — Pay with Zelle</p>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background:linear-gradient(180deg,#100820 0%,#0d0a1a 100%);border-bottom:1px solid rgba(107,47,160,0.2);">
+  <p class="section-label">Why Clear Path</p>
+  <h2 class="section-title">What Makes Us Different</h2>
+  <div class="divider"></div>
+
+  <div class="features-grid fade-up">
+    <div class="feature-card">
+      <div class="feature-card-icon">&#9878;</div>
+      <h3>Compliance-First</h3>
+      <p>Every product is built around Texas Education Code requirements. SPED/504 blocking, MDR tracking, TEC &sect;37 references, PEIMS export. Compliance isn't an add-on &mdash; it's the foundation.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-icon">&#128274;</div>
+      <h3>Zero Data Exposure</h3>
+      <p>Beacon and Investigator Toolkit run 100% on your device. No cloud. No server. No IT approval needed. Student data never leaves the building.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-icon">&#9889;</div>
+      <h3>AI-Powered Coaching</h3>
+      <p>Apex turns a 3-minute walkthrough narration into T-TESS scores, a coaching email, and a teacher growth plan. What took 45 minutes now takes 60 seconds.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-icon">&#9733;</div>
+      <h3>Built for Texas</h3>
+      <p>TEC Chapter 37 workflows, STAAR/PEIMS alignment, T-TESS frameworks, SB 179 counselor compliance. Every product speaks Texas education language.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-icon">&#128737;</div>
+      <h3>District-Ready Security</h3>
+      <p>Supabase PostgreSQL with row-level security. FERPA compliant. SOC 2 infrastructure. DKIM/SPF/DMARC email authentication. DPA templates available.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-icon">&#127969;</div>
+      <h3>One Company, Complete Coverage</h3>
+      <p>Discipline, behavior tracking, instructional leadership, counseling, and investigations. One vendor for your entire campus operations stack.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="background:linear-gradient(180deg,#0d0a1a 0%,#0e0618 100%);padding:80px 5%;border-bottom:1px solid rgba(107,47,160,0.2);">
+  <p class="section-label">Getting Started</p>
+  <h2 class="section-title">From Download to Daily Use in 3 Minutes</h2>
+  <div class="divider"></div>
+
+  <div class="steps-row fade-up">
+    <div class="step-card">
+      <div class="step-number">1</div>
+      <h3>Choose Your Tool</h3>
+      <p>Pick the product that fits your role. Principals: Apex. Counselors: Beacon. District Admin: Waypoint. Investigators: Toolkit. Behavior leads: Navigator.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-number">2</div>
+      <h3>Start Free</h3>
+      <p>Every product has a free trial. No credit card. No IT approval for Beacon and Toolkit &mdash; they're downloadable. Apex and Waypoint are cloud-based with instant signup.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-number">3</div>
+      <h3>See Results Day One</h3>
+      <p>Sample data pre-loaded. AI coaching drafts in 60 seconds. Compliance tracking from your first incident. You're productive before your first cup of coffee.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" style="background:linear-gradient(180deg,#0e0618 0%,#100820 100%);padding:80px 5%;border-bottom:1px solid rgba(107,47,160,0.2);">
+  <div style="max-width:800px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:40px;">
+      <p class="section-label">Our Story</p>
+      <h2 class="section-title">Built by Educators, for Educators</h2>
+      <div class="divider"></div>
+    </div>
+    <p style="font-size:1.02rem;color:var(--text-muted);line-height:1.9;margin:0 0 24px;text-align:center;">Clear Path Education Group was founded by Kim Culley &mdash; a former IB Head of School, campus administrator, and behavior coordinator in Texas. Every product in our suite was designed from the perspective of the person who actually uses it: the AP handling a fight at lunch, the counselor between sessions, the principal doing walkthroughs at 7 AM.</p>
+    <p style="font-size:1.02rem;color:var(--text-muted);line-height:1.9;margin:0 0 36px;text-align:center;">We don't build software and then look for problems to solve. We lived the problems, then built the solutions.</p>
+
+    <div class="about-facts fade-up">
+      <div class="about-fact">
+        <span class="af-val">2025</span>
+        <span class="af-label">Founded</span>
+      </div>
+      <div class="about-fact">
+        <span class="af-val">Texas</span>
+        <span class="af-label">Headquarters</span>
+      </div>
+      <div class="about-fact">
+        <span class="af-val">5</span>
+        <span class="af-label">Live Products</span>
+      </div>
+      <div class="about-fact">
+        <span class="af-val">K&ndash;12</span>
+        <span class="af-label">Focus</span>
+      </div>
+      <div class="about-fact">
+        <span class="af-val">FERPA</span>
+        <span class="af-label">Compliant</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <a href="#contact" class="btn-ghost" style="text-decoration:none;">Talk to Our Team &#8594;</a>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING CALCULATOR -->
+<section id="pricing" class="fade-up">
+  <p class="section-label">Investment</p>
+  <h2 class="section-title">Transparent Pricing for Your District</h2>
+  <div class="divider"></div>
+  <p class="section-subtitle">Annual subscription pricing scales with your enrollment. Adjust below to see your estimated investment &mdash; all prices shown in USD per year.</p>
+
+  <div class="calc-box fade-up">
+    <div class="calc-row">
+      <label class="calc-label">District Enrollment</label>
+      <div class="enroll-row">
+        <input type="number" id="enrollInput" min="0" max="50000" value="1000" class="enroll-num" />
+        <input type="range" id="enrollSlider" min="0" max="200000" value="1000" class="enroll-slider" />
+      </div>
+      <div id="bandPill" class="band-pill">Small Band &middot; 501&ndash;2,500</div>
+    </div>
+
+    <div class="calc-row">
+      <label class="calc-label">Subscription Tier</label>
+      <div class="tier-toggle">
+        <button class="tier-btn" data-tier="essential">Essential</button>
+        <button class="tier-btn active" data-tier="professional">Professional</button>
+        <button class="tier-btn" data-tier="enterprise_tier">Enterprise</button>
+      </div>
+    </div>
+
+    <div class="calc-row" style="margin-bottom:0;">
+      <label class="calc-label">Products</label>
+      <div class="product-checks">
+        <label class="check-label">
+          <input type="checkbox" id="chkWaypoint" checked>
+          <span class="check-box"></span>
+          <span>Waypoint</span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="chkNavigator">
+          <span class="check-box"></span>
+          <span>Navigator</span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="chkMeridian">
+          <span class="check-box"></span>
+          <span>Meridian</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="calc-results" id="calcResults"></div>
+
+    <div style="text-align:center;">
+      <a href="mailto:support@clearpathedgroup.com?subject=Pricing%20Quote%20Request" class="btn-primary" style="font-size:0.94rem;padding:14px 32px;display:inline-flex;">
+        Get Your Custom Quote &#8594;
+      </a>
+    </div>
+    <p class="calc-disclaimer">Estimates based on published base rates. Bundle discounts applied at 2 products (15% off) and 3 products (25% off). Final pricing confirmed by your account manager.</p>
+  </div>
+</section>
+
+<!-- Individual Product Pricing + Zelle -->
+<section style="background:linear-gradient(135deg,rgba(107,47,160,0.06),rgba(26,10,46,0.7));padding:48px 5%;border-bottom:1px solid var(--border-purple);">
+  <div style="max-width:700px;margin:0 auto;text-align:center;">
+    <p style="font-size:0.72rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--purple-light);margin:0 0 8px;">Individual Products &mdash; Pay with Zelle</p>
     <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;font-weight:800;color:var(--text);margin:0 0 24px;">Simple pricing. No contracts. Cancel anytime.</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:700px;margin:0 auto 24px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:500px;margin:0 auto 24px;">
       <div style="border:1px solid rgba(249,115,22,0.2);border-radius:12px;padding:18px;background:rgba(0,0,0,0.15);">
         <div style="font-size:0.68rem;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Apex</div>
         <div style="font-size:1.4rem;font-weight:900;color:var(--text);">$100<span style="font-size:0.65rem;font-weight:400;color:var(--text-muted);">/yr</span></div>
@@ -1073,36 +1201,9 @@
     <p style="font-size:0.82rem;font-weight:600;color:var(--text);margin:0 0 6px;">Zelle tag: <strong style="color:#f97316;">clearpathedgroup</strong></p>
     <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:200px;height:200px;border-radius:10px;border:2px solid var(--border-purple);background:#fff;padding:4px;margin:12px 0;">
     <p style="font-size:0.76rem;color:var(--text-muted);max-width:400px;margin:0 auto;">Scan or search <strong>clearpathedgroup</strong> in your banking app. Access activated after payment confirmed.</p>
-    <p style="font-size:0.72rem;color:var(--text-muted);margin-top:12px;">District products (Waypoint, Navigator) — <a href="#contact" style="color:var(--purple-light);text-decoration:none;font-weight:600;">request a demo</a> for pricing.</p>
+    <p style="font-size:0.72rem;color:var(--text-muted);margin-top:12px;">District products (Waypoint, Navigator) &mdash; <a href="#contact" style="color:var(--purple-light);text-decoration:none;font-weight:600;">request a demo</a> for pricing.</p>
   </div>
-
-  <!-- Consulting + Compliance Guide — compact row -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;" class="fade-up">
-    <div style="background:linear-gradient(135deg,rgba(107,47,160,0.1),rgba(26,10,46,0.6));border:1px solid rgba(107,47,160,0.3);border-radius:14px;padding:24px;">
-      <h4 style="font-size:0.9rem;font-weight:700;color:var(--text);margin:0 0 8px;">Consulting &amp; Professional Development</h4>
-      <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;margin:0 0 14px;">PD presentations, compliance coaching, implementation support — we come alongside your team where it matters most.</p>
-      <a href="mailto:support@clearpathedgroup.com?subject=Consulting%20Inquiry" class="btn-primary" style="font-size:0.8rem;padding:8px 16px;display:inline-flex;text-decoration:none;">Talk to Our Team &#8594;</a>
-    </div>
-    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:24px;">
-      <h4 style="font-size:0.9rem;font-weight:700;color:var(--text);margin:0 0 8px;">Free DAEP Compliance Checklist</h4>
-      <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;margin:0 0 14px;">20-point self-audit with TEC citations and scoring bands. See where your district stands before investing in technology.</p>
-      <a href="/whitepaper.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;display:inline-flex;text-decoration:none;">Download Free &#8594;</a>
-    </div>
-  </div>
-
-<!-- REMOVE old expanded product cards — replaced by compact grid above -->
-<!-- Old content removed: Waypoint expanded card, Navigator expanded card, Apex expanded card + pricing, Beacon expanded card + pricing, old consulting cards -->
-
 </section>
-
-<!-- SKIP old sections that added length — keep only essential below -->
-
-<!--
-  REMOVED TO REDUCE SCROLLING:
-  - "Intro to Waypoint" section (redundant with product card)
-  - "Differentiators" section (redundant with product card)
-  - These sections still exist in git history if needed
--->
 
 <!-- PILOT APPLICATION SECTION -->
 <section id="pilot" style="background:linear-gradient(180deg,#130820 0%,#0d0a1a 100%);padding:80px 5%;position:relative;z-index:1;border-bottom:1px solid rgba(107,47,160,0.2);">
@@ -1111,7 +1212,7 @@
     <div style="text-align:center;margin-bottom:48px;">
       <div style="display:inline-block;font-size:0.72rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#f4a84a;background:rgba(244,168,74,0.1);border:1px solid rgba(244,168,74,0.25);border-radius:999px;padding:5px 16px;margin-bottom:16px;">Now Accepting Applications</div>
       <h2 style="font-family:'Cinzel',serif;font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;color:#f4a84a;margin:0 0 14px;line-height:1.2;">Apply to Become a<br>Waypoint Founding District</h2>
-      <p style="font-size:0.95rem;color:rgba(240,230,211,0.6);max-width:520px;margin:0 auto;line-height:1.7;">Two spots. Free 60-day pilot. Full access, dedicated support, and a permanent seat at the table as we build. Tell us about your district — we'll be in touch shortly.</p>
+      <p style="font-size:0.95rem;color:rgba(240,230,211,0.6);max-width:520px;margin:0 auto;line-height:1.7;">Two spots. Free 60-day pilot. Full access, dedicated support, and a permanent seat at the table as we build. Tell us about your district &mdash; we'll be in touch shortly.</p>
     </div>
 
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(244,168,74,0.18);border-radius:16px;padding:40px 36px;">
@@ -1144,8 +1245,8 @@
             <select name="district_size" required style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(244,168,74,0.18);border-radius:8px;color:#f0e6d3;font-size:0.92rem;outline:none;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23f4a84a%22 stroke-width=%222.5%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;" onfocus="this.style.borderColor='rgba(244,168,74,0.55)'" onblur="this.style.borderColor='rgba(244,168,74,0.18)'">
               <option value="" disabled selected style="background:#130820;">Select...</option>
               <option value="under_1000" style="background:#130820;">Under 1,000</option>
-              <option value="1000_5000" style="background:#130820;">1,000 – 5,000</option>
-              <option value="5000_15000" style="background:#130820;">5,000 – 15,000</option>
+              <option value="1000_5000" style="background:#130820;">1,000 &ndash; 5,000</option>
+              <option value="5000_15000" style="background:#130820;">5,000 &ndash; 15,000</option>
               <option value="over_15000" style="background:#130820;">Over 15,000</option>
             </select>
           </div>
@@ -1154,8 +1255,8 @@
             <select name="daep_volume" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(244,168,74,0.18);border-radius:8px;color:#f0e6d3;font-size:0.92rem;outline:none;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23f4a84a%22 stroke-width=%222.5%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;" onfocus="this.style.borderColor='rgba(244,168,74,0.55)'" onblur="this.style.borderColor='rgba(244,168,74,0.18)'">
               <option value="" disabled selected style="background:#130820;">Select...</option>
               <option value="under_25" style="background:#130820;">Under 25</option>
-              <option value="25_100" style="background:#130820;">25 – 100</option>
-              <option value="100_300" style="background:#130820;">100 – 300</option>
+              <option value="25_100" style="background:#130820;">25 &ndash; 100</option>
+              <option value="100_300" style="background:#130820;">100 &ndash; 300</option>
               <option value="over_300" style="background:#130820;">Over 300</option>
               <option value="unsure" style="background:#130820;">Not sure</option>
             </select>
@@ -1181,13 +1282,13 @@
         </div>
 
         <button type="submit" id="pilot-submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#f4a84a);color:#fff;border:none;border-radius:10px;font-size:0.97rem;font-weight:700;cursor:pointer;letter-spacing:0.03em;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-          Submit Application →
+          Submit Application &rarr;
         </button>
         <p style="font-size:0.76rem;color:rgba(240,230,211,0.28);text-align:center;margin:10px 0 0;">Two spots remaining. No cost. No commitment beyond honest feedback.</p>
       </form>
 
       <div id="pilot-success" style="display:none;text-align:center;padding:20px 0;">
-        <div style="font-size:2rem;margin-bottom:16px;color:#f4a84a;">✓</div>
+        <div style="font-size:2rem;margin-bottom:16px;color:#f4a84a;">&#10003;</div>
         <div style="font-size:1.1rem;font-weight:700;color:#f4a84a;margin-bottom:10px;">Application received.</div>
         <div style="font-size:0.92rem;color:rgba(240,230,211,0.55);line-height:1.7;">We review every application personally and will be in touch soon.</div>
       </div>
@@ -1196,114 +1297,20 @@
   </div>
 </section>
 
-<!-- WHO WE ARE -->
-<section style="background:linear-gradient(180deg,#100820 0%,#0d0a1a 100%);padding:80px 5%;border-top:1px solid rgba(107,47,160,0.2);">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:56px;">
-      <p style="font-size:0.76rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#f4a84a;margin:0 0 14px;">Clear Path Education Group</p>
-      <h2 style="font-family:'Cinzel',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:900;color:#f4a84a;margin:0 0 20px;line-height:1.25;">Educators and administrators.<br>Solution-focused by design.</h2>
-      <p style="font-size:1rem;color:rgba(240,230,211,0.6);max-width:660px;margin:0 auto;line-height:1.8;">Clear Path Education Group is a team of Texas educators and administrators dedicated to finding practical solutions and meaningful supports for campuses. Our work spans technology, consulting, professional development, and implementation — all focused on one outcome: <strong style="color:rgba(240,230,211,0.85);">better results for students.</strong></p>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;">
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(232,134,42,0.25);border-radius:14px;padding:28px 24px;">
-        <div style="font-size:1.6rem;margin-bottom:12px;">📍</div>
-        <h3 style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin:0 0 8px;">Compliance Technology</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);line-height:1.7;margin:0;">Purpose-built platforms for Texas educators — Waypoint, Navigator, Apex, Beacon, and Investigator Toolkit all live today.</p>
-      </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(107,47,160,0.3);border-radius:14px;padding:28px 24px;">
-        <div style="font-size:1.6rem;margin-bottom:12px;">🏫</div>
-        <h3 style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin:0 0 8px;">Campus &amp; District Consulting</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);line-height:1.7;margin:0;">On-the-ground support for discipline reform, behavior frameworks, and compliance process design — from single campuses to district-wide rollouts.</p>
-      </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(107,47,160,0.3);border-radius:14px;padding:28px 24px;">
-        <div style="font-size:1.6rem;margin-bottom:12px;">📚</div>
-        <h3 style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin:0 0 8px;">Professional Development</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);line-height:1.7;margin:0;">Training and coaching for administrators and staff on TEC compliance, SPED obligations, and behavior-positive campus culture.</p>
-      </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(107,47,160,0.3);border-radius:14px;padding:28px 24px;">
-        <div style="font-size:1.6rem;margin-bottom:12px;">🤝</div>
-        <h3 style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin:0 0 8px;">Implementation &amp; Onboarding</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);line-height:1.7;margin:0;">We don't hand you software and disappear. Every district gets dedicated support, staff training, and a clear path to compliance confidence.</p>
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:44px;">
-      <a href="#contact" style="display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid rgba(232,134,42,0.4);color:#f4a84a;font-size:0.9rem;font-weight:700;padding:12px 28px;border-radius:6px;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(232,134,42,0.1)';this.style.borderColor='rgba(232,134,42,0.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(232,134,42,0.4)'">Talk to Our Team &#8594;</a>
-    </div>
-  </div>
-</section>
-
-<!-- PRICING CALCULATOR -->
-<section id="pricing" class="fade-up">
-  <p class="section-label">Investment</p>
-  <h2 class="section-title">Transparent Pricing for Your District</h2>
-  <div class="divider"></div>
-  <p class="section-subtitle">Annual subscription pricing scales with your enrollment. Adjust below to see your estimated investment — all prices shown in USD per year.</p>
-
-  <div class="calc-box fade-up">
-    <div class="calc-row">
-      <label class="calc-label">District Enrollment</label>
-      <div class="enroll-row">
-        <input type="number" id="enrollInput" min="0" max="50000" value="1000" class="enroll-num" />
-        <input type="range" id="enrollSlider" min="0" max="200000" value="1000" class="enroll-slider" />
-      </div>
-      <div id="bandPill" class="band-pill">Small Band · 501–2,500</div>
-    </div>
-
-    <div class="calc-row">
-      <label class="calc-label">Subscription Tier</label>
-      <div class="tier-toggle">
-        <button class="tier-btn" data-tier="essential">Essential</button>
-        <button class="tier-btn active" data-tier="professional">Professional</button>
-        <button class="tier-btn" data-tier="enterprise_tier">Enterprise</button>
-      </div>
-    </div>
-
-    <div class="calc-row" style="margin-bottom:0;">
-      <label class="calc-label">Products</label>
-      <div class="product-checks">
-        <label class="check-label">
-          <input type="checkbox" id="chkWaypoint" checked>
-          <span class="check-box"></span>
-          <span>📍 Waypoint</span>
-        </label>
-        <label class="check-label">
-          <input type="checkbox" id="chkNavigator">
-          <span class="check-box"></span>
-          <span>🧭 Navigator</span>
-        </label>
-        <label class="check-label">
-          <input type="checkbox" id="chkMeridian">
-          <span class="check-box"></span>
-          <span>⭐ Meridian</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="calc-results" id="calcResults"></div>
-
-    <div style="text-align:center;">
-      <a href="mailto:support@clearpathedgroup.com?subject=Pricing%20Quote%20Request" class="btn-primary" style="font-size:0.94rem;padding:14px 32px;display:inline-flex;">
-        Get Your Custom Quote &#8594;
-      </a>
-    </div>
-    <p class="calc-disclaimer">Estimates based on published base rates. Bundle discounts applied at 2 products (15% off) and 3 products (25% off). Final pricing confirmed by your account manager.</p>
-  </div>
-</section>
-
 <!-- CTA / Demo Request -->
 <div class="cta-banner" id="contact">
   <h2>Request a Private Demo</h2>
   <div class="audience-mini">
     <div class="audience-mini-item">
-      <span class="audience-mini-icon">🏫</span>
+      <span class="audience-mini-icon">&#127979;</span>
       <span class="audience-mini-label">Campus Admins</span>
     </div>
     <div class="audience-mini-item">
-      <span class="audience-mini-icon">🏢</span>
+      <span class="audience-mini-icon">&#127970;</span>
       <span class="audience-mini-label">District Leaders</span>
     </div>
     <div class="audience-mini-item">
-      <span class="audience-mini-icon">🧑‍🏫</span>
+      <span class="audience-mini-icon">&#129489;&#8205;&#127891;</span>
       <span class="audience-mini-label">Compliance Staff</span>
     </div>
   </div>
@@ -1323,7 +1330,7 @@
       <div class="demo-form-row">
         <label for="df-concern">Biggest Compliance Challenge</label>
         <select id="df-concern" name="concern" required>
-          <option value="" disabled selected>Select your top priority…</option>
+          <option value="" disabled selected>Select your top priority&hellip;</option>
           <option value="DAEP documentation &amp; TEC compliance">DAEP documentation &amp; TEC compliance</option>
           <option value="SPED / ARD timeline tracking">SPED / ARD timeline tracking</option>
           <option value="ISS / OSS tracking &amp; reporting">ISS / OSS tracking &amp; reporting</option>
@@ -1337,8 +1344,8 @@
       <div class="demo-form-row">
         <label for="df-timeline">When are you looking to make a decision?</label>
         <select id="df-timeline" name="timeline" required>
-          <option value="" disabled selected>Select your timeline…</option>
-          <option value="ASAP — we have an active compliance gap">As soon as possible — we have an active compliance gap</option>
+          <option value="" disabled selected>Select your timeline&hellip;</option>
+          <option value="ASAP — we have an active compliance gap">As soon as possible &mdash; we have an active compliance gap</option>
           <option value="This semester (before June 2026)">This semester (before June 2026)</option>
           <option value="Planning for next school year (Fall 2026)">Planning for next school year (Fall 2026)</option>
           <option value="Just exploring right now">Just exploring right now</option>
@@ -1353,12 +1360,12 @@
         />
       </div>
       <button type="submit" class="demo-form-submit" id="demo-submit-btn">
-        Request My 30-Min Demo →
+        Request My 30-Min Demo &rarr;
       </button>
       <p class="demo-form-note">No sales pitch. No commitment. We respond as soon as we can.</p>
     </form>
     <div id="demo-success" class="demo-form-success" style="display:none;">
-      <span class="success-icon">✅</span>
+      <span class="success-icon">&#9989;</span>
       <p><strong>You're on our calendar.</strong><br/>We'll be in touch shortly to confirm a time. Check your inbox at the email you provided.</p>
     </div>
   </div>
@@ -1373,33 +1380,31 @@
       <p>Texas educators building technology and services that help districts create better outcomes for every student.</p>
     </div>
     <div class="footer-links">
-      <h4>Pathways &amp; Products</h4>
+      <h4>Products</h4>
       <ul>
-        <li><a href="#products">🧭 Compass — Behavior &amp; Compliance</a></li>
-        <li><a href="#products">📍 Waypoint — DAEP Management</a></li>
-        <li><a href="#products">🧭 Navigator — ISS/OSS Tracker</a></li>
-        <li><a href="#products">⭐ Meridian — SPED Compliance</a></li>
-        <li><a href="#products">🧱 Cornerstone — Instructional Support</a></li>
-        <li><a href="#products">🌅 Horizon — PD &amp; Coaching</a></li>
-        <li><a href="#products">🏔️ Summit — Leadership</a></li>
+        <li><a href="/waypoint.html">Waypoint &mdash; DAEP Compliance</a></li>
+        <li><a href="/navigator.html">Navigator &mdash; ISS/OSS Tracker</a></li>
+        <li><a href="/apex.html">Apex &mdash; AI Instructional Leadership</a></li>
+        <li><a href="/beacon-product.html">Beacon &mdash; Counselor Command Center</a></li>
+        <li><a href="/investigator.html">Investigator Toolkit &mdash; Case Mgmt</a></li>
       </ul>
     </div>
     <div class="footer-links">
       <h4>Company</h4>
       <ul>
+        <li><a href="#about">About Us</a></li>
         <li><a href="#pilot">Founding District Program</a></li>
-        <li><a href="mailto:support@clearpathedgroup.com">Contact Us</a></li>
+        <li><a href="#contact">Request a Demo</a></li>
         <li><a href="mailto:support@clearpathedgroup.com">support@clearpathedgroup.com</a></li>
         <li><a href="security.html">Security &amp; Compliance</a></li>
         <li><a href="/whitepaper.html">Free DAEP Compliance Checklist</a></li>
         <li><a href="/research.html">Research: The Hidden Gap</a></li>
-        <li><a href="https://www.teacherspayteachers.com/store/kimberly-culley" target="_blank" rel="noopener noreferrer">Teachers Pay Teachers Store</a></li>
         <li><a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer">Waypoint Platform</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2026 Clear Path Education Group, LLC. All rights reserved.</p>
+    <p>&copy; 2026 Clear Path Education Group, LLC. All rights reserved.</p>
     <span class="footer-note">Registered in Texas</span>
   </div>
 </footer>
@@ -1443,7 +1448,7 @@
       e.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
       btn.disabled = true;
-      btn.textContent = 'Sending…';
+      btn.textContent = 'Sending\u2026';
       try {
         const data = new FormData(form);
         const res = await fetch(form.action, {
@@ -1460,12 +1465,12 @@
           }).catch(function() {});
         } else {
           btn.disabled = false;
-          btn.textContent = 'Request My 30-Min Demo →';
+          btn.textContent = 'Request My 30-Min Demo \u2192';
           alert('Something went wrong. Please email us directly at support@clearpathedgroup.com');
         }
       } catch (_) {
         btn.disabled = false;
-        btn.textContent = 'Request My 30-Min Demo →';
+        btn.textContent = 'Request My 30-Min Demo \u2192';
         alert('Network error. Please email us at support@clearpathedgroup.com');
       }
     });
@@ -1474,13 +1479,13 @@
   // Pricing Calculator
   (function() {
     const BANDS = [
-      { label: 'Micro',      range: '≤ 500',          max: 500,      w: 4500,  n: 2500,  m: 3500  },
-      { label: 'Small',      range: '501–2,500',       max: 2500,     w: 6750,  n: 3750,  m: 5250  },
-      { label: 'Medium',     range: '2,501–10,000',    max: 10000,    w: 11250, n: 6250,  m: 8750  },
-      { label: 'Large',      range: '10,001–25,000',   max: 25000,    w: 18000, n: 10000, m: 14000 },
-      { label: 'Regional',   range: '25,001–50,000',   max: 50000,    w: 27000, n: 15000, m: 21000 },
-      { label: 'Major',      range: '50,001–100,000',  max: 100000,   w: 38500, n: 21500, m: 29500 },
-      { label: 'Metro',      range: '100,001–200,000', max: 200000,   w: 54000, n: 30000, m: 42000 },
+      { label: 'Micro',      range: '\u2264 500',          max: 500,      w: 4500,  n: 2500,  m: 3500  },
+      { label: 'Small',      range: '501\u20132,500',       max: 2500,     w: 6750,  n: 3750,  m: 5250  },
+      { label: 'Medium',     range: '2,501\u201310,000',    max: 10000,    w: 11250, n: 6250,  m: 8750  },
+      { label: 'Large',      range: '10,001\u201325,000',   max: 25000,    w: 18000, n: 10000, m: 14000 },
+      { label: 'Regional',   range: '25,001\u201350,000',   max: 50000,    w: 27000, n: 15000, m: 21000 },
+      { label: 'Major',      range: '50,001\u2013100,000',  max: 100000,   w: 38500, n: 21500, m: 29500 },
+      { label: 'Metro',      range: '100,001\u2013200,000', max: 200000,   w: 54000, n: 30000, m: 42000 },
       { label: 'Enterprise', range: '200,001+',        max: Infinity, w: null,  n: null,  m: null  },
     ];
     const TIER_MULT = { essential: 0.55, professional: 1.0, enterprise_tier: 1.55 };
@@ -1493,7 +1498,7 @@
     function update() {
       const enrollment = parseInt(document.getElementById('enrollInput').value) || 0;
       const band = getBand(enrollment);
-      document.getElementById('bandPill').textContent = band.label + ' Band · ' + band.range;
+      document.getElementById('bandPill').textContent = band.label + ' Band \u00b7 ' + band.range;
       const results = document.getElementById('calcResults');
 
       if (band.label === 'Enterprise') {
@@ -1506,9 +1511,9 @@
       const chkM = document.getElementById('chkMeridian').checked;
       const mult = TIER_MULT[selectedTier];
       const selected = [];
-      if (chkW) selected.push({ name: '📍 Waypoint',  base: band.w });
-      if (chkN) selected.push({ name: '🧭 Navigator', base: band.n });
-      if (chkM) selected.push({ name: '⭐ Meridian',  base: band.m });
+      if (chkW) selected.push({ name: 'Waypoint',  base: band.w });
+      if (chkN) selected.push({ name: 'Navigator', base: band.n });
+      if (chkM) selected.push({ name: 'Meridian',  base: band.m });
 
       if (selected.length === 0) {
         results.innerHTML = '<div class="empty-notice">Select at least one product above to see pricing.</div>';
@@ -1527,8 +1532,8 @@
       if (discPct > 0) {
         const savings = Math.round(subtotal * discPct);
         const total = subtotal - savings;
-        const discLabel = discPct === 0.25 ? '🎉 Clear Path Suite — 25% bundle discount' : '🎉 2-product bundle — 15% discount';
-        html += '<div class="bundle-row"><span class="bundle-label">' + discLabel + '</span><span class="bundle-amt">−' + fmt(savings) + '</span></div>';
+        const discLabel = discPct === 0.25 ? 'Clear Path Suite \u2014 25% bundle discount' : '2-product bundle \u2014 15% discount';
+        html += '<div class="bundle-row"><span class="bundle-label">' + discLabel + '</span><span class="bundle-amt">\u2212' + fmt(savings) + '</span></div>';
         html += '<div class="total-row"><span class="total-label-text">Total / Year</span><span class="total-amt">' + fmt(total) + '</span></div>';
       } else {
         html += '<div class="total-row"><span class="total-label-text">Total / Year</span><span class="total-amt">' + fmt(subtotal) + '</span></div>';
@@ -1641,7 +1646,7 @@
           font-size:0.92rem;font-weight:700;cursor:pointer;
           transition:opacity 0.15s;
         " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-          Send →
+          Send &rarr;
         </button>
 
         <p style="font-size:0.76rem;color:rgba(240,230,211,0.3);text-align:center;margin:10px 0 0;">No spam. We'll be in touch soon.</p>
@@ -1650,8 +1655,8 @@
 
     <!-- Success state (hidden) -->
     <div id="lc-success" style="display:none;padding:28px 20px;text-align:center;">
-      <div style="font-size:1.8rem;margin-bottom:10px;">✓</div>
-      <div style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin-bottom:10px;">Got it — thanks.</div>
+      <div style="font-size:1.8rem;margin-bottom:10px;">&#10003;</div>
+      <div style="font-size:0.95rem;font-weight:700;color:#f4a84a;margin-bottom:10px;">Got it &mdash; thanks.</div>
       <div id="lc-reply" style="font-size:0.9rem;color:rgba(240,230,211,0.65);line-height:1.7;margin-bottom:14px;"></div>
       <div style="font-size:0.82rem;color:rgba(240,230,211,0.35);line-height:1.6;">In the meantime, <a href="#contact" onclick="lcToggle()" style="color:#f4a84a;">request a full demo</a> to jump ahead.</div>
     </div>
@@ -1663,7 +1668,7 @@
     e.preventDefault();
     var btn = document.getElementById('pilot-submit');
     btn.disabled = true;
-    btn.textContent = 'Submitting…';
+    btn.textContent = 'Submitting\u2026';
     fetch(this.action, {
       method: 'POST',
       body: new FormData(this),
@@ -1698,13 +1703,13 @@
   }
 
   var lcReplies = {
-    'daep_sped':            'Thank you for your interest in Waypoint — we\'re glad you reached out. Manifestation documentation trips up even the most experienced administrators, and you\'re not alone in this. We built Waypoint to handle exactly that piece so nothing gets missed when it matters most.',
-    'peims':                'Thank you for your interest in Waypoint — that means a lot to us. PEIMS headaches are real, and they don\'t have to be. Waypoint keeps your discipline data clean from the moment of placement so when reporting time comes, you\'re already ready.',
-    'transition_plans':     'Thank you for reaching out — we\'re excited to connect with you. Transition plans are one of the first things TEA looks for and one of the easiest to let slip. Waypoint keeps every plan on track automatically so you can focus on the student, not the paperwork.',
-    'ocr_complaint':        'Thank you for trusting us with something this important — we don\'t take that lightly. We know how stressful this situation can be. A clear documentation trail makes all the difference, and building that is exactly what Waypoint does. We\'re here to help.',
-    'parent_notifications': 'Thank you for your interest in Waypoint — you\'re in the right place. Staying ahead of parent communication is one of the hardest parts of the job. Waypoint timestamps every notice and tracks acknowledgment so you always have the proof you need, without the scramble.',
-    'general':              'Thank you for reaching out — we love hearing from district leaders who are taking compliance seriously. There\'s a lot to manage under TEC Chapter 37, and most districts are juggling it across spreadsheets and email. Waypoint brings it all into one place so your team can breathe a little easier.',
-    'exploring':            'Thank you for your interest in Waypoint — we\'re really glad you stopped by. That\'s exactly the right time to look. Most compliance gaps don\'t show up until an audit or complaint, and by then it\'s stressful. We\'re happy to just have a conversation, no pressure at all.'
+    'daep_sped':            'Thank you for your interest in Waypoint \u2014 we\'re glad you reached out. Manifestation documentation trips up even the most experienced administrators, and you\'re not alone in this. We built Waypoint to handle exactly that piece so nothing gets missed when it matters most.',
+    'peims':                'Thank you for your interest in Waypoint \u2014 that means a lot to us. PEIMS headaches are real, and they don\'t have to be. Waypoint keeps your discipline data clean from the moment of placement so when reporting time comes, you\'re already ready.',
+    'transition_plans':     'Thank you for reaching out \u2014 we\'re excited to connect with you. Transition plans are one of the first things TEA looks for and one of the easiest to let slip. Waypoint keeps every plan on track automatically so you can focus on the student, not the paperwork.',
+    'ocr_complaint':        'Thank you for trusting us with something this important \u2014 we don\'t take that lightly. We know how stressful this situation can be. A clear documentation trail makes all the difference, and building that is exactly what Waypoint does. We\'re here to help.',
+    'parent_notifications': 'Thank you for your interest in Waypoint \u2014 you\'re in the right place. Staying ahead of parent communication is one of the hardest parts of the job. Waypoint timestamps every notice and tracks acknowledgment so you always have the proof you need, without the scramble.',
+    'general':              'Thank you for reaching out \u2014 we love hearing from district leaders who are taking compliance seriously. There\'s a lot to manage under TEC Chapter 37, and most districts are juggling it across spreadsheets and email. Waypoint brings it all into one place so your team can breathe a little easier.',
+    'exploring':            'Thank you for your interest in Waypoint \u2014 we\'re really glad you stopped by. That\'s exactly the right time to look. Most compliance gaps don\'t show up until an audit or complaint, and by then it\'s stressful. We\'re happy to just have a conversation, no pressure at all.'
   };
 
   document.getElementById('lc-form').addEventListener('submit', function(e) {
@@ -1712,7 +1717,7 @@
     var btn = document.getElementById('lc-submit');
     var challenge = this.querySelector('[name="compliance_challenge"]').value;
     btn.disabled = true;
-    btn.textContent = 'Sending…';
+    btn.textContent = 'Sending\u2026';
 
     fetch(this.action, {
       method: 'POST',
@@ -1757,33 +1762,33 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </div>
         <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Explore the Sandbox</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Quick question before we get you in — who are you?</p>
+        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Quick question before we get you in &mdash; who are you?</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <button onclick="selectExploreRole('district_admin')" class="role-btn">
-          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🏢</span>
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">&#127970;</span>
           <span style="font-size:0.86rem;font-weight:700;color:#f0e6d3;display:block;">District Administrator</span>
         </button>
         <button onclick="selectExploreRole('campus_leader')" class="role-btn">
-          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🏫</span>
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">&#127979;</span>
           <span style="font-size:0.86rem;font-weight:700;color:#f0e6d3;display:block;">Campus Leader</span>
         </button>
         <button onclick="selectExploreRole('parent')" class="role-btn">
-          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">👤</span>
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">&#128100;</span>
           <span style="font-size:0.86rem;font-weight:700;color:#f0e6d3;display:block;">Parent</span>
         </button>
         <button onclick="selectExploreRole('community')" class="role-btn">
-          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">🌐</span>
+          <span style="font-size:1.4rem;display:block;margin-bottom:6px;">&#127760;</span>
           <span style="font-size:0.86rem;font-weight:700;color:#f0e6d3;display:block;">Community Member</span>
         </button>
       </div>
     </div>
 
-    <!-- Step 2a: District/Campus form → sandbox credentials -->
+    <!-- Step 2a: District/Campus form -->
     <div id="explore-step-district" style="display:none;">
       <div style="text-align:center;margin-bottom:22px;">
         <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Get Sandbox Access</h3>
-        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Explorer ISD — pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
+        <p style="font-size:0.9rem;color:rgba(240,230,211,0.5);margin:0;line-height:1.6;">Explorer ISD &mdash; pre-loaded with 15 students, real compliance workflows, and active SPED alerts.</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div>
@@ -1800,7 +1805,7 @@
       </div>
     </div>
 
-    <!-- Step 2b: Parent/Community form → thank you -->
+    <!-- Step 2b: Parent/Community form -->
     <div id="explore-step-community" style="display:none;">
       <div style="text-align:center;margin-bottom:22px;">
         <h3 style="font-family:'Cinzel',serif;font-size:1.2rem;color:#f0e6d3;margin:0 0 8px;">Thanks for Your Interest</h3>
@@ -1844,9 +1849,9 @@
 
     <!-- Success: community thank you -->
     <div id="explore-thankyou" style="display:none;text-align:center;padding:12px 0;">
-      <div style="font-size:2rem;margin-bottom:14px;">🙏</div>
+      <div style="font-size:2rem;margin-bottom:14px;">&#128591;</div>
       <p style="font-size:1rem;font-weight:700;color:#f4a84a;margin:0 0 10px;">Thank you for exploring Waypoint.</p>
-      <p style="font-size:0.92rem;color:rgba(240,230,211,0.55);line-height:1.7;margin:0;">We've sent a short note to your inbox. Your interest and feedback genuinely matter to us — every student deserves a clear path forward.</p>
+      <p style="font-size:0.92rem;color:rgba(240,230,211,0.55);line-height:1.7;margin:0;">We've sent a short note to your inbox. Your interest and feedback genuinely matter to us &mdash; every student deserves a clear path forward.</p>
     </div>
   </div>
 </div>
@@ -1947,7 +1952,7 @@ function submitCommunityForm(){
 </script>
 
 <script>
-// Hero carousel — auto-rotates between Waypoint and Apex
+// Hero carousel — auto-rotates between products
 (function(){
   let current = 0;
   const slides = document.querySelectorAll('.hero-slide');
