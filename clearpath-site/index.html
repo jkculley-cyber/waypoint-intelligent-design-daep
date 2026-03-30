@@ -201,6 +201,7 @@
   .hero-carousel { position:relative; width:100%; max-width:420px; }
   .hero-slide { position:absolute; top:0; left:0; width:100%; opacity:0; transform:translateY(16px); transition:opacity 0.6s ease, transform 0.6s ease; pointer-events:none; }
   .hero-slide.active { position:relative; opacity:1; transform:translateY(0); pointer-events:auto; }
+  .hero-carousel:hover .hero-slide.active { pointer-events:auto; }
   .hero-dots { display:flex; justify-content:center; gap:10px; margin-top:18px; }
   .hero-dot { width:10px; height:10px; border-radius:50%; border:2px solid rgba(232,134,42,0.4); background:transparent; cursor:pointer; transition:all 0.3s; padding:0; }
   .hero-dot.active { background:var(--amber); border-color:var(--amber); box-shadow:0 0 10px rgba(232,134,42,0.5); }
@@ -838,7 +839,10 @@
             <span class="hero-tag">Transition Plans</span>
             <span class="hero-tag">Parent Portal</span>
           </div>
-          <a href="/waypoint.html" class="btn-primary" style="font-size:0.9rem;padding:11px 26px;display:inline-flex;text-decoration:none;">Learn More &#8594;</a>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <a href="/waypoint.html" class="btn-primary" style="font-size:0.82rem;padding:10px 20px;display:inline-flex;text-decoration:none;">Learn More &#8594;</a>
+            <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="font-size:0.82rem;padding:10px 20px;display:inline-flex;text-decoration:none;border-color:rgba(244,168,74,0.4);color:#f4a84a;">Explore Demo &#8594;</a>
+          </div>
         </div>
       </div>
       <!-- Slide 2: Navigator -->
@@ -1965,6 +1969,13 @@ function submitCommunityForm(){
   function resetAuto() { clearInterval(timer); startAuto(); }
 
   window.heroGoTo = function(i) { goTo(i); resetAuto(); };
+
+  // Pause carousel on hover so links are clickable
+  const carousel = document.getElementById('hero-carousel');
+  if (carousel) {
+    carousel.addEventListener('mouseenter', () => clearInterval(timer));
+    carousel.addEventListener('mouseleave', () => { clearInterval(timer); startAuto(); });
+  }
 
   startAuto();
 })();
