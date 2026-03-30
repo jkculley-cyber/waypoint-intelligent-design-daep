@@ -12,6 +12,7 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Unhandled error:', error, info.componentStack)
+    this.setState({ componentStack: info.componentStack })
   }
 
   render() {
@@ -29,16 +30,32 @@ export default class ErrorBoundary extends Component {
               An unexpected error occurred. Refreshing the page usually fixes this.
             </p>
             {this.state.error?.message && (
-              <pre className="text-xs text-left bg-gray-100 rounded-lg p-3 mb-6 text-gray-600 overflow-auto">
+              <pre className="text-xs text-left bg-gray-100 rounded-lg p-3 mb-6 text-gray-600 overflow-auto max-h-40">
                 {this.state.error.message}
               </pre>
             )}
-            <button
-              onClick={() => window.location.reload()}
-              className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Refresh Page
-            </button>
+            {this.state.componentStack && (
+              <pre className="text-xs text-left bg-gray-100 rounded-lg p-3 mb-6 text-gray-600 overflow-auto max-h-40">
+                {this.state.componentStack}
+              </pre>
+            )}
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Refresh Page
+              </button>
+              <button
+                onClick={() => {
+                  const txt = (this.state.error?.message || '') + '\n' + (this.state.componentStack || '')
+                  navigator.clipboard?.writeText(txt)
+                }}
+                className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+              >
+                Copy Error
+              </button>
+            </div>
           </div>
         </div>
       )

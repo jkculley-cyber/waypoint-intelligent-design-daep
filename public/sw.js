@@ -2,7 +2,7 @@
 // Strategy: network-first everywhere, cache only as offline fallback
 // Vite hashes JS/CSS bundles per deploy, so network-first always gets the latest
 
-const CACHE_NAME = 'waypoint-cache-v2'
+const CACHE_NAME = 'waypoint-cache-v3'
 
 self.addEventListener('install', () => {
   self.skipWaiting()
