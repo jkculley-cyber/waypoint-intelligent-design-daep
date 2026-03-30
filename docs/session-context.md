@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-30 (Session BH — Testing Command Center explored + shelved)
+> Last updated: 2026-03-30 (Session BI — Demo crash fix, lead capture gate, chat FAQ fix)
 
 ---
 
@@ -111,6 +111,7 @@
 5. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
 6. **Meridian deep audit** when ready to launch.
 7. **Parent Communication Hub** for Waypoint.
+8. **Demo leads viewer** in WaypointAdminPage (nice-to-have — currently view via ops Supabase Table Editor).
 
 ---
 
