@@ -336,58 +336,30 @@ function renderResources() {
     html += `</div>`;
   }
 
-  // Other resources — rich cards for products with images, grid cards for the rest
+  // Other resources — all paid products get rich cards with Buy Now
   if (otherResources.length) {
-    const withImages = otherResources.filter(r => r.price && findProductImages(r.title)?.images?.length);
-    const withoutImages = otherResources.filter(r => !withImages.includes(r));
+    const paidProducts = otherResources.filter(r => r.price);
+    const freeResources = otherResources.filter(r => !r.price);
 
-    // Rich product cards (principal tools with previews)
-    withImages.forEach(res => {
-      const pi = findProductImages(res.title);
+    paidProducts.forEach(res => {
+      const pi = findProductImages(res.title) || {};
+      const color = pi.color || 'var(--amber)';
+      const badge = pi.badge || 'Campus Admin Tool';
       const price = escHtml(res.price);
-      const k = 'p' + res.id;
-      const imgs = pi.images;
-      html += `<div class="teacher-product" style="border-color:${pi.color}55">
-        <div style="height:3px;background:linear-gradient(90deg,${pi.color},${pi.color}cc,${pi.color}88)"></div>
-        <div class="tp-layout">
-          <div class="tp-images" id="carousel-${k}" style="background:rgba(0,0,0,.5)">
-            ${imgs.map((img, i) => `<img src="${img}" alt="Preview ${i+1}" class="${i===0?'active':''}" loading="lazy" />`).join('')}
-            ${imgs.length > 1 ? `<button class="tp-img-nav tp-img-prev" onclick="carouselNav('${k}',-1)">‹</button>
-            <button class="tp-img-nav tp-img-next" onclick="carouselNav('${k}',1)">›</button>
-            <div class="tp-dots">${imgs.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="carouselGo('${k}',${i})"></button>`).join('')}</div>` : ''}
+      html += `<div class="teacher-product" style="border-color:${color}55">
+        <div style="height:3px;background:linear-gradient(90deg,${color},${color}cc,${color}88)"></div>
+        <div style="padding:28px">
+          <span class="tp-badge" style="color:${color}">${badge}</span>
+          <div class="tp-title">${escHtml(res.title)}</div>
+          <div class="tp-desc">${escHtml(res.description)}</div>
+          <div class="tp-footer">
+            <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
+            <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
           </div>
-          <div class="tp-body" style="display:flex;flex-direction:column">
-            <span class="tp-badge" style="color:${pi.color}">${pi.badge}</span>
-            <div class="tp-title">${escHtml(res.title)}</div>
-            <div class="tp-desc">${escHtml(res.description)}</div>
-            <div class="tp-footer">
-              <span class="tp-price" style="background:linear-gradient(90deg,${pi.color},${pi.color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
-              <button class="tp-buy" style="background:linear-gradient(135deg,${pi.color},${pi.color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
-            </div>
-            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
-          </div>
+          <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
         </div>
       </div>`;
     });
-
-    // Products without images (bundles) — still show as styled cards
-    const bundleProducts = withoutImages.filter(r => r.price);
-    const freeResources = withoutImages.filter(r => !r.price);
-
-    if (bundleProducts.length) {
-      html += `<div class="resource-grid">${bundleProducts.map(res => {
-        const pi = findProductImages(res.title);
-        const color = pi?.color || 'var(--amber)';
-        const badge = pi?.badge || 'Bundle';
-        const price = escHtml(res.price);
-        return `<div class="resource-card bundle" style="border-color:${color}55">
-          <span class="resource-type-badge" style="color:${color}">${badge}</span>
-          <h3>${escHtml(res.title)} <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:${color};margin-left:6px">${price}</span></h3>
-          ${res.description ? `<p>${escHtml(res.description)}</p>` : ''}
-          <button class="resource-link" style="border:none;cursor:pointer" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
-        </div>`;
-      }).join('')}</div>`;
-    }
 
     // Free resources
     if (freeResources.length) {
