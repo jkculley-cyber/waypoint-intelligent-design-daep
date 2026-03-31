@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { opsSupabase } from '../lib/opsSupabase'
 import { useAuth } from '../contexts/AuthContext'
 import { format, addDays, differenceInDays, parseISO } from 'date-fns'
 import { SCENARIOS as ORIGINS_SCENARIOS } from '../lib/originsScenarios'
@@ -967,6 +968,91 @@ function LeadsPanel() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                       </svg>
                     </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Demo Leads from Waypoint explore */}
+      <DemoLeadsSection />
+    </div>
+  )
+}
+
+function DemoLeadsSection() {
+  const [demoLeads, setDemoLeads] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchDemoLeads = useCallback(async () => {
+    setLoading(true)
+    const { data } = await opsSupabase
+      .from('demo_leads')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setDemoLeads(data || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchDemoLeads() }, [fetchDemoLeads])
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Demo Leads</h2>
+          <p className="text-sm text-gray-400">{demoLeads.length} people explored the Waypoint demo</p>
+        </div>
+        <button onClick={fetchDemoLeads} className="text-sm text-gray-400 hover:text-white transition-colors">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+        {loading ? (
+          <p className="text-center text-gray-500 py-12 text-sm">Loading demo leads…</p>
+        ) : demoLeads.length === 0 ? (
+          <p className="text-center text-gray-500 py-12 text-sm">No demo leads yet. They appear when someone fills out the Explore Demo form.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-800">
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Name / Email</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">District</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Role</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Source</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demoLeads.map(lead => (
+                <tr key={lead.id} className="border-b border-gray-800 hover:bg-gray-800/40 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="text-white font-medium">{lead.name}</p>
+                    <p className="text-gray-400 text-xs">{lead.email}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-300 text-xs">{lead.district_name}</td>
+                  <td className="px-4 py-3">
+                    {lead.role ? (
+                      <span className="text-xs bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded">{lead.role}</span>
+                    ) : (
+                      <span className="text-gray-600 text-xs">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500">
+                    {lead.utm_source ? (
+                      <span className="bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{lead.utm_source}{lead.utm_campaign ? ` / ${lead.utm_campaign}` : ''}</span>
+                    ) : lead.referrer ? (
+                      <span className="text-gray-500 truncate block max-w-[160px]" title={lead.referrer}>{new URL(lead.referrer).hostname}</span>
+                    ) : (
+                      <span className="text-gray-600">Direct</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                    {format(parseISO(lead.created_at), 'MMM d, yyyy')}
+                    <span className="block text-gray-600">{format(parseISO(lead.created_at), 'h:mm a')}</span>
                   </td>
                 </tr>
               ))}
