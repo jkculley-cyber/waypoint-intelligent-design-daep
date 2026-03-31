@@ -104,10 +104,13 @@
   .nav-links a:hover { color: var(--amber-light); }
   .nav-dropdown-parent { position: relative; }
   .nav-dropdown {
-    display: none; position: absolute; top: 100%; left: 0; margin-top: 8px;
+    display: none; position: absolute; top: 100%; left: 0; padding-top: 8px;
+    min-width: 200px; list-style: none;
+  }
+  .nav-dropdown-inner {
     background: rgba(14,6,24,0.96); backdrop-filter: blur(16px);
     border: 1px solid var(--border-purple); border-radius: 10px;
-    padding: 8px 0; min-width: 200px; list-style: none;
+    padding: 8px 0;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   }
   .nav-dropdown-parent:hover .nav-dropdown { display: block; }
@@ -737,12 +740,12 @@
     <li><a href="/store.html">Store</a></li>
     <li class="nav-dropdown-parent">
       <a href="/resources.html">Resources &#9662;</a>
-      <ul class="nav-dropdown">
+      <ul class="nav-dropdown"><div class="nav-dropdown-inner">
         <li><a href="/resources.html?cat=teacher">Teacher Resources</a></li>
         <li><a href="/resources.html?cat=principal">Principal Resources</a></li>
         <li><a href="/resources.html?cat=ib">IB Resources</a></li>
         <li><a href="/resources.html?cat=pd">Professional Development</a></li>
-      </ul>
+      </div></ul>
     </li>
     <li><a href="security.html">Security</a></li>
   </ul>
