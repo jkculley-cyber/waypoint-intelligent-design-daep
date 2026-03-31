@@ -192,11 +192,12 @@ function renderResources() {
   container.innerHTML = `<div class="resource-grid">${filtered.map(res => {
     const isProduct = res.price && res.price.startsWith('$');
     const isBundle = isProduct && /bundle/i.test(res.title);
+    const isTeacherProduct = isProduct && res.category === 'teacher';
     const storeId = isProduct ? titleToStoreId(res.title) : '';
     const cta = isProduct ? 'View Product →' : 'View Resource →';
     const href = isProduct ? '/store.html#' + storeId : escHtml(res.url);
     return `<div class="resource-card${isBundle ? ' bundle' : ''}">
-      <span class="resource-type-badge">${isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
+      <span class="resource-type-badge">${isTeacherProduct ? 'Classroom Strategy' : isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
       <h3>${escHtml(res.title)}${res.price ? ` <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:var(--amber);margin-left:6px">${escHtml(res.price)}</span>` : ''}</h3>
       ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
       ${href ? `<a href="${href}" class="resource-link"${isProduct ? '' : ' target="_blank" rel="noopener"'}>${cta}</a>` : ''}
@@ -223,6 +224,10 @@ function titleToStoreId(title) {
     'Behavior Intervention System': 'bundle-behavior',
     "Administrator's Investigation Kit": 'bundle-investigation',
     'Campus Leadership Complete': 'bundle-flagship',
+    'Partner Engagement Activities': 'partner-activities',
+    'Small Group Engagement Activities': 'small-group-activities',
+    'Whole Class Engagement Activities': 'whole-class-activities',
+    'Check for Understanding Activities': 'cfu-activities',
   };
   for (const [key, id] of Object.entries(map)) {
     if (title.includes(key)) return id;

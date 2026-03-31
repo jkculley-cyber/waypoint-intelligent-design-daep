@@ -488,6 +488,41 @@ const BUNDLES = [
   },
 ];
 
+const CLASSROOM_BUNDLES = [
+  {
+    id: 'partner-activities',
+    title: 'Partner Engagement Activities Bundle',
+    count: '5 Activities',
+    price: 7,
+    short: '5 ready-to-use partner activities for grades 4–12. Listen Linda, You\'re the Boss, Sync or Swim, Tick-Talk, and Snap Show. Zero prep, any subject.',
+    activities: ['🎙️ Listen Linda', '👑 You\'re the Boss', '🔄 Sync or Swim', '⏱️ Tick-Talk', '📸 Snap Show'],
+  },
+  {
+    id: 'small-group-activities',
+    title: 'Small Group Engagement Activities Bundle',
+    count: '8 Activities',
+    price: 12,
+    short: '8 structured small group activities for grades 4–12. Three activities include printable student pages. Builds reasoning, collaboration, and accountability.',
+    activities: ['👔 The CEO', '🤝 Consensus Quest', '💬 Group Chat', '🎲 Pick 6', '🏈 Scrum', '📱 Social Circle', '🎓 Teacher of the Minute', '🔇 You\'re on Mute'],
+  },
+  {
+    id: 'whole-class-activities',
+    title: 'Whole Class Engagement Activities Bundle',
+    count: '9 Activities',
+    price: 12.50,
+    short: '9 dynamic whole class activities for grades 4–12. Turn passive learning into active participation. Printable appointment grid included.',
+    activities: ['🚶 Walk-a-Molies', '🃏 Mix Match Mingle', '📌 My 2 Cents', '💚 Pick Your Passion', '🧅 The Onion Ring', '📅 OOMF', '💡 IYKYK', '🤔 Delulu', '🙈 Oops My Bad'],
+  },
+  {
+    id: 'cfu-activities',
+    title: 'Check for Understanding Activities Bundle',
+    count: '6 Activities',
+    price: 9.50,
+    short: '6 fast, flexible CFU activities for grades 4–12. Three include printable student response cards. Perfect for exit tickets, bellringers, and formative assessment.',
+    activities: ['⚡ Quick CFUs (3-in-1)', '👁️ POV 321', '📸 Regram', '👻 Send a Snap', '❓ Quiz Quest', '✉️ You\'ve Got Mail'],
+  },
+];
+
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -506,7 +541,7 @@ function switchSheet(productId, index) {
 }
 
 function openCheckout(productId) {
-  const item = PRODUCTS.find(p => p.id === productId) || BUNDLES.find(b => b.id === productId);
+  const item = PRODUCTS.find(p => p.id === productId) || BUNDLES.find(b => b.id === productId) || CLASSROOM_BUNDLES.find(c => c.id === productId);
   if (!item) return;
   document.getElementById('co-product-name').textContent = item.title;
   document.getElementById('co-product-price').textContent = '$' + item.price;
@@ -549,6 +584,35 @@ function renderProducts() {
     <div class="section-label">Save with Bundles</div>
     <div class="section-desc">Curated combinations that cover complete workflows.</div>
     ${others.map(b => renderBundleCard(b)).join('')}
+  </div>`;
+
+  // ── Classroom Strategies — Melissa's bundles ──
+  html += `<div class="store-section" style="padding-top:40px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+      <div class="section-label" style="margin-bottom:0">Classroom Engagement Strategies</div>
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(42,157,143,.15);color:#2A9D8F;border:1px solid rgba(42,157,143,.4);padding:3px 10px;border-radius:4px">By ClearPath Classroom</span>
+    </div>
+    <div class="section-desc">Print-and-go engagement activities for grades 4–12. Step-by-step directions, materials lists, and teacher tips included in every activity.</div>
+    ${CLASSROOM_BUNDLES.map(cb => `
+      <div class="product-card" id="card-${cb.id}" style="border-color:rgba(42,157,143,.3)">
+        <div style="height:3px;background:linear-gradient(90deg,#2A9D8F,#0d9488,#14b8a6)"></div>
+        <div class="pc-layout">
+          <div class="pc-main">
+            <span class="pc-tag" style="color:#2A9D8F">${esc(cb.count)} · Grades 4–12</span>
+            <div class="pc-title">${esc(cb.title)}</div>
+            <div class="pc-short">${esc(cb.short)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+              ${cb.activities.map(a => `<span style="font-size:.72rem;background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.25);color:#5eead4;padding:4px 10px;border-radius:4px">${esc(a)}</span>`).join('')}
+            </div>
+            <div style="margin-top:12px;font-size:.78rem;color:var(--text-muted)">✅ Zero prep · ✅ Any subject · ✅ Printable pages included</div>
+          </div>
+          <div class="pc-side">
+            <div class="pc-price">$${cb.price.toFixed ? cb.price.toFixed(2) : cb.price}</div>
+            <button class="pc-buy" style="background:linear-gradient(135deg,#2A9D8F,#0d9488)" onclick="openCheckout('${cb.id}')">Buy Now →</button>
+          </div>
+        </div>
+      </div>
+    `).join('')}
   </div>`;
 
   // ── Principal Tools Section — Apex ──
