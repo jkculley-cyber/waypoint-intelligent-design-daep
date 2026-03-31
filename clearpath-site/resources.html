@@ -229,6 +229,29 @@ function setCategory(cat, el) {
   renderResources();
 }
 
+// Image maps for all products
+const PRODUCT_IMAGES = {
+  "Administrator's Command Toolkit": { images: ['/previews/Admin-Command-Toolkit-01-hero.png','/previews/Admin-Command-Toolkit-02-tabs.png','/previews/Admin-Command-Toolkit-03-data.png'], color: '#f97316', badge: 'Flagship · 14 Tabs' },
+  'DAEP Student Tracker': { images: ['/previews/daep-tracker-page1.png','/previews/daep-tracker-page2.png','/previews/daep-tracker-page3.png'], color: '#f97316', badge: '6 Sheets · Auto-Calculate' },
+  'ISS Engagement': { images: ['/previews/iss-tracker-page1.png','/previews/iss-tracker-page2.png','/previews/iss-tracker-page3.png'], color: '#3b82f6', badge: 'ISS · Daily Activities' },
+  'TEC Consequence': { images: ['/previews/tec-matrix-page1.png','/previews/tec-matrix-page2.png'], color: '#ef4444', badge: 'TEC §37 Reference' },
+  'Navigator': { images: ['/previews/navigator-tracker-page1.png','/previews/navigator-tracker-page2.png','/previews/navigator-tracker-page3.png'], color: '#3b82f6', badge: 'Behavior · Risk Scores' },
+  'Meridian': { images: ['/previews/meridian-sped-page1.png','/previews/meridian-sped-page2.png','/previews/meridian-sped-page3.png'], color: '#a855f7', badge: 'SPED · Compliance' },
+  'Investigation Templates': { images: ['/previews/investigation-templates-page1.png'], color: '#6366f1', badge: '5 Templates · Print-Ready' },
+  'Digital Investigation': { images: ['/previews/digital-intake-page1.png'], color: '#6366f1', badge: 'Intake Form' },
+  'DAEP & Discipline Complete': { color: '#f97316', badge: '3-Tool Bundle · Save $8' },
+  'Behavior Intervention System': { color: '#3b82f6', badge: '3-Tool Bundle · Save $6' },
+  "Administrator's Investigation Kit": { color: '#6366f1', badge: '3-Tool Bundle · Save $10' },
+  'Campus Leadership Complete': { color: '#f97316', badge: '8-Tool Bundle · Save $50' },
+};
+
+function findProductImages(title) {
+  for (const [key, val] of Object.entries(PRODUCT_IMAGES)) {
+    if (title.includes(key)) return val;
+  }
+  return null;
+}
+
 const TEACHER_BUNDLES = {
   'Partner Engagement Activities': {
     activities: ['🎙️ Listen Linda','👑 You\'re the Boss','🔄 Sync or Swim','⏱️ Tick-Talk','📸 Snap Show'],
@@ -313,21 +336,70 @@ function renderResources() {
     html += `</div>`;
   }
 
-  // Standard grid cards for other resources
+  // Other resources — rich cards for products with images, grid cards for the rest
   if (otherResources.length) {
-    html += `<div class="resource-grid">${otherResources.map(res => {
-      const isProduct = res.price && res.price.startsWith('$');
-      const isBundle = isProduct && /bundle/i.test(res.title);
-      const storeId = isProduct ? titleToStoreId(res.title) : '';
-      const cta = isProduct ? 'View Product →' : 'View Resource →';
-      const href = isProduct ? '/store.html#' + storeId : escHtml(res.url);
-      return `<div class="resource-card${isBundle ? ' bundle' : ''}">
-        <span class="resource-type-badge">${isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
-        <h3>${escHtml(res.title)}${res.price ? ` <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:var(--amber);margin-left:6px">${escHtml(res.price)}</span>` : ''}</h3>
-        ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
-        ${href ? `<a href="${href}" class="resource-link"${isProduct ? '' : ' target="_blank" rel="noopener"'}>${cta}</a>` : ''}
+    const withImages = otherResources.filter(r => r.price && findProductImages(r.title)?.images);
+    const withoutImages = otherResources.filter(r => !withImages.includes(r));
+
+    // Rich product cards (principal tools with previews)
+    withImages.forEach(res => {
+      const pi = findProductImages(res.title);
+      const price = escHtml(res.price);
+      const k = 'p' + res.id;
+      const imgs = pi.images;
+      html += `<div class="teacher-product" style="border-color:${pi.color}55">
+        <div style="height:3px;background:linear-gradient(90deg,${pi.color},${pi.color}cc,${pi.color}88)"></div>
+        <div class="tp-layout">
+          <div class="tp-images" id="carousel-${k}" style="background:rgba(0,0,0,.5)">
+            ${imgs.map((img, i) => `<img src="${img}" alt="Preview ${i+1}" class="${i===0?'active':''}" loading="lazy" />`).join('')}
+            ${imgs.length > 1 ? `<button class="tp-img-nav tp-img-prev" onclick="carouselNav('${k}',-1)">‹</button>
+            <button class="tp-img-nav tp-img-next" onclick="carouselNav('${k}',1)">›</button>
+            <div class="tp-dots">${imgs.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="carouselGo('${k}',${i})"></button>`).join('')}</div>` : ''}
+          </div>
+          <div class="tp-body" style="display:flex;flex-direction:column">
+            <span class="tp-badge" style="color:${pi.color}">${pi.badge}</span>
+            <div class="tp-title">${escHtml(res.title)}</div>
+            <div class="tp-desc">${escHtml(res.description)}</div>
+            <div class="tp-footer">
+              <span class="tp-price" style="background:linear-gradient(90deg,${pi.color},${pi.color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
+              <button class="tp-buy" style="background:linear-gradient(135deg,${pi.color},${pi.color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
+            </div>
+            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
+          </div>
+        </div>
       </div>`;
-    }).join('')}</div>`;
+    });
+
+    // Products without images (bundles) — still show as styled cards
+    const bundleProducts = withoutImages.filter(r => r.price);
+    const freeResources = withoutImages.filter(r => !r.price);
+
+    if (bundleProducts.length) {
+      html += `<div class="resource-grid">${bundleProducts.map(res => {
+        const pi = findProductImages(res.title);
+        const color = pi?.color || 'var(--amber)';
+        const badge = pi?.badge || 'Bundle';
+        const price = escHtml(res.price);
+        return `<div class="resource-card bundle" style="border-color:${color}55">
+          <span class="resource-type-badge" style="color:${color}">${badge}</span>
+          <h3>${escHtml(res.title)} <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:${color};margin-left:6px">${price}</span></h3>
+          ${res.description ? `<p>${escHtml(res.description)}</p>` : ''}
+          <button class="resource-link" style="border:none;cursor:pointer" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
+        </div>`;
+      }).join('')}</div>`;
+    }
+
+    // Free resources
+    if (freeResources.length) {
+      html += `<div class="resource-grid">${freeResources.map(res => {
+        return `<div class="resource-card">
+          <span class="resource-type-badge">${(TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
+          <h3>${escHtml(res.title)}</h3>
+          ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
+          ${res.url ? `<a href="${escHtml(res.url)}" class="resource-link" target="_blank" rel="noopener">View Resource →</a>` : ''}
+        </div>`;
+      }).join('')}</div>`;
+    }
   }
 
   container.innerHTML = html;
