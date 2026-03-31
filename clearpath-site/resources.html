@@ -107,7 +107,42 @@
   footer a{font-size:.78rem;color:var(--text-muted);text-decoration:none}
   footer a:hover{color:var(--amber-light)}
 
-  @media(max-width:768px){.page{padding:100px 5% 60px}.cat-tabs{gap:8px}.cat-tab{padding:8px 16px;font-size:.74rem}}
+  /* TEACHER PRODUCT CARD — rich inline */
+  .teacher-product{background:var(--card-bg);border:1px solid rgba(42,157,143,.35);
+    border-radius:14px;overflow:hidden;margin-bottom:20px;backdrop-filter:blur(8px);
+    transition:border-color .25s,box-shadow .25s}
+  .teacher-product::before{content:'';display:block;height:3px;
+    background:linear-gradient(90deg,#2A9D8F,#0d9488,#14b8a6)}
+  .teacher-product:hover{border-color:rgba(42,157,143,.6);box-shadow:0 0 30px rgba(42,157,143,.2)}
+  .tp-layout{display:flex;gap:0}
+  .tp-preview{flex:0 0 280px;background:rgba(0,0,0,.3);display:flex;align-items:stretch;min-height:360px}
+  .tp-preview iframe{width:100%;border:0}
+  .tp-body{flex:1;padding:28px 28px 24px}
+  .tp-badge{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:#2A9D8F;margin-bottom:10px;display:block}
+  .tp-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--text);
+    margin-bottom:8px;line-height:1.4}
+  .tp-desc{font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:14px}
+  .tp-activities{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .tp-activity-tag{font-size:.72rem;background:rgba(42,157,143,.1);
+    border:1px solid rgba(42,157,143,.25);color:#5eead4;padding:4px 10px;border-radius:4px}
+  .tp-footer{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .tp-price{font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;
+    background:linear-gradient(90deg,#5eead4,#2A9D8F);-webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;background-clip:text}
+  .tp-buy{display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(135deg,#2A9D8F,#0d9488);color:white;
+    padding:12px 24px;border-radius:8px;font-weight:700;font-size:.82rem;
+    text-decoration:none;border:none;cursor:pointer;letter-spacing:.03em;
+    transition:transform .2s,box-shadow .2s}
+  .tp-buy:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(42,157,143,.4)}
+  .tp-zelle-info{font-size:.75rem;color:var(--text-muted);margin-top:10px}
+
+  @media(max-width:768px){
+    .page{padding:100px 5% 60px}.cat-tabs{gap:8px}.cat-tab{padding:8px 16px;font-size:.74rem}
+    .tp-layout{flex-direction:column}
+    .tp-preview{flex:none;height:280px}
+  }
 </style>
 </head>
 <body>
@@ -182,6 +217,36 @@ function setCategory(cat, el) {
   renderResources();
 }
 
+const TEACHER_BUNDLES = {
+  'Partner Engagement Activities': {
+    activities: ['🎙️ Listen Linda','👑 You\'re the Boss','🔄 Sync or Swim','⏱️ Tick-Talk','📸 Snap Show'],
+    pdf: '/downloads/bundles/Bundle %231 Partner Activities.pdf',
+    count: '5 Activities',
+  },
+  'Small Group Engagement Activities': {
+    activities: ['👔 The CEO','🤝 Consensus Quest','💬 Group Chat','🎲 Pick 6','🏈 Scrum','📱 Social Circle','🎓 Teacher of the Minute','🔇 You\'re on Mute'],
+    pdf: '/downloads/bundles/Bundle %232 Group Activities.pdf',
+    count: '8 Activities',
+  },
+  'Whole Class Engagement Activities': {
+    activities: ['🚶 Walk-a-Molies','🃏 Mix Match Mingle','📌 My 2 Cents','💚 Pick Your Passion','🧅 The Onion Ring','📅 OOMF','💡 IYKYK','🤔 Delulu','🙈 Oops My Bad'],
+    pdf: '/downloads/bundles/Bundle %233 Group Activities.pdf',
+    count: '9 Activities',
+  },
+  'Check for Understanding Activities': {
+    activities: ['⚡ Quick CFUs (3-in-1)','👁️ POV 321','📸 Regram','👻 Send a Snap','❓ Quiz Quest','✉️ You\'ve Got Mail'],
+    pdf: '/downloads/bundles/Bundle %234 CFUs.pdf',
+    count: '6 Activities',
+  },
+};
+
+function findTeacherBundle(title) {
+  for (const [key, val] of Object.entries(TEACHER_BUNDLES)) {
+    if (title.includes(key)) return val;
+  }
+  return null;
+}
+
 function renderResources() {
   const filtered = currentCat === 'all' ? allResources : allResources.filter(r => r.category === currentCat);
   const container = document.getElementById('resource-container');
@@ -189,20 +254,61 @@ function renderResources() {
     container.innerHTML = `<div class="resource-grid"><div class="empty-state"><div class="empty-icon">📂</div>No resources in this category yet.<br><span style="font-size:.8rem;margin-top:8px;display:block">Check back soon — we're adding new materials regularly.</span></div></div>`;
     return;
   }
-  container.innerHTML = `<div class="resource-grid">${filtered.map(res => {
-    const isProduct = res.price && res.price.startsWith('$');
-    const isBundle = isProduct && /bundle/i.test(res.title);
-    const isTeacherProduct = isProduct && res.category === 'teacher';
-    const storeId = isProduct ? titleToStoreId(res.title) : '';
-    const cta = isProduct ? 'View Product →' : 'View Resource →';
-    const href = isProduct ? '/store.html#' + storeId : escHtml(res.url);
-    return `<div class="resource-card${isBundle ? ' bundle' : ''}">
-      <span class="resource-type-badge">${isTeacherProduct ? 'Classroom Strategy' : isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
-      <h3>${escHtml(res.title)}${res.price ? ` <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:var(--amber);margin-left:6px">${escHtml(res.price)}</span>` : ''}</h3>
-      ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
-      ${href ? `<a href="${href}" class="resource-link"${isProduct ? '' : ' target="_blank" rel="noopener"'}>${cta}</a>` : ''}
-    </div>`;
-  }).join('')}</div>`;
+
+  // Separate teacher products (rich cards) from other resources (grid cards)
+  const teacherProducts = filtered.filter(r => r.category === 'teacher' && r.price && findTeacherBundle(r.title));
+  const otherResources = filtered.filter(r => !teacherProducts.includes(r));
+
+  let html = '';
+
+  // Rich teacher product cards
+  if (teacherProducts.length) {
+    html += `<div style="margin-bottom:32px">`;
+    if (currentCat === 'all') html += `<div style="font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px">Classroom Engagement Strategies <span style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(42,157,143,.15);color:#2A9D8F;border:1px solid rgba(42,157,143,.4);padding:3px 10px;border-radius:4px">By ClearPath Classroom</span></div>`;
+    teacherProducts.forEach(res => {
+      const bundle = findTeacherBundle(res.title);
+      const price = escHtml(res.price);
+      html += `<div class="teacher-product">
+        <div class="tp-layout">
+          <div class="tp-preview">
+            <iframe src="${bundle.pdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" loading="lazy"></iframe>
+          </div>
+          <div class="tp-body">
+            <span class="tp-badge">${bundle.count} · Grades 4–12 · Print & Go</span>
+            <div class="tp-title">${escHtml(res.title)}</div>
+            <div class="tp-desc">${escHtml(res.description)}</div>
+            <div class="tp-activities">${bundle.activities.map(a => `<span class="tp-activity-tag">${escHtml(a)}</span>`).join('')}</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px">✅ Zero prep · ✅ Any subject · ✅ Step-by-step directions · ✅ Teacher tips included</div>
+            <div class="tp-footer">
+              <span class="tp-price">${price}</span>
+              <button class="tp-buy" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy via Zelle →</button>
+            </div>
+            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Include "${bundle.count}" in memo · PDF delivered within 24 hours</div>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Standard grid cards for other resources
+  if (otherResources.length) {
+    html += `<div class="resource-grid">${otherResources.map(res => {
+      const isProduct = res.price && res.price.startsWith('$');
+      const isBundle = isProduct && /bundle/i.test(res.title);
+      const storeId = isProduct ? titleToStoreId(res.title) : '';
+      const cta = isProduct ? 'View Product →' : 'View Resource →';
+      const href = isProduct ? '/store.html#' + storeId : escHtml(res.url);
+      return `<div class="resource-card${isBundle ? ' bundle' : ''}">
+        <span class="resource-type-badge">${isProduct ? 'Campus Admin Tool' : (TYPE_LABELS[res.resource_type] || res.resource_type) + ' · ' + (CAT_LABELS[res.category] || res.category)}</span>
+        <h3>${escHtml(res.title)}${res.price ? ` <span style="font-family:'Raleway',sans-serif;font-size:.82rem;font-weight:700;color:var(--amber);margin-left:6px">${escHtml(res.price)}</span>` : ''}</h3>
+        ${res.description ? `<p>${escHtml(res.description)}</p>` : '<p style="min-height:20px"></p>'}
+        ${href ? `<a href="${href}" class="resource-link"${isProduct ? '' : ' target="_blank" rel="noopener"'}>${cta}</a>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 function escHtml(s) {
@@ -233,6 +339,33 @@ function titleToStoreId(title) {
     if (title.includes(key)) return id;
   }
   return '';
+}
+
+function openZelle(productName, price) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)';
+  modal.innerHTML = `
+    <div style="background:#1a0a2e;border:1px solid rgba(42,157,143,.4);border-radius:16px;padding:32px;max-width:420px;width:90%;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:rgba(240,230,211,.4);font-size:1.5rem;cursor:pointer">&times;</button>
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:#f0e6d3">${escHtml(productName)}</div>
+        <div style="font-family:'Cinzel',serif;font-size:1.8rem;font-weight:900;color:#5eead4;margin-top:4px">${escHtml(price)}</div>
+      </div>
+      <div style="background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.3);border-radius:10px;padding:20px;margin-bottom:16px">
+        <div style="font-size:.9rem;color:#f0e6d3;line-height:1.8">
+          <strong style="color:#5eead4">Step 1:</strong> Send <strong>${escHtml(price)}</strong> via Zelle to:<br>
+          <span style="font-family:monospace;font-size:1rem;color:#5eead4;font-weight:700">clearpathedgroup</span><br><br>
+          <strong style="color:#5eead4">Step 2:</strong> Include the bundle name in the memo<br><br>
+          <strong style="color:#5eead4">Step 3:</strong> We'll email your PDF within 24 hours
+        </div>
+      </div>
+      <div style="text-align:center">
+        <a href="mailto:support@clearpathedgroup.com?subject=Bundle%20Purchase:%20${encodeURIComponent(productName)}&body=I%20just%20sent%20${encodeURIComponent(price)}%20via%20Zelle%20for%20${encodeURIComponent(productName)}.%20Please%20send%20my%20PDF." style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2A9D8F,#0d9488);color:white;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none">Confirm Purchase via Email →</a>
+        <div style="font-size:.72rem;color:rgba(240,230,211,.4);margin-top:12px">Questions? support@clearpathedgroup.com</div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 // On load: read ?cat= param and activate tab
