@@ -392,11 +392,15 @@ function openZelle(productName, price) {
         <div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:#f0e6d3">${escHtml(productName)}</div>
         <div style="font-family:'Cinzel',serif;font-size:1.8rem;font-weight:900;color:#5eead4;margin-top:4px">${escHtml(price)}</div>
       </div>
-      <div style="background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.3);border-radius:10px;padding:20px;margin-bottom:16px">
-        <div style="font-size:.9rem;color:#f0e6d3;line-height:1.8">
-          <strong style="color:#5eead4">Step 1:</strong> Send <strong>${escHtml(price)}</strong> via Zelle to:<br>
-          <span style="font-family:monospace;font-size:1rem;color:#5eead4;font-weight:700">clearpathedgroup</span><br><br>
-          <strong style="color:#5eead4">Step 2:</strong> Include the bundle name in the memo<br><br>
+      <div style="background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.3);border-radius:10px;padding:20px;margin-bottom:16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div style="flex:0 0 auto;text-align:center">
+          <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:140px;height:140px;border-radius:10px;border:2px solid rgba(42,157,143,.3)" />
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:6px">Scan to pay via Zelle</div>
+        </div>
+        <div style="flex:1;font-size:.9rem;color:#f0e6d3;line-height:1.8">
+          <strong style="color:#5eead4">Step 1:</strong> Scan the QR code or send <strong>${escHtml(price)}</strong> via Zelle to:<br>
+          <span style="font-family:monospace;font-size:1rem;color:#5eead4;font-weight:700">clearpathedgroup</span><br>
+          <strong style="color:#5eead4">Step 2:</strong> Include the bundle name in the memo<br>
           <strong style="color:#5eead4">Step 3:</strong> We'll email your PDF within 24 hours
         </div>
       </div>
