@@ -116,7 +116,7 @@
   .teacher-product:hover{border-color:rgba(42,157,143,.6);box-shadow:0 0 30px rgba(42,157,143,.2)}
   .tp-layout{display:flex;gap:0}
   .tp-images{flex:0 0 340px;background:rgba(0,0,0,.4);position:relative;overflow:hidden;min-height:420px}
-  .tp-images img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .4s}
+  .tp-images img{width:100%;height:100%;object-fit:contain;object-position:top center;position:absolute;inset:0;opacity:0;transition:opacity .4s;background:#0a0418}
   .tp-images img.active{opacity:1}
   .tp-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:2}
   .tp-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.3);border:none;
@@ -231,18 +231,18 @@ function setCategory(cat, el) {
 
 // Image maps for all products
 const PRODUCT_IMAGES = {
-  "Administrator's Command Toolkit": { images: ['/previews/Admin-Command-Toolkit-01-hero.png','/previews/Admin-Command-Toolkit-02-tabs.png','/previews/Admin-Command-Toolkit-03-data.png'], color: '#f97316', badge: 'Flagship · 14 Tabs' },
-  'DAEP Student Tracker': { images: ['/previews/daep-tracker-page1.png','/previews/daep-tracker-page2.png','/previews/daep-tracker-page3.png'], color: '#f97316', badge: '6 Sheets · Auto-Calculate' },
-  'ISS Engagement': { images: ['/previews/iss-tracker-page1.png','/previews/iss-tracker-page2.png','/previews/iss-tracker-page3.png'], color: '#3b82f6', badge: 'ISS · Daily Activities' },
-  'TEC Consequence': { images: ['/previews/tec-matrix-page1.png','/previews/tec-matrix-page2.png'], color: '#ef4444', badge: 'TEC §37 Reference' },
-  'Navigator': { images: ['/previews/navigator-tracker-page1.png','/previews/navigator-tracker-page2.png','/previews/navigator-tracker-page3.png'], color: '#3b82f6', badge: 'Behavior · Risk Scores' },
-  'Meridian': { images: ['/previews/meridian-sped-page1.png','/previews/meridian-sped-page2.png','/previews/meridian-sped-page3.png'], color: '#a855f7', badge: 'SPED · Compliance' },
-  'Investigation Templates': { images: ['/previews/investigation-templates-page1.png'], color: '#6366f1', badge: '5 Templates · Print-Ready' },
-  'Digital Investigation': { images: ['/previews/digital-intake-page1.png'], color: '#6366f1', badge: 'Intake Form' },
-  'DAEP & Discipline Complete': { color: '#f97316', badge: '3-Tool Bundle · Save $8' },
-  'Behavior Intervention System': { color: '#3b82f6', badge: '3-Tool Bundle · Save $6' },
-  "Administrator's Investigation Kit": { color: '#6366f1', badge: '3-Tool Bundle · Save $10' },
-  'Campus Leadership Complete': { color: '#f97316', badge: '8-Tool Bundle · Save $50' },
+  "Administrator's Command Toolkit": { images: ['/previews/command-toolkit-store.png','/previews/command-toolkit-sheet1.png','/previews/command-toolkit-sheet2.png','/previews/command-toolkit-sheet3.png'], color: '#f97316', badge: 'Flagship · 14 Tabs' },
+  'DAEP Student Tracker': { images: ['/previews/daep-tracker-store.png','/previews/daep-tracker-sheet1.png','/previews/daep-tracker-sheet2.png','/previews/daep-tracker-sheet3.png'], color: '#f97316', badge: '6 Sheets · Auto-Calculate' },
+  'ISS Engagement': { images: ['/previews/iss-tracker-store.png','/previews/iss-tracker-sheet1.png','/previews/iss-tracker-sheet2.png','/previews/iss-tracker-sheet3.png'], color: '#3b82f6', badge: 'ISS · Daily Activities' },
+  'TEC Consequence': { images: ['/previews/tec-matrix-store.png','/previews/tec-matrix-sheet1.png','/previews/tec-matrix-sheet2.png','/previews/tec-matrix-sheet3.png'], color: '#ef4444', badge: 'TEC §37 Reference' },
+  'Navigator': { images: ['/previews/navigator-tracker-store.png','/previews/navigator-tracker-sheet1.png','/previews/navigator-tracker-sheet2.png','/previews/navigator-tracker-sheet3.png'], color: '#3b82f6', badge: 'Behavior · Risk Scores' },
+  'Meridian': { images: ['/previews/meridian-sped-store.png','/previews/meridian-sped-sheet1.png','/previews/meridian-sped-sheet2.png','/previews/meridian-sped-sheet3.png'], color: '#a855f7', badge: 'SPED · Compliance' },
+  'Investigation Templates': { images: ['/previews/investigation-templates-store.png','/previews/investigation-templates-sheet1.png','/previews/investigation-templates-sheet2.png','/previews/investigation-templates-sheet3.png'], color: '#6366f1', badge: '5 Templates · Print-Ready' },
+  'Digital Investigation': { images: ['/previews/digital-intake-store.png','/previews/digital-intake-sheet1.png'], color: '#6366f1', badge: 'Intake Form' },
+  'DAEP & Discipline Complete': { images: ['/previews/bundle-daep-store.png'], color: '#f97316', badge: '3-Tool Bundle · Save $8' },
+  'Behavior Intervention System': { images: ['/previews/bundle-behavior-store.png'], color: '#3b82f6', badge: '3-Tool Bundle · Save $6' },
+  "Administrator's Investigation Kit": { images: ['/previews/bundle-investigation-store.png'], color: '#6366f1', badge: '3-Tool Bundle · Save $10' },
+  'Campus Leadership Complete': { images: ['/previews/bundle-flagship-store.png'], color: '#f97316', badge: '8-Tool Bundle · Save $50' },
 };
 
 function findProductImages(title) {
@@ -338,7 +338,7 @@ function renderResources() {
 
   // Other resources — rich cards for products with images, grid cards for the rest
   if (otherResources.length) {
-    const withImages = otherResources.filter(r => r.price && findProductImages(r.title)?.images);
+    const withImages = otherResources.filter(r => r.price && findProductImages(r.title)?.images?.length);
     const withoutImages = otherResources.filter(r => !withImages.includes(r));
 
     // Rich product cards (principal tools with previews)
