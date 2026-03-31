@@ -53,7 +53,7 @@ export default function DemoGatePage() {
         district_name: districtName.trim(),
         role: role || null,
         referrer: utm.referrer,
-        utm_source: utm.utm_source,
+        utm_source: utm.utm_source || 'waypoint',
         utm_medium: utm.utm_medium,
         utm_campaign: utm.utm_campaign,
       })

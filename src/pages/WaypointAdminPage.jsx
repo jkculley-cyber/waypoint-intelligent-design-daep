@@ -1020,9 +1020,9 @@ function DemoLeadsSection() {
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Name / Email</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Product</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">District</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Role</th>
-                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Source</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Date</th>
               </tr>
             </thead>
@@ -1041,14 +1041,14 @@ function DemoLeadsSection() {
                       <span className="text-gray-600 text-xs">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    {lead.utm_source ? (
-                      <span className="bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{lead.utm_source}{lead.utm_campaign ? ` / ${lead.utm_campaign}` : ''}</span>
-                    ) : lead.referrer ? (
-                      <span className="text-gray-500 truncate block max-w-[160px]" title={lead.referrer}>{new URL(lead.referrer).hostname}</span>
-                    ) : (
-                      <span className="text-gray-600">Direct</span>
-                    )}
+                  <td className="px-4 py-3 text-xs">
+                    {(() => {
+                      const src = (lead.utm_source || '').toLowerCase()
+                      if (src === 'beacon') return <span className="bg-teal-900/60 text-teal-300 px-2 py-0.5 rounded font-medium">Beacon</span>
+                      if (src === 'waypoint') return <span className="bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-medium">Waypoint</span>
+                      if (src === 'toolkit') return <span className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-medium">Toolkit</span>
+                      return <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{src || 'Unknown'}</span>
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                     {format(parseISO(lead.created_at), 'MMM d, yyyy')}
