@@ -45,18 +45,32 @@ export default function DemoGatePage() {
     e.preventDefault()
     setLoading(true)
 
-    // Save lead — don't block the demo if this fails
+    // Save lead + notify Kim — don't block the demo if either fails
     try {
-      await opsSupabase.from('demo_leads').insert({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        district_name: districtName.trim(),
-        role: role || null,
-        referrer: utm.referrer,
-        utm_source: utm.utm_source || 'waypoint',
-        utm_medium: utm.utm_medium,
-        utm_campaign: utm.utm_campaign,
-      })
+      await Promise.all([
+        opsSupabase.from('demo_leads').insert({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          district_name: districtName.trim(),
+          role: role || null,
+          referrer: utm.referrer,
+          utm_source: utm.utm_source || 'waypoint',
+          utm_medium: utm.utm_medium,
+          utm_campaign: utm.utm_campaign,
+        }),
+        fetch('https://formspree.io/f/xpqjngpp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'waypoint_demo_gate',
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            district: districtName.trim(),
+            role: role || 'Not specified',
+            _subject: `Demo Request: ${name.trim()} — ${districtName.trim()}`,
+          }),
+        }),
+      ])
     } catch (err) {
       console.error('Failed to save demo lead:', err)
     }
