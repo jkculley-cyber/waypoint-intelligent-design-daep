@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-31 (Session BJ — Deep audit, Beacon leads, teacher bundles, outreach emails)
+> Last updated: 2026-04-01 (Session BK — Investigator Toolkit rebuild, license-gated downloads, audio/file upload)
 
 ---
 
@@ -220,7 +220,8 @@
 - **License enforcement:** Same system as Beacon (ops Supabase `product_licenses`). License entry screen required before first use.
 - **Pricing:** $5/mo or $49/yr via Zelle on clearpathedgroup.com
 - **Key generator:** `scripts/generate-license-key.mjs`
-- **Pending:** Connect to Cloudflare Pages at `investigatortoolkit.clearpathedgroup.com`, store listing
+- **Distribution:** License-gated download via `/activate` page on clearpathedgroup.com (validates against ops Supabase `product_licenses`). Works from `file://` protocol (base64 JS encoding). Audio/file upload for witness statements added.
+- **Pending:** Connect to Cloudflare Pages at `investigatortoolkit.clearpathedgroup.com`; student history, case locking, audit trail features
 
 ## Documentation Suite (Session AV)
 

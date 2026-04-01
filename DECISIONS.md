@@ -97,6 +97,8 @@
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-04-01 | **License-gated downloads for all downloadable products.** `/activate` page validates license key against ops Supabase `product_licenses` table before showing download. Supports INV- and BCN- prefixes. Store page links to `/activate` instead of direct file downloads. Kim can send pre-filled links with `?key=` param. | Prevents unauthorized downloads; gives Kim control over product access. |
+| 2026-04-01 | **Investigator Toolkit single-file HTML uses base64 JS encoding** to work from `file://` protocol. No external asset dependencies — all icons, logos, and scripts embedded. | School admin computers may not run a local server; `file://` must work. |
 | 2026-02-19 | **Laserfiche status mapping:** `In progress + "DAEP" step → active`, `+ "Back to CBC" → returned`, `+ empty step → under_review`. `Completed → completed`. `Completed via terminate → overturned`. | Based on real Laserfiche export data from pilot district. Update if new step values are discovered. |
 | 2026-02-19 | **Laserfiche import is a dedicated tab in Import Data page (admin only).** Does not use the standard 4-step wizard — find-or-create logic is too different from insert-only importers. | The standard wizard (mapping → validation → insert) doesn't support upsert-by-external-key logic. |
 
