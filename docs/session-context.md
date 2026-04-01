@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-03-30 (Session BI — Demo crash fix, lead capture gate, chat FAQ fix)
+> Last updated: 2026-03-31 (Session BJ — Deep audit, Beacon leads, teacher bundles, outreach emails)
 
 ---
 
@@ -104,14 +104,13 @@
 
 ## Next Session Priority
 
-1. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
-2. **IB outreach** — Kim contacts former IB colleagues with demo link.
+1. **Excel product screenshots** — Kim screenshots key tabs from each spreadsheet product → Archer wires into resource page carousels.
+2. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
 3. **IB DB tables** for Projects + PD Workshops (replace localStorage).
 4. **IB route guard** (non-IB users can URL-navigate to IB pages).
 5. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
 6. **Meridian deep audit** when ready to launch.
 7. **Parent Communication Hub** for Waypoint.
-8. **Demo leads viewer** in WaypointAdminPage (nice-to-have — currently view via ops Supabase Table Editor).
 
 ---
 
