@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-01 (Session BK — Investigator Toolkit rebuild, license-gated downloads, audio/file upload)
+> Last updated: 2026-04-01 (Session BL — Demo lead pipeline fixes: email notification, status tracking, phone capture)
 
 ---
 
@@ -104,13 +104,14 @@
 
 ## Next Session Priority
 
-1. **Excel product screenshots** — Kim screenshots key tabs from each spreadsheet product → Archer wires into resource page carousels.
-2. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
-3. **IB DB tables** for Projects + PD Workshops (replace localStorage).
-4. **IB route guard** (non-IB users can URL-navigate to IB pages).
-5. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
-6. **Meridian deep audit** when ready to launch.
-7. **Parent Communication Hub** for Waypoint.
+1. **Reach Chad Bronowski** — LinkedIn or phone (College Station ISD, AP, CSISD front office: 979-764-5400). Email blocked by district firewall.
+2. **Excel product screenshots** — Kim screenshots key tabs from each spreadsheet product → Archer wires into resource page carousels.
+3. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
+4. **IB DB tables** for Projects + PD Workshops (replace localStorage).
+5. **IB route guard** (non-IB users can URL-navigate to IB pages).
+6. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
+7. **Meridian deep audit** when ready to launch.
+8. **Parent Communication Hub** for Waypoint.
 
 ---
 

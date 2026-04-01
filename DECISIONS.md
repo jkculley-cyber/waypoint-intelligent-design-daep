@@ -97,6 +97,8 @@
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-04-01 | **Demo gate form requires phone number.** District email firewalls (Google Workspace) block cold outreach from unknown sender domains. Phone is the reliable fallback for scheduling demos. Field is required. | Chad Bronowski (College Station ISD) demo lead was unreachable by email — 550 5.7.1 block despite clean SPF/DKIM/DMARC. |
+| 2026-04-01 | **All demo leads trigger Formspree email notification to Kim.** DemoGatePage submits to Formspree `xpqjngpp` in parallel with ops Supabase insert. | Previously only saved to DB with no notification — silent failure discovered when Chad Bronowski's lead sat unnoticed. |
 | 2026-04-01 | **License-gated downloads for all downloadable products.** `/activate` page validates license key against ops Supabase `product_licenses` table before showing download. Supports INV- and BCN- prefixes. Store page links to `/activate` instead of direct file downloads. Kim can send pre-filled links with `?key=` param. | Prevents unauthorized downloads; gives Kim control over product access. |
 | 2026-04-01 | **Investigator Toolkit single-file HTML uses base64 JS encoding** to work from `file://` protocol. No external asset dependencies — all icons, logos, and scripts embedded. | School admin computers may not run a local server; `file://` must work. |
 | 2026-02-19 | **Laserfiche status mapping:** `In progress + "DAEP" step → active`, `+ "Back to CBC" → returned`, `+ empty step → under_review`. `Completed → completed`. `Completed via terminate → overturned`. | Based on real Laserfiche export data from pilot district. Update if new step values are discovered. |
