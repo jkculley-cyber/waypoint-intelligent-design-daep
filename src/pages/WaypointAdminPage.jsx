@@ -982,6 +982,17 @@ function LeadsPanel() {
   )
 }
 
+const LEAD_STATUSES = [
+  { value: 'new', label: 'New', bg: 'bg-blue-900/60', text: 'text-blue-300' },
+  { value: 'contacted', label: 'Contacted', bg: 'bg-yellow-900/60', text: 'text-yellow-300' },
+  { value: 'demo_scheduled', label: 'Demo Scheduled', bg: 'bg-purple-900/60', text: 'text-purple-300' },
+  { value: 'demo_completed', label: 'Demo Completed', bg: 'bg-indigo-900/60', text: 'text-indigo-300' },
+  { value: 'proposal_sent', label: 'Proposal Sent', bg: 'bg-orange-900/60', text: 'text-orange-300' },
+  { value: 'closed_won', label: 'Closed Won', bg: 'bg-green-900/60', text: 'text-green-300' },
+  { value: 'closed_lost', label: 'Closed Lost', bg: 'bg-red-900/60', text: 'text-red-300' },
+  { value: 'not_qualified', label: 'Not Qualified', bg: 'bg-gray-700', text: 'text-gray-400' },
+]
+
 function DemoLeadsSection() {
   const [demoLeads, setDemoLeads] = useState([])
   const [loading, setLoading] = useState(true)
@@ -997,6 +1008,11 @@ function DemoLeadsSection() {
   }, [])
 
   useEffect(() => { fetchDemoLeads() }, [fetchDemoLeads])
+
+  const updateStatus = async (leadId, newStatus) => {
+    setDemoLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l))
+    await opsSupabase.from('demo_leads').update({ status: newStatus }).eq('id', leadId)
+  }
 
   return (
     <div className="mt-8">
@@ -1020,42 +1036,57 @@ function DemoLeadsSection() {
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Name / Email</th>
-                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Product</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">District</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Role</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Product</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Status</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Date</th>
               </tr>
             </thead>
             <tbody>
-              {demoLeads.map(lead => (
-                <tr key={lead.id} className="border-b border-gray-800 hover:bg-gray-800/40 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="text-white font-medium">{lead.name}</p>
-                    <p className="text-gray-400 text-xs">{lead.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-300 text-xs">{lead.district_name}</td>
-                  <td className="px-4 py-3">
-                    {lead.role ? (
-                      <span className="text-xs bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded">{lead.role}</span>
-                    ) : (
-                      <span className="text-gray-600 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs">
-                    {(() => {
-                      const src = (lead.utm_source || '').toLowerCase()
-                      if (src === 'beacon') return <span className="bg-teal-900/60 text-teal-300 px-2 py-0.5 rounded font-medium">Beacon</span>
-                      if (src === 'waypoint') return <span className="bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-medium">Waypoint</span>
-                      if (src === 'toolkit') return <span className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-medium">Toolkit</span>
-                      return <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{src || 'Unknown'}</span>
-                    })()}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                    {format(parseISO(lead.created_at), 'MMM d, yyyy')}
-                    <span className="block text-gray-600">{format(parseISO(lead.created_at), 'h:mm a')}</span>
-                  </td>
-                </tr>
-              ))}
+              {demoLeads.map(lead => {
+                const status = LEAD_STATUSES.find(s => s.value === (lead.status || 'new')) || LEAD_STATUSES[0]
+                return (
+                  <tr key={lead.id} className="border-b border-gray-800 hover:bg-gray-800/40 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="text-white font-medium">{lead.name}</p>
+                      <p className="text-gray-400 text-xs">{lead.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-300 text-xs">{lead.district_name}</td>
+                    <td className="px-4 py-3">
+                      {lead.role ? (
+                        <span className="text-xs bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded">{lead.role}</span>
+                      ) : (
+                        <span className="text-gray-600 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {(() => {
+                        const src = (lead.utm_source || '').toLowerCase()
+                        if (src === 'beacon') return <span className="bg-teal-900/60 text-teal-300 px-2 py-0.5 rounded font-medium">Beacon</span>
+                        if (src === 'waypoint') return <span className="bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-medium">Waypoint</span>
+                        if (src === 'toolkit') return <span className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-medium">Toolkit</span>
+                        return <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{src || 'Unknown'}</span>
+                      })()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={lead.status || 'new'}
+                        onChange={(e) => updateStatus(lead.id, e.target.value)}
+                        className={`text-xs font-medium px-2 py-1 rounded border-0 cursor-pointer outline-none ${status.bg} ${status.text}`}
+                      >
+                        {LEAD_STATUSES.map(s => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {format(parseISO(lead.created_at), 'MMM d, yyyy')}
+                      <span className="block text-gray-600">{format(parseISO(lead.created_at), 'h:mm a')}</span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
