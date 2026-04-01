@@ -1036,6 +1036,7 @@ function DemoLeadsSection() {
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Name / Email</th>
+                <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Phone</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">District</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Role</th>
                 <th className="text-left text-xs text-gray-500 font-medium px-4 py-3">Product</th>
@@ -1051,6 +1052,13 @@ function DemoLeadsSection() {
                     <td className="px-4 py-3">
                       <p className="text-white font-medium">{lead.name}</p>
                       <p className="text-gray-400 text-xs">{lead.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {lead.phone ? (
+                        <a href={`tel:${lead.phone}`} className="text-orange-400 hover:text-orange-300">{lead.phone}</a>
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-300 text-xs">{lead.district_name}</td>
                     <td className="px-4 py-3">

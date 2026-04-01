@@ -19,6 +19,7 @@ export default function DemoGatePage() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [districtName, setDistrictName] = useState('')
   const [role, setRole] = useState('')
   const [loading, setLoading] = useState(false)
@@ -51,6 +52,7 @@ export default function DemoGatePage() {
         opsSupabase.from('demo_leads').insert({
           name: name.trim(),
           email: email.trim().toLowerCase(),
+          phone: phone.trim() || null,
           district_name: districtName.trim(),
           role: role || null,
           referrer: utm.referrer,
@@ -65,6 +67,7 @@ export default function DemoGatePage() {
             source: 'waypoint_demo_gate',
             name: name.trim(),
             email: email.trim().toLowerCase(),
+            phone: phone.trim() || 'Not provided',
             district: districtName.trim(),
             role: role || 'Not specified',
             _subject: `Demo Request: ${name.trim()} — ${districtName.trim()}`,
@@ -119,6 +122,17 @@ export default function DemoGatePage() {
               placeholder="you@district.edu"
               required
               autoComplete="email"
+            />
+
+            <FormField
+              label="Phone number"
+              name="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="(555) 555-1234"
+              required
+              autoComplete="tel"
             />
 
             <FormField
