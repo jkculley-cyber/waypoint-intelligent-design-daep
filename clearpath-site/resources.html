@@ -341,24 +341,54 @@ function renderResources() {
     const paidProducts = otherResources.filter(r => r.price);
     const freeResources = otherResources.filter(r => !r.price);
 
-    paidProducts.forEach(res => {
+    paidProducts.forEach((res, idx) => {
       const pi = findProductImages(res.title) || {};
       const color = pi.color || 'var(--amber)';
       const badge = pi.badge || 'Campus Admin Tool';
       const price = escHtml(res.price);
-      html += `<div class="teacher-product" style="border-color:${color}55">
-        <div style="height:3px;background:linear-gradient(90deg,${color},${color}cc,${color}88)"></div>
-        <div style="padding:28px">
-          <span class="tp-badge" style="color:${color}">${badge}</span>
-          <div class="tp-title">${escHtml(res.title)}</div>
-          <div class="tp-desc">${escHtml(res.description)}</div>
-          <div class="tp-footer">
-            <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
-            <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
+      const images = pi.images || [];
+      const cKey = 'paid-' + idx;
+
+      if (images.length > 0) {
+        html += `<div class="teacher-product" style="border-color:${color}55">
+          <div style="height:3px;background:linear-gradient(90deg,${color},${color}cc,${color}88)"></div>
+          <div class="tp-layout">
+            <div class="tp-images" id="carousel-${cKey}">
+              ${images.map((img, i) => `<img src="${img}" alt="Preview ${i+1}" class="${i===0?'active':''}" loading="lazy" />`).join('')}
+              ${images.length > 1 ? `
+                <button class="tp-img-nav tp-img-prev" onclick="carouselNav('${cKey}',-1)">‹</button>
+                <button class="tp-img-nav tp-img-next" onclick="carouselNav('${cKey}',1)">›</button>
+                <div class="tp-dots">
+                  ${images.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="carouselGo('${cKey}',${i})"></button>`).join('')}
+                </div>` : ''}
+            </div>
+            <div class="tp-body" style="display:flex;flex-direction:column">
+              <span class="tp-badge" style="color:${color}">${badge}</span>
+              <div class="tp-title">${escHtml(res.title)}</div>
+              <div class="tp-desc">${escHtml(res.description)}</div>
+              <div class="tp-footer" style="margin-top:auto">
+                <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
+                <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
+              </div>
+              <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
+            </div>
           </div>
-          <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
-        </div>
-      </div>`;
+        </div>`;
+      } else {
+        html += `<div class="teacher-product" style="border-color:${color}55">
+          <div style="height:3px;background:linear-gradient(90deg,${color},${color}cc,${color}88)"></div>
+          <div style="padding:28px">
+            <span class="tp-badge" style="color:${color}">${badge}</span>
+            <div class="tp-title">${escHtml(res.title)}</div>
+            <div class="tp-desc">${escHtml(res.description)}</div>
+            <div class="tp-footer">
+              <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
+              <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
+            </div>
+            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
+          </div>
+        </div>`;
+      }
     });
 
     // Free resources
