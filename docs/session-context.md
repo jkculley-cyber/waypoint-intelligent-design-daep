@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-01 (Session BL — Demo lead pipeline fixes: email notification, status tracking, phone capture)
+> Last updated: 2026-04-02 (Session BM — IB DB tables + route guard, Toolkit features, Beacon audit, product images)
 
 ---
 
@@ -104,14 +104,12 @@
 
 ## Next Session Priority
 
-1. **Reach Chad Bronowski** — LinkedIn or phone (College Station ISD, AP, CSISD front office: 979-764-5400). Email blocked by district firewall.
-2. **Excel product screenshots** — Kim screenshots key tabs from each spreadsheet product → Archer wires into resource page carousels.
-3. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
-4. **IB DB tables** for Projects + PD Workshops (replace localStorage).
-5. **IB route guard** (non-IB users can URL-navigate to IB pages).
-6. **Investigator Toolkit features**: student history, investigator filter, case locking, audit trail.
-7. **Meridian deep audit** when ready to launch.
-8. **Parent Communication Hub** for Waypoint.
+1. **Product images for remaining products** — wire images for DAEP Tracker, ISS, Navigator, Meridian, etc. into resources page carousels (Command Toolkit done)
+2. **Reach Chad Bronowski** — LinkedIn or phone (College Station ISD, AP, CSISD front office: 979-764-5400). Email blocked by district firewall.
+3. **Investigator Toolkit** — rebuild single-file HTML distribution with new features (student history, case locking, audit trail added but not yet in single-file build)
+4. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
+5. **Meridian deep audit** when ready to launch.
+6. **Parent Communication Hub** for Waypoint.
 
 ---
 
