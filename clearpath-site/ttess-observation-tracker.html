@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-TESS Observation Tracking for Principals | Save Hours on Documentation</title>
+<meta name="description" content="How principals can streamline T-TESS observation tracking. Covers the 4-domain framework, documentation burden, walkthrough vs. formal observation workflow, TIA requirements, and tools that save hours per week.">
+<meta name="keywords" content="T-TESS observation tracking tool principal, T-TESS documentation, Texas teacher evaluation, principal walkthrough tracker, TIA observation requirements, T-TESS domains">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://clearpathedgroup.com/ttess-observation-tracker.html">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://clearpathedgroup.com/ttess-observation-tracker.html">
+<meta property="og:title" content="T-TESS Observation Tracking for Principals | Save Hours on Documentation">
+<meta property="og:description" content="Streamline T-TESS observation tracking. 4-domain overview, documentation workflow, TIA requirements, and tools that save principals hours per week.">
+<meta property="og:image" content="https://clearpathedgroup.com/Waypoint_Behavioral_Solutions_logo_design.jpeg">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="T-TESS Observation Tracking for Principals | Save Hours on Documentation">
+<meta name="twitter:description" content="Streamline T-TESS observation tracking. 4-domain overview, documentation workflow, TIA requirements, and tools that save principals hours per week.">
+<meta name="twitter:image" content="https://clearpathedgroup.com/Waypoint_Behavioral_Solutions_logo_design.jpeg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are the 4 domains of T-TESS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Texas Teacher Evaluation and Support System (T-TESS) is organized into 4 domains: Domain 1 - Planning (standards-based planning, data-driven instruction, knowledge of students), Domain 2 - Instruction (achieving expectations, content and pedagogy, communication, differentiation, monitoring and adjustment), Domain 3 - Learning Environment (classroom management, student engagement, classroom culture), and Domain 4 - Professional Practices (professional development, school community involvement, data-driven practice)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many observations are required under T-TESS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "At minimum, T-TESS requires one formal 45-minute observation per year for each teacher, plus a pre-conference and post-conference. Most principals also conduct multiple informal walkthroughs (10-15 minutes) throughout the year to gather evidence across all four domains. Teachers pursuing TIA designation may need additional documented observations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does TIA affect principal observation requirements?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Teacher Incentive Allotment (TIA) requires districts to use an approved teacher designation system. For the observation component, TIA-eligible teachers need documented observations scored using a TEA-approved rubric aligned to T-TESS. Principals must ensure inter-rater reliability and maintain detailed evidence trails. The observation scores are combined with student growth data to determine TIA designation levels (Recognized, Exemplary, Master)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the biggest time drain for principals doing T-TESS observations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Post-observation documentation is the biggest time drain. After a 45-minute formal observation, most principals spend 30-60 additional minutes typing up evidence, aligning it to specific T-TESS dimensions, scoring each dimension, and writing the feedback narrative for the post-conference. Multiply that by 25-40 teachers per campus, and observation season consumes hundreds of hours."
+      }
+    }
+  ]
+}
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple: #1a0a2e;
+    --dark-bg: #0e0618;
+    --mid-purple: #2d1054;
+    --purple: #6b2fa0;
+    --purple-light: #9b5fd4;
+    --amber: #e8862a;
+    --amber-light: #f5b050;
+    --amber-glow: #ffcc66;
+    --orange: #d4541a;
+    --text: #f0e6d3;
+    --text-muted: rgba(240,230,211,0.6);
+    --border: rgba(232,134,42,0.2);
+    --border-purple: rgba(107,47,160,0.35);
+    --card-bg: rgba(26,10,46,0.7);
+    --glow-amber: 0 0 30px rgba(232,134,42,0.3);
+    --glow-purple: 0 0 30px rgba(107,47,160,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--dark-bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(107,47,160,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(212,84,26,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(26,10,46,1) 0%, #0e0618 100%);
+    pointer-events: none;
+  }
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 200;
+    background: rgba(14,6,24,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); padding: 0 5%;
+    display: flex; align-items: center; justify-content: space-between; height: 72px;
+  }
+  .nav-logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
+  .nav-logo img { height:48px; width:auto; flex-shrink:0; }
+  .nav-links { display:flex; gap:30px; list-style:none; }
+  .nav-links a {
+    font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--amber-light); }
+  .nav-dropdown-parent { position: relative; }
+  .nav-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; padding-top: 8px;
+    min-width: 200px; list-style: none;
+  }
+  .nav-dropdown-inner {
+    background: rgba(14,6,24,0.96); backdrop-filter: blur(16px);
+    border: 1px solid var(--border-purple); border-radius: 10px;
+    padding: 8px 0; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .nav-dropdown-parent:hover .nav-dropdown { display: block; }
+  .nav-dropdown li a {
+    display: block; padding: 8px 18px; font-size: 0.85rem; color: var(--text-muted);
+    text-decoration: none; white-space: nowrap;
+  }
+  .nav-dropdown li a:hover { color: var(--amber-light); background: rgba(107,47,160,0.15); }
+  .nav-cta {
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    color: white; padding: 10px 22px; border-radius: 6px;
+    font-weight: 700; font-size: 0.86rem; text-decoration: none;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    transition: transform 0.2s, box-shadow 0.2s; box-shadow: var(--glow-amber);
+  }
+  .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(232,134,42,0.5); }
+  .page-hero {
+    position: relative; z-index: 1; padding: 140px 5% 60px; text-align: center;
+  }
+  .page-hero h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 900; line-height: 1.2; margin-bottom: 20px;
+    background: linear-gradient(160deg, var(--amber-glow) 0%, var(--amber-light) 50%, var(--text) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .page-hero p {
+    font-size: 1.1rem; color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.8;
+  }
+  .content-wrap {
+    position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 0 5% 80px;
+  }
+  .content-wrap h2 {
+    font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700;
+    color: var(--amber-light); margin: 48px 0 16px;
+  }
+  .content-wrap h3 {
+    font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+    color: var(--amber-glow); margin: 32px 0 12px;
+  }
+  .content-wrap p, .content-wrap li {
+    font-size: 1rem; line-height: 1.85; color: var(--text-muted); margin-bottom: 16px;
+  }
+  .content-wrap ul, .content-wrap ol { padding-left: 24px; margin-bottom: 20px; }
+  .content-wrap li { margin-bottom: 8px; }
+  .content-wrap strong { color: var(--text); }
+  .highlight-box {
+    background: var(--card-bg); border: 1px solid var(--border-purple);
+    border-left: 4px solid var(--amber); border-radius: 10px; padding: 24px 28px; margin: 28px 0;
+  }
+  .highlight-box p { margin-bottom: 8px; }
+  .highlight-box p:last-child { margin-bottom: 0; }
+  .domain-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0;
+  }
+  .domain-card {
+    background: var(--card-bg); border: 1px solid var(--border-purple);
+    border-radius: 10px; padding: 20px 22px;
+  }
+  .domain-card h4 {
+    font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700;
+    color: var(--amber-light); margin-bottom: 8px;
+  }
+  .domain-card p { font-size: 0.9rem; margin-bottom: 0; }
+  .cta-box {
+    background: linear-gradient(135deg, rgba(107,47,160,0.2), rgba(232,134,42,0.1));
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 36px 32px; text-align: center; margin: 48px 0;
+  }
+  .cta-box h3 { color: var(--amber-light); margin-top: 0; }
+  .cta-box p { max-width: 560px; margin: 0 auto 20px; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    color: white; padding: 14px 30px; border-radius: 6px;
+    font-weight: 700; font-size: 0.94rem; text-decoration: none;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: transform 0.2s, box-shadow 0.2s; box-shadow: var(--glow-amber);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 50px rgba(232,134,42,0.5); }
+  .faq-section { margin-top: 48px; }
+  .faq-item {
+    background: var(--card-bg); border: 1px solid var(--border-purple);
+    border-radius: 10px; padding: 24px 28px; margin-bottom: 16px;
+  }
+  .faq-item h4 {
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+    color: var(--amber-light); margin-bottom: 12px;
+  }
+  .faq-item p { margin-bottom: 0; }
+  footer {
+    background: #060310; border-top: 1px solid var(--border-purple);
+    padding: 60px 5% 30px; position: relative; z-index: 1;
+  }
+  .footer-top {
+    display: flex; justify-content: space-between; gap: 40px;
+    margin-bottom: 50px; flex-wrap: wrap; align-items: flex-start;
+  }
+  .footer-brand .fname {
+    font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700;
+    background: linear-gradient(90deg, var(--amber-light), var(--amber-glow));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px; display: block;
+  }
+  .footer-brand p { font-size: 0.9rem; color: var(--text-muted); max-width: 240px; line-height: 1.65; }
+  .footer-logo { height:52px; width:auto; display:block; margin-bottom:12px; }
+  .footer-links h4 {
+    font-size: 0.76rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--amber); margin-bottom: 16px;
+  }
+  .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-links a { font-size: 0.92rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--amber-light); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.06); padding-top: 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bottom p { font-size: 0.86rem; color: rgba(240,230,211,0.25); }
+  .footer-note { font-size: 0.78rem; color: var(--amber); font-weight: 600; letter-spacing: 0.06em; }
+  @media (max-width: 960px) {
+    .nav-links { display: none; }
+    .nav-cta { padding: 8px 16px; font-size: 0.78rem; }
+    .page-hero { padding-top: 110px; }
+  }
+  @media (max-width: 600px) {
+    nav { height: 60px; padding: 0 4%; }
+    .nav-logo img { height: 36px; }
+    .page-hero h1 { font-size: 1.5rem; }
+    .content-wrap { padding: 0 4% 60px; }
+    .domain-grid { grid-template-columns: 1fr; }
+    footer { padding: 44px 4% 24px; }
+    .footer-top { flex-direction: column; gap: 32px; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="/">
+    <img src="clearpath-logo.svg" alt="Clear Path Education Group" />
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#products">Products</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#about">About</a></li>
+    <li><a href="/#individual-pricing">Pricing</a></li>
+    <li><a href="/store.html">Store</a></li>
+    <li class="nav-dropdown-parent">
+      <a href="/resources.html">Resources &#9662;</a>
+      <ul class="nav-dropdown"><div class="nav-dropdown-inner">
+        <li><a href="/resources.html?cat=teacher">Teacher Resources</a></li>
+        <li><a href="/resources.html?cat=principal">Principal Resources</a></li>
+        <li><a href="/resources.html?cat=ib">IB Resources</a></li>
+        <li><a href="/resources.html?cat=pd">Professional Development</a></li>
+      </div></ul>
+    </li>
+    <li><a href="security.html">Security</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/#pilot" style="font-size:0.86rem;font-weight:700;color:#f4a84a;border:1px solid rgba(244,168,74,0.4);border-radius:999px;padding:8px 18px;text-decoration:none;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(244,168,74,0.1)';this.style.borderColor='rgba(244,168,74,0.8)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(244,168,74,0.4)'">Apply for Pilot Spot</a>
+    <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="nav-cta">Launch Waypoint &#8594;</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="page-hero">
+  <h1>T-TESS Observation Tracking for Principals</h1>
+  <p>A practical guide to streamlining the Texas Teacher Evaluation and Support System documentation process &mdash; so you spend less time typing and more time in classrooms.</p>
+</section>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <h2>The T-TESS Framework: A Quick Overview</h2>
+  <p>The <strong>Texas Teacher Evaluation and Support System (T-TESS)</strong> is the state's official teacher appraisal framework. It replaced PDAS in 2016 and is organized around four domains, each containing multiple dimensions that principals must evaluate through classroom observations and artifact review.</p>
+
+  <div class="domain-grid">
+    <div class="domain-card">
+      <h4>Domain 1: Planning</h4>
+      <p>Standards-aligned lesson design, use of student data to inform instruction, and knowledge of students' backgrounds and learning needs.</p>
+    </div>
+    <div class="domain-card">
+      <h4>Domain 2: Instruction</h4>
+      <p>Content knowledge, communication, differentiation, monitoring and adjusting instruction in real time, and achieving learning expectations.</p>
+    </div>
+    <div class="domain-card">
+      <h4>Domain 3: Learning Environment</h4>
+      <p>Classroom management and routines, student engagement and motivation, and a classroom culture built on respect and high expectations.</p>
+    </div>
+    <div class="domain-card">
+      <h4>Domain 4: Professional Practices</h4>
+      <p>Professional development participation, involvement in the school community, and use of data to drive professional growth and student outcomes.</p>
+    </div>
+  </div>
+
+  <p>Each dimension within these domains is scored on a 1&ndash;5 scale: Improvement Needed, Developing, Proficient, Accomplished, and Distinguished. Principals must provide <strong>evidence-based justification</strong> for each score &mdash; which is where the documentation burden becomes real.</p>
+
+  <h2>The Documentation Problem Principals Face</h2>
+  <p>Here is the math that no one talks about in principal preparation programs:</p>
+  <p>A campus with <strong>35 teachers</strong> requires at minimum 35 formal observations per year. Each formal observation involves:</p>
+  <ul>
+    <li><strong>Pre-conference</strong> (15&ndash;20 minutes) &mdash; reviewing the teacher's lesson plan, discussing goals, and setting the observation focus</li>
+    <li><strong>Classroom observation</strong> (45 minutes minimum) &mdash; scripting evidence aligned to T-TESS dimensions</li>
+    <li><strong>Evidence organization</strong> (30&ndash;60 minutes) &mdash; sorting raw observation notes into the appropriate domains and dimensions, selecting evidence that justifies each score</li>
+    <li><strong>Post-conference</strong> (20&ndash;30 minutes) &mdash; sharing feedback, discussing growth areas, and agreeing on next steps</li>
+    <li><strong>Documentation entry</strong> (15&ndash;30 minutes) &mdash; entering scores and evidence into the district's appraisal system</li>
+  </ul>
+  <p>That is roughly <strong>2.5 to 3 hours per teacher</strong> for formal observations alone. Multiply by 35 teachers and you are looking at 85&ndash;105 hours &mdash; more than two full work weeks &mdash; just for the formal observation cycle.</p>
+  <p>Now add informal walkthroughs. Most effective principals conduct 3&ndash;5 walkthroughs per teacher per year. Each walkthrough is 10&ndash;15 minutes of observation time, but the write-up and feedback loop adds another 15&ndash;20 minutes. That is another 50+ hours.</p>
+
+  <div class="highlight-box">
+    <p><strong>The result:</strong> Observation and documentation consume 150+ hours of a principal's year. That is time not spent on instruction, student discipline, parent communication, or campus culture. Most principals cope by doing the bare minimum &mdash; one formal observation, minimal walkthroughs, and surface-level feedback that does not actually improve teaching.</p>
+  </div>
+
+  <h2>TIA and the Rising Stakes of Observation Quality</h2>
+  <p>The <strong>Teacher Incentive Allotment (TIA)</strong> has raised the stakes for observation accuracy. Under TIA, teacher designations (Recognized, Exemplary, Master) are determined partly by observation scores. This means:</p>
+  <ul>
+    <li><strong>Inter-rater reliability matters.</strong> If your campus scores consistently higher or lower than comparable campuses, TEA will flag it. Principals need calibration, and calibration requires documented evidence to review.</li>
+    <li><strong>Evidence trails are auditable.</strong> TIA-approved systems must demonstrate that observation scores are based on documented classroom evidence, not general impressions.</li>
+    <li><strong>Financial consequences are real.</strong> TIA designations translate to real salary supplements &mdash; $3,000 to $32,000+ per teacher depending on the designation and campus. Inaccurate scoring affects both teacher compensation and district funding.</li>
+  </ul>
+
+  <h2>What Good Observation Tracking Looks Like</h2>
+  <p>An effective T-TESS tracking tool should compress the documentation timeline without sacrificing quality. Here is what to look for:</p>
+  <ul>
+    <li><strong>Voice-to-text scripting:</strong> Record observation notes by speaking instead of typing. The system transcribes and timestamps your evidence in real time, so you can focus on watching the lesson instead of staring at a laptop.</li>
+    <li><strong>Automatic domain alignment:</strong> When you capture a piece of evidence ("teacher used exit tickets to check understanding"), the system should suggest which T-TESS dimension it maps to. This eliminates the post-observation sorting step that eats 30&ndash;60 minutes.</li>
+    <li><strong>Walkthrough templates:</strong> Quick-entry forms for informal walkthroughs that capture the essentials (teacher, date, focus area, 2&ndash;3 evidence points, a coaching note) in under 2 minutes.</li>
+    <li><strong>Teacher dashboard:</strong> Each teacher should have a profile showing all observations, walkthrough trends, growth areas, and coaching history in one view. This makes pre-conferences and end-of-year summative conversations data-driven instead of memory-driven.</li>
+    <li><strong>TIA-ready scoring:</strong> Built-in 1&ndash;5 rubric aligned to T-TESS dimensions, with the ability to export scores in a format compatible with district TIA submissions.</li>
+    <li><strong>Coaching feedback loop:</strong> A way to share feedback with teachers digitally after each observation, with space for teacher reflection and goal-setting.</li>
+  </ul>
+
+  <h2>Streamlining Your Workflow: Practical Tips</h2>
+  <p>Even without a specialized tool, principals can reduce observation documentation time with a few workflow changes:</p>
+  <ol>
+    <li><strong>Script during the observation, not after.</strong> Take evidence notes in real time using shorthand or voice recording. Reconstructing an observation from memory doubles the time and halves the accuracy.</li>
+    <li><strong>Use a walkthrough rotation schedule.</strong> Instead of cramming all walkthroughs into observation season, spread them across the year. Two walkthroughs per week (20 minutes each) keeps you in classrooms consistently without creating a documentation backlog.</li>
+    <li><strong>Batch your post-conferences.</strong> Schedule post-conferences in 25-minute blocks on specific days rather than scattering them. This reduces context-switching and keeps the momentum going.</li>
+    <li><strong>Keep a running coaching log.</strong> Instead of writing detailed narratives for every walkthrough, maintain a brief running log per teacher: date, what you saw, one compliment, one growth area. This becomes your evidence base for the summative conference.</li>
+  </ol>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h3>Try Apex Free for 14 Days</h3>
+    <p>Apex is our AI-powered instructional leadership platform built for Texas principals. It handles voice-to-text observation scripting, automatic T-TESS domain alignment, walkthrough tracking, AI coaching suggestions, and daily morning briefs &mdash; so you can get back into classrooms.</p>
+    <a href="https://clearpath-apex.pages.dev/try" target="_blank" rel="noopener noreferrer" class="btn-primary">Start Free Trial &#8594;</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+
+    <div class="faq-item">
+      <h4>What are the 4 domains of T-TESS?</h4>
+      <p>The Texas Teacher Evaluation and Support System (T-TESS) is organized into 4 domains: Domain 1 &mdash; Planning (standards-based planning, data-driven instruction, knowledge of students), Domain 2 &mdash; Instruction (achieving expectations, content and pedagogy, communication, differentiation, monitoring and adjustment), Domain 3 &mdash; Learning Environment (classroom management, student engagement, classroom culture), and Domain 4 &mdash; Professional Practices (professional development, school community involvement, data-driven practice).</p>
+    </div>
+
+    <div class="faq-item">
+      <h4>How many observations are required under T-TESS?</h4>
+      <p>At minimum, T-TESS requires one formal 45-minute observation per year for each teacher, plus a pre-conference and post-conference. Most principals also conduct multiple informal walkthroughs (10&ndash;15 minutes) throughout the year to gather evidence across all four domains. Teachers pursuing TIA designation may need additional documented observations.</p>
+    </div>
+
+    <div class="faq-item">
+      <h4>How does TIA affect principal observation requirements?</h4>
+      <p>The Teacher Incentive Allotment (TIA) requires districts to use an approved teacher designation system. For the observation component, TIA-eligible teachers need documented observations scored using a TEA-approved rubric aligned to T-TESS. Principals must ensure inter-rater reliability and maintain detailed evidence trails. Observation scores are combined with student growth data to determine designation levels (Recognized, Exemplary, Master).</p>
+    </div>
+
+    <div class="faq-item">
+      <h4>What is the biggest time drain for principals doing T-TESS observations?</h4>
+      <p>Post-observation documentation is the biggest time drain. After a 45-minute formal observation, most principals spend 30&ndash;60 additional minutes typing up evidence, aligning it to specific T-TESS dimensions, scoring each dimension, and writing the feedback narrative for the post-conference. Multiply that by 25&ndash;40 teachers per campus, and observation season consumes hundreds of hours.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="clearpath-logo.svg" alt="Clear Path Education Group" class="footer-logo" />
+      <span class="fname">Clear Path Education Group, LLC</span>
+      <p>Texas educators building technology and services that help districts create better outcomes for every student.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Products</h4>
+      <ul>
+        <li><a href="/waypoint.html">Waypoint &mdash; DAEP Compliance</a></li>
+        <li><a href="/navigator.html">Navigator &mdash; ISS/OSS Tracker</a></li>
+        <li><a href="/apex.html">Apex &mdash; AI Instructional Leadership</a></li>
+        <li><a href="/beacon-product.html">Beacon &mdash; Counselor Command Center</a></li>
+        <li><a href="/investigator.html">Investigator Toolkit &mdash; Case Mgmt</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/#about">About Us</a></li>
+        <li><a href="/#pilot">Founding District Program</a></li>
+        <li><a href="/#contact">Request a Demo</a></li>
+        <li><a href="mailto:support@clearpathedgroup.com">support@clearpathedgroup.com</a></li>
+        <li><a href="security.html">Security &amp; Compliance</a></li>
+        <li><a href="/whitepaper.html">Free DAEP Compliance Checklist</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>clearpathedgroup.com &middot; support@clearpathedgroup.com &middot; &copy; 2026 Clear Path Education Group, LLC</p>
+    <span class="footer-note">Registered in Texas</span>
+  </div>
+</footer>
+
+</body>
+</html>
