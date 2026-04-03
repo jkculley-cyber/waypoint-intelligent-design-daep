@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-02 (Session BM — IB DB tables + route guard, Toolkit features, Beacon audit, product images)
+> Last updated: 2026-04-03 (Session BN — Spreadsheet audits + fixes, product image carousels, XML corruption root cause)
 
 ---
 
