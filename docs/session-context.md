@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-03 (Session BN — Spreadsheet audits + fixes, product image carousels, XML corruption root cause)
+> Last updated: 2026-04-03 (Session BO — SIGNAL built + deployed, Reddit/Twitter/Quora/TpT/Trends scanning, SEO strategy)
 
 ---
 
@@ -104,12 +104,14 @@
 
 ## Next Session Priority
 
-1. **Product images for remaining products** — wire images for DAEP Tracker, ISS, Navigator, Meridian, etc. into resources page carousels (Command Toolkit done)
-2. **Reach Chad Bronowski** — LinkedIn or phone (College Station ISD, AP, CSISD front office: 979-764-5400). Email blocked by district firewall.
-3. **Investigator Toolkit** — rebuild single-file HTML distribution with new features (student history, case locking, audit trail added but not yet in single-file build)
-4. **Re-send Apex marketing emails** — conversion fix is live, front door is now open.
-5. **Meridian deep audit** when ready to launch.
-6. **Parent Communication Hub** for Waypoint.
+1. **SEO landing pages** — build pages targeting educator search terms (DAEP tracking, counselor caseload, T-TESS observation, student engagement) to rank on Google
+2. **Store redesign** — clearpathedgroup.com/store visual product grid (model: brightfutures-counseling.com)
+3. **SIGNAL custom domain** — add signal.clearpathedgroup.com in Cloudflare Pages
+4. **Product images for remaining products** — wire images for DAEP Tracker, ISS, Navigator, Meridian into resources carousels
+5. **Investigator Toolkit** — rebuild single-file HTML with new features
+6. **Reach Chad Bronowski** — LinkedIn or phone (CSISD 979-764-5400)
+7. **Re-send Apex marketing emails**
+8. **Meridian deep audit** when ready
 
 ---
 
