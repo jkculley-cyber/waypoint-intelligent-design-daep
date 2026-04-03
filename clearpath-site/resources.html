@@ -116,8 +116,20 @@
   .teacher-product:hover{border-color:rgba(42,157,143,.6);box-shadow:0 0 30px rgba(42,157,143,.2)}
   .tp-layout{display:flex;gap:0}
   .tp-images{flex:0 0 340px;background:rgba(0,0,0,.4);position:relative;overflow:hidden;min-height:420px}
-  .tp-images img{width:100%;height:100%;object-fit:contain;object-position:top center;position:absolute;inset:0;opacity:0;transition:opacity .4s;background:#0a0418}
+  .tp-images img{width:100%;height:100%;object-fit:contain;object-position:top center;position:absolute;inset:0;opacity:0;transition:opacity .4s;background:#0a0418;cursor:pointer}
   .tp-images img.active{opacity:1}
+  .lightbox-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);cursor:pointer}
+  .lightbox-inner{position:relative;max-width:90vw;max-height:90vh;cursor:default}
+  .lightbox-inner img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.5)}
+  .lightbox-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+  .lightbox-watermark span{font-family:'Cinzel',serif;font-size:4rem;font-weight:900;color:rgba(255,255,255,.12);transform:rotate(-30deg);white-space:nowrap;letter-spacing:.2em;text-transform:uppercase;user-select:none}
+  .lightbox-close{position:absolute;top:-40px;right:0;background:none;border:none;color:rgba(255,255,255,.6);font-size:2rem;cursor:pointer}
+  .lightbox-close:hover{color:#fff}
+  .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .lightbox-nav:hover{background:rgba(42,157,143,.4);border-color:rgba(42,157,143,.6)}
+  .lightbox-prev{left:-60px}
+  .lightbox-next{right:-60px}
+  @media(max-width:768px){.lightbox-prev{left:8px}.lightbox-next{right:8px}.lightbox-watermark span{font-size:2rem}}
   .tp-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:2}
   .tp-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.3);border:none;
     cursor:pointer;transition:background .2s}
@@ -310,12 +322,12 @@ function renderResources() {
       const k = bundle.key;
       html += `<div class="teacher-product">
         <div class="tp-layout">
-          <div class="tp-images" id="carousel-${k}">
+          <div class="tp-images" id="carousel-${k}" onclick="openLightbox('${k}')">
             ${bundle.images.map((img, i) => `<img src="${img}" alt="Preview page ${i+1}" class="${i===0?'active':''}" loading="lazy" />`).join('')}
-            <button class="tp-img-nav tp-img-prev" onclick="carouselNav('${k}',-1)">‹</button>
-            <button class="tp-img-nav tp-img-next" onclick="carouselNav('${k}',1)">›</button>
+            <button class="tp-img-nav tp-img-prev" onclick="event.stopPropagation();carouselNav('${k}',-1)">‹</button>
+            <button class="tp-img-nav tp-img-next" onclick="event.stopPropagation();carouselNav('${k}',1)">›</button>
             <div class="tp-dots">
-              ${bundle.images.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="carouselGo('${k}',${i})"></button>`).join('')}
+              ${bundle.images.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="event.stopPropagation();carouselGo('${k}',${i})"></button>`).join('')}
             </div>
           </div>
           <div class="tp-body" style="display:flex;flex-direction:column">
@@ -353,13 +365,13 @@ function renderResources() {
         html += `<div class="teacher-product" style="border-color:${color}55">
           <div style="height:3px;background:linear-gradient(90deg,${color},${color}cc,${color}88)"></div>
           <div class="tp-layout">
-            <div class="tp-images" id="carousel-${cKey}">
+            <div class="tp-images" id="carousel-${cKey}" onclick="openLightbox('${cKey}')">
               ${images.map((img, i) => `<img src="${img}" alt="Preview ${i+1}" class="${i===0?'active':''}" loading="lazy" />`).join('')}
               ${images.length > 1 ? `
-                <button class="tp-img-nav tp-img-prev" onclick="carouselNav('${cKey}',-1)">‹</button>
-                <button class="tp-img-nav tp-img-next" onclick="carouselNav('${cKey}',1)">›</button>
+                <button class="tp-img-nav tp-img-prev" onclick="event.stopPropagation();carouselNav('${cKey}',-1)">‹</button>
+                <button class="tp-img-nav tp-img-next" onclick="event.stopPropagation();carouselNav('${cKey}',1)">›</button>
                 <div class="tp-dots">
-                  ${images.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="carouselGo('${cKey}',${i})"></button>`).join('')}
+                  ${images.map((_, i) => `<button class="tp-dot${i===0?' active':''}" onclick="event.stopPropagation();carouselGo('${cKey}',${i})"></button>`).join('')}
                 </div>` : ''}
             </div>
             <div class="tp-body" style="display:flex;flex-direction:column">
@@ -436,6 +448,61 @@ function titleToStoreId(title) {
   }
   return '';
 }
+
+let lightboxImages = [];
+let lightboxIdx = 0;
+
+function openLightbox(carouselKey) {
+  const container = document.getElementById('carousel-' + carouselKey);
+  if (!container) return;
+  const imgs = Array.from(container.querySelectorAll('img'));
+  lightboxImages = imgs.map(img => img.src);
+  lightboxIdx = 0;
+  imgs.forEach((img, i) => { if (img.classList.contains('active')) lightboxIdx = i; });
+  renderLightbox();
+}
+
+function renderLightbox() {
+  let overlay = document.getElementById('lightbox-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'lightbox-overlay';
+    overlay.className = 'lightbox-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) closeLightbox(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div class="lightbox-inner">
+      <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+      ${lightboxImages.length > 1 ? `<button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">&lsaquo;</button>` : ''}
+      <img src="${lightboxImages[lightboxIdx]}" alt="Preview" />
+      <div class="lightbox-watermark"><span>PREVIEW &nbsp; PREVIEW &nbsp; PREVIEW</span></div>
+      ${lightboxImages.length > 1 ? `<button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">&rsaquo;</button>` : ''}
+      ${lightboxImages.length > 1 ? `<div style="text-align:center;margin-top:12px;color:rgba(255,255,255,.4);font-size:.8rem">${lightboxIdx + 1} / ${lightboxImages.length}</div>` : ''}
+    </div>
+  `;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const overlay = document.getElementById('lightbox-overlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function lightboxNav(dir) {
+  lightboxIdx = (lightboxIdx + dir + lightboxImages.length) % lightboxImages.length;
+  renderLightbox();
+}
+
+document.addEventListener('keydown', (e) => {
+  const overlay = document.getElementById('lightbox-overlay');
+  if (!overlay || overlay.style.display === 'none') return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowRight') lightboxNav(1);
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+});
 
 function carouselGo(key, idx) {
   const container = document.getElementById('carousel-' + key);
