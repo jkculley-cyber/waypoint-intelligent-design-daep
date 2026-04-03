@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-03 (Session BO — SIGNAL built + deployed, Reddit/Twitter/Quora/TpT/Trends scanning, SEO strategy)
+> Last updated: 2026-04-03 (Session BP — SEO landing pages, TpT optimization, TEC Matrix audit, lightbox, SIGNAL fixes)
 
 ---
 
@@ -104,14 +104,15 @@
 
 ## Next Session Priority
 
-1. **SEO landing pages** — build pages targeting educator search terms (DAEP tracking, counselor caseload, T-TESS observation, student engagement) to rank on Google
+1. **Add Anthropic API credits** — $5 at console.anthropic.com to resume SIGNAL scanning
 2. **Store redesign** — clearpathedgroup.com/store visual product grid (model: brightfutures-counseling.com)
 3. **SIGNAL custom domain** — add signal.clearpathedgroup.com in Cloudflare Pages
-4. **Product images for remaining products** — wire images for DAEP Tracker, ISS, Navigator, Meridian into resources carousels
-5. **Investigator Toolkit** — rebuild single-file HTML with new features
-6. **Reach Chad Bronowski** — LinkedIn or phone (CSISD 979-764-5400)
-7. **Re-send Apex marketing emails**
-8. **Meridian deep audit** when ready
+4. **Google Search Console** — register clearpathedgroup.com to accelerate SEO page indexing
+5. **Product images for remaining products** — DAEP Tracker, ISS, Navigator, Meridian
+6. **Investigator Toolkit** — rebuild single-file HTML with new features
+7. **Reach Chad Bronowski** — LinkedIn or phone (CSISD 979-764-5400)
+8. **Re-send Apex marketing emails**
+9. **Meridian deep audit** when ready
 
 ---
 
