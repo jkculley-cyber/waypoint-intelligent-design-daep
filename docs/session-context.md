@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-05 (Session BR — Team brief, SP4 Ollama setup, VEP/PEIMS audit fixes)
+> Last updated: 2026-04-07 (Session BS — SP4 tunnel still blocked on token paste corruption; switch to CF dashboard install command next session)
 
 ---
 
