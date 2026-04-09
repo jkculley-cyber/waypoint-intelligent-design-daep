@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-07 (Session BS — SP4 tunnel still blocked on token paste corruption; switch to CF dashboard install command next session)
+> Last updated: 2026-04-09 (Session BT — SP4 tunnel LIVE, SCOUT free pipeline shipped: Worker + Ollama, Reddit+HN working)
 
 ---
 
