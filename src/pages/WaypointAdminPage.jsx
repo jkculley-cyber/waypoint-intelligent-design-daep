@@ -1612,7 +1612,7 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
     const load = async () => {
       setLoading(true)
       const [campusRes, userRes, offenseRes, studentRes] = await Promise.all([
-        supabase.from('campuses').select('id, name, campus_type, tea_campus_id').eq('district_id', district.id).order('name'),
+        supabase.from('campuses').select('id, name, campus_type, tea_campus_id, daep_seat_allocation').eq('district_id', district.id).order('name'),
         supabase.from('profiles').select('id, full_name, email, role, is_active').eq('district_id', district.id).order('full_name'),
         supabase.from('offense_codes').select('id', { count: 'exact', head: true }).eq('district_id', district.id),
         supabase.from('students').select('id', { count: 'exact', head: true }).eq('district_id', district.id),
@@ -1689,7 +1689,7 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
       setNewCampusName('')
       setNewCampusTea('')
       setShowAddCampus(false)
-      const { data } = await supabase.from('campuses').select('id, name, campus_type, tea_campus_id').eq('district_id', district.id).order('name')
+      const { data } = await supabase.from('campuses').select('id, name, campus_type, tea_campus_id, daep_seat_allocation').eq('district_id', district.id).order('name')
       setCampuses(data || [])
       onRefresh()
     }
@@ -1891,10 +1891,32 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
 
               <div className="space-y-1">
                 {campuses.map(c => (
-                  <div key={c.id} className="flex items-center justify-between px-3 py-2 bg-gray-800/60 rounded-lg">
-                    <div>
-                      <p className="text-sm text-white">{c.name}</p>
+                  <div key={c.id} className="flex items-center justify-between px-3 py-2 bg-gray-800/60 rounded-lg gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-white truncate">{c.name}</p>
                       <p className="text-xs text-gray-500">{c.campus_type?.toUpperCase()} · {c.tea_campus_id}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-gray-400 uppercase">DAEP Seats</label>
+                      <input
+                        type="number"
+                        min="0"
+                        defaultValue={c.daep_seat_allocation || 0}
+                        onBlur={async (e) => {
+                          const val = parseInt(e.target.value, 10) || 0
+                          if (val === (c.daep_seat_allocation || 0)) return
+                          const { error } = await supabase
+                            .from('campuses')
+                            .update({ daep_seat_allocation: val })
+                            .eq('id', c.id)
+                          if (error) alert('Failed to update allocation: ' + error.message)
+                          else {
+                            const { data } = await supabase.from('campuses').select('id, name, campus_type, tea_campus_id, daep_seat_allocation').eq('district_id', district.id).order('name')
+                            setCampuses(data || [])
+                          }
+                        }}
+                        className="w-16 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-xs text-white text-center focus:border-orange-500 focus:outline-none"
+                      />
                     </div>
                   </div>
                 ))}

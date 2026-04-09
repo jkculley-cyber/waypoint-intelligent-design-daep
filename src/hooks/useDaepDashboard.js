@@ -840,3 +840,223 @@ export function useDaepDaysActions() {
 
   return { updateDaepDays, loading }
 }
+
+/**
+ * Per-home-campus DAEP capacity view.
+ *
+ * For each campus in the user's scope (identified via students.campus_id — the student's
+ * home/enrolled campus, NOT where they are physically placed), returns:
+ *   - allocation: campuses.daep_seat_allocation (district-set budget of DAEP seats)
+ *   - pending:    their students with incident status in submitted/under_review/compliance_hold/approved
+ *   - active:     their students with incident status='active' (includes oriented no-shows
+ *                 whose seat has not been released — they keep the seat until an admin overrides)
+ *   - noShows:    subset of active — oriented, zero daily_behavior_tracking rows,
+ *                 seat_released_at IS NULL
+ *   - available:  allocation − (active + pending)
+ *
+ * Also returns per-campus drill-down lists so a click on a tile can show the students.
+ */
+export function useHomeCampusCapacity() {
+  const [campusRows, setCampusRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  const fetchCapacity = useCallback(async () => {
+    if (!districtId || scopeLoading) return
+    setLoading(true)
+    try {
+      // 1. Campuses in scope
+      let campusQuery = supabase
+        .from('campuses')
+        .select('id, name, daep_seat_allocation')
+        .eq('district_id', districtId)
+        .order('name')
+      if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+        campusQuery = campusQuery.in('id', scope.scopedCampusIds)
+      }
+      const { data: campuses, error: cErr } = await campusQuery
+      if (cErr) throw cErr
+
+      // 2. All DAEP incidents (active + pending) with home campus via students.campus_id
+      const { data: incidents, error: iErr } = await supabase
+        .from('incidents')
+        .select(`
+          id, status, consequence_start, consequence_days, seat_released_at,
+          student:students!inner(id, first_name, last_name, grade_level, campus_id),
+          scheduling:daep_placement_scheduling(id, orientation_status, orientation_completed_date)
+        `)
+        .eq('district_id', districtId)
+        .eq('consequence_type', 'daep')
+        .in('status', ['submitted', 'under_review', 'compliance_hold', 'approved', 'active'])
+
+      if (iErr) throw iErr
+
+      // 3. For each active incident, check daily_behavior_tracking count to identify no-shows
+      const activeIncidents = (incidents || []).filter(inc => inc.status === 'active')
+      const trackingCounts = await Promise.all(
+        activeIncidents.map(async (inc) => {
+          if (!inc.student?.id) return 0
+          let q = supabase
+            .from('daily_behavior_tracking')
+            .select('id', { count: 'exact', head: true })
+            .eq('student_id', inc.student.id)
+          if (inc.consequence_start) q = q.gte('tracking_date', inc.consequence_start)
+          const { count } = await q
+          return count || 0
+        })
+      )
+      const noShowIds = new Set()
+      activeIncidents.forEach((inc, idx) => {
+        const sched = Array.isArray(inc.scheduling) ? inc.scheduling[0] : inc.scheduling
+        const oriented = sched?.orientation_status === 'completed'
+        const zeroCheckins = trackingCounts[idx] === 0
+        const notReleased = !inc.seat_released_at
+        if (oriented && zeroCheckins && notReleased) {
+          noShowIds.add(inc.id)
+        }
+      })
+
+      // 4. Group by home campus
+      const byCampus = {}
+      ;(campuses || []).forEach(c => {
+        byCampus[c.id] = {
+          campus_id: c.id,
+          campus_name: c.name,
+          allocation: c.daep_seat_allocation || 0,
+          active: 0,
+          pending: 0,
+          noShows: 0,
+          activeList: [],
+          pendingList: [],
+          noShowList: [],
+        }
+      })
+      ;(incidents || []).forEach(inc => {
+        // Skip released seats from active count
+        if (inc.status === 'active' && inc.seat_released_at) return
+        const homeCampusId = inc.student?.campus_id
+        const row = byCampus[homeCampusId]
+        if (!row) return
+        if (inc.status === 'active') {
+          row.active++
+          row.activeList.push(inc)
+          if (noShowIds.has(inc.id)) {
+            row.noShows++
+            row.noShowList.push(inc)
+          }
+        } else {
+          row.pending++
+          row.pendingList.push(inc)
+        }
+      })
+      Object.values(byCampus).forEach(row => {
+        row.available = row.allocation - (row.active + row.pending)
+      })
+
+      setCampusRows(Object.values(byCampus))
+    } catch (err) {
+      console.error('Error fetching home campus capacity:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, scopeLoading, scope])
+
+  useEffect(() => { fetchCapacity() }, [fetchCapacity])
+
+  return { campusRows, loading, refetch: fetchCapacity }
+}
+
+/**
+ * Students nearing DAEP completion (days_served >= consequence_days - threshold).
+ * Scoped to the viewer's home campuses (students.campus_id ∈ scope).
+ * Used by home-campus dashboard widget to surface upcoming returns.
+ */
+export function useNearingCompletion(threshold = 5) {
+  const [students, setStudents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { districtId } = useAuth()
+  const { scope, loading: scopeLoading } = useAccessScope()
+
+  const fetchNearing = useCallback(async () => {
+    if (!districtId || scopeLoading) return
+    setLoading(true)
+    try {
+      let query = supabase
+        .from('incidents')
+        .select(`
+          id, consequence_start, consequence_days, status,
+          student:students!inner(id, first_name, last_name, grade_level, campus_id,
+            campus:campuses!campus_id(id, name)),
+          transition_plans(id, handoff_status)
+        `)
+        .eq('district_id', districtId)
+        .eq('consequence_type', 'daep')
+        .eq('status', 'active')
+
+      if (!scope.isDistrictWide && scope.scopedCampusIds?.length) {
+        query = query.in('student.campus_id', scope.scopedCampusIds)
+      }
+      const { data, error } = await query
+      if (error) throw error
+
+      // Count days served for each, keep those with daysRemaining <= threshold
+      const enriched = await Promise.all((data || []).map(async (inc) => {
+        if (!inc.student?.id || !inc.consequence_start) return null
+        let q = supabase
+          .from('daily_behavior_tracking')
+          .select('id', { count: 'exact', head: true })
+          .eq('student_id', inc.student.id)
+          .gte('tracking_date', inc.consequence_start)
+        const { count } = await q
+        const daysServed = count || 0
+        const assigned = inc.consequence_days || 0
+        const daysRemaining = Math.max(0, assigned - daysServed)
+        return { ...inc, daysServed, daysRemaining, assigned }
+      }))
+
+      const filtered = enriched
+        .filter(r => r && r.daysRemaining <= threshold)
+        .sort((a, b) => a.daysRemaining - b.daysRemaining)
+      setStudents(filtered)
+    } catch (err) {
+      console.error('Error fetching nearing completion:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, scopeLoading, scope, threshold])
+
+  useEffect(() => { fetchNearing() }, [fetchNearing])
+
+  return { students, loading, refetch: fetchNearing }
+}
+
+/**
+ * Mark an oriented no-show's seat as released (admin override).
+ */
+export function useReleaseSeat() {
+  const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
+
+  const releaseSeat = useCallback(async (incidentId) => {
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({
+          seat_released_at: new Date().toISOString(),
+          seat_released_by: user?.id || null,
+        })
+        .eq('id', incidentId)
+      if (error) throw error
+      return { success: true }
+    } catch (err) {
+      console.error('Error releasing seat:', err)
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }, [user?.id])
+
+  return { releaseSeat, loading }
+}

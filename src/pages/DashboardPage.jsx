@@ -10,6 +10,7 @@ import { applyCampusScope } from '../lib/accessControl'
 import Topbar from '../components/layout/Topbar'
 import Card, { CardTitle } from '../components/ui/Card'
 import SetupChecklist from '../components/ui/SetupChecklist'
+import HomeCampusCapacityWidget from '../components/daep/HomeCampusCapacityWidget'
 import { ROLE_LABELS, ROLES, APPROVAL_CHAIN_STEPS, STAFF_ROLES, INCIDENT_STATUS_COLORS } from '../lib/constants'
 import { getSchoolYearLabel, getSchoolYearStart, formatDate } from '../lib/utils'
 
@@ -476,6 +477,9 @@ export default function DashboardPage() {
             }
           />
         </div>
+
+        {/* Home Campus DAEP Capacity + Returning Soon */}
+        <HomeCampusCapacityWidget />
 
         {/* Compliance Protection ROI Widget — shown when any count > 0 */}
         {roiLoaded && roiTotal > 0 && (

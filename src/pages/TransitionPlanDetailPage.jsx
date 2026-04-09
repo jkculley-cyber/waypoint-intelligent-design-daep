@@ -79,9 +79,12 @@ function isReviewDueSoon(date) {
 export default function TransitionPlanDetailPage() {
   const { id } = useParams()
   const { plan, reviews, interventions, loading, refetch } = useTransitionPlan(id)
-  const { activatePlan, completePlan } = useTransitionPlanActions()
+  const { activatePlan, completePlan, acceptHandoff } = useTransitionPlanActions()
   const { hasRole, districtId } = useAuth()
   const [showReviewForm, setShowReviewForm] = useState(false)
+  const [showHandoffModal, setShowHandoffModal] = useState(false)
+  const [handoffNote, setHandoffNote] = useState('')
+  const [handoffSubmitting, setHandoffSubmitting] = useState(false)
 
   if (loading) return <PageLoader message="Loading plan..." />
   if (!plan) {
@@ -116,6 +119,20 @@ export default function TransitionPlanDetailPage() {
     if (error) toast.error('Failed to activate plan')
     else {
       toast.success('Plan activated')
+      refetch()
+    }
+  }
+
+  const handleAcceptHandoff = async () => {
+    setHandoffSubmitting(true)
+    const { error } = await acceptHandoff(plan.id, handoffNote)
+    setHandoffSubmitting(false)
+    if (error) {
+      toast.error('Failed to accept handoff')
+    } else {
+      toast.success('Handoff accepted. Plan is now owned by home campus.')
+      setShowHandoffModal(false)
+      setHandoffNote('')
       refetch()
     }
   }
@@ -156,6 +173,37 @@ export default function TransitionPlanDetailPage() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Handoff Banners */}
+        {plan.handoff_status === 'pending_home_campus' && (
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 flex items-start gap-3">
+            <svg className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-900">Returning to Home Campus — Accept Handoff</p>
+              <p className="text-sm text-amber-800 mt-1">
+                This student completed their DAEP placement on {formatDate(plan.handoff_initiated_at)}. The home campus needs to review the plan, make any post-return adjustments, and accept ownership.
+              </p>
+              {canManage && (
+                <Button size="sm" variant="warning" onClick={() => setShowHandoffModal(true)} className="mt-3">
+                  Accept Handoff & Adjust Plan
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+        {plan.handoff_status === 'accepted' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-sm text-green-800">
+              Home campus accepted handoff on {formatDate(plan.home_campus_accepted_at)}.
+              {plan.post_return_adjustments && <span className="block text-xs text-green-700 mt-1 italic">"{plan.post_return_adjustments}"</span>}
+            </p>
+          </div>
+        )}
+
         {/* Review Due Alert */}
         {isActive && nextReview && isReviewOverdue(nextReview) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -413,6 +461,33 @@ export default function TransitionPlanDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Handoff Modal */}
+      {showHandoffModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900">Accept Handoff to Home Campus</h3>
+            <p className="text-sm text-gray-600 mt-2">
+              By accepting, you take ownership of this transition plan. Use the field below to note any adjustments based on how the student performed at DAEP (what supports worked, what needs to change, etc.).
+            </p>
+            <textarea
+              value={handoffNote}
+              onChange={e => setHandoffNote(e.target.value)}
+              rows={5}
+              placeholder="Post-return adjustments — e.g. 'CICO card continues; add lunch buddy check-in; remove social studies modification — teacher reports no need.'"
+              className="mt-3 w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="secondary" onClick={() => setShowHandoffModal(false)} disabled={handoffSubmitting}>
+                Cancel
+              </Button>
+              <Button variant="success" onClick={handleAcceptHandoff} disabled={handoffSubmitting}>
+                {handoffSubmitting ? 'Accepting...' : 'Accept Handoff'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Review Form Modal */}
       {showReviewForm && (

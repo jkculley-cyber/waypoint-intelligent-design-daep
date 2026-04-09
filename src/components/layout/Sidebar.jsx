@@ -6,6 +6,7 @@ import { useSidebar } from '../../contexts/SidebarContext'
 import { cn } from '../../lib/utils'
 import { COMPLIANCE_ROLES, ALERT_ROLES, ROLES, DAEP_ROLES } from '../../lib/constants'
 import AlertBadge from '../alerts/AlertBadge'
+import { useIsDaepStaff } from '../../hooks/useIsDaepStaff'
 
 // ─── Navigation Definitions ───────────────────────────────────────────────────
 
@@ -51,9 +52,9 @@ const staffNavigation = [
   { name: '504 Reviews',      path: '/incidents?filter=504_queue',      icon: ComplianceIcon,  roles: [ROLES.SECTION_504_COORDINATOR],                   product: 'waypoint', group: 'discipline' },
   { name: 'Pending Approval', path: '/incidents?filter=director_queue', icon: IncidentsIcon,   roles: [ROLES.DIRECTOR_STUDENT_AFFAIRS],                  product: 'waypoint', group: 'discipline' },
   { name: 'Transition Plans', path: '/plans',                           icon: PlansIcon,       roles: null,             feature: 'transition_plans',    product: 'waypoint', group: 'daep' },
-  { name: 'DAEP Dashboard',   path: '/daep',                            icon: DaepIcon,        roles: DAEP_ROLES,       feature: 'daep_dashboard',      product: 'waypoint', group: 'daep' },
+  { name: 'DAEP Dashboard',   path: '/daep',                            icon: DaepIcon,        roles: DAEP_ROLES,       feature: 'daep_dashboard',      product: 'waypoint', group: 'daep', daepProgramOnly: true },
   { name: 'Orientations',     path: '/daep/orientations',               icon: CalendarIcon,    roles: DAEP_ROLES,       feature: 'daep_dashboard',      product: 'waypoint', group: 'daep' },
-  { name: 'Phone Return',     path: '/daep/phone-return',               icon: PhoneIcon,       roles: DAEP_ROLES,       feature: 'phone_return',        product: 'waypoint', group: 'daep' },
+  { name: 'Phone Return',     path: '/daep/phone-return',               icon: PhoneIcon,       roles: DAEP_ROLES,       feature: 'phone_return',        product: 'waypoint', group: 'daep', daepProgramOnly: true },
   // Daily Scoring removed — tracked via Kiosk and behavior tracking instead
   { name: 'Discipline Matrix',path: '/matrix',                          icon: MatrixIcon,      roles: null,                                              product: 'waypoint', group: 'tools' },
   { name: 'Calendar',         path: '/calendar',                        icon: CalendarIcon,    roles: null,                                              product: 'waypoint', group: 'tools' },
@@ -264,6 +265,7 @@ export default function Sidebar() {
   const { alertCount } = useNotifications()
   const { sidebarOpen, setSidebarOpen } = useSidebar()
   const { pathname } = useLocation()
+  const { isDaepStaff } = useIsDaepStaff()
 
   const isParent = profile?.role === 'parent'
   const showWaypoint  = !isParent && hasProduct('waypoint')
@@ -294,6 +296,7 @@ export default function Sidebar() {
   function itemVisible(item) {
     if (item.roles && !hasRole(item.roles)) return false
     if (item.feature && !hasFeature(item.feature)) return false
+    if (item.daepProgramOnly && !isDaepStaff) return false
     return true
   }
 

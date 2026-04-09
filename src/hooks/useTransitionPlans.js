@@ -196,7 +196,16 @@ export function useTransitionPlanActions() {
     return updatePlan(id, { status: 'extended', end_date: newEndDate })
   }
 
-  return { createPlan, updatePlan, activatePlan, completePlan, extendPlan }
+  const acceptHandoff = async (id, postReturnAdjustments) => {
+    return updatePlan(id, {
+      handoff_status: 'accepted',
+      home_campus_accepted_by: user.id,
+      home_campus_accepted_at: new Date().toISOString(),
+      post_return_adjustments: postReturnAdjustments || null,
+    })
+  }
+
+  return { createPlan, updatePlan, activatePlan, completePlan, extendPlan, acceptHandoff }
 }
 
 /**
