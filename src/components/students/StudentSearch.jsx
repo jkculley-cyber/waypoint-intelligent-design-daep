@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useStudentActions } from '../../hooks/useStudents'
 import { formatStudentName, formatGradeLevel } from '../../lib/utils'
 import { StudentFlagsSummary } from './StudentFlags'
 
@@ -9,7 +10,9 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
   const [results, setResults] = useState([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { districtId, campusIds, isAdmin } = useAuth()
+  const [showAddForm, setShowAddForm] = useState(false)
+  const { districtId, campusIds, isAdmin, hasRole } = useAuth()
+  const canAddStudent = hasRole(['admin', 'principal', 'ap', 'counselor'])
   const wrapperRef = useRef(null)
 
   useEffect(() => {
@@ -131,8 +134,130 @@ export default function StudentSearch({ onSelect, selectedStudent, placeholder =
       {isOpen && query.length >= 2 && results.length === 0 && !loading && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center">
           <p className="text-sm text-gray-500">No students found for "{query}"</p>
+          {canAddStudent && (
+            <button
+              type="button"
+              onClick={() => { setIsOpen(false); setShowAddForm(true) }}
+              className="mt-2 text-sm font-medium text-orange-600 hover:text-orange-700"
+            >
+              + Add New Student
+            </button>
+          )}
         </div>
       )}
+
+      {showAddForm && (
+        <QuickAddStudent
+          campusIds={campusIds}
+          districtId={districtId}
+          onCreated={(student) => { setShowAddForm(false); onSelect(student) }}
+          onCancel={() => setShowAddForm(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function QuickAddStudent({ campusIds, districtId, onCreated, onCancel }) {
+  const { createStudent } = useStudentActions()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    student_id_number: '',
+    grade_level: '',
+    campus_id: campusIds?.[0] || '',
+    date_of_birth: '',
+    is_sped: false,
+    is_504: false,
+  })
+
+  const canSave = form.first_name.trim() && form.last_name.trim() && form.student_id_number.trim() && form.grade_level
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError(null)
+    const { data, error: err } = await createStudent({
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      student_id_number: form.student_id_number.trim(),
+      grade_level: form.grade_level,
+      campus_id: form.campus_id || null,
+      date_of_birth: form.date_of_birth || null,
+      is_sped: form.is_sped,
+      is_504: form.is_504,
+      is_active: true,
+    })
+    setSaving(false)
+    if (err) {
+      setError(err.message)
+    } else {
+      onCreated(data)
+    }
+  }
+
+  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  return (
+    <div className="mt-2 border border-orange-200 bg-orange-50 rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-900">Add New Student</p>
+        <button type="button" onClick={onCancel} className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name *</label>
+          <input type="text" value={form.first_name} onChange={e => update('first_name', e.target.value)}
+            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Last Name *</label>
+          <input type="text" value={form.last_name} onChange={e => update('last_name', e.target.value)}
+            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Student ID *</label>
+          <input type="text" value={form.student_id_number} onChange={e => update('student_id_number', e.target.value)}
+            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Grade Level *</label>
+          <select value={form.grade_level} onChange={e => update('grade_level', e.target.value)}
+            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+            <option value="">Select...</option>
+            {['PK','KG','1','2','3','4','5','6','7','8','9','10','11','12'].map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Date of Birth</label>
+          <input type="date" value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)}
+            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+        </div>
+        <div className="flex items-end gap-4 pb-1">
+          <label className="flex items-center gap-1.5 text-xs text-gray-700">
+            <input type="checkbox" checked={form.is_sped} onChange={e => update('is_sped', e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+            SPED
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-gray-700">
+            <input type="checkbox" checked={form.is_504} onChange={e => update('is_504', e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+            504
+          </label>
+        </div>
+      </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={!canSave || saving}
+        className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+      >
+        {saving ? 'Adding...' : 'Add Student & Select'}
+      </button>
     </div>
   )
 }
