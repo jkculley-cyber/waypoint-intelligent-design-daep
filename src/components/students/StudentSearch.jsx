@@ -168,9 +168,10 @@ function QuickAddStudent({ campusIds, districtId, onCreated, onCancel }) {
     student_id_number: '',
     grade_level: '',
     campus_id: campusIds?.[0] || '',
-    date_of_birth: '',
     is_sped: false,
     is_504: false,
+    is_ell: false,
+    is_mtss: false,
   })
 
   const canSave = form.first_name.trim() && form.last_name.trim() && form.student_id_number.trim() && form.grade_level
@@ -184,9 +185,10 @@ function QuickAddStudent({ campusIds, districtId, onCreated, onCancel }) {
       student_id_number: form.student_id_number.trim(),
       grade_level: form.grade_level,
       campus_id: form.campus_id || null,
-      date_of_birth: form.date_of_birth || null,
       is_sped: form.is_sped,
       is_504: form.is_504,
+      is_ell: form.is_ell,
+      is_mtss: form.is_mtss,
       is_active: true,
     })
     setSaving(false)
@@ -231,12 +233,7 @@ function QuickAddStudent({ campusIds, districtId, onCreated, onCancel }) {
             ))}
           </select>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-0.5">Date of Birth</label>
-          <input type="date" value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)}
-            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
-        </div>
-        <div className="flex items-end gap-4 pb-1">
+        <div className="col-span-2 flex items-center gap-5 pt-1">
           <label className="flex items-center gap-1.5 text-xs text-gray-700">
             <input type="checkbox" checked={form.is_sped} onChange={e => update('is_sped', e.target.checked)}
               className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
@@ -246,6 +243,16 @@ function QuickAddStudent({ campusIds, districtId, onCreated, onCancel }) {
             <input type="checkbox" checked={form.is_504} onChange={e => update('is_504', e.target.checked)}
               className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
             504
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-gray-700">
+            <input type="checkbox" checked={form.is_ell} onChange={e => update('is_ell', e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+            EB
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-gray-700">
+            <input type="checkbox" checked={form.is_mtss} onChange={e => update('is_mtss', e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+            MTSS
           </label>
         </div>
       </div>
