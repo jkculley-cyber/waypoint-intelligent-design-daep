@@ -603,8 +603,8 @@ export default function NewIncidentPage() {
                     label="Transcript"
                     required
                     existingDocument={formData.documents.transcript}
-                    onUploadComplete={(meta) => updateField('documents', { ...formData.documents, transcript: meta })}
-                    onRemove={() => updateField('documents', { ...formData.documents, transcript: null })}
+                    onUploadComplete={(meta) => setFormData(prev => ({ ...prev, documents: { ...prev.documents, transcript: meta } }))}
+                    onRemove={() => setFormData(prev => ({ ...prev, documents: { ...prev.documents, transcript: null } }))}
                     incidentId={tempIncidentId}
                   />
                   <DocumentUpload
@@ -612,8 +612,8 @@ export default function NewIncidentPage() {
                     label="Current Schedule"
                     required
                     existingDocument={formData.documents.schedule}
-                    onUploadComplete={(meta) => updateField('documents', { ...formData.documents, schedule: meta })}
-                    onRemove={() => updateField('documents', { ...formData.documents, schedule: null })}
+                    onUploadComplete={(meta) => setFormData(prev => ({ ...prev, documents: { ...prev.documents, schedule: meta } }))}
+                    onRemove={() => setFormData(prev => ({ ...prev, documents: { ...prev.documents, schedule: null } }))}
                     incidentId={tempIncidentId}
                   />
                   {formData.student?.is_sped && (
@@ -622,8 +622,8 @@ export default function NewIncidentPage() {
                       label="Manifestation Determination Review (MDR)"
                       required
                       existingDocument={formData.documents.mdr}
-                      onUploadComplete={(meta) => updateField('documents', { ...formData.documents, mdr: meta })}
-                      onRemove={() => updateField('documents', { ...formData.documents, mdr: null })}
+                      onUploadComplete={(meta) => setFormData(prev => ({ ...prev, documents: { ...prev.documents, mdr: meta } }))}
+                      onRemove={() => setFormData(prev => ({ ...prev, documents: { ...prev.documents, mdr: null } }))}
                       incidentId={tempIncidentId}
                     />
                   )}
