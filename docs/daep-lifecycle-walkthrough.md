@@ -60,13 +60,13 @@ Status transitions: `draft` → `submitted` → `under_review` → (`compliance_
 3. Status: `orientation_status` → `scheduled` → `completed` (or `missed` → alert fires).
 4. Incident remains `status = 'approved'` until student actually checks in on day 1.
 
-**Home Campus view needs to see:**
-- **That their student has a scheduled orientation date** (simple line item on the incident, or a small "Pending Placement Start" list showing their kids who finished orientation but haven't started DAEP)
+**Home Campus view needs:**
+- **Orientations page** (`/daep/orientations`) — campus staff can see their students' scheduled orientations and schedule new ones. This is visible in the sidebar for all staff.
+- **Orientation date on the Incident Detail Page** — visible when viewing any of their campus's incidents.
 
 **Home Campus view does NOT need:**
-- The full Orientation Schedule page (`/daep/orientations`) — that's a DAEP scheduling tool
-- The Orientation Kiosk — DAEP-only
-- Phone Return page — DAEP-only
+- The Orientation Kiosk — DAEP-only (physical device at the DAEP campus)
+- Phone Return page — DAEP-only (parent contact log managed by DAEP staff)
 
 ---
 
@@ -94,15 +94,22 @@ Status transitions: `draft` → `submitted` → `under_review` → (`compliance_
 
 ## Phase 5 — Nearing Completion
 
-**Actors:** Home Campus Admin + Counselor
+**Actors:** Home Campus Admin + Counselor + DAEP Staff
 
-When `days_served >= consequence_days − 5` (configurable), the student appears in the **"Returning from DAEP Soon"** card on the home campus dashboard.
+When `days_served >= consequence_days − 5` (based on actual check-in days, not calendar), the student appears in the **"Returning from DAEP Soon"** card on the home campus dashboard.
+
+**Important:** `consequence_days` can be adjusted by DAEP staff based on earned incentives (good behavior, academic milestones). When DAEP reduces the assigned days, the student moves into the "nearing completion" window sooner. Campus staff see the current assigned days, not the original.
 
 **Home Campus view needs:**
-- Student name + current campus
-- Days served / days assigned
-- Days remaining (counts down)
+- Student name + home campus
+- Days served / days assigned (current, reflecting any incentive adjustments)
+- Days remaining (counts down: 5, 4, 3, 2, 1, 0)
 - Link to the transition plan (not the incident)
+
+**DAEP Staff responsibility:**
+- Monitor behavior tracking and adjust `consequence_days` when incentives are earned (Incident Detail Page → DAEP Days section)
+- When `days_served = consequence_days` (student served all assigned days), click **Mark Complete** on the incident
+- This triggers the handoff to home campus (Phase 6)
 
 This is the *pre-return prep* moment — home campus counselor should be opening the plan now to prep supports before the student walks back in.
 
@@ -112,11 +119,22 @@ This is the *pre-return prep* moment — home campus counselor should be opening
 
 **Actors:** DAEP Staff (marks complete) → Home Campus Admin/Counselor (accepts)
 
-1. Student serves their final day. DAEP staff clicks **Mark Complete** on the incident. Status = `completed`.
-2. **Trigger fires** (migration 061): linked `transition_plans.handoff_status` → `pending_home_campus`, `handoff_initiated_at = NOW()`.
-3. Home Campus Admin/Counselor opens the plan and sees the amber **"Accept Handoff & Adjust Plan"** banner.
-4. They click Accept → modal asks for `post_return_adjustments` (what worked at DAEP, what to change on return).
-5. On save: `handoff_status = 'accepted'`, records `home_campus_accepted_by` + `_at`. Plan is now owned by home campus. Green confirmation banner replaces the amber one.
+### DAEP Staff — closing out the placement
+1. Student serves their final assigned day (all `consequence_days` served, verified by `daily_behavior_tracking` count).
+2. DAEP Staff opens the Incident Detail Page and clicks **Mark Complete**. Status = `completed`.
+3. **Database trigger fires** (migration 061): the linked `transition_plans.handoff_status` auto-flips to `pending_home_campus`, with `handoff_initiated_at = NOW()`.
+4. The student drops off the DAEP dashboard's active enrollment count. Seat is freed.
+5. DAEP Staff is done — the student is no longer their responsibility.
+
+### Home Campus — accepting the return
+1. The student's plan appears with an amber **"Returning to Home Campus — Accept Handoff"** banner on the Transition Plan Detail Page (`/plans/{id}`).
+2. Home Campus Admin or Counselor clicks **"Accept Handoff & Adjust Plan"**.
+3. Modal prompts for **post-return adjustments** — what worked at DAEP, what supports to continue, what to change (e.g., "CICO card continues; add lunch buddy check-in; remove social studies modification — teacher reports no need").
+4. On save: `handoff_status = 'accepted'`, records `home_campus_accepted_by` + timestamp. Green confirmation banner replaces the amber one.
+5. The plan is now **owned by home campus**. Behavioral/academic supports, parent engagement, and review schedule are the home campus counselor's responsibility.
+
+### What triggers the handoff
+The handoff is NOT based on calendar `consequence_end` date. It fires when DAEP staff manually marks the incident as `completed` — which only happens after the student has served all assigned instructional days (absences don't count, incentive adjustments are reflected in `consequence_days`).
 
 **Home Campus view is the protagonist here.** The plan detail page is the single surface.
 
@@ -126,11 +144,17 @@ This is the *pre-return prep* moment — home campus counselor should be opening
 
 ## Phase 7 — Post-Return Monitoring
 
-**Actors:** Home Campus Counselor
+**Actors:** Home Campus Counselor + Home Campus Admin
 
-- Plan is active on the home campus. 30 / 60 / 90-day reviews scheduled.
-- `ReentryHub` component tracks checklists and check-ins.
-- Home Campus Counselor runs the reviews; home campus admins monitor the plan status card.
+Once the handoff is accepted, the home campus owns the student's ongoing support:
+
+1. **Transition plan reviews** — 30-day, 60-day, and 90-day reviews are scheduled from the plan start date. The Review Schedule card on the plan detail page shows status (Pending / Due Soon / Overdue / Complete) for each. Overdue reviews trigger a red alert banner.
+2. **Reentry Hub** — the `ReentryHub` component on the plan detail page tracks the 4-party sign-off checklist (student, parent, counselor, admin) and post-return counselor check-ins.
+3. **Post-return check-ins** — Counselor logs touchpoints during the first 30 days after return. Each check-in has a status (positive / neutral / concerning) and notes. Students with no check-in in 5+ days are surfaced on the DAEP dashboard's "Returned" widget.
+4. **Post-return adjustments** — the notes entered during handoff acceptance are visible on the plan detail page. The home campus counselor uses these to tailor supports: continuing what worked at DAEP, modifying what didn't, and adding campus-specific interventions.
+5. **Re-referral monitoring** — if the student gets a new incident within 90 days, the repeat offender alert system fires automatically.
+
+**Home campus admin monitors** the plan status card on the dashboard (Active Plans count) and can review the counselor's check-in timeline at any time.
 
 ---
 
@@ -138,30 +162,29 @@ This is the *pre-return prep* moment — home campus counselor should be opening
 
 Here is an audit of what `hs-principal@lonestar-isd.org` currently sees and my recommendation for each item.
 
-## Sidebar items (currently visible to DAEP_ROLES, which includes Principal)
+## Sidebar items — as shipped (Session BU)
 
-| Item | Current | Recommendation | Reason |
+Sidebar uses `useIsDaepStaff` hook: returns true for waypoint_admin / district admin / director_student_affairs, or any user assigned to a `campus_type='daep'` campus. Items tagged `daepProgramOnly: true` are hidden from regular campus staff.
+
+| Item | Campus staff sees? | Gate | Reason |
 |---|---|---|---|
-| Dashboard | ✅ | **Keep** | Primary landing |
-| Students | ✅ | **Keep** | Campus student roster |
-| Quick Report | ✅ | **Keep** | Incident creation |
-| Incidents | ✅ | **Keep** | Their campus's incidents |
-| Compliance | ✅ | **Keep** | SPED/504 blocking is campus concern |
-| Alerts | ✅ | **Keep** | Repeat offender alerts are campus concern |
-| Transition Plans | ✅ | **Keep** | They own post-return plan |
-| **DAEP Dashboard** | ✅ | **Remove from campus view** | Facility operations tool — not their job |
-| **Orientations** | ✅ | **Remove from campus view** | DAEP scheduling tool |
-| **Phone Return** | ✅ | **Remove from campus view** | Parent contact log, DAEP-only workflow |
-| Discipline Matrix | ✅ | **Keep** | Reference tool |
-| Calendar | ✅ | **Keep** | Plan review dates |
-| Reports | ✅ | **Keep** | Admin-only anyway |
-| Data Import | ✅ | **Keep** | Admin-only anyway |
-| Student Kiosk / Orientation Kiosk | Admin-only | **Keep as-is** | Kiosk devices |
-| Settings | Admin-only | **Keep as-is** | |
-
-**Proposed fix:** Change the `DAEP_ROLES` gate on DAEP Dashboard / Orientations / Phone Return to a narrower `DAEP_PROGRAM_ROLES` (new constant = [admin, ap, director_student_affairs]), or add an explicit "is this user assigned to a DAEP campus" check via `profile_campus_assignments → campuses.campus_type = 'daep'`.
-
-The cleanest rule: **"only users whose campus assignments include a DAEP-type campus see the DAEP program sidebar group."** Home campus principal/AP/counselor are assigned to regular campuses → they don't see that group. District admin is district-wide → they do see it.
+| Dashboard | ✅ Yes | — | Primary landing |
+| Students | ✅ Yes | — | Campus student roster |
+| Quick Report | ✅ Yes | — | Incident creation |
+| Incidents | ✅ Yes | — | Their campus's incidents |
+| Compliance | ✅ Yes | COMPLIANCE_ROLES | SPED/504 blocking is campus concern |
+| Alerts | ✅ Yes | ALERT_ROLES | Repeat offender alerts are campus concern |
+| Transition Plans | ✅ Yes | — | They own post-return plans |
+| **DAEP Dashboard** | ❌ No | `daepProgramOnly` | Facility operations — DAEP staff only |
+| **Orientations** | ✅ Yes | DAEP_ROLES (no daepProgramOnly) | Campus needs to see/schedule their students' orientations |
+| **Phone Return** | ❌ No | `daepProgramOnly` | Parent contact log — DAEP staff only |
+| Discipline Matrix | ✅ Yes | — | Reference tool |
+| Calendar | ✅ Yes | — | Plan review dates |
+| Reports | ✅ Yes | admin/principal | Reporting |
+| Data Import | ✅ Yes | admin/principal | Bulk import |
+| Student Kiosk | ✅ (admin only) | admin | Kiosk device link |
+| Orientation Kiosk | ✅ (admin only) | admin | Kiosk device link |
+| Settings | ✅ (admin only) | admin | District settings |
 
 ## Dashboard widgets (currently shown on `/dashboard`)
 
@@ -189,8 +212,14 @@ Already home-campus-oriented (goals, supports, reviews, reentry hub, now: handof
 
 ---
 
-# Summary — Tonight's Recommendation
+# Summary — What Was Shipped (Session BU/BV)
 
-**Ship the sidebar scope fix.** Add a `DAEP_PROGRAM_ROLES` concept or a "user's campus is a DAEP campus" check so the DAEP Dashboard / Orientations / Phone Return group is hidden from regular campus principals. That gives `hs-principal@lonestar-isd.org` a clean, campus-focused sidebar and eliminates the "why is Phone Return in my menu?" noise.
+**Sidebar scope fix shipped.** `useIsDaepStaff` hook gates DAEP Dashboard and Phone Return behind a "user assigned to DAEP campus" check. Orientations stays visible per campus request. Regular campus principals (e.g., `hs-principal@lonestar-isd.org`) get a clean sidebar focused on their job: referrals, compliance, approvals, plans, and orientation visibility.
 
-Everything else (dashboard widgets, incident detail, plan detail) is already correctly scoped by campus — we just need to stop leaking DAEP-facility tools into the campus sidebar.
+**Home campus capacity widget shipped.** Per-campus tiles (Allocation / Active / Pending / Available) with no-show detection and Release Seat action. Only visible to campus-scoped staff (hidden for district-wide admins who have the full DAEP dashboard).
+
+**Nearing completion widget shipped.** Students within 5 instructional days of completion, based on actual `daily_behavior_tracking` count (not calendar date), with countdown display and link to transition plan.
+
+**Transition plan handoff shipped.** Trigger on incident completion auto-flips linked plan to `pending_home_campus`. Amber banner → Accept Handoff modal → post-return adjustments textarea → green confirmation. Home campus owns the plan post-acceptance.
+
+**Reentry_checklists 400 fix shipped.** `is_ready` column never existed — derived from four `*_completed_at` timestamps instead.

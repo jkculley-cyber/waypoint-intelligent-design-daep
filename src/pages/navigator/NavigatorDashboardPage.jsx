@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import Topbar from '../../components/layout/Topbar'
-import { useNavigatorDashboardStats } from '../../hooks/useNavigator'
+import { useNavigatorDashboardStats, useDaepReturns, useDaepRiskStudents, useCreateReturnSupports } from '../../hooks/useNavigator'
 import { format } from 'date-fns'
+import toast from 'react-hot-toast'
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -12,6 +13,9 @@ const STATUS_COLORS = {
 
 export default function NavigatorDashboardPage() {
   const { stats, recentReferrals, escalationAlerts, loading } = useNavigatorDashboardStats()
+  const { returns: daepReturns, loading: returnsLoading, refetch: refetchReturns } = useDaepReturns()
+  const { students: atRiskStudents, loading: riskLoading } = useDaepRiskStudents()
+  const { createFromPlan, loading: creatingSupport } = useCreateReturnSupports()
 
   return (
     <div>
@@ -94,6 +98,113 @@ export default function NavigatorDashboardPage() {
               icon={<SupportIcon />}
               link="/navigator/supports"
             />
+          </div>
+        )}
+
+        {/* DAEP Risk — Proactive Alert */}
+        {!riskLoading && atRiskStudents.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <h2 className="text-sm font-semibold text-gray-900">DAEP Risk — Proactive Intervention Needed</h2>
+              </div>
+              <span className="text-xs text-gray-500">{atRiskStudents.length} student{atRiskStudents.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {atRiskStudents.map(s => {
+                const riskColor = s.riskScore >= 85 ? 'text-red-700 bg-red-50' : s.riskScore >= 70 ? 'text-orange-700 bg-orange-50' : 'text-yellow-700 bg-yellow-50'
+                const riskLabel = s.riskScore >= 85 ? 'CRITICAL' : s.riskScore >= 70 ? 'HIGH' : 'ELEVATED'
+                return (
+                  <Link key={s.student_id} to={`/navigator/students/${s.student_id}`} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {s.student?.first_name} {s.student?.last_name}
+                        <span className="ml-2 text-xs text-gray-500">Grade {s.student?.grade_level}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {s.issCount} ISS · {s.ossCount} OSS · {s.failedSupports} failed support{s.failedSupports !== 1 ? 's' : ''} (180 days)
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${riskColor}`}>{riskLabel} {s.riskScore}</span>
+                      <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Returning from DAEP */}
+        {!returnsLoading && daepReturns.length > 0 && (
+          <div className="bg-white rounded-xl border-2 border-green-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-green-100 bg-green-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+                <h2 className="text-sm font-semibold text-green-900">Returning from DAEP</h2>
+              </div>
+              <span className="text-xs text-green-700">{daepReturns.length} student{daepReturns.length !== 1 ? 's' : ''} in last 90 days</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {daepReturns.map(ret => {
+                const student = ret.student
+                const plan = ret.plan
+                const hasAdjustments = !!plan?.post_return_adjustments
+                return (
+                  <div key={ret.id} className="px-5 py-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <Link to={`/navigator/students/${student.id}`} className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                          {student.first_name} {student.last_name}
+                          <span className="ml-2 text-xs text-gray-500">Grade {student.grade_level}</span>
+                        </Link>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {student.campus?.name} · {ret.consequence_days} DAEP days served
+                          {plan.handoff_initiated_at && ` · Completed ${format(new Date(plan.handoff_initiated_at), 'MMM d')}`}
+                        </p>
+                        {hasAdjustments && (
+                          <p className="text-xs text-green-800 bg-green-50 rounded px-2 py-1 mt-2 italic">
+                            "{plan.post_return_adjustments}"
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-4">
+                        {ret.handoffPending && (
+                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">Pending Acceptance</span>
+                        )}
+                        {ret.handoffAccepted && (
+                          <button
+                            onClick={async () => {
+                              const { success, count, error } = await createFromPlan(student.id, student.campus_id, plan)
+                              if (success && count > 0) {
+                                toast.success(`${count} support${count > 1 ? 's' : ''} created from DAEP plan`)
+                                refetchReturns()
+                              } else if (success && count === 0) {
+                                toast('No supports to import from the transition plan', { icon: 'i' })
+                              } else {
+                                toast.error(error || 'Failed to create supports')
+                              }
+                            }}
+                            disabled={creatingSupport}
+                            className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            {creatingSupport ? 'Creating...' : 'Import DAEP Supports'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 

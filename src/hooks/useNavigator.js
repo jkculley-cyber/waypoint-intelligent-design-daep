@@ -941,3 +941,239 @@ function aggregateByMonth(placements, startDate) {
 
   return months
 }
+
+// ─── Post-DAEP Return ────────────────────────────────────────────────────────
+
+/**
+ * Students returning from DAEP to the viewer's home campus in the last 90 days.
+ * Reads from Waypoint tables (incidents + transition_plans) — no Navigator tables involved.
+ *
+ * Returns students whose DAEP incident is completed, transition plan handoff is
+ * pending or accepted, and student.campus_id matches the viewer's campus scope.
+ */
+export function useDaepReturns() {
+  const { districtId, campusIds, isAdmin } = useAuth()
+  const [returns, setReturns] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    try {
+      const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+
+      let q = supabase
+        .from('incidents')
+        .select(`
+          id, status, consequence_days, consequence_start, incident_date,
+          student:students!inner(id, first_name, last_name, grade_level, campus_id,
+            campus:campuses!campus_id(id, name)),
+          transition_plans(id, handoff_status, handoff_initiated_at, home_campus_accepted_at,
+            post_return_adjustments, behavioral_supports, academic_supports, parent_engagement_plan,
+            review_30_date, review_60_date, review_90_date)
+        `)
+        .eq('district_id', districtId)
+        .eq('consequence_type', 'daep')
+        .eq('status', 'completed')
+        .gte('updated_at', ninetyDaysAgo)
+
+      if (!isAdmin && campusIds?.length) {
+        q = q.in('student.campus_id', campusIds)
+      }
+
+      const { data, error } = await q
+      if (error) throw error
+
+      // Filter to only those with a handoff-initiated plan
+      const filtered = (data || []).filter(inc => {
+        const plan = inc.transition_plans?.[0]
+        return plan && plan.handoff_status
+      }).map(inc => {
+        const plan = inc.transition_plans[0]
+        return {
+          ...inc,
+          plan,
+          handoffAccepted: plan.handoff_status === 'accepted',
+          handoffPending: plan.handoff_status === 'pending_home_campus',
+        }
+      })
+
+      // Sort: pending first, then by handoff date desc
+      filtered.sort((a, b) => {
+        if (a.handoffPending && !b.handoffPending) return -1
+        if (!a.handoffPending && b.handoffPending) return 1
+        const dateA = a.plan.handoff_initiated_at || ''
+        const dateB = b.plan.handoff_initiated_at || ''
+        return dateB.localeCompare(dateA)
+      })
+
+      setReturns(filtered)
+    } catch (err) {
+      console.error('useDaepReturns error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, campusIds, isAdmin])
+
+  useEffect(() => { fetch() }, [fetch])
+  return { returns, loading, refetch: fetch }
+}
+
+/**
+ * Create a Navigator support plan seeded from a Waypoint transition plan.
+ * Extracts behavioral + academic supports from the plan and creates
+ * navigator_supports records for the returning student.
+ */
+export function useCreateReturnSupports() {
+  const { districtId, user } = useAuth()
+  const [loading, setLoading] = useState(false)
+
+  const createFromPlan = useCallback(async (studentId, campusId, plan) => {
+    setLoading(true)
+    try {
+      const supports = []
+
+      // Parse behavioral_supports from the transition plan
+      const behavioral = plan.behavioral_supports
+      if (behavioral && (typeof behavioral === 'string' ? behavioral.trim() : true)) {
+        supports.push({
+          district_id: districtId,
+          campus_id: campusId,
+          student_id: studentId,
+          support_type: 'behavior_contract',
+          assigned_by: user.id,
+          status: 'active',
+          notes: `[Post-DAEP] ${typeof behavioral === 'string' ? behavioral : JSON.stringify(behavioral)}${plan.post_return_adjustments ? '\n\nAdjustments: ' + plan.post_return_adjustments : ''}`,
+        })
+      }
+
+      // Parse academic_supports
+      const academic = plan.academic_supports
+      if (academic && (typeof academic === 'string' ? academic.trim() : true)) {
+        supports.push({
+          district_id: districtId,
+          campus_id: campusId,
+          student_id: studentId,
+          support_type: 'mentoring',
+          assigned_by: user.id,
+          status: 'active',
+          notes: `[Post-DAEP Academic] ${typeof academic === 'string' ? academic : JSON.stringify(academic)}`,
+        })
+      }
+
+      // If no specific supports but there are post-return adjustments, create a general one
+      if (supports.length === 0 && plan.post_return_adjustments) {
+        supports.push({
+          district_id: districtId,
+          campus_id: campusId,
+          student_id: studentId,
+          support_type: 'other',
+          assigned_by: user.id,
+          status: 'active',
+          notes: `[Post-DAEP Return] ${plan.post_return_adjustments}`,
+        })
+      }
+
+      if (supports.length === 0) {
+        return { success: true, count: 0 }
+      }
+
+      const { error } = await supabase
+        .from('navigator_supports')
+        .insert(supports)
+      if (error) throw error
+      return { success: true, count: supports.length }
+    } catch (err) {
+      console.error('createFromPlan error:', err)
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, user?.id])
+
+  return { createFromPlan, loading }
+}
+
+/**
+ * DAEP Risk Score — identifies students at elevated risk of DAEP referral.
+ * Factors: ISS/OSS count (rolling 180 days), repeat offenses, failed supports.
+ * Returns students sorted by risk score descending.
+ */
+export function useDaepRiskStudents() {
+  const { districtId, campusIds, isAdmin } = useAuth()
+  const [students, setStudents] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    try {
+      const sixMonthsAgo = new Date(Date.now() - 180 * 86400000).toISOString().split('T')[0]
+
+      // 1. All ISS/OSS placements in rolling 180 days
+      let placementQ = supabase
+        .from('navigator_placements')
+        .select('student_id, placement_type, start_date, students(id, first_name, last_name, grade_level, campus_id, is_sped, is_504)')
+        .eq('district_id', districtId)
+        .gte('start_date', sixMonthsAgo)
+      if (!isAdmin && campusIds?.length) placementQ = placementQ.in('campus_id', campusIds)
+      const { data: placements } = await placementQ
+
+      // 2. Failed/discontinued supports in same window
+      let supportQ = supabase
+        .from('navigator_supports')
+        .select('student_id, status, support_type')
+        .eq('district_id', districtId)
+        .eq('status', 'discontinued')
+        .gte('start_date', sixMonthsAgo)
+      if (!isAdmin && campusIds?.length) supportQ = supportQ.in('campus_id', campusIds)
+      const { data: failedSupports } = await supportQ
+
+      // 3. Aggregate per student
+      const byStudent = {}
+      ;(placements || []).forEach(p => {
+        const sid = p.student_id
+        if (!byStudent[sid]) {
+          byStudent[sid] = {
+            student_id: sid,
+            student: p.students,
+            issCount: 0,
+            ossCount: 0,
+            totalPlacements: 0,
+            failedSupports: 0,
+            riskScore: 0,
+          }
+        }
+        byStudent[sid].totalPlacements++
+        if (p.placement_type === 'iss') byStudent[sid].issCount++
+        if (p.placement_type === 'oss') byStudent[sid].ossCount++
+      })
+
+      ;(failedSupports || []).forEach(s => {
+        if (byStudent[s.student_id]) byStudent[s.student_id].failedSupports++
+      })
+
+      // 4. Compute risk score (0-100)
+      //    OSS weighted 3x, ISS 1x, failed supports 2x each
+      //    Thresholds: 50+ = elevated, 70+ = high, 85+ = critical
+      Object.values(byStudent).forEach(s => {
+        const raw = (s.issCount * 10) + (s.ossCount * 25) + (s.failedSupports * 15)
+        s.riskScore = Math.min(100, raw)
+      })
+
+      // 5. Filter to elevated+ and sort
+      const atRisk = Object.values(byStudent)
+        .filter(s => s.riskScore >= 40)
+        .sort((a, b) => b.riskScore - a.riskScore)
+
+      setStudents(atRisk)
+    } catch (err) {
+      console.error('useDaepRiskStudents error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, campusIds, isAdmin])
+
+  useEffect(() => { fetch() }, [fetch])
+  return { students, loading, refetch: fetch }
+}
