@@ -1359,7 +1359,7 @@ function ReturningThisWeekWidget() {
           <div className="divide-y divide-gray-100">
             {returning.map(p => {
               const cl = p.reentry_checklist?.[0]
-              const isReady = cl?.is_ready
+              const isReady = !!(cl?.student_completed_at && cl?.parent_completed_at && cl?.counselor_completed_at && cl?.admin_completed_at)
               const briefSent = cl?.brief_sent_at
               return (
                 <Link

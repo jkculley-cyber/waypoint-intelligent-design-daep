@@ -254,7 +254,7 @@ export function useReturningThisWeek() {
         .select(`
           id, plan_type, end_date,
           student:students(id, first_name, last_name, grade_level),
-          reentry_checklist:reentry_checklists(is_ready, brief_sent_at, return_date)
+          reentry_checklist:reentry_checklists(student_completed_at, parent_completed_at, counselor_completed_at, admin_completed_at, brief_sent_at, return_date)
         `)
         .eq('district_id', districtId)
         .eq('status', 'active')
