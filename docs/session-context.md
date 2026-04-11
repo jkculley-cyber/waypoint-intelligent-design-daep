@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-10 (Session BV — BU deployed, Navigator post-DAEP return flow, DAEP risk indicator, campus guide, 3 bug fixes, quick-add student)
+> Last updated: 2026-04-11 (Session BW — SIGNAL/SCOUT command center integration, Intel Tools tab, Worker Ollama proxy, Reddit direct-from-browser, Google Custom Search setup)
 
 ---
 
@@ -104,9 +104,10 @@
 
 ## Next Session Priority
 
-1. **Verify sidebar gate** — test as `hs-principal@lonestar-isd.org` on deployed site, confirm DAEP Dashboard + Phone Return hidden
-2. **Test Navigator DAEP Risk + Returning from DAEP widgets** — need seed data
-3. **Add Anthropic API credits** — $5 at console.anthropic.com to resume SIGNAL scanning
+1. **Test SIGNAL scan** on command center — verify Reddit posts + clickable URLs after latest deploy
+2. **Test Google Custom Search API** — should be propagated. Wire into SCOUT for free contact research.
+3. **Verify sidebar gate** — test as `hs-principal@lonestar-isd.org` on deployed site
+4. **Test Navigator DAEP Risk + Returning from DAEP widgets** — need seed data
 2. **Store redesign** — clearpathedgroup.com/store visual product grid (model: brightfutures-counseling.com)
 3. **SIGNAL custom domain** — add signal.clearpathedgroup.com in Cloudflare Pages
 4. **Google Search Console** — register clearpathedgroup.com to accelerate SEO page indexing
