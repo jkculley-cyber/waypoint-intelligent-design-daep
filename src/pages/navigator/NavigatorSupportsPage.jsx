@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
+import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorSupports } from '../../hooks/useNavigator'
 import { useAuth } from '../../contexts/AuthContext'
@@ -129,7 +130,7 @@ export default function NavigatorSupportsPage() {
       {showDrawer && (
         <NewSupportDrawer
           onClose={() => setShowDrawer(false)}
-          onSaved={() => { setShowDrawer(false); refetch() }}
+          onSaved={() => { setShowDrawer(false); refetch(); toast.success('Support created') }}
         />
       )}
 
@@ -137,7 +138,11 @@ export default function NavigatorSupportsPage() {
         <EditSupportDrawer
           support={editingSupport}
           onClose={() => setEditingSupport(null)}
-          onSaved={() => { setEditingSupport(null); refetch() }}
+          onSaved={(result) => {
+            setEditingSupport(null)
+            refetch()
+            toast.success(result?.completed ? 'Support completed — effectiveness data saved' : 'Support updated')
+          }}
         />
       )}
     </div>
@@ -386,7 +391,9 @@ function EditSupportDrawer({ support, onClose, onSaved }) {
     }).eq('id', support.id)
     setSaving(false)
     if (err) { setError(err.message); return }
-    onSaved()
+    const wasActive = support.status === 'active'
+    const nowCompleted = form.status === 'completed'
+    onSaved({ completed: wasActive && nowCompleted })
   }
 
   const studentName = support.students ? `${support.students.first_name} ${support.students.last_name}` : 'Support'

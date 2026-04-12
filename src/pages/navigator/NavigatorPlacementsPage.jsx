@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
+import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorPlacements } from '../../hooks/useNavigator'
 import { useAuth } from '../../contexts/AuthContext'
@@ -15,6 +16,7 @@ const TABS = [
 
 export default function NavigatorPlacementsPage() {
   const { districtId } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('active_iss')
   const [campusFilter, setCampusFilter] = useState('')
   const [campuses, setCampuses] = useState([])
@@ -130,7 +132,12 @@ export default function NavigatorPlacementsPage() {
                         <Link to={`/navigator/students/${p.student_id}`} className="font-medium text-gray-900 hover:text-blue-600">
                           {p.students ? `${p.students.first_name} ${p.students.last_name}` : '—'}
                         </Link>
-                        <p className="text-xs text-gray-400">{p.students?.grade_level || ''}</p>
+                        <p className="text-xs text-gray-400">
+                          Grade {p.students?.grade_level || '—'}
+                          {p.navigator_referrals && (
+                            <span className="ml-1 text-gray-300">· Ref {format(parseISO(p.navigator_referrals.referral_date), 'M/d')}</span>
+                          )}
+                        </p>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{p.campuses?.name || '—'}</td>
                       <td className="px-4 py-3">
@@ -176,7 +183,7 @@ export default function NavigatorPlacementsPage() {
       {showDrawer && (
         <NewPlacementDrawer
           onClose={() => setShowDrawer(false)}
-          onSaved={() => { setShowDrawer(false); refetch() }}
+          onSaved={() => { setShowDrawer(false); refetch(); toast.success('Placement created') }}
         />
       )}
 
@@ -184,7 +191,27 @@ export default function NavigatorPlacementsPage() {
         <EditPlacementDrawer
           placement={editingPlacement}
           onClose={() => setEditingPlacement(null)}
-          onSaved={() => { setEditingPlacement(null); refetch() }}
+          onSaved={(result) => {
+            const studentId = editingPlacement.student_id
+            const studentName = editingPlacement.students
+              ? `${editingPlacement.students.first_name} ${editingPlacement.students.last_name}`
+              : 'Student'
+            setEditingPlacement(null)
+            refetch()
+            if (result?.ended) {
+              toast((t) => (
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">Placement ended for {studentName}</span>
+                  <button
+                    onClick={() => { toast.dismiss(t.id); navigate(`/navigator/supports?new=1&student=${studentId}`) }}
+                    className="text-sm text-blue-600 font-semibold hover:underline text-left"
+                  >Create follow-up support →</button>
+                </div>
+              ), { duration: 6000, icon: '✓' })
+            } else {
+              toast.success('Placement updated')
+            }
+          }}
         />
       )}
     </div>
@@ -437,7 +464,9 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
       .eq('id', placement.id)
     setSaving(false)
     if (err) { setError(err.message); return }
-    onSaved()
+    const wasOpen = !placement.end_date
+    const nowClosed = !!form.end_date
+    onSaved({ ended: wasOpen && nowClosed })
   }
 
   return (

@@ -82,14 +82,36 @@ export default function NavigatorStudentPage() {
       <Topbar
         title="Navigator — Student History"
         subtitle={student.first_name + ' ' + student.last_name}
-        actions={showDaep ? (
-          <button
-            onClick={() => setShowEscalateModal(true)}
-            className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
-          >
-            Escalate to DAEP →
-          </button>
-        ) : null}
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/navigator/referrals?new=1&student=${id}`)}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + Referral
+            </button>
+            <button
+              onClick={() => navigate(`/navigator/placements?new=1&student=${id}`)}
+              className="px-3 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              + Placement
+            </button>
+            <button
+              onClick={() => navigate(`/navigator/supports?new=1&student=${id}`)}
+              className="px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              + Support
+            </button>
+            {showDaep && (
+              <button
+                onClick={() => setShowEscalateModal(true)}
+                className="px-3 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Escalate to DAEP →
+              </button>
+            )}
+          </div>
+        }
       />
 
       <div className="p-6 space-y-6">

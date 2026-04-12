@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
+import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorReferrals } from '../../hooks/useNavigator'
 import { useAuth } from '../../contexts/AuthContext'
@@ -42,6 +43,7 @@ const SKILL_GAP_LABELS = {
 
 export default function NavigatorReferralsPage() {
   const { districtId } = useAuth()
+  const navigate = useNavigate()
   const [filters, setFilters] = useState({ status: '', campus_id: '', date_from: '', date_to: '' })
   const [showDrawer, setShowDrawer] = useState(false)
   const [selectedReferral, setSelectedReferral] = useState(null)
@@ -189,7 +191,35 @@ export default function NavigatorReferralsPage() {
         <ReferralDrawer
           referral={selectedReferral}
           onClose={() => setShowDrawer(false)}
-          onSaved={() => { setShowDrawer(false); refetch() }}
+          onSaved={(result) => {
+            setShowDrawer(false)
+            refetch()
+            if (result?.isNew) {
+              toast.success('Referral created')
+            } else if (result?.outcome === 'iss' || result?.outcome === 'oss') {
+              toast((t) => (
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">Referral reviewed — {result.outcome.toUpperCase()} assigned</span>
+                  <button
+                    onClick={() => { toast.dismiss(t.id); navigate(`/navigator/placements?new=1&student=${result.studentId}`) }}
+                    className="text-sm text-blue-600 font-semibold hover:underline text-left"
+                  >Create {result.outcome.toUpperCase()} placement now →</button>
+                </div>
+              ), { duration: 6000, icon: '✓' })
+            } else if (result?.outcome === 'support_assigned') {
+              toast((t) => (
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">Referral reviewed — support assigned</span>
+                  <button
+                    onClick={() => { toast.dismiss(t.id); navigate(`/navigator/supports?new=1&student=${result.studentId}`) }}
+                    className="text-sm text-blue-600 font-semibold hover:underline text-left"
+                  >Create support now →</button>
+                </div>
+              ), { duration: 6000, icon: '✓' })
+            } else {
+              toast.success('Referral updated')
+            }
+          }}
         />
       )}
     </div>
@@ -272,7 +302,7 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
     })
     setSaving(false)
     if (err) { setError(err.message); return }
-    onSaved()
+    onSaved({ isNew: true })
   }
 
   const handleSubmitReview = async () => {
@@ -288,7 +318,7 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
     }).eq('id', referral.id)
     setSaving(false)
     if (err) { setError(err.message); return }
-    onSaved()
+    onSaved({ outcome: reviewForm.outcome, studentId: referral.student_id })
   }
 
   return (
