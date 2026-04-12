@@ -495,6 +495,8 @@ export default function TransitionPlanDetailPage() {
           planId={plan.id}
           studentId={plan.student_id}
           districtId={plan.district_id}
+          plan={plan}
+          interventions={interventions}
           onClose={() => setShowReviewForm(false)}
           onComplete={() => {
             setShowReviewForm(false)

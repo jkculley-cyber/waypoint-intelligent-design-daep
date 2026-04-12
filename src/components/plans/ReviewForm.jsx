@@ -34,7 +34,18 @@ const FIDELITY_OPTIONS = [
   { value: 'not_implemented', label: 'Not Implemented' },
 ]
 
-export default function ReviewForm({ planId, studentId, districtId, onClose, onComplete }) {
+function formatSupport(val) {
+  if (!val) return null
+  if (typeof val === 'string') return val.trim() || null
+  if (Array.isArray(val)) return val.length ? val.join(', ') : null
+  if (typeof val === 'object') {
+    const entries = Object.entries(val).filter(([, v]) => v)
+    return entries.length ? entries.map(([k, v]) => `${k}: ${v}`).join(', ') : null
+  }
+  return String(val)
+}
+
+export default function ReviewForm({ planId, studentId, districtId, plan, interventions, onClose, onComplete }) {
   const { createReview } = useReviewActions()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -123,6 +134,46 @@ export default function ReviewForm({ planId, studentId, districtId, onClose, onC
       }
     >
       <div className="space-y-5">
+        {/* Current Plan Supports & Interventions — context for the reviewer */}
+        {(plan || interventions?.length > 0) && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wide mb-2">Current Plan — Action Steps & Interventions</h4>
+            <div className="space-y-2 text-sm text-gray-700">
+              {formatSupport(plan?.behavioral_supports) && (
+                <div><span className="font-medium text-gray-900">Behavioral:</span> {formatSupport(plan.behavioral_supports)}</div>
+              )}
+              {formatSupport(plan?.academic_supports) && (
+                <div><span className="font-medium text-gray-900">Academic:</span> {formatSupport(plan.academic_supports)}</div>
+              )}
+              {plan?.parent_engagement_plan && (
+                <div><span className="font-medium text-gray-900">Parent Engagement:</span> {plan.parent_engagement_plan}</div>
+              )}
+              {plan?.goals && (
+                <div><span className="font-medium text-gray-900">Goals:</span> {plan.goals}</div>
+              )}
+              {plan?.post_return_adjustments && (
+                <div><span className="font-medium text-gray-900">Post-Return Adjustments:</span> <em>{plan.post_return_adjustments}</em></div>
+              )}
+              {interventions && interventions.length > 0 && (
+                <div>
+                  <span className="font-medium text-gray-900">Active Interventions:</span>
+                  <ul className="mt-1 ml-4 list-disc text-xs text-gray-600 space-y-0.5">
+                    {interventions.map((iv, i) => (
+                      <li key={iv.id || i}>
+                        {iv.intervention_type?.replace(/_/g, ' ')} {iv.status && iv.status !== 'active' ? `(${iv.status})` : ''}
+                        {iv.notes ? ` — ${iv.notes}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!formatSupport(plan?.behavioral_supports) && !formatSupport(plan?.academic_supports) && !plan?.goals && (!interventions || interventions.length === 0) && (
+                <p className="text-xs text-gray-500 italic">No supports or interventions documented on this plan yet.</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Review Type + Progress */}
         <div className="grid grid-cols-2 gap-4">
           <SelectField
