@@ -1505,7 +1505,18 @@ function HomeCampusAllocationsWidget() {
   // Filter out DAEP-type campuses — they're shown in CapacityTrackerWidget above
   const homeCampuses = campusRows.filter(r => r.campus_name && !r.campus_name.toLowerCase().includes('daep'))
 
-  if (loading || homeCampuses.length === 0) return null
+  if (loading) return (
+    <div className="rounded-xl border border-gray-200 p-4 bg-white">
+      <p className="text-sm text-gray-400">Loading home campus allocations...</p>
+    </div>
+  )
+
+  if (homeCampuses.length === 0) return (
+    <div className="rounded-xl border border-gray-200 p-4 bg-white">
+      <p className="text-sm text-gray-500">No home campus allocations configured. Go to Settings → DAEP Seat Allocations to set them up.</p>
+      <p className="text-xs text-gray-400 mt-1">Raw data: {campusRows.length} campus rows returned, {campusRows.map(r => r.campus_name).join(', ')}</p>
+    </div>
+  )
 
   const totalAllocation = homeCampuses.reduce((s, r) => s + r.allocation, 0)
   const totalActive = homeCampuses.reduce((s, r) => s + r.active, 0)
