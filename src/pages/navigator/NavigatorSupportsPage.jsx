@@ -34,12 +34,22 @@ const STATUS_COLORS = {
 
 export default function NavigatorSupportsPage() {
   const { districtId } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [typeFilter, setTypeFilter] = useState('')
   const [campusFilter, setCampusFilter] = useState('')
   const [campuses, setCampuses] = useState([])
   const [showDrawer, setShowDrawer] = useState(false)
   const [editingSupport, setEditingSupport] = useState(null)
   const { supports, loading, refetch } = useNavigatorSupports()
+  const prefilledStudentId = searchParams.get('student')
+
+  // Auto-open drawer when navigated with ?new=1
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowDrawer(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
 
   useEffect(() => {
     if (!districtId) return
@@ -129,6 +139,7 @@ export default function NavigatorSupportsPage() {
 
       {showDrawer && (
         <NewSupportDrawer
+          prefilledStudentId={prefilledStudentId}
           onClose={() => setShowDrawer(false)}
           onSaved={() => { setShowDrawer(false); refetch(); toast.success('Support created') }}
         />
@@ -215,13 +226,26 @@ const SUPPORT_TEMPLATES = [
   { id: 'parent_conference', label: 'Parent Conference', type: 'parent_contact', notes: 'Scheduled parent/guardian conference to discuss behavior patterns, review supports in place, and align on home-school expectations.', weeks: 1 },
 ]
 
-function NewSupportDrawer({ onClose, onSaved }) {
+function NewSupportDrawer({ onClose, onSaved, prefilledStudentId }) {
   const { districtId, profile } = useAuth()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [studentSearch, setStudentSearch] = useState('')
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  // Auto-load prefilled student
+  useEffect(() => {
+    if (!prefilledStudentId || !districtId) return
+    supabase.from('students').select('id, first_name, last_name, grade_level, campus_id')
+      .eq('id', prefilledStudentId).single()
+      .then(({ data }) => {
+        if (data) {
+          setSelectedStudent(data)
+          setForm(f => ({ ...f, campus_id: data.campus_id || f.campus_id }))
+        }
+      })
+  }, [prefilledStudentId, districtId])
   const [staff, setStaff] = useState([])
   const [campuses, setCampuses] = useState([])
   const [form, setForm] = useState({

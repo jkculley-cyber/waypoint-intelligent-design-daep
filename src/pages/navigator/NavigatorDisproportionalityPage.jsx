@@ -95,7 +95,7 @@ export default function NavigatorDisproportionalityPage() {
                     {avgCampusRate && (
                       <ReferenceLine x={parseFloat(avgCampusRate)} stroke="#94a3b8" strokeDasharray="4 2" label={{ value: 'Avg', position: 'top', fontSize: 10, fill: '#94a3b8' }} />
                     )}
-                    <Bar dataKey="rate" radius={[0,4,4,0]}>
+                    <Bar dataKey="rate" radius={[0,4,4,0]} cursor="pointer" onClick={(d) => setExpandedCampus(expandedCampus === d.campus_id ? null : d.campus_id)}>
                       {campusData.map((entry) => (
                         <Cell key={entry.campus_id} fill={rateColor(entry.rate, maxCampusRate)} />
                       ))}

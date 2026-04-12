@@ -47,7 +47,7 @@ export default function NavigatorEscalationPage() {
       const s = students.find(x => x.student_id === studentId)
       return {
         district_id: districtId,
-        campus_id: s?.campus?.id || s?.student?.campus_id,
+        campus_id: s?.campus?.id,
         student_id: studentId,
         assigned_by: profile.id,
         support_type: bulkType,

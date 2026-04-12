@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
@@ -44,11 +44,22 @@ const SKILL_GAP_LABELS = {
 export default function NavigatorReferralsPage() {
   const { districtId } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ status: '', campus_id: '', date_from: '', date_to: '' })
   const [showDrawer, setShowDrawer] = useState(false)
   const [selectedReferral, setSelectedReferral] = useState(null)
   const [campuses, setCampuses] = useState([])
   const { referrals, loading, refetch } = useNavigatorReferrals(filters)
+  const prefilledStudentId = searchParams.get('student')
+
+  // Auto-open drawer when navigated with ?new=1
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setSelectedReferral(null)
+      setShowDrawer(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
 
   useEffect(() => {
     if (!districtId) return

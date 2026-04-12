@@ -17,11 +17,21 @@ const TABS = [
 export default function NavigatorPlacementsPage() {
   const { districtId } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('active_iss')
   const [campusFilter, setCampusFilter] = useState('')
   const [campuses, setCampuses] = useState([])
   const [showDrawer, setShowDrawer] = useState(false)
   const [editingPlacement, setEditingPlacement] = useState(null)
+  const prefilledStudentId = searchParams.get('student')
+
+  // Auto-open drawer when navigated with ?new=1
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowDrawer(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
 
   useEffect(() => {
     if (!districtId) return
@@ -182,6 +192,7 @@ export default function NavigatorPlacementsPage() {
 
       {showDrawer && (
         <NewPlacementDrawer
+          prefilledStudentId={prefilledStudentId}
           onClose={() => setShowDrawer(false)}
           onSaved={() => { setShowDrawer(false); refetch(); toast.success('Placement created') }}
         />
@@ -220,13 +231,26 @@ export default function NavigatorPlacementsPage() {
 
 // ─── New Placement Drawer ─────────────────────────────────────────────────────
 
-function NewPlacementDrawer({ onClose, onSaved }) {
+function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
   const { districtId, profile } = useAuth()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [studentSearch, setStudentSearch] = useState('')
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  // Auto-load prefilled student
+  useEffect(() => {
+    if (!prefilledStudentId || !districtId) return
+    supabase.from('students').select('id, first_name, last_name, grade_level, campus_id, is_sped, is_504')
+      .eq('id', prefilledStudentId).single()
+      .then(({ data }) => {
+        if (data) {
+          setSelectedStudent(data)
+          setForm(f => ({ ...f, campus_id: data.campus_id || f.campus_id }))
+        }
+      })
+  }, [prefilledStudentId, districtId])
   const [campuses, setCampuses] = useState([])
   const [form, setForm] = useState({
     campus_id: '',
