@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-12 (Session BY — Navigator DAEP awareness: At DAEP stat card, badges, prior DAEP history, risk boost +30, Students list page with filters)
+> Last updated: 2026-04-12 (Session BZ — Navigator standalone campus model, deep audit, workflow chaining, drill-downs, bulk supports, templates, bug fixes)
 
 ---
 
@@ -104,18 +104,14 @@
 
 ## Next Session Priority
 
-1. **Google Custom Search API** — still 403 after 2 days. Troubleshoot or new key.
-2. **Wire SCOUT to Google + Ollama** — free contact research
-3. **Test SIGNAL Run Scan** from command center — verify Reddit via browser
-4. **Test Navigator DAEP Risk + Returning from DAEP widgets** — need seed data
-5. **Facebook Live recording** — Kim records with script from `docs/brand/facebook-live-script.md`
-2. **Store redesign** — clearpathedgroup.com/store visual product grid (model: brightfutures-counseling.com)
-3. **SIGNAL custom domain** — add signal.clearpathedgroup.com in Cloudflare Pages
-4. **Google Search Console** — register clearpathedgroup.com to accelerate SEO page indexing
-5. **Product images for remaining products** — DAEP Tracker, ISS, Navigator, Meridian
-6. **Investigator Toolkit** — rebuild single-file HTML with new features
-7. **Reach Chad Bronowski** — LinkedIn or phone (CSISD 979-764-5400)
-8. **Re-send Apex marketing emails**
+1. **Navigator campus pilot outreach** — pilot form live at clearpathedgroup.com/navigator.html#pilot. Monitor Formspree + ops Supabase demo_leads for submissions.
+2. **Test Navigator in browser** — login as ap@lincoln-hs.demo, walk through entire workflow: create referral → review → create placement → end → create support → complete with effectiveness data
+3. **Campus-scoped dashboard filter** — top remaining gap: principals see all campuses, need campus dropdown on Dashboard/Goals/Placements
+4. **Facebook Live recording** — script at `docs/brand/facebook-live-script.md`
+5. **Store redesign** — clearpathedgroup.com/store visual product grid
+6. **Google Custom Search API** — still 403 (carryover)
+7. **SIGNAL custom domain** — signal.clearpathedgroup.com
+8. **Google Search Console** — register clearpathedgroup.com
 9. **Meridian deep audit** when ready
 
 ---
