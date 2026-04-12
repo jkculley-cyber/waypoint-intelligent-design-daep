@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
+import { useAuth } from '../../contexts/AuthContext'
 import { useNavigatorStudentHistory, useStudentDaepStatus } from '../../hooks/useNavigator'
 
 const SUPPORT_TYPE_LABELS = {
@@ -22,6 +23,8 @@ const RISK_STYLES = {
 export default function NavigatorStudentPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { hasProduct } = useAuth()
+  const showDaep = hasProduct('waypoint')
   const [showEscalateModal, setShowEscalateModal] = useState(false)
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
   const daepStatus = useStudentDaepStatus(id)
@@ -79,14 +82,14 @@ export default function NavigatorStudentPage() {
       <Topbar
         title="Navigator — Student History"
         subtitle={student.first_name + ' ' + student.last_name}
-        actions={
+        actions={showDaep ? (
           <button
             onClick={() => setShowEscalateModal(true)}
             className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
           >
-            Escalate to Waypoint DAEP →
+            Escalate to DAEP →
           </button>
-        }
+        ) : null}
       />
 
       <div className="p-6 space-y-6">
@@ -276,7 +279,7 @@ export default function NavigatorStudentPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowEscalateModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Escalate to Waypoint DAEP?</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Escalate to DAEP Placement?</h2>
             <p className="text-sm text-gray-500 mb-4">This will open a new DAEP incident pre-filled with this student's Navigator context.</p>
 
             <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-4">

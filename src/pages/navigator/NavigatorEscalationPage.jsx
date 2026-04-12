@@ -152,7 +152,7 @@ export default function NavigatorEscalationPage() {
 
         {/* Algorithm note */}
         <p className="text-xs text-gray-400">
-          Risk score factors: referral recency (+30/+15), frequency (+15/+10), OSS (+25/+10), ISS (+10), prior DAEP escalation (+20), active supports (−12 each). Scores clamped 0–100.
+          Risk score factors: referral recency (+30/+15), frequency (+15/+10), OSS (+25/+10), ISS (+10), prior escalation history (+20), active supports (−12 each). Scores clamped 0–100.
         </p>
       </div>
     </div>

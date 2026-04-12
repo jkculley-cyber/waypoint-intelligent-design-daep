@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Topbar from '../../components/layout/Topbar'
+import { useAuth } from '../../contexts/AuthContext'
 import { useNavigatorPilotSummary, currentSchoolYear, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
 
 const SCHOOL_YEARS = ['2025-26', '2024-25', '2023-24']
 
 export default function NavigatorPilotPage() {
   const navigate = useNavigate()
+  const { hasProduct } = useAuth()
+  const showDaep = hasProduct('waypoint')
   const defaultYear = currentSchoolYear()
   const [schoolYear, setSchoolYear] = useState(defaultYear)
   const { summary, loading, error, refetch } = useNavigatorPilotSummary(schoolYear)
@@ -55,8 +58,8 @@ export default function NavigatorPilotPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <BigMetric label="Total Referrals" value={summary.totalReferrals} color="text-blue-700" bg="bg-blue-50" onClick={() => navigate('/navigator/referrals')} />
               <BigMetric label="Students Served" value={summary.uniqueStudents} color="text-indigo-700" bg="bg-indigo-50" onClick={() => navigate('/navigator')} />
-              <BigMetric label="Diverted from DAEP" value={summary.diverted} color="text-emerald-700" bg="bg-emerald-50" onClick={() => navigate('/navigator/effectiveness')} />
-              <BigMetric label="Escalated to DAEP" value={summary.escalated} color={summary.escalated > 0 ? 'text-red-700' : 'text-gray-500'} bg={summary.escalated > 0 ? 'bg-red-50' : 'bg-gray-50'} onClick={() => navigate('/navigator/escalation')} />
+              <BigMetric label={showDaep ? 'Diverted from DAEP' : 'Diverted from Escalation'} value={summary.diverted} color="text-emerald-700" bg="bg-emerald-50" onClick={() => navigate('/navigator/effectiveness')} />
+              <BigMetric label={showDaep ? 'Escalated to DAEP' : 'Referred for Escalation'} value={summary.escalated} color={summary.escalated > 0 ? 'text-red-700' : 'text-gray-500'} bg={summary.escalated > 0 ? 'bg-red-50' : 'bg-gray-50'} onClick={() => navigate('/navigator/escalation')} />
             </div>
 
             {/* ISS / OSS row */}
@@ -123,13 +126,13 @@ export default function NavigatorPilotPage() {
                 {summary.diverted > 0 && (
                   <>
                     <strong>{summary.diverted}</strong> students ({Math.round(summary.diverted / summary.totalReferrals * 100)}%)
-                    were diverted from DAEP through targeted supports.{' '}
+                    were diverted from {showDaep ? 'DAEP' : 'escalation'} through targeted supports.{' '}
                   </>
                 )}
                 {summary.escalated > 0 && (
                   <>
                     <strong>{summary.escalated}</strong> student{summary.escalated !== 1 ? 's' : ''} required
-                    escalation to DAEP.{' '}
+                    escalation{showDaep ? ' to DAEP' : ''}.{' '}
                   </>
                 )}
                 {summary.totalDaysRemoved > 0 && (

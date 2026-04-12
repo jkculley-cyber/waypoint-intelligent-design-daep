@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Topbar from '../../components/layout/Topbar'
+import { useAuth } from '../../contexts/AuthContext'
 import { useNavigatorDashboardStats, useDaepReturns, useDaepRiskStudents, useCreateReturnSupports } from '../../hooks/useNavigator'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -12,6 +13,8 @@ const STATUS_COLORS = {
 }
 
 export default function NavigatorDashboardPage() {
+  const { hasProduct } = useAuth()
+  const showDaep = hasProduct('waypoint')
   const { stats, recentReferrals, escalationAlerts, loading } = useNavigatorDashboardStats()
   const { returns: daepReturns, loading: returnsLoading, refetch: refetchReturns } = useDaepReturns()
   const { students: atRiskStudents, loading: riskLoading } = useDaepRiskStudents()
@@ -41,7 +44,7 @@ export default function NavigatorDashboardPage() {
             </svg>
             <div>
               <p className="text-sm font-medium text-red-800">
-                {escalationAlerts.length} student{escalationAlerts.length !== 1 ? 's' : ''} with 3+ OSS placements in the last 90 days — Consider DAEP review.
+                {escalationAlerts.length} student{escalationAlerts.length !== 1 ? 's' : ''} with 3+ OSS placements in the last 90 days{showDaep ? ' — Consider DAEP review.' : ' — Immediate intervention needed.'}
               </p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {escalationAlerts.map(a => (
@@ -69,7 +72,7 @@ export default function NavigatorDashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <div className={`grid grid-cols-2 ${showDaep ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-4`}>
             <StatCard
               label="Referrals This Month"
               value={stats?.referralsThisMonth ?? 0}
@@ -91,13 +94,15 @@ export default function NavigatorDashboardPage() {
               icon={<PlacementIcon />}
               link="/navigator/placements"
             />
-            <StatCard
-              label="At DAEP"
-              value={stats?.atDaep ?? 0}
-              color="text-orange-600"
-              icon={<DaepIcon />}
-              link="/navigator/placements"
-            />
+            {showDaep && (
+              <StatCard
+                label="At DAEP"
+                value={stats?.atDaep ?? 0}
+                color="text-orange-600"
+                icon={<DaepIcon />}
+                link="/navigator/placements"
+              />
+            )}
             <StatCard
               label="Active Supports"
               value={stats?.activeSupports ?? 0}
@@ -108,8 +113,8 @@ export default function NavigatorDashboardPage() {
           </div>
         )}
 
-        {/* DAEP Risk — Proactive Alert */}
-        {!riskLoading && atRiskStudents.length > 0 && (
+        {/* DAEP Risk — Proactive Alert (only when Waypoint/DAEP is enabled) */}
+        {showDaep && !riskLoading && atRiskStudents.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -149,8 +154,8 @@ export default function NavigatorDashboardPage() {
           </div>
         )}
 
-        {/* Returning from DAEP */}
-        {!returnsLoading && daepReturns.length > 0 && (
+        {/* Returning from DAEP (only when Waypoint/DAEP is enabled) */}
+        {showDaep && !returnsLoading && daepReturns.length > 0 && (
           <div className="bg-white rounded-xl border-2 border-green-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-green-100 bg-green-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
