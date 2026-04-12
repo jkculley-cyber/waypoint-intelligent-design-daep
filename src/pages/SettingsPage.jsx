@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import Topbar from '../components/layout/Topbar'
 import Card from '../components/ui/Card'
 import { SIS_OPTIONS } from '../lib/sisExport'
+import { INTERVENTION_CATEGORIES, INTERVENTION_CATEGORY_LABELS } from '../lib/constants'
 
 const SETTINGS_SECTIONS = [
   {
@@ -22,6 +23,14 @@ const SETTINGS_SECTIONS = [
     href: '/settings/offense-codes',
     icon: OffenseIcon,
     ready: true,
+  },
+  {
+    title: 'Custom Interventions',
+    description: 'Add district-specific interventions for transition plans. System-wide interventions are always available.',
+    href: null,
+    icon: InterventionIcon,
+    ready: true,
+    inline: 'custom-interventions',
   },
   {
     title: 'Discipline Matrix',
@@ -63,6 +72,12 @@ const SETTINGS_SECTIONS = [
 export default function SettingsPage() {
   const { hasRole } = useAuth()
   const [showAllocations, setShowAllocations] = useState(false)
+  const [showInterventions, setShowInterventions] = useState(false)
+
+  const handleInlineClick = (inline) => {
+    if (inline === 'daep-allocations') setShowAllocations(v => !v)
+    if (inline === 'custom-interventions') setShowInterventions(v => !v)
+  }
 
   return (
     <div>
@@ -74,8 +89,8 @@ export default function SettingsPage() {
       <div className="p-3 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {SETTINGS_SECTIONS.map((section) =>
-            section.inline === 'daep-allocations' ? (
-              <div key={section.title} onClick={() => setShowAllocations(!showAllocations)}>
+            section.inline ? (
+              <div key={section.title} onClick={() => handleInlineClick(section.inline)}>
                 <SettingsCard {...section} href="#" />
               </div>
             ) : (
@@ -85,6 +100,7 @@ export default function SettingsPage() {
         </div>
 
         {showAllocations && <DaepAllocationEditor />}
+        {showInterventions && <CustomInterventionEditor />}
 
         {/* SIS Integration — admin only */}
         {hasRole(['admin']) && <SISIntegrationSection />}
@@ -151,6 +167,160 @@ function DaepAllocationEditor() {
               </div>
             </div>
           ))}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function CustomInterventionEditor() {
+  const { districtId } = useAuth()
+  const [interventions, setInterventions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showAdd, setShowAdd] = useState(false)
+  const [newIntervention, setNewIntervention] = useState({ name: '', category: 'behavioral', tier: 2, description: '' })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!districtId) return
+    supabase
+      .from('interventions')
+      .select('*')
+      .or(`district_id.eq.${districtId},district_id.is.null`)
+      .eq('is_active', true)
+      .order('district_id', { ascending: true, nullsFirst: true })
+      .order('category')
+      .order('name')
+      .then(({ data }) => {
+        setInterventions(data || [])
+        setLoading(false)
+      })
+  }, [districtId])
+
+  const handleAdd = async () => {
+    if (!newIntervention.name.trim()) { toast.error('Name is required'); return }
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('interventions')
+      .insert({
+        district_id: districtId,
+        name: newIntervention.name.trim(),
+        category: newIntervention.category,
+        tier: newIntervention.tier,
+        description: newIntervention.description.trim() || null,
+        is_active: true,
+      })
+      .select()
+      .single()
+    setSaving(false)
+    if (error) {
+      toast.error('Failed to add: ' + error.message)
+    } else {
+      toast.success('Intervention added')
+      setInterventions(prev => [...prev, data])
+      setNewIntervention({ name: '', category: 'behavioral', tier: 2, description: '' })
+      setShowAdd(false)
+    }
+  }
+
+  const handleDeactivate = async (id) => {
+    const { error } = await supabase.from('interventions').update({ is_active: false }).eq('id', id)
+    if (error) toast.error('Failed to remove')
+    else {
+      toast.success('Intervention removed')
+      setInterventions(prev => prev.filter(i => i.id !== id))
+    }
+  }
+
+  if (loading) return <p className="text-sm text-gray-400 mt-4">Loading interventions...</p>
+
+  const systemWide = interventions.filter(i => !i.district_id)
+  const custom = interventions.filter(i => i.district_id)
+
+  return (
+    <div className="mt-6">
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Interventions Catalog</h3>
+            <p className="text-xs text-gray-500 mt-0.5">System-wide interventions are shared across all districts. Add your own custom interventions below.</p>
+          </div>
+          <button onClick={() => setShowAdd(!showAdd)} className="text-xs font-medium text-orange-600 hover:text-orange-700">+ Add Custom</button>
+        </div>
+
+        {showAdd && (
+          <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Name *</label>
+                <input type="text" value={newIntervention.name} onChange={e => setNewIntervention(p => ({ ...p, name: e.target.value }))}
+                  placeholder="e.g. Peer Mediation Program" className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Category</label>
+                <select value={newIntervention.category} onChange={e => setNewIntervention(p => ({ ...p, category: e.target.value }))}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                  {Object.entries(INTERVENTION_CATEGORY_LABELS).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Tier</label>
+                <select value={newIntervention.tier} onChange={e => setNewIntervention(p => ({ ...p, tier: parseInt(e.target.value) }))}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                  <option value={1}>Tier 1 — Universal</option>
+                  <option value={2}>Tier 2 — Targeted</option>
+                  <option value={3}>Tier 3 — Intensive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Description</label>
+                <input type="text" value={newIntervention.description} onChange={e => setNewIntervention(p => ({ ...p, description: e.target.value }))}
+                  placeholder="Optional description" className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleAdd} disabled={saving || !newIntervention.name.trim()}
+                className="px-4 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors">
+                {saving ? 'Adding...' : 'Add Intervention'}
+              </button>
+              <button onClick={() => setShowAdd(false)} className="px-4 py-1.5 text-gray-500 hover:text-gray-700 text-xs transition-colors">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {custom.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-2">Your District's Custom Interventions</p>
+            <div className="space-y-1">
+              {custom.map(i => (
+                <div key={i.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{i.name}</p>
+                    <p className="text-xs text-gray-500">{INTERVENTION_CATEGORY_LABELS[i.category] || i.category} · Tier {i.tier}{i.description ? ` · ${i.description}` : ''}</p>
+                  </div>
+                  <button onClick={() => handleDeactivate(i.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">System-Wide Interventions ({systemWide.length})</p>
+        <div className="space-y-1">
+          {systemWide.map(i => (
+            <div key={i.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-700">{i.name}</p>
+                <p className="text-xs text-gray-400">{INTERVENTION_CATEGORY_LABELS[i.category] || i.category} · Tier {i.tier}</p>
+              </div>
+              <span className="text-[10px] text-gray-400 italic">System</span>
+            </div>
+          ))}
+          {systemWide.length === 0 && <p className="text-xs text-gray-400 py-2">No system-wide interventions configured.</p>}
         </div>
       </Card>
     </div>

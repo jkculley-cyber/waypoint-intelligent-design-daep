@@ -331,7 +331,7 @@ BEGIN
 
   -- Marijuana
   INSERT INTO discipline_matrix (district_id, offense_code_id, occurrence, grade_group, min_consequence, max_consequence, default_consequence, consequence_days_min, consequence_days_max, required_supports, transition_plan_required) VALUES
-  (v_district, oc_drug3, 1, 'all', 'daep', 'daep', 'daep', 30, 45, ARRAY['parent_conference','substance_assessment','drug_testing','counseling_referral'], true);
+  (v_district, oc_drug3, 1, 'all', 'daep', 'daep', 'daep', 30, 45, ARRAY['parent_conference','substance_assessment','counseling_referral'], true);
 END $$;
 
 -- ============================================
