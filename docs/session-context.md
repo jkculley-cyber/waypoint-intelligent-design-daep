@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-11 (Session BW — SIGNAL/SCOUT command center integration, Intel Tools tab, Worker Ollama proxy, Reddit direct-from-browser, Google Custom Search setup)
+> Last updated: 2026-04-12 (Session BX — seat allocations in Settings, Home Campus Allocations on DAEP Dashboard, sidebar rename, compliance clickthrough, review context, custom interventions, Facebook Live script)
 
 ---
 
@@ -12,7 +12,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–063 (production). Migration 061: home campus DAEP handoff schema + trigger. Migration 062: `students.is_mtss`. Migration 063: students INSERT RLS for principal/ap/counselor.
+- **Migrations applied:** 001–063 (production). Migration 061: home campus DAEP handoff schema + trigger. Migration 062: `students.is_mtss`. Migration 063: students INSERT RLS for principal/ap/counselor. Home campuses seeded for Lone Star ISD (HS/MS/Elementary with DAEP seat allocations).
 - **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 28 placements (6 completed + 2 active + 20 prior year), 6 supports, 3 campus goals seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). 2 active placements (Marcus OSS, DeShawn ISS — no end_date) power the Active ISS/Active OSS tabs. `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -104,10 +104,11 @@
 
 ## Next Session Priority
 
-1. **Test SIGNAL scan** on command center — verify Reddit posts + clickable URLs after latest deploy
-2. **Test Google Custom Search API** — should be propagated. Wire into SCOUT for free contact research.
-3. **Verify sidebar gate** — test as `hs-principal@lonestar-isd.org` on deployed site
+1. **Google Custom Search API** — still 403 after 2 days. Troubleshoot or new key.
+2. **Wire SCOUT to Google + Ollama** — free contact research
+3. **Test SIGNAL Run Scan** from command center — verify Reddit via browser
 4. **Test Navigator DAEP Risk + Returning from DAEP widgets** — need seed data
+5. **Facebook Live recording** — Kim records with script from `docs/brand/facebook-live-script.md`
 2. **Store redesign** — clearpathedgroup.com/store visual product grid (model: brightfutures-counseling.com)
 3. **SIGNAL custom domain** — add signal.clearpathedgroup.com in Cloudflare Pages
 4. **Google Search Console** — register clearpathedgroup.com to accelerate SEO page indexing
