@@ -164,7 +164,7 @@ export function useNavigatorDashboardStats() {
       return q
     }
 
-    const [referralsThisMonth, activeISS, activeOSS, activeSupports, recentRes, ossStudents] = await Promise.all([
+    const [referralsThisMonth, activeISS, activeOSS, activeSupports, recentRes, ossStudents, atDaepRes] = await Promise.all([
       scopeCampus(
         supabase
           .from('navigator_referrals')
@@ -213,6 +213,21 @@ export function useNavigatorDashboardStats() {
           .limit(10)
       ),
 
+      // Students currently at DAEP (from Waypoint incidents, scoped by home campus)
+      supabase
+        .from('incidents')
+        .select('id, student:students!inner(id, campus_id)', { count: 'exact', head: false })
+        .eq('district_id', districtId)
+        .eq('consequence_type', 'daep')
+        .eq('status', 'active')
+        .then(r => {
+          if (!isAdmin && campusIds?.length) {
+            const filtered = (r.data || []).filter(inc => campusIds.includes(inc.student?.campus_id))
+            return { count: filtered.length }
+          }
+          return { count: r.count || 0 }
+        }),
+
       // Students with 3+ OSS in rolling 90 days — escalation alert
       scopeCampus(
         supabase
@@ -241,6 +256,7 @@ export function useNavigatorDashboardStats() {
       activeISS: activeISS.count || 0,
       activeOSS: activeOSS.count || 0,
       activeSupports: activeSupports.count || 0,
+      atDaep: atDaepRes.count || 0,
     })
     setRecentReferrals(recentRes.data || [])
     setEscalationAlerts(escalations)
@@ -1153,12 +1169,29 @@ export function useDaepRiskStudents() {
         if (byStudent[s.student_id]) byStudent[s.student_id].failedSupports++
       })
 
+      // 3b. Check for prior DAEP history (completed DAEP incidents)
+      const studentIds = Object.keys(byStudent)
+      let priorDaepIds = new Set()
+      if (studentIds.length > 0) {
+        const { data: daepInc } = await supabase
+          .from('incidents')
+          .select('student_id')
+          .eq('district_id', districtId)
+          .eq('consequence_type', 'daep')
+          .in('status', ['completed', 'active'])
+          .in('student_id', studentIds)
+        ;(daepInc || []).forEach(d => priorDaepIds.add(d.student_id))
+      }
+
       // 4. Compute risk score (0-100)
       //    OSS weighted 3x, ISS 1x, failed supports 2x each
+      //    Prior DAEP adds +30
       //    Thresholds: 50+ = elevated, 70+ = high, 85+ = critical
       Object.values(byStudent).forEach(s => {
-        const raw = (s.issCount * 10) + (s.ossCount * 25) + (s.failedSupports * 15)
+        const daepBoost = priorDaepIds.has(s.student_id) ? 30 : 0
+        const raw = (s.issCount * 10) + (s.ossCount * 25) + (s.failedSupports * 15) + daepBoost
         s.riskScore = Math.min(100, raw)
+        s.priorDaep = priorDaepIds.has(s.student_id)
       })
 
       // 5. Filter to elevated+ and sort
@@ -1176,4 +1209,48 @@ export function useDaepRiskStudents() {
 
   useEffect(() => { fetch() }, [fetch])
   return { students, loading, refetch: fetch }
+}
+
+/**
+ * Returns DAEP status for a single student — used on Navigator student detail page.
+ * - atDaep: true if currently in an active DAEP placement
+ * - priorDaep: array of completed DAEP incidents (dates, days served)
+ */
+export function useStudentDaepStatus(studentId) {
+  const { districtId } = useAuth()
+  const [status, setStatus] = useState({ atDaep: false, priorDaep: [], loading: true })
+
+  useEffect(() => {
+    if (!studentId || !districtId) { setStatus({ atDaep: false, priorDaep: [], loading: false }); return }
+
+    const fetchStatus = async () => {
+      const { data } = await supabase
+        .from('incidents')
+        .select('id, status, consequence_days, consequence_start, incident_date, updated_at')
+        .eq('district_id', districtId)
+        .eq('student_id', studentId)
+        .eq('consequence_type', 'daep')
+        .in('status', ['active', 'approved', 'completed'])
+        .order('incident_date', { ascending: false })
+
+      const incidents = data || []
+      const active = incidents.find(i => i.status === 'active' || i.status === 'approved')
+      const completed = incidents.filter(i => i.status === 'completed')
+
+      setStatus({
+        atDaep: !!active,
+        activeDaepIncident: active || null,
+        priorDaep: completed.map(i => ({
+          id: i.id,
+          date: i.incident_date,
+          days: i.consequence_days,
+          completedAt: i.updated_at,
+        })),
+        loading: false,
+      })
+    }
+    fetchStatus()
+  }, [studentId, districtId])
+
+  return status
 }

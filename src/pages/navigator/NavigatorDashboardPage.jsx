@@ -60,8 +60,8 @@ export default function NavigatorDashboardPage() {
 
         {/* Stat Cards */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map(i => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
                 <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
                 <div className="h-8 w-12 bg-gray-200 rounded" />
@@ -69,7 +69,7 @@ export default function NavigatorDashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             <StatCard
               label="Referrals This Month"
               value={stats?.referralsThisMonth ?? 0}
@@ -89,6 +89,13 @@ export default function NavigatorDashboardPage() {
               value={stats?.activeOSS ?? 0}
               color="text-red-600"
               icon={<PlacementIcon />}
+              link="/navigator/placements"
+            />
+            <StatCard
+              label="At DAEP"
+              value={stats?.atDaep ?? 0}
+              color="text-orange-600"
+              icon={<DaepIcon />}
               link="/navigator/placements"
             />
             <StatCard
@@ -126,6 +133,7 @@ export default function NavigatorDashboardPage() {
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {s.issCount} ISS · {s.ossCount} OSS · {s.failedSupports} failed support{s.failedSupports !== 1 ? 's' : ''} (180 days)
+                        {s.priorDaep && <span className="ml-1 text-orange-600 font-semibold">· PRIOR DAEP</span>}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -285,6 +293,14 @@ function ReferralIcon() {
 }
 
 function PlacementIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+    </svg>
+  )
+}
+
+function DaepIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
-import { useNavigatorStudentHistory } from '../../hooks/useNavigator'
+import { useNavigatorStudentHistory, useStudentDaepStatus } from '../../hooks/useNavigator'
 
 const SUPPORT_TYPE_LABELS = {
   cico: 'CICO',
@@ -24,6 +24,7 @@ export default function NavigatorStudentPage() {
   const navigate = useNavigate()
   const [showEscalateModal, setShowEscalateModal] = useState(false)
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
+  const daepStatus = useStudentDaepStatus(id)
 
   if (loading) {
     return (
@@ -99,6 +100,8 @@ export default function NavigatorStudentPage() {
               <h2 className="text-xl font-semibold text-gray-900">{student.first_name} {student.last_name}</h2>
               {student.is_sped && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">SPED</span>}
               {student.is_504 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">504</span>}
+              {daepStatus.atDaep && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">AT DAEP</span>}
+              {!daepStatus.atDaep && daepStatus.priorDaep?.length > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300">PRIOR DAEP ({daepStatus.priorDaep.length})</span>}
             </div>
             <p className="text-sm text-gray-500 mt-1">
               Grade {student.grade_level || '—'} · {student.campuses?.name || '—'}
@@ -112,6 +115,34 @@ export default function NavigatorStudentPage() {
             <p className="text-xs font-semibold mt-0.5 tracking-wide">{riskStyle.label}</p>
           </div>
         </div>
+
+        {/* DAEP History */}
+        {(daepStatus.atDaep || daepStatus.priorDaep?.length > 0) && (
+          <div className={`rounded-xl border p-4 ${daepStatus.atDaep ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
+            {daepStatus.atDaep && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse" />
+                <p className="text-sm font-semibold text-orange-800">Currently at DAEP</p>
+                {daepStatus.activeDaepIncident && (
+                  <a href={`/incidents/${daepStatus.activeDaepIncident.id}`} className="text-xs text-orange-600 underline ml-auto">View Incident</a>
+                )}
+              </div>
+            )}
+            {daepStatus.priorDaep?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-700 mb-1">{daepStatus.atDaep ? 'Previous' : 'Prior'} DAEP Placement{daepStatus.priorDaep.length > 1 ? 's' : ''}</p>
+                <div className="space-y-1">
+                  {daepStatus.priorDaep.map(d => (
+                    <div key={d.id} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">{d.date ? format(parseISO(d.date), 'MMM d, yyyy') : '—'} · {d.days || '?'} days assigned</span>
+                      <a href={`/incidents/${d.id}`} className="text-blue-600 underline">View</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Risk Triggers */}
         {riskTriggers && riskTriggers.length > 0 && (
