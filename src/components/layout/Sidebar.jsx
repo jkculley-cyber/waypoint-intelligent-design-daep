@@ -39,7 +39,7 @@ const meridianNavigation = [
 ]
 
 const staffNavigation = [
-  { name: 'Dashboard',        path: '/dashboard',                       icon: DashboardIcon,   roles: null,                                              product: 'waypoint', group: 'overview' },
+  { name: 'Home',             path: '/dashboard',                       icon: DashboardIcon,   roles: null,                                              product: 'waypoint', group: 'overview' },
   { name: 'Students',         path: '/students',                        icon: StudentsIcon,    roles: null,                                              product: 'waypoint', group: 'overview' },
   { name: 'Quick Report',     path: '/quick-report',                    icon: QuickReportIcon, roles: null,                                              product: 'waypoint', group: 'discipline' },
   { name: 'Incidents',        path: '/incidents',                       icon: IncidentsIcon,   roles: null,                                              product: 'waypoint', group: 'discipline' },
