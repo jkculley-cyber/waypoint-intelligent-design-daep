@@ -58,6 +58,7 @@ const NavigatorDashboardPage        = lazy(() => import('./pages/navigator/Navig
 const NavigatorReferralsPage        = lazy(() => import('./pages/navigator/NavigatorReferralsPage'))
 const NavigatorPlacementsPage       = lazy(() => import('./pages/navigator/NavigatorPlacementsPage'))
 const NavigatorSupportsPage         = lazy(() => import('./pages/navigator/NavigatorSupportsPage'))
+const NavigatorStudentsListPage     = lazy(() => import('./pages/navigator/NavigatorStudentsListPage'))
 const NavigatorStudentPage          = lazy(() => import('./pages/navigator/NavigatorStudentPage'))
 const NavigatorReportsPage          = lazy(() => import('./pages/navigator/NavigatorReportsPage'))
 const NavigatorGoalsPage            = lazy(() => import('./pages/navigator/NavigatorGoalsPage'))
@@ -161,6 +162,7 @@ function App() {
                 <Route path="/navigator/referrals" element={<RequireRole roles={STAFF_ROLES}><NavigatorReferralsPage /></RequireRole>} />
                 <Route path="/navigator/placements" element={<RequireRole roles={STAFF_ROLES}><NavigatorPlacementsPage /></RequireRole>} />
                 <Route path="/navigator/supports" element={<RequireRole roles={STAFF_ROLES}><NavigatorSupportsPage /></RequireRole>} />
+                <Route path="/navigator/students" element={<RequireRole roles={STAFF_ROLES}><NavigatorStudentsListPage /></RequireRole>} />
                 <Route path="/navigator/students/:id" element={<RequireRole roles={STAFF_ROLES}><NavigatorStudentPage /></RequireRole>} />
                 <Route path="/navigator/reports" element={<RequireRole roles={STAFF_ROLES}><NavigatorReportsPage /></RequireRole>} />
                 <Route path="/navigator/goals" element={<RequireRole roles={STAFF_ROLES}><NavigatorGoalsPage /></RequireRole>} />

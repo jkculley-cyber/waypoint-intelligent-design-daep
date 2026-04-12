@@ -12,6 +12,7 @@ import { useIsDaepStaff } from '../../hooks/useIsDaepStaff'
 
 const navigatorNavigation = [
   { name: 'Dashboard',          path: '/navigator',                    icon: DashboardIcon,      end: true },
+  { name: 'Students',           path: '/navigator/students',           icon: StudentsIcon        },
   { name: 'Referrals',          path: '/navigator/referrals',          icon: ReferralIcon        },
   { name: 'Placements',         path: '/navigator/placements',         icon: PlacementIcon       },
   { name: 'Supports',           path: '/navigator/supports',           icon: SupportsIcon        },
