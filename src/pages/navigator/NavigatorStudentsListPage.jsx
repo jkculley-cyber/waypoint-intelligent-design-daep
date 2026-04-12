@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import Topbar from '../../components/layout/Topbar'
 
 export default function NavigatorStudentsListPage() {
-  const { districtId, campusIds, isAdmin } = useAuth()
+  const { districtId, campusIds, isAdmin, hasProduct } = useAuth()
+  const showDaep = hasProduct('waypoint')
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all | at_daep | prior_daep | active_support
@@ -100,8 +101,10 @@ export default function NavigatorStudentsListPage() {
         <div className="flex gap-2 flex-wrap">
           {[
             { key: 'all', label: 'All Students' },
-            { key: 'at_daep', label: 'At DAEP', color: 'orange' },
-            { key: 'prior_daep', label: 'Prior DAEP', color: 'gray' },
+            ...(showDaep ? [
+              { key: 'at_daep', label: 'At DAEP', color: 'orange' },
+              { key: 'prior_daep', label: 'Prior DAEP', color: 'gray' },
+            ] : []),
             { key: 'active_support', label: 'Active Supports', color: 'green' },
           ].map(f => (
             <button

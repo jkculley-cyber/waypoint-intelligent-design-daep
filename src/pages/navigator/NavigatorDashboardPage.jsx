@@ -63,8 +63,8 @@ export default function NavigatorDashboardPage() {
 
         {/* Stat Cards */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map(i => (
+          <div className={`grid grid-cols-2 ${showDaep ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-4`}>
+            {[...Array(showDaep ? 5 : 4)].map((_, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
                 <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
                 <div className="h-8 w-12 bg-gray-200 rounded" />
