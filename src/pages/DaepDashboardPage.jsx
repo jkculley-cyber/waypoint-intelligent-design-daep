@@ -17,6 +17,7 @@ import {
   useMissedOrientations,
   usePendingPlacementStart,
   useDaepEnrollmentStats,
+  useHomeCampusCapacity,
 } from '../hooks/useDaepDashboard'
 import { useCampuses } from '../hooks/useCampuses'
 import { useAuth } from '../contexts/AuthContext'
@@ -71,6 +72,7 @@ export default function DaepDashboardPage() {
           <CapacityWarningBanner />
           <SummaryCards />
           <CapacityTrackerWidget />
+          <HomeCampusAllocationsWidget />
           <ReturningThisWeekWidget />
           <ActiveEnrollmentsTable />
           <ApprovalFlowTable />
@@ -1493,6 +1495,74 @@ function TexasBenchmarkCard() {
       <p className="text-xs text-gray-600 mt-4 pt-3 border-t border-gray-800">
         Source: TEA PEIMS discipline data products — tea.texas.gov. Benchmarks are statewide aggregates and do not represent any individual district.
       </p>
+    </div>
+  )
+}
+
+function HomeCampusAllocationsWidget() {
+  const { campusRows, loading } = useHomeCampusCapacity()
+
+  // Filter out DAEP-type campuses — they're shown in CapacityTrackerWidget above
+  const homeCampuses = campusRows.filter(r => r.campus_name && !r.campus_name.toLowerCase().includes('daep'))
+
+  if (loading || homeCampuses.length === 0) return null
+
+  const totalAllocation = homeCampuses.reduce((s, r) => s + r.allocation, 0)
+  const totalActive = homeCampuses.reduce((s, r) => s + r.active, 0)
+  const totalPending = homeCampuses.reduce((s, r) => s + r.pending, 0)
+  const totalAvailable = totalAllocation - totalActive - totalPending
+
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-blue-600">
+        <p className="text-sm font-semibold text-white">Home Campus DAEP Allocations</p>
+        <p className="text-xs text-blue-100">{totalActive + totalPending} of {totalAllocation} seats used</p>
+      </div>
+      <div className="bg-white">
+        {/* District totals */}
+        <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-700">{totalAllocation}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Total Allocated</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-orange-600">{totalActive}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Active at DAEP</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-blue-500">{totalPending}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Pending Approval</p>
+          </div>
+          <div className="text-center">
+            <p className={`text-2xl font-bold ${totalAvailable < 0 ? 'text-red-600' : 'text-green-600'}`}>{totalAvailable}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Available</p>
+          </div>
+        </div>
+        {/* Per-campus rows */}
+        <div className="divide-y divide-gray-50">
+          {homeCampuses.map(row => {
+            const overAlloc = row.available < 0
+            return (
+              <div key={row.campus_id} className={`px-4 py-3 flex items-center justify-between ${overAlloc ? 'bg-red-50' : ''}`}>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{row.campus_name}</p>
+                  {row.noShows > 0 && (
+                    <p className="text-xs text-red-600 mt-0.5">{row.noShows} no-show{row.noShows !== 1 ? 's' : ''} (seats held)</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-6 text-xs text-gray-500">
+                  <span><strong className="text-gray-700">{row.allocation}</strong> alloc</span>
+                  <span><strong className="text-orange-600">{row.active}</strong> active</span>
+                  <span><strong className="text-blue-500">{row.pending}</strong> pending</span>
+                  <span className={overAlloc ? 'text-red-600 font-bold' : ''}>
+                    <strong className={overAlloc ? 'text-red-600' : 'text-green-600'}>{row.available}</strong> avail
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
