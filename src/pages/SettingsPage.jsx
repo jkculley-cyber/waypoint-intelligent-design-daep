@@ -9,6 +9,14 @@ import { SIS_OPTIONS } from '../lib/sisExport'
 
 const SETTINGS_SECTIONS = [
   {
+    title: 'DAEP Seat Allocations',
+    description: 'Set how many DAEP seats each campus is allocated. Campus staff see their remaining availability.',
+    href: null,
+    icon: CapacityIcon,
+    ready: true,
+    inline: 'daep-allocations',
+  },
+  {
     title: 'Offense Codes',
     description: 'Manage Texas Education Code offense codes and add district-specific custom codes.',
     href: '/settings/offense-codes',
@@ -54,6 +62,7 @@ const SETTINGS_SECTIONS = [
 
 export default function SettingsPage() {
   const { hasRole } = useAuth()
+  const [showAllocations, setShowAllocations] = useState(false)
 
   return (
     <div>
@@ -64,14 +73,86 @@ export default function SettingsPage() {
 
       <div className="p-3 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {SETTINGS_SECTIONS.map((section) => (
-            <SettingsCard key={section.title} {...section} />
-          ))}
+          {SETTINGS_SECTIONS.map((section) =>
+            section.inline === 'daep-allocations' ? (
+              <div key={section.title} onClick={() => setShowAllocations(!showAllocations)}>
+                <SettingsCard {...section} href="#" />
+              </div>
+            ) : (
+              <SettingsCard key={section.title} {...section} />
+            )
+          )}
         </div>
+
+        {showAllocations && <DaepAllocationEditor />}
 
         {/* SIS Integration — admin only */}
         {hasRole(['admin']) && <SISIntegrationSection />}
       </div>
+    </div>
+  )
+}
+
+function DaepAllocationEditor() {
+  const { districtId } = useAuth()
+  const [campuses, setCampuses] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!districtId) return
+    supabase
+      .from('campuses')
+      .select('id, name, campus_type, daep_seat_allocation')
+      .eq('district_id', districtId)
+      .order('name')
+      .then(({ data }) => {
+        setCampuses(data || [])
+        setLoading(false)
+      })
+  }, [districtId])
+
+  const handleUpdate = async (campusId, value) => {
+    const val = parseInt(value, 10) || 0
+    const { error } = await supabase
+      .from('campuses')
+      .update({ daep_seat_allocation: val })
+      .eq('id', campusId)
+    if (error) {
+      toast.error('Failed to update: ' + error.message)
+    } else {
+      toast.success('Allocation saved')
+      setCampuses(prev => prev.map(c => c.id === campusId ? { ...c, daep_seat_allocation: val } : c))
+    }
+  }
+
+  if (loading) return <p className="text-sm text-gray-400 mt-4">Loading campuses...</p>
+
+  return (
+    <div className="mt-6">
+      <Card>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">DAEP Seat Allocations by Campus</h3>
+        <p className="text-xs text-gray-500 mb-4">Set how many students each home campus can have in DAEP at one time. Campus staff will see their available seats on their dashboard.</p>
+        <div className="space-y-2">
+          {campuses.map(c => (
+            <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                <p className="text-xs text-gray-500">{c.campus_type?.toUpperCase()}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">Seats</label>
+                <input
+                  type="number"
+                  min="0"
+                  defaultValue={c.daep_seat_allocation || 0}
+                  onBlur={(e) => handleUpdate(c.id, e.target.value)}
+                  className="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   )
 }
@@ -334,6 +415,14 @@ function CalendarIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  )
+}
+
+function CapacityIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
     </svg>
   )
 }
