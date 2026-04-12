@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import Topbar from '../../components/layout/Topbar'
 import { useSkillGapData, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
@@ -147,9 +148,56 @@ export default function NavigatorSkillMapPage() {
               </div>
             </div>
 
+            {/* Student Drill-Down (when skill selected) */}
+            {selectedSkill?.students?.length > 0 && (
+              <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-blue-900">
+                      Students with {selectedSkill.label} Gap
+                    </h2>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      {selectedSkill.students.length} student{selectedSkill.students.length !== 1 ? 's' : ''} identified — click to view history or create support
+                    </p>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-blue-100 rounded text-blue-700 font-medium">
+                    {selectedSkill.count} referrals
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {selectedSkill.students.map(s => (
+                    <div key={s.id} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
+                      <Link to={`/navigator/students/${s.id}`} className="flex-1">
+                        <span className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                          {s.first_name} {s.last_name}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500">Grade {s.grade_level}</span>
+                        <span className="ml-2 text-xs text-gray-400">{s.referral_count} referral{s.referral_count !== 1 ? 's' : ''}</span>
+                      </Link>
+                      <Link
+                        to={`/navigator/supports?new=1&student=${s.id}`}
+                        className="px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shrink-0"
+                      >
+                        + Support
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+                {selectedSkill.interventions?.length > 0 && (
+                  <div className="px-5 py-3 bg-emerald-50 border-t border-emerald-100">
+                    <p className="text-xs text-emerald-800">
+                      <span className="font-semibold">Recommended for {selectedSkill.label}:</span>{' '}
+                      {selectedSkill.interventions.join(', ')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Info note */}
             <p className="text-xs text-gray-400">
               Skill gaps are tagged on individual referrals. To populate this map, open a referral and set the "Skill Gap" field when reviewing.
+              {data.length > 0 && ' Click a bar or table row to see affected students and create targeted supports.'}
             </p>
           </>
         )}

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from 'recharts'
@@ -16,6 +18,7 @@ function rateColor(rate, max) {
 
 export default function NavigatorDisproportionalityPage() {
   const { campusData, gradeData, loading, error, refetch } = useDisproportionality()
+  const [expandedCampus, setExpandedCampus] = useState(null)
 
   const maxCampusRate = Math.max(...campusData.map(c => c.rate || 0), 0)
   const maxGradeRate  = Math.max(...gradeData.map(g => g.rate || 0), 0)
@@ -114,9 +117,15 @@ export default function NavigatorDisproportionalityPage() {
                   <tbody className="divide-y divide-gray-50">
                     {campusData.map(c => {
                       const diff = avgCampusRate ? (c.rate - parseFloat(avgCampusRate)).toFixed(1) : null
+                      const isExpanded = expandedCampus === c.campus_id
                       return (
-                        <tr key={c.campus_id} className="hover:bg-gray-50">
-                          <td className="py-2 font-medium text-gray-800">{c.name}</td>
+                        <tr key={c.campus_id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedCampus(isExpanded ? null : c.campus_id)}>
+                          <td className="py-2 font-medium text-gray-800">
+                            <span className="flex items-center gap-1.5">
+                              <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                              {c.name}
+                            </span>
+                          </td>
                           <td className="py-2 text-right text-gray-600">{c.referrals}</td>
                           <td className="py-2 text-right text-gray-500">{c.enrollment || '—'}</td>
                           <td className="py-2 text-right font-semibold text-gray-800">{c.rate != null ? `${c.rate}%` : '—'}</td>
@@ -130,6 +139,30 @@ export default function NavigatorDisproportionalityPage() {
                         </tr>
                       )
                     })}
+                    {expandedCampus && campusData.find(c => c.campus_id === expandedCampus)?.students?.length > 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-0">
+                          <div className="bg-gray-50 border-t border-b border-gray-200 px-6 py-3">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                              Students at {campusData.find(c => c.campus_id === expandedCampus)?.name} — {campusData.find(c => c.campus_id === expandedCampus)?.students?.length} referred
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                              {campusData.find(c => c.campus_id === expandedCampus).students.map(s => (
+                                <Link
+                                  key={s.id}
+                                  to={`/navigator/students/${s.id}`}
+                                  className="flex items-center justify-between px-3 py-1.5 bg-white rounded border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <span className="font-medium text-gray-800">{s.first_name} {s.last_name}</span>
+                                  <span className="text-xs text-gray-500">Gr {s.grade_level} · {s.referral_count} ref{s.referral_count !== 1 ? 's' : ''}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

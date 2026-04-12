@@ -622,11 +622,23 @@ export function useSkillGapData() {
 
       const counts = {}
       const studentsBySkill = {}
+      const studentDetailsBySkill = {}
       ;(rows || []).forEach(r => {
         const gap = r.skill_gap
         counts[gap] = (counts[gap] || 0) + 1
         if (!studentsBySkill[gap]) studentsBySkill[gap] = new Set()
         studentsBySkill[gap].add(r.student_id)
+        if (!studentDetailsBySkill[gap]) studentDetailsBySkill[gap] = {}
+        if (!studentDetailsBySkill[gap][r.student_id]) {
+          studentDetailsBySkill[gap][r.student_id] = {
+            id: r.student_id,
+            first_name: r.students?.first_name,
+            last_name: r.students?.last_name,
+            grade_level: r.students?.grade_level,
+            referral_count: 0,
+          }
+        }
+        studentDetailsBySkill[gap][r.student_id].referral_count++
       })
 
       const gapData = Object.entries(counts)
@@ -636,6 +648,7 @@ export function useSkillGapData() {
           count,
           unique_students: studentsBySkill[gap]?.size || 0,
           interventions: SKILL_INTERVENTIONS[gap] || [],
+          students: Object.values(studentDetailsBySkill[gap] || {}).sort((a, b) => b.referral_count - a.referral_count),
         }))
         .sort((a, b) => b.count - a.count)
 
@@ -742,7 +755,7 @@ export function useDisproportionality() {
 
       let refQ = supabase
         .from('navigator_referrals')
-        .select('campus_id, student_id, students(grade_level), campuses(id, name)')
+        .select('campus_id, student_id, students(id, first_name, last_name, grade_level), campuses(id, name)')
         .eq('district_id', districtId)
         .gte('referral_date', d90)
 
@@ -766,9 +779,21 @@ export function useDisproportionality() {
 
       const campusRefs = {}
       const campusNames = {}
+      const campusStudents = {}
       referrals.forEach(r => {
         campusRefs[r.campus_id] = (campusRefs[r.campus_id] || 0) + 1
         if (r.campuses) campusNames[r.campus_id] = r.campuses.name
+        if (!campusStudents[r.campus_id]) campusStudents[r.campus_id] = {}
+        if (!campusStudents[r.campus_id][r.student_id]) {
+          campusStudents[r.campus_id][r.student_id] = {
+            id: r.student_id,
+            first_name: r.students?.first_name,
+            last_name: r.students?.last_name,
+            grade_level: r.students?.grade_level,
+            referral_count: 0,
+          }
+        }
+        campusStudents[r.campus_id][r.student_id].referral_count++
       })
 
       const campusPop = {}
@@ -784,6 +809,7 @@ export function useDisproportionality() {
             referrals: refs,
             enrollment: campusPop[cid] || 0,
             rate: campusPop[cid] ? +(refs / campusPop[cid] * 100).toFixed(1) : null,
+            students: Object.values(campusStudents[cid] || {}).sort((a, b) => b.referral_count - a.referral_count),
           }))
           .sort((a, b) => (b.rate || 0) - (a.rate || 0))
       )
