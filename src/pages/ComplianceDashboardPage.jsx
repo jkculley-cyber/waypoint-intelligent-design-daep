@@ -54,6 +54,10 @@ export default function ComplianceDashboardPage() {
           approaching10: 0,
           atOrOver10: 0,
           pendingChecklists: 0,
+          overdueMdrIncidents: [],
+          approaching10Students: [],
+          atOrOver10Students: [],
+          pendingChecklistIncidents: [],
         }
       })
 
@@ -77,6 +81,7 @@ export default function ComplianceDashboardPage() {
           const cl = inc.compliance_checklists
           if (!cl || cl.status === 'pending' || cl.status === 'in_progress') {
             campusMap[cid].overdueMdr++
+            campusMap[cid].overdueMdrIncidents.push(inc.id)
           }
         }
       })
@@ -87,8 +92,10 @@ export default function ComplianceDashboardPage() {
         if (!cid || !campusMap[cid]) return
         if (days >= 10) {
           campusMap[cid].atOrOver10++
+          campusMap[cid].atOrOver10Students.push(sid)
         } else if (days >= 7) {
           campusMap[cid].approaching10++
+          campusMap[cid].approaching10Students.push(sid)
         }
       })
 
@@ -98,6 +105,7 @@ export default function ComplianceDashboardPage() {
         if (!campusMap[cid]) return
         if (pendingChecklistByIncident[inc.id]) {
           campusMap[cid].pendingChecklists += pendingChecklistByIncident[inc.id]
+          campusMap[cid].pendingChecklistIncidents.push(inc.id)
         }
       })
 
@@ -187,21 +195,25 @@ export default function ComplianceDashboardPage() {
                       label="Overdue MDRs"
                       value={campus.overdueMdr}
                       danger={campus.overdueMdr > 0}
+                      href={campus.overdueMdrIncidents.length === 1 ? `/incidents/${campus.overdueMdrIncidents[0]}` : campus.overdueMdrIncidents.length > 1 ? `/compliance` : null}
                     />
                     <MetricRow
                       label="Approaching 10-day limit (7-9 days)"
                       value={campus.approaching10}
                       warn={campus.approaching10 > 0}
+                      href={campus.approaching10Students.length === 1 ? `/students/${campus.approaching10Students[0]}` : campus.approaching10Students.length > 1 ? `/students` : null}
                     />
                     <MetricRow
                       label="At/over 10-day limit"
                       value={campus.atOrOver10}
                       danger={campus.atOrOver10 > 0}
+                      href={campus.atOrOver10Students.length === 1 ? `/students/${campus.atOrOver10Students[0]}` : campus.atOrOver10Students.length > 1 ? `/students` : null}
                     />
                     <MetricRow
                       label="Pending checklists"
                       value={campus.pendingChecklists}
                       warn={campus.pendingChecklists > 0}
+                      href={campus.pendingChecklistIncidents.length === 1 ? `/incidents/${campus.pendingChecklistIncidents[0]}` : campus.pendingChecklistIncidents.length > 1 ? `/compliance` : null}
                     />
                   </div>
                 </div>
@@ -220,7 +232,7 @@ export default function ComplianceDashboardPage() {
   )
 }
 
-function MetricRow({ label, value, danger, warn }) {
+function MetricRow({ label, value, danger, warn, href }) {
   let valueClass = 'text-gray-700'
   if (danger && value > 0) valueClass = 'text-red-700 font-bold'
   else if (warn && value > 0) valueClass = 'text-amber-700 font-bold'
@@ -228,7 +240,11 @@ function MetricRow({ label, value, danger, warn }) {
   return (
     <div className="flex items-center justify-between text-xs">
       <span className="text-gray-600">{label}</span>
-      <span className={valueClass}>{value}</span>
+      {value > 0 && href ? (
+        <Link to={href} className={`${valueClass} underline hover:opacity-80 cursor-pointer`}>{value}</Link>
+      ) : (
+        <span className={valueClass}>{value}</span>
+      )}
     </div>
   )
 }
