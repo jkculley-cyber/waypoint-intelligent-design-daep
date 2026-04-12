@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -55,6 +56,8 @@ export default function NavigatorReportsPage() {
   const [rangePreset, setRangePreset] = useState('90d')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+  const [drillDown, setDrillDown] = useState(null) // { type: 'campus'|'offense'|'month', key: '...', label: '...' }
+  const [allReferrals, setAllReferrals] = useState([])
 
   const dateRange = useMemo(() => {
     if (rangePreset === 'custom' && customFrom && customTo) {
@@ -92,21 +95,24 @@ export default function NavigatorReportsPage() {
       return q
     }
 
-    const [referralsRes, placementsRes, offenseRes, campusRes] = await Promise.all([
-      scope(supabase.from('navigator_referrals').select('referral_date').eq('district_id', districtId)
-        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
+    const [referralsRes, placementsRes] = await Promise.all([
+      scope(supabase.from('navigator_referrals')
+        .select('id, referral_date, description, status, outcome, student_id, campus_id, students(first_name, last_name, grade_level), campuses(name), offense_codes(code, description)')
+        .eq('district_id', districtId)
+        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)
+        .order('referral_date', { ascending: false })),
       scope(supabase.from('navigator_placements').select('start_date, placement_type').eq('district_id', districtId)
         .gte('start_date', dateRange.from).lte('start_date', dateRange.to)),
-      scope(supabase.from('navigator_referrals').select('offense_codes(code, description)').eq('district_id', districtId)
-        .not('offense_code_id', 'is', null).gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
-      scope(supabase.from('navigator_referrals').select('campus_id, campuses(name)').eq('district_id', districtId)
-        .gte('referral_date', dateRange.from).lte('referral_date', dateRange.to)),
     ])
+
+    const refs = referralsRes.data || []
+    setAllReferrals(refs)
+    setDrillDown(null)
 
     // Trend: referrals by month
     const trend = months.map(m => {
-      const count = (referralsRes.data || []).filter(r => r.referral_date >= m.start && r.referral_date <= m.end).length
-      return { month: m.label, referrals: count }
+      const count = refs.filter(r => r.referral_date >= m.start && r.referral_date <= m.end).length
+      return { month: m.label, start: m.start, end: m.end, referrals: count }
     })
     setTrendData(trend)
 
@@ -120,7 +126,7 @@ export default function NavigatorReportsPage() {
 
     // Top 10 offense codes
     const offenseMap = {}
-    ;(offenseRes.data || []).forEach(r => {
+    refs.forEach(r => {
       if (r.offense_codes) {
         const key = r.offense_codes.code
         offenseMap[key] = offenseMap[key] || { code: key, description: r.offense_codes.description, count: 0 }
@@ -132,7 +138,7 @@ export default function NavigatorReportsPage() {
 
     // By campus
     const campusMap = {}
-    ;(campusRes.data || []).forEach(r => {
+    refs.forEach(r => {
       if (r.campuses) {
         const name = r.campuses.name
         campusMap[name] = (campusMap[name] || 0) + 1
@@ -273,7 +279,7 @@ export default function NavigatorReportsPage() {
                 {campusData.map((c, i) => {
                   const max = campusData[0]?.count || 1
                   return (
-                    <div key={i} className="flex items-center gap-3">
+                    <button key={i} onClick={() => setDrillDown({ type: 'campus', key: c.name, label: c.name })} className="flex items-center gap-3 w-full text-left hover:bg-blue-50 rounded-lg px-1 py-0.5 transition-colors">
                       <span className="text-xs text-gray-600 w-32 truncate shrink-0" title={c.name}>{c.name}</span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2">
                         <div
@@ -282,7 +288,7 @@ export default function NavigatorReportsPage() {
                         />
                       </div>
                       <span className="text-xs font-medium text-gray-700 w-6 text-right">{c.count}</span>
-                    </div>
+                    </button>
                   )
                 })}
               </div>
@@ -302,11 +308,80 @@ export default function NavigatorReportsPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="code" tick={{ fontSize: 11 }} width={75} />
                 <Tooltip formatter={(v, n, p) => [v, p.payload.description || p.payload.code]} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(d) => setDrillDown({ type: 'offense', key: d.code, label: `${d.code} — ${d.description}` })} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
+        {/* Drill-Down Panel */}
+        {drillDown && (
+          <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-blue-900">
+                  {drillDown.type === 'campus' && `Referrals at ${drillDown.label}`}
+                  {drillDown.type === 'offense' && `Referrals for ${drillDown.label}`}
+                  {drillDown.type === 'month' && `Referrals in ${drillDown.label}`}
+                </h2>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  {(() => {
+                    const filtered = allReferrals.filter(r => {
+                      if (drillDown.type === 'campus') return r.campuses?.name === drillDown.key
+                      if (drillDown.type === 'offense') return r.offense_codes?.code === drillDown.key
+                      if (drillDown.type === 'month') return r.referral_date >= drillDown.start && r.referral_date <= drillDown.end
+                      return false
+                    })
+                    return `${filtered.length} referral${filtered.length !== 1 ? 's' : ''}`
+                  })()}
+                </p>
+              </div>
+              <button onClick={() => setDrillDown(null)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">Close</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-left">
+                    <th className="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Student</th>
+                    <th className="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Date</th>
+                    <th className="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Campus</th>
+                    <th className="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Offense</th>
+                    <th className="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {allReferrals
+                    .filter(r => {
+                      if (drillDown.type === 'campus') return r.campuses?.name === drillDown.key
+                      if (drillDown.type === 'offense') return r.offense_codes?.code === drillDown.key
+                      if (drillDown.type === 'month') return r.referral_date >= drillDown.start && r.referral_date <= drillDown.end
+                      return false
+                    })
+                    .map(r => (
+                      <tr key={r.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">
+                          <Link to={`/navigator/students/${r.student_id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                            {r.students ? `${r.students.first_name} ${r.students.last_name}` : '—'}
+                          </Link>
+                          <span className="ml-1 text-xs text-gray-400">Gr {r.students?.grade_level}</span>
+                        </td>
+                        <td className="px-4 py-2 text-gray-600">{r.referral_date ? format(new Date(r.referral_date), 'MMM d, yyyy') : '—'}</td>
+                        <td className="px-4 py-2 text-gray-600">{r.campuses?.name || '—'}</td>
+                        <td className="px-4 py-2 text-gray-500 text-xs">{r.offense_codes ? `${r.offense_codes.code} — ${r.offense_codes.description}` : r.description?.slice(0, 40) || '—'}</td>
+                        <td className="px-4 py-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${
+                            r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            r.status === 'reviewed' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{r.status?.replace(/_/g, ' ')}</span>
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

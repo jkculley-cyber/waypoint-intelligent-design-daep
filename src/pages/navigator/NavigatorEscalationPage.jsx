@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
+import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { useEscalationRisk } from '../../hooks/useNavigator'
 
 const LEVEL_STYLES = {
@@ -9,9 +12,59 @@ const LEVEL_STYLES = {
   low:    { badge: 'bg-emerald-100 text-emerald-700 border border-emerald-200', bar: 'bg-emerald-400', label: 'Low' },
 }
 
+const BULK_SUPPORT_TYPES = [
+  { value: 'cico', label: 'CICO (Check-In Check-Out)' },
+  { value: 'behavior_contract', label: 'Behavior Contract' },
+  { value: 'counseling_referral', label: 'Counseling Referral' },
+  { value: 'mentoring', label: 'Mentoring' },
+  { value: 'parent_contact', label: 'Parent Contact' },
+]
+
 export default function NavigatorEscalationPage() {
+  const { districtId, profile } = useAuth()
   const { students, loading, error, refetch } = useEscalationRisk()
   const [filter, setFilter] = useState('all')
+  const [selected, setSelected] = useState(new Set())
+  const [showBulkModal, setShowBulkModal] = useState(false)
+  const [bulkType, setBulkType] = useState('cico')
+  const [bulkNotes, setBulkNotes] = useState('')
+  const [bulkSaving, setBulkSaving] = useState(false)
+
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+  const toggleAll = () => {
+    if (selected.size === visible.length) setSelected(new Set())
+    else setSelected(new Set(visible.map(s => s.student_id)))
+  }
+
+  const handleBulkCreate = async () => {
+    if (selected.size === 0) return
+    setBulkSaving(true)
+    const rows = [...selected].map(studentId => {
+      const s = students.find(x => x.student_id === studentId)
+      return {
+        district_id: districtId,
+        campus_id: s?.campus?.id || s?.student?.campus_id,
+        student_id: studentId,
+        assigned_by: profile.id,
+        support_type: bulkType,
+        start_date: new Date().toISOString().split('T')[0],
+        status: 'active',
+        notes: bulkNotes || null,
+      }
+    })
+    const { error: err } = await supabase.from('navigator_supports').insert(rows)
+    setBulkSaving(false)
+    if (err) { toast.error(err.message); return }
+    toast.success(`${rows.length} support${rows.length > 1 ? 's' : ''} created`)
+    setSelected(new Set())
+    setShowBulkModal(false)
+    setBulkNotes('')
+    refetch()
+  }
 
   const high   = students.filter(s => s.risk_level === 'high')
   const medium = students.filter(s => s.risk_level === 'medium')
@@ -78,6 +131,9 @@ export default function NavigatorEscalationPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left">
+                    <th className="px-4 py-3 w-8">
+                      <input type="checkbox" checked={selected.size > 0 && selected.size === visible.length} onChange={toggleAll} className="rounded border-gray-300" />
+                    </th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Student</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Grade</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Campus</th>
@@ -92,7 +148,10 @@ export default function NavigatorEscalationPage() {
                   {visible.map(s => {
                     const st = LEVEL_STYLES[s.risk_level]
                     return (
-                      <tr key={s.student_id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={s.student_id} className={`hover:bg-gray-50 transition-colors ${selected.has(s.student_id) ? 'bg-blue-50' : ''}`}>
+                        <td className="px-4 py-3">
+                          <input type="checkbox" checked={selected.has(s.student_id)} onChange={() => toggleSelect(s.student_id)} className="rounded border-gray-300" />
+                        </td>
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {s.student ? `${s.student.first_name} ${s.student.last_name}` : '—'}
                         </td>
@@ -155,6 +214,69 @@ export default function NavigatorEscalationPage() {
           Risk score factors: referral recency (+30/+15), frequency (+15/+10), OSS (+25/+10), ISS (+10), prior escalation history (+20), active supports (−12 each). Scores clamped 0–100.
         </p>
       </div>
+
+      {/* Floating action bar when students selected */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium">{selected.size} student{selected.size !== 1 ? 's' : ''} selected</span>
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            + Create Support for All
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="px-3 py-2 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {/* Bulk support modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <h2 className="text-base font-semibold text-gray-900">Create Support for {selected.size} Student{selected.size !== 1 ? 's' : ''}</h2>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Support Type</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                value={bulkType}
+                onChange={e => setBulkType(e.target.value)}
+              >
+                {BULK_SUPPORT_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Notes (applied to all)</label>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                rows={3}
+                placeholder="Assigned via bulk action from Escalation Engine..."
+                value={bulkNotes}
+                onChange={e => setBulkNotes(e.target.value)}
+              />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+              This will create {selected.size} active {BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support{selected.size !== 1 ? 's' : ''} starting today.
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+              <button
+                onClick={handleBulkCreate}
+                disabled={bulkSaving}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg"
+              >
+                {bulkSaving ? 'Creating...' : `Create ${selected.size} Support${selected.size !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -190,7 +190,7 @@
     <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#14b8a6;margin-bottom:14px">Free Campus Pilot</div>
     <h2>Try Navigator at Your Campus</h2>
     <p>Get a fully loaded Navigator account with your own login. Explore with sample data immediately — add real students after a quick data agreement is signed.</p>
-    <form action="https://formspree.io/f/xpqjngpp" method="POST" style="max-width:440px;margin:0 auto;text-align:left">
+    <form id="pilotForm" action="https://formspree.io/f/xpqjngpp" method="POST" style="max-width:440px;margin:0 auto;text-align:left">
       <input type="hidden" name="source" value="navigator_campus_pilot">
       <input type="hidden" name="_subject" value="Navigator Campus Pilot Request">
       <div style="margin-bottom:12px">
@@ -248,5 +248,30 @@
   </div>
 </footer>
 
+<script>
+// Post pilot leads to ops Supabase (command center) in parallel with Formspree
+document.getElementById('pilotForm').addEventListener('submit', function() {
+  try {
+    const f = this;
+    const lead = {
+      name: f.name.value,
+      email: f.email.value,
+      phone: f.phone.value,
+      district_name: f.school.value,
+      role: f.role.value,
+      referrer: 'navigator_campus_pilot|' + f.campus_size.value,
+      utm_source: 'navigator',
+      status: 'new'
+    };
+    const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+    fetch(OPS + '/rest/v1/demo_leads', {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(lead)
+    }).catch(function() {});
+  } catch(e) {}
+});
+</script>
 </body>
 </html>

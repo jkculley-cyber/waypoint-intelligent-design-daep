@@ -205,6 +205,16 @@ function SupportsTable({ supports, onEdit }) {
 
 // ─── New Support Drawer ───────────────────────────────────────────────────────
 
+const SUPPORT_TEMPLATES = [
+  { id: 'cico_emotional', label: 'CICO — Emotional Regulation', type: 'cico', notes: 'Daily morning + afternoon check-in. Focus: emotional regulation, de-escalation strategies. Goal: reduce reactive outbursts. Weekly review with case manager.', weeks: 6 },
+  { id: 'cico_executive', label: 'CICO — Executive Functioning', type: 'cico', notes: 'Daily check-in/check-out. Focus: task initiation, organization, device management. Goal: reduce off-task referrals. Weekly progress review.', weeks: 6 },
+  { id: 'contract_impulse', label: 'Behavior Contract — Impulse Control', type: 'behavior_contract', notes: 'Behavior contract addressing impulsive reactions in peer conflicts. Student identifies 3 alternative behaviors. Daily self-monitoring sheet. Weekly teacher feedback.', weeks: 4 },
+  { id: 'counseling_conflict', label: 'Counseling — Peer Conflict Resolution', type: 'counseling_referral', notes: 'Weekly counseling sessions focusing on conflict de-escalation, perspective-taking, and peer mediation skills. Role-play and practice scenarios.', weeks: 8 },
+  { id: 'counseling_frustration', label: 'Counseling — Academic Frustration', type: 'counseling_referral', notes: 'Weekly sessions for academic frustration tolerance. Coping strategies for challenging assignments. Self-advocacy skills for requesting help.', weeks: 6 },
+  { id: 'mentoring_general', label: 'Mentoring — General Support', type: 'mentoring', notes: 'Bi-weekly mentoring with assigned staff. Build rapport, set goals, check-in on academics and behavior. Focus on positive relationship with a trusted adult.', weeks: 8 },
+  { id: 'parent_conference', label: 'Parent Conference', type: 'parent_contact', notes: 'Scheduled parent/guardian conference to discuss behavior patterns, review supports in place, and align on home-school expectations.', weeks: 1 },
+]
+
 function NewSupportDrawer({ onClose, onSaved }) {
   const { districtId, profile } = useAuth()
   const [saving, setSaving] = useState(false)
@@ -223,6 +233,19 @@ function NewSupportDrawer({ onClose, onSaved }) {
     notes: '',
     contact_method: '',
   })
+
+  const applyTemplate = (templateId) => {
+    const t = SUPPORT_TEMPLATES.find(x => x.id === templateId)
+    if (!t) return
+    const endDate = new Date()
+    endDate.setDate(endDate.getDate() + t.weeks * 7)
+    setForm(f => ({
+      ...f,
+      support_type: t.type,
+      notes: t.notes,
+      end_date: format(endDate, 'yyyy-MM-dd'),
+    }))
+  }
 
   useEffect(() => {
     if (!districtId) return
@@ -278,6 +301,21 @@ function NewSupportDrawer({ onClose, onSaved }) {
         </div>
 
         <div className="p-5 space-y-4 flex-1">
+          {/* Template quick-fill */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Quick Template (optional)</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+              defaultValue=""
+              onChange={e => { if (e.target.value) applyTemplate(e.target.value) }}
+            >
+              <option value="">— Select a template to pre-fill —</option>
+              {SUPPORT_TEMPLATES.map(t => (
+                <option key={t.id} value={t.id}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Student search */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Student *</label>
@@ -439,7 +477,17 @@ function EditSupportDrawer({ support, onClose, onSaved }) {
           {/* Effectiveness fields — shown when completed */}
           {form.status === 'completed' && (
             <>
-              <div className="pt-1 pb-1 border-t border-gray-100">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
+                <svg className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">Record effectiveness data now</p>
+                  <p className="text-xs text-emerald-700 mt-0.5">How many referrals or incidents did this student have before and after this support? This data powers the Effectiveness dashboard.</p>
+                </div>
+              </div>
+
+              <div className="pt-1 pb-1">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Effectiveness Data</p>
               </div>
 
