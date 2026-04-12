@@ -19,6 +19,7 @@ import {
   useDaepEnrollmentStats,
   useHomeCampusCapacity,
 } from '../hooks/useDaepDashboard'
+import { useIsDaepStaff } from '../hooks/useIsDaepStaff'
 import { useCampuses } from '../hooks/useCampuses'
 import { useAuth } from '../contexts/AuthContext'
 import { useReturningThisWeek } from '../hooks/useReentry'
@@ -1055,9 +1056,14 @@ function CapacityWarningBanner() {
 
 function CapacityTrackerWidget() {
   const { districtId, profile } = useAuth()
+  const { isDaepStaff } = useIsDaepStaff()
   const { stats, loading } = useDaepEnrollmentStats()
   const { campuses, loading: campusesLoading } = useCampuses()
   const [modalOpen, setModalOpen] = useState(false)
+
+  // Only DAEP facility staff see the physical building capacity widget
+  // District admins see the Home Campus Allocations widget instead
+  if (!isDaepStaff) return null
 
   const canEdit = ['admin', 'principal', 'waypoint_admin'].includes(profile?.role)
   const daepCampuses = campuses.filter(c => c.campus_type === 'daep')
