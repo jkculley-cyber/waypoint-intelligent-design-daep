@@ -566,6 +566,69 @@ const WORKSHEET_DATA = {
       { type: 'signatures', fields: ['Student Signature', 'Date', 'Staff Signature', 'Date'] },
     ]
   },
+  'strengths': {
+    title: 'My Strengths Worksheet',
+    subtitle: 'Behavior Contract Support',
+    intro: 'Before we talk about what needs to change, let\'s talk about what you already bring. Everyone has strengths — let\'s find yours.',
+    sections: [
+      { type: 'strength_areas', areas: [
+        { area: 'With People', prompt: 'I\'m good at...', lines: 2 },
+        { area: 'With my Hands / Body', prompt: 'I\'m good at...', lines: 2 },
+        { area: 'With my Mind', prompt: 'I\'m good at...', lines: 2 },
+        { area: 'In School', prompt: 'I\'m good at...', lines: 2 },
+      ]},
+      { type: 'instruction', text: 'If a friend described what you\'re really good at, what would they say? Write your top 3:' },
+      { type: 'top3_fields', fields: ['Strength #1:', 'Strength #2:', 'Strength #3:'] },
+      { type: 'rating_table', columns: ['My Strength', 'How I Can Use It at School'], rows: 3 },
+      { type: 'labeled_write', step: null, label: 'Connect to Your Contract', prompt: 'My contract goal is:', lines: 1 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'The strength I\'ll use to help me get there:', lines: 1 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'What that looks like in real life:', lines: 1 },
+    ]
+  },
+  'triggers': {
+    title: 'Trigger Mapping',
+    subtitle: 'Behavior Contract Support',
+    intro: 'A trigger is anything that makes it hard for you to stay in control. When you know your triggers, you can plan for them.',
+    sections: [
+      { type: 'trigger_categories', categories: [
+        { label: 'At School', examples: 'e.g. a certain class, being called out, transitions', lines: 2 },
+        { label: 'With People', examples: 'e.g. a specific student, teacher tone, feeling ignored', lines: 2 },
+        { label: 'Inside Me', examples: 'e.g. tired, hungry, anxious, embarrassed', lines: 2 },
+        { label: 'Outside School', examples: 'e.g. something happening at home', lines: 2 },
+      ]},
+      { type: 'warning_signs',
+        physical: 'Physical Warning Signs (e.g. heart racing, clenching fists, face getting hot)',
+        thoughts: 'Thoughts Warning Signs (e.g. "Everyone is against me", "I don\'t care anymore")',
+        lines: 2 },
+      { type: 'rating_table', columns: ['My Trigger', 'What I Usually Do', 'Better Response I Can Try'], rows: 3 },
+      { type: 'reflection', prompt: 'Which trigger is hardest to manage? What makes that one different from the others?' },
+    ]
+  },
+  'alt_behavior': {
+    title: 'Alternative Behavior Brainstorm',
+    subtitle: 'Behavior Contract Support',
+    intro: 'You can\'t always control what happens to you — but you can control how you respond. Let\'s build your options.',
+    sections: [
+      { type: 'response_bank', responses: [
+        'Ask to step out for 2 min', 'Write down what I\'m feeling', 'Take 3 slow breaths',
+        'Count to 10 before I speak', 'Ask for help from a trusted adult', 'Walk away before I react',
+        'Use an "I" statement', 'Ask to change seats', 'Focus on what I can control',
+      ]},
+      { type: 'rating_table', columns: ['Trigger', 'The Situation', 'What I Usually Do', '2 Better Responses'], rows: 3 },
+      { type: 'practice_scenario',
+        situation: 'A teacher corrects you in front of the class and you feel embarrassed.',
+        prompt: 'My better response:', lines: 2 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'The next time I feel triggered, the first thing I will do is:', lines: 1 },
+    ]
+  },
+  'certificate': {
+    title: 'Certificate of Achievement',
+    subtitle: 'Behavior Contract Completion',
+    intro: null,
+    sections: [
+      { type: 'certificate' },
+    ]
+  },
   'cico_goal': {
     title: 'Goal-Setting: My CICO Plan',
     subtitle: 'CICO / Behavior Support',
@@ -774,6 +837,96 @@ function WorksheetSection({ section: s }) {
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-2">{s.label}</p>
           <div className="flex justify-center gap-4">{s.days.map(d => <div key={d} className="text-center"><span className="text-2xl">☆</span><p className="text-[10px] text-gray-500 mt-0.5">{d}</p></div>)}</div>
+        </div>
+      )
+    case 'strength_areas':
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          {s.areas.map(a => (
+            <div key={a.area} className="border border-gray-200 rounded-lg p-3">
+              <p className="text-xs font-bold text-gray-700 mb-1">{a.area}</p>
+              <p className="text-xs text-gray-500 mb-1">{a.prompt}</p>
+              <Lines count={a.lines} />
+            </div>
+          ))}
+        </div>
+      )
+    case 'top3_fields':
+      return (
+        <div className="space-y-2">
+          {s.fields.map((f, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-sm font-bold text-blue-600 w-5 shrink-0">{i + 1}.</span>
+              <div className="flex-1 border-b-2 border-blue-300 pb-1 min-h-[24px]"></div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'trigger_categories':
+      return (
+        <div className="space-y-3">
+          {s.categories.map(c => (
+            <div key={c.label} className="border border-gray-200 rounded-lg p-3">
+              <p className="text-xs font-bold text-gray-700">{c.label}</p>
+              <p className="text-[10px] text-gray-400 mb-1">{c.examples}</p>
+              <Lines count={c.lines} />
+            </div>
+          ))}
+        </div>
+      )
+    case 'warning_signs':
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="border-2 border-red-200 rounded-lg p-3 bg-red-50">
+            <p className="text-xs font-bold text-red-700 mb-1">{s.physical}</p>
+            <Lines count={s.lines} />
+          </div>
+          <div className="border-2 border-amber-200 rounded-lg p-3 bg-amber-50">
+            <p className="text-xs font-bold text-amber-700 mb-1">{s.thoughts}</p>
+            <Lines count={s.lines} />
+          </div>
+        </div>
+      )
+    case 'response_bank':
+      return (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">Response Bank — circle or check the ones you want to try:</p>
+          <div className="flex flex-wrap gap-2">
+            {s.responses.map(r => (
+              <span key={r} className="px-3 py-1.5 border-2 border-green-300 rounded-full text-xs font-medium text-green-800 bg-green-50">{r}</span>
+            ))}
+          </div>
+        </div>
+      )
+    case 'practice_scenario':
+      return (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-xs font-bold text-amber-800 mb-1">Practice Scenario:</p>
+          <p className="text-xs text-amber-700 italic mb-2">{s.situation}</p>
+          <p className="text-xs font-semibold text-gray-700 mb-1">{s.prompt}</p>
+          <Lines count={s.lines} />
+        </div>
+      )
+    case 'certificate':
+      return (
+        <div className="border-4 border-double border-amber-400 rounded-xl p-8 text-center bg-amber-50 print:bg-white">
+          <p className="text-xs font-bold text-amber-600 uppercase tracking-[.2em] mb-2">Navigator by Clear Path Education Group</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1" style={{fontFamily: 'serif'}}>CERTIFICATE OF ACHIEVEMENT</h2>
+          <p className="text-sm text-gray-600 mb-4">This certifies that</p>
+          <div className="border-b-2 border-gray-400 mx-auto max-w-xs mb-2 min-h-[28px]"></div>
+          <p className="text-sm text-gray-600 mb-6">has successfully completed the goals of their Behavior Contract.</p>
+          <table className="w-full text-xs border border-gray-200 mb-6 text-left">
+            <thead><tr className="bg-gray-100"><th className="border border-gray-200 px-3 py-2">Goal I Set</th><th className="border border-gray-200 px-3 py-2">How I Achieved It</th><th className="border border-gray-200 px-3 py-2">What It Took</th></tr></thead>
+            <tbody>{[1, 2].map(i => <tr key={i}><td className="border border-gray-200 px-3 py-4"></td><td className="border border-gray-200 px-3 py-4"></td><td className="border border-gray-200 px-3 py-4"></td></tr>)}</tbody>
+          </table>
+          <div className="text-left mb-6">
+            <p className="text-xs font-bold text-gray-700 mb-1">A Message From Your Team:</p>
+            <Lines count={3} />
+          </div>
+          <div className="grid grid-cols-2 gap-6 mt-4">
+            <div><div className="border-b border-gray-400 mt-6 mb-1"></div><p className="text-xs text-gray-500">Student Signature / Date</p></div>
+            <div><div className="border-b border-gray-400 mt-6 mb-1"></div><p className="text-xs text-gray-500">Presented by / Title</p></div>
+          </div>
         </div>
       )
     default:
