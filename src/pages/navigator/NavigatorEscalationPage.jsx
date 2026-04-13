@@ -131,11 +131,9 @@ export default function NavigatorEscalationPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left">
-                    {!isDemoReadonly && (
-                      <th className="px-4 py-3 w-8">
-                        <input type="checkbox" checked={selected.size > 0 && selected.size === visible.length} onChange={toggleAll} className="rounded border-gray-300" />
-                      </th>
-                    )}
+                    <th className="px-4 py-3 w-8">
+                      <input type="checkbox" checked={!isDemoReadonly && selected.size > 0 && selected.size === visible.length} onChange={isDemoReadonly ? undefined : toggleAll} disabled={isDemoReadonly} className="rounded border-gray-300" title={isDemoReadonly ? 'Available in your pilot account' : ''} />
+                    </th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Student</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Grade</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Campus</th>
@@ -151,11 +149,9 @@ export default function NavigatorEscalationPage() {
                     const st = LEVEL_STYLES[s.risk_level]
                     return (
                       <tr key={s.student_id} className={`hover:bg-gray-50 transition-colors ${selected.has(s.student_id) ? 'bg-blue-50' : ''}`}>
-                        {!isDemoReadonly && (
-                          <td className="px-4 py-3">
-                            <input type="checkbox" checked={selected.has(s.student_id)} onChange={() => toggleSelect(s.student_id)} className="rounded border-gray-300" />
-                          </td>
-                        )}
+                        <td className="px-4 py-3">
+                          <input type="checkbox" checked={!isDemoReadonly && selected.has(s.student_id)} onChange={isDemoReadonly ? undefined : () => toggleSelect(s.student_id)} disabled={isDemoReadonly} className="rounded border-gray-300" />
+                        </td>
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {s.student ? `${s.student.first_name} ${s.student.last_name}` : '—'}
                         </td>

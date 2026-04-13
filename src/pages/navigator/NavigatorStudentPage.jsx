@@ -82,36 +82,44 @@ export default function NavigatorStudentPage() {
       <Topbar
         title="Navigator — Student History"
         subtitle={student.first_name + ' ' + student.last_name}
-        actions={isDemoReadonly ? null : (
+        actions={
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/navigator/referrals?new=1&student=${id}`)}
-              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={isDemoReadonly ? undefined : () => navigate(`/navigator/referrals?new=1&student=${id}`)}
+              disabled={isDemoReadonly}
+              title={isDemoReadonly ? 'Available in your pilot account' : ''}
+              className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-blue-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
               + Referral
             </button>
             <button
-              onClick={() => navigate(`/navigator/placements?new=1&student=${id}`)}
-              className="px-3 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+              onClick={isDemoReadonly ? undefined : () => navigate(`/navigator/placements?new=1&student=${id}`)}
+              disabled={isDemoReadonly}
+              title={isDemoReadonly ? 'Available in your pilot account' : ''}
+              className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-gray-600 hover:bg-gray-700'}`}
             >
               + Placement
             </button>
             <button
-              onClick={() => navigate(`/navigator/supports?new=1&student=${id}`)}
-              className="px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+              onClick={isDemoReadonly ? undefined : () => navigate(`/navigator/supports?new=1&student=${id}`)}
+              disabled={isDemoReadonly}
+              title={isDemoReadonly ? 'Available in your pilot account' : ''}
+              className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-emerald-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-700'}`}
             >
               + Support
             </button>
             {showDaep && (
               <button
-                onClick={() => setShowEscalateModal(true)}
-                className="px-3 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
+                onClick={isDemoReadonly ? undefined : () => setShowEscalateModal(true)}
+                disabled={isDemoReadonly}
+                title={isDemoReadonly ? 'Available in your pilot account' : ''}
+                className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-red-300 cursor-not-allowed opacity-60' : 'bg-red-500 hover:bg-red-600'}`}
               >
                 Escalate to DAEP →
               </button>
             )}
           </div>
-        )}
+        }
       />
 
       <div className="p-6 space-y-6">

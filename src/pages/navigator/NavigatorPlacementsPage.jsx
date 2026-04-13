@@ -74,14 +74,14 @@ export default function NavigatorPlacementsPage() {
             >
               Export Excel
             </button>
-            {!isDemoReadonly && (
-              <button
-                onClick={() => setShowDrawer(true)}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                + New Placement
-              </button>
-            )}
+            <button
+              onClick={isDemoReadonly ? undefined : () => setShowDrawer(true)}
+              disabled={isDemoReadonly}
+              title={isDemoReadonly ? 'Available in your pilot account' : ''}
+              className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-blue-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700'}`}
+            >
+              + New Placement
+            </button>
           </div>
         }
       />

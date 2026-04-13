@@ -64,14 +64,16 @@ export default function NavigatorReferralsPage() {
       <Topbar
         title="Navigator — Referrals"
         subtitle="Discipline referrals and behavioral incidents"
-        actions={isDemoReadonly ? null : (
+        actions={
           <button
-            onClick={() => { setSelectedReferral(null); setShowDrawer(true) }}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={isDemoReadonly ? undefined : () => { setSelectedReferral(null); setShowDrawer(true) }}
+            disabled={isDemoReadonly}
+            title={isDemoReadonly ? 'Available in your pilot account' : ''}
+            className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-blue-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
             + New Referral
           </button>
-        )}
+        }
       />
 
       <div className="p-6 space-y-4">

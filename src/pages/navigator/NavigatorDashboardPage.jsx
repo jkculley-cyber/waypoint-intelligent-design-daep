@@ -25,14 +25,13 @@ export default function NavigatorDashboardPage() {
       <Topbar
         title="Navigator Dashboard"
         subtitle="ISS / OSS Tracker &amp; Proactive Supports"
-        actions={isDemoReadonly ? null : (
-          <Link
-            to="/navigator/referrals"
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + New Referral
-          </Link>
-        )}
+        actions={
+          isDemoReadonly ? (
+            <span className="px-4 py-2 bg-blue-400 text-white text-sm font-medium rounded-lg opacity-60 cursor-not-allowed" title="Available in your pilot account">+ New Referral</span>
+          ) : (
+            <Link to="/navigator/referrals" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">+ New Referral</Link>
+          )
+        }
       />
 
       <div className="p-6 space-y-6">
