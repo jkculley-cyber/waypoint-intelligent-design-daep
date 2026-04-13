@@ -681,6 +681,82 @@ const WORKSHEET_DATA = {
       ]},
     ]
   },
+  'parent_checkin': {
+    title: 'Weekly Behavior Check-In Conversation Guide',
+    subtitle: 'Parent Resource — All Skill Gaps',
+    intro: 'You don\'t need to be a counselor to have a powerful conversation with your child. These 5 questions — asked once a week — can change everything.',
+    sections: [
+      { type: 'parent_questions', questions: [
+        { n: 1, cat: 'Vision', q: '"How did school feel this week — easy, hard, or somewhere in between?"', why: 'Opens the conversation without judgment. Lets your child set the tone.', tip: 'Listen without interrupting. Don\'t offer solutions yet — just hear them out.' },
+        { n: 2, cat: 'Wins', q: '"Was there a moment this week you\'re proud of — even something small?"', why: 'Builds confidence and helps your child notice their own progress.', tip: 'Celebrate it genuinely. Specifics matter: "That took real self-control."' },
+        { n: 3, cat: 'Struggles', q: '"Was there a moment that was hard? What happened?"', why: 'Creates space for honesty about struggles before they become crises.', tip: 'Stay calm. If you react with anger, they\'ll stop telling you things.' },
+        { n: 4, cat: 'Peer Relationships', q: '"Is there anything going on with friends or other students that\'s bothering you?"', why: 'Peer conflict often drives school behavior. Kids rarely bring it up unprompted.', tip: 'Ask follow-up questions. Avoid telling them what to do — ask what they think they should do.' },
+        { n: 5, cat: 'Partnership', q: '"What\'s one thing I can do to help you have a better week next week?"', why: 'Positions you as a partner, not just a monitor. Shows you\'re on their team.', tip: 'Actually do the thing they say. Follow-through builds trust.' },
+      ]},
+      { type: 'facilitator_tips', tips: [
+        { tip: 'Pick a consistent time', detail: 'Same day, same spot. After dinner or on the drive home works well. Routine removes resistance.' },
+        { tip: 'Put your phone away', detail: 'Even face-down counts as distracted. Your full attention is the message.' },
+        { tip: 'Keep it short', detail: '10–15 minutes is enough. Long conversations become interrogations.' },
+        { tip: 'Don\'t share everything with the school', detail: 'Your child needs to trust that what they tell you stays between you, unless safety is at risk.' },
+      ]},
+      { type: 'contact_fields', fields: ['Campus contact', 'Phone / Email'] },
+    ]
+  },
+  'parent_reinforcement': {
+    title: 'Home Reinforcement Tips',
+    subtitle: 'Parent Resource — Behavior Contract Support',
+    intro: 'You don\'t need to punish more to get better results at school. Research is clear: positive reinforcement at home is more effective than consequences. Here\'s what actually works.',
+    sections: [
+      { type: 'do_dont_list',
+        doList: [
+          { action: 'Celebrate small wins specifically', example: '"You made it through the whole day without a referral — that\'s real progress."' },
+          { action: 'Ask before you advise', example: '"What do you think you should do?" before "Here\'s what you should do."' },
+          { action: 'Use consistent, predictable consequences', example: 'Same rule, same outcome, every time. Consistency is more powerful than strictness.' },
+          { action: 'Name the behavior, not the child', example: '"That choice was disrespectful" not "You\'re disrespectful."' },
+          { action: 'Follow their lead on when to talk', example: 'Some kids open up in the car. Others need 30 minutes to decompress first.' },
+          { action: 'Connect school goals to what they care about', example: '"Staying out of ISS means you can make it to Friday\'s game."' },
+        ],
+        dontList: [
+          { action: 'Punish at home for school consequences', example: 'Double punishment (school + home) breaks trust and removes motivation to be honest with you.' },
+          { action: 'Compare them to siblings or other students', example: 'Comparison shuts down conversation and damages self-worth.' },
+          { action: 'Make every conversation about behavior', example: 'They need to know you see them as more than their worst moments.' },
+          { action: 'Promise things you can\'t deliver', example: '"If you\'re good all week I\'ll buy you..." only works once.' },
+        ],
+      },
+      { type: 'reinforcement_strategies', strategies: [
+        { label: 'Earned Screen Time', desc: 'Each day without a referral = 30 extra minutes. Simple, trackable, motivating.' },
+        { label: 'Weekend Activity Choice', desc: 'They pick Saturday\'s activity if the weekly goal is met.' },
+        { label: 'Privilege Jar', desc: 'Add a slip for each positive day. Cash in for something they want.' },
+        { label: 'Verbal Recognition Ritual', desc: 'Same phrase, every time: "I saw you handle that well." Consistency is the point.' },
+        { label: 'Family Celebration', desc: 'Mark contract completion with something meaningful — their choice.' },
+        { label: 'Written Note', desc: 'A handwritten note left on their pillow. Small but powerful.' },
+      ]},
+      { type: 'contact_fields', fields: ['Campus contact', 'Phone / Email'] },
+    ]
+  },
+  'comm_card': {
+    title: 'Communication Preference Card',
+    subtitle: 'Parent Intake — All Skill Gaps',
+    intro: 'Help us reach you the right way, at the right time. Complete this card once and we\'ll honor your preferences all year.',
+    sections: [
+      { type: 'language_select', options: ['English', 'Spanish', 'Vietnamese', 'Arabic', 'Mandarin', 'Other: ____________'] },
+      { type: 'contact_methods', methods: [
+        { method: 'Phone call', detail: 'Best number + best time to call' },
+        { method: 'Text message', detail: 'Best number' },
+        { method: 'Email', detail: 'Email address' },
+        { method: 'App / Portal notification', detail: 'Check frequency' },
+        { method: 'Send note home with student', detail: 'All contact or serious concerns only' },
+      ]},
+      { type: 'contact_situations', rows: [
+        { situation: 'Safety concern / emergency', timeframe: 'Same day' },
+        { situation: 'Office referral / suspension', timeframe: 'Same day' },
+        { situation: 'Behavior concern (non-urgent)', timeframe: 'Within 2 days' },
+        { situation: 'Positive update / progress', timeframe: 'Any time' },
+      ]},
+      { type: 'labeled_write', step: null, label: 'Anything Else I Want the School to Know', prompt: null, lines: 2 },
+      { type: 'signatures', fields: ['Parent/Guardian Name', 'Relationship to Student', 'Student Name', 'Date Completed'] },
+    ]
+  },
   'cico_goal': {
     title: 'Goal-Setting: My CICO Plan',
     subtitle: 'CICO / Behavior Support',
@@ -957,6 +1033,120 @@ function WorksheetSection({ section: s }) {
           <p className="text-xs text-amber-700 italic mb-2">{s.situation}</p>
           <p className="text-xs font-semibold text-gray-700 mb-1">{s.prompt}</p>
           <Lines count={s.lines} />
+        </div>
+      )
+    case 'parent_questions':
+      return (
+        <div className="space-y-4">
+          {s.questions.map(q => (
+            <div key={q.n} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-amber-50 px-4 py-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">{q.n}</span>
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">{q.cat}</span>
+              </div>
+              <div className="p-4 space-y-2">
+                <p className="text-sm font-bold text-gray-900">{q.q}</p>
+                <div className="bg-gray-50 rounded p-2"><p className="text-[10px] text-gray-500 uppercase font-bold mb-0.5">Why ask this</p><p className="text-xs text-gray-600">{q.why}</p></div>
+                <div className="bg-green-50 rounded p-2"><p className="text-[10px] text-green-700 uppercase font-bold mb-0.5">What to do with the answer</p><p className="text-xs text-green-800">{q.tip}</p></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'contact_fields':
+      return (
+        <div className="grid grid-cols-2 gap-4 mt-2 pt-3 border-t border-gray-200">
+          {s.fields.map(f => <div key={f}><span className="text-xs text-gray-500">{f}:</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[22px]"></div></div>)}
+        </div>
+      )
+    case 'do_dont_list':
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Do This</p>
+            <div className="space-y-2">
+              {s.doList.map((d, i) => (
+                <div key={i} className="bg-green-50 border border-green-100 rounded-lg p-2">
+                  <p className="text-xs font-semibold text-green-900">{d.action}</p>
+                  <p className="text-[10px] text-green-700 italic mt-0.5">{d.example}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-2">Avoid This</p>
+            <div className="space-y-2">
+              {s.dontList.map((d, i) => (
+                <div key={i} className="bg-red-50 border border-red-100 rounded-lg p-2">
+                  <p className="text-xs font-semibold text-red-900">{d.action}</p>
+                  <p className="text-[10px] text-red-700 italic mt-0.5">{d.example}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    case 'reinforcement_strategies':
+      return (
+        <div>
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">6 Ready-to-Use Reinforcement Strategies</p>
+          <div className="grid grid-cols-2 gap-2">
+            {s.strategies.map((st, i) => (
+              <div key={i} className="border border-blue-100 bg-blue-50 rounded-lg p-2">
+                <p className="text-xs font-semibold text-blue-900">{st.label}</p>
+                <p className="text-[10px] text-blue-700 mt-0.5">{st.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    case 'language_select':
+      return (
+        <div>
+          <p className="text-xs font-bold text-gray-700 mb-2">Section 1 — My Preferred Language</p>
+          <div className="flex flex-wrap gap-3">
+            {s.options.map(o => (
+              <label key={o} className="flex items-center gap-1.5 text-xs text-gray-700">
+                <span className="w-3.5 h-3.5 border-2 border-gray-400 rounded-full inline-block shrink-0"></span>{o}
+              </label>
+            ))}
+          </div>
+        </div>
+      )
+    case 'contact_methods':
+      return (
+        <div>
+          <p className="text-xs font-bold text-gray-700 mb-2">Section 2 — How I Prefer to Be Contacted</p>
+          <div className="space-y-2">
+            {s.methods.map(m => (
+              <div key={m.method} className="flex items-start gap-3 border border-gray-200 rounded-lg p-2">
+                <span className="w-4 h-4 border-2 border-gray-400 rounded-sm inline-block shrink-0 mt-0.5"></span>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-gray-800">{m.method}</p>
+                  <p className="text-[10px] text-gray-500">{m.detail}:</p>
+                  <div className="border-b border-gray-300 mt-1 pb-1 min-h-[18px]"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    case 'contact_situations':
+      return (
+        <div>
+          <p className="text-xs font-bold text-gray-700 mb-2">Section 3 — When to Contact Me</p>
+          <table className="w-full text-xs border border-gray-200">
+            <thead><tr className="bg-gray-50"><th className="border border-gray-200 px-3 py-2 text-left">Situation</th><th className="border border-gray-200 px-3 py-2 text-left">How quickly?</th><th className="border border-gray-200 px-3 py-2 text-left">Preferred method</th></tr></thead>
+            <tbody>
+              {s.rows.map(r => (
+                <tr key={r.situation}>
+                  <td className="border border-gray-200 px-3 py-2 font-medium">{r.situation}</td>
+                  <td className="border border-gray-200 px-3 py-2 text-gray-600">{r.timeframe}</td>
+                  <td className="border border-gray-200 px-3 py-2"></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )
     case 'how_to_use':
