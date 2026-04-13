@@ -17,8 +17,8 @@ export default function NavigatorPilotPage() {
   return (
     <div>
       <Topbar
-        title="Pilot Summary"
-        subtitle="Leadership dashboard — annual Navigator impact metrics"
+        title="Leadership Report"
+        subtitle="Annual Navigator impact metrics and leadership narrative"
         actions={
           <div className="flex items-center gap-3">
             <select

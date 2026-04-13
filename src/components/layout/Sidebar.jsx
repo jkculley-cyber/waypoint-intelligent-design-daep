@@ -24,7 +24,7 @@ const navigatorNavigation = [
   { name: 'Disproportionality', path: '/navigator/disproportionality', icon: ScaleIcon           },
   { name: 'Forms & Resources',   path: '/navigator/forms',              icon: ClipboardListIcon   },
   { name: 'ISS Kiosk',           path: '/navigator/iss-kiosk',          icon: ClipboardListIcon, external: true },
-  { name: 'Pilot Summary',      path: '/navigator/pilot',              icon: ClipboardListIcon   },
+  { name: 'Leadership Report',   path: '/navigator/pilot',              icon: ClipboardListIcon   },
   { name: 'Data Import',        path: '/navigator/import',             icon: ImportIcon          },
 ]
 

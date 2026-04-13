@@ -173,7 +173,7 @@ function App() {
                 <Route path="/navigator/skill-map" element={<RequireRole roles={STAFF_ROLES}><NavigatorSkillMapPage /></RequireRole>} />
                 <Route path="/navigator/effectiveness" element={<RequireRole roles={STAFF_ROLES}><NavigatorEffectivenessPage /></RequireRole>} />
                 <Route path="/navigator/disproportionality" element={<RequireRole roles={STAFF_ROLES}><NavigatorDisproportionalityPage /></RequireRole>} />
-                <Route path="/navigator/pilot" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><NavigatorPilotPage /></RequireRole>} />
+                <Route path="/navigator/pilot" element={<RequireRole roles={STAFF_ROLES}><NavigatorPilotPage /></RequireRole>} />
               </Route>
 
               {/* ── Meridian product routes ── */}
