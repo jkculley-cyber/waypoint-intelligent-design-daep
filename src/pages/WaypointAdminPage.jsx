@@ -785,11 +785,46 @@ function LeadsPanel() {
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
+    // Fetch from main leads table
+    const { data: mainLeads } = await supabase
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false })
-    setLeads(data || [])
+
+    // Also fetch from ops Supabase demo_leads (Navigator pilot form, demo gate)
+    let opsLeads = []
+    try {
+      const { data: opsData } = await opsSupabase
+        .from('demo_leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+      // Normalize ops leads to match main leads shape
+      opsLeads = (opsData || []).map(d => ({
+        id: 'ops-' + d.id,
+        name: d.name,
+        email: d.email,
+        source: d.referrer?.startsWith('navigator_') ? 'navigator_campus_pilot' : (d.utm_source || 'demo_gate'),
+        district: d.district_name,
+        concern: d.referrer ? d.referrer.replace('navigator_campus_pilot|', 'Campus size: ') + (d.phone ? '. Phone: ' + d.phone : '') : (d.phone ? 'Phone: ' + d.phone : ''),
+        notes: null,
+        status: d.status || 'new',
+        created_at: d.created_at,
+        updated_at: d.created_at,
+        _ops: true, // flag to prevent edits (different DB)
+      }))
+    } catch (e) { /* ops Supabase unreachable — show main leads only */ }
+
+    // Merge and deduplicate by email
+    const seen = new Set()
+    const merged = []
+    for (const l of [...(mainLeads || []), ...opsLeads]) {
+      if (seen.has(l.email)) continue
+      seen.add(l.email)
+      merged.push(l)
+    }
+    merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    setLeads(merged)
     setLoading(false)
   }, [])
 

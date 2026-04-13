@@ -249,28 +249,43 @@
 </footer>
 
 <script>
-// Post pilot leads to ops Supabase (command center) in parallel with Formspree
-document.getElementById('pilotForm').addEventListener('submit', function() {
-  try {
-    const f = this;
-    const lead = {
-      name: f.name.value,
-      email: f.email.value,
-      phone: f.phone.value,
-      district_name: f.school.value,
-      role: f.role.value,
-      referrer: 'navigator_campus_pilot|' + f.campus_size.value,
-      utm_source: 'navigator',
-      status: 'new'
-    };
-    const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
-    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+// Intercept form submit — send to BOTH Formspree and ops Supabase, then show success
+document.getElementById('pilotForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var f = this;
+  var btn = f.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  var formData = new FormData(f);
+  var lead = {
+    name: f.name.value,
+    email: f.email.value,
+    phone: f.phone.value,
+    district_name: f.school.value,
+    role: f.role.value,
+    referrer: 'navigator_campus_pilot|' + f.campus_size.value,
+    utm_source: 'navigator',
+    status: 'new'
+  };
+
+  var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+
+  // Send to both Formspree + ops Supabase demo_leads
+  Promise.all([
+    fetch('https://formspree.io/f/xpqjngpp', {
+      method: 'POST', body: formData, headers: { 'Accept': 'application/json' }
+    }).catch(function() {}),
     fetch(OPS + '/rest/v1/demo_leads', {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify(lead)
-    }).catch(function() {});
-  } catch(e) {}
+    }).catch(function() {})
+  ]).then(function() {
+    // Show success inline
+    f.innerHTML = '<div style="text-align:center;padding:24px 0"><p style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px">Pilot request submitted!</p><p style="font-size:.85rem;color:var(--text-muted)">We\'ll reach out within 24 hours to schedule your demo.</p></div>';
+  });
 });
 </script>
 </body>
