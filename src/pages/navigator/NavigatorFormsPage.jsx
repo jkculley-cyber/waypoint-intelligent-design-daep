@@ -8,7 +8,7 @@ const FORMS = [
   { id: 'iss_reflection', label: 'ISS Reflection Form', icon: '📝', description: 'Restorative reflection for students during ISS — what happened, who was affected, re-entry goal.' },
   { id: 'cico', label: 'CICO Daily Tracking Sheet', icon: '✓', description: 'Check-In/Check-Out daily behavior tracking — morning check-in, period-by-period rating, afternoon check-out.' },
   { id: 'behavior_contract', label: 'Behavior Contract', icon: '📋', description: 'Student-staff agreement on specific behavior expectations, consequences, and rewards.' },
-  { id: 'parent_agreement', label: 'Parent Behavior Agreement', icon: '👥', description: 'Home-school partnership agreement — shared expectations, communication plan, parent commitments.' },
+  { id: 'parent_agreement', label: 'Parent-Student Behavior Agreement (HB 6)', icon: '👥', description: 'HB 6 required — DAEP conference documentation with student/school commitments, incident summary, 30-day review disposition.' },
 ]
 
 const SKILL_GAP_ACTIVITIES = {
@@ -362,107 +362,139 @@ function BehaviorContractForm({ studentId, onBack }) {
 function ParentAgreementForm({ studentId, onBack }) {
   return (
     <div>
-      <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-4">← Back to Forms</button>
-      <div className="flex justify-end mb-2">
+      <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-4 print:hidden">← Back to Forms</button>
+      <div className="flex justify-end mb-2 print:hidden">
         <button onClick={() => window.print()} className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Print Form</button>
       </div>
       <div className="bg-white border border-gray-200 rounded-xl p-8 max-w-3xl mx-auto print:border-none print:shadow-none print:p-4">
-        <div className="text-center mb-6">
-          <h1 className="text-lg font-bold text-gray-900">Parent-School Behavior Partnership Agreement</h1>
-          <p className="text-xs text-gray-500 mt-1">A collaborative commitment between home and school to support student behavior improvement.</p>
+        {/* Header */}
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Parent-Student Behavior Agreement</h1>
+            <p className="text-sm text-gray-600 font-medium">HB 6 Texas &bull; DAEP Conference Documentation</p>
+            <p className="text-xs text-gray-500 mt-0.5">Under HB 6, parents may request a behavior agreement when their child is placed in DAEP — TEC §37.009</p>
+          </div>
+          <span className="px-3 py-1.5 bg-orange-600 text-white text-xs font-bold rounded shrink-0">HB 6 REQUIRED</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-          <div><span className="text-xs text-gray-500 block">Student Name</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
-          <div><span className="text-xs text-gray-500 block">Date</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
-          <div><span className="text-xs text-gray-500 block">Parent/Guardian Name</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
-          <div><span className="text-xs text-gray-500 block">School Contact / Phone</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
-        </div>
+        <div className="space-y-4 mt-4">
+          {/* Section 1 — Student Information */}
+          <FormSection title="SECTION 1 — Student Information">
+            <div className="grid grid-cols-4 gap-3">
+              <FieldLine label="Student Name" span={2} />
+              <FieldLine label="Student ID" />
+              <FieldLine label="Grade" />
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              <FieldLine label="Date of Conference" />
+              <FieldLine label="Administrator" />
+              <FieldLine label="Counselor" />
+            </div>
+          </FormSection>
 
-        <div className="space-y-5">
-          <Section title="Current Behavior Concern" number="1">
-            <p className="text-xs text-gray-600 mb-2">Describe the behavior pattern that has been observed at school.</p>
+          {/* Section 2 — Incident Summary */}
+          <FormSection title="SECTION 2 — Incident Summary">
+            <div className="grid grid-cols-3 gap-3">
+              <FieldLine label="Date of Incident" />
+              <FieldLine label="Offense / Behavior" span={2} />
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              <FieldLine label="TEC Reference" />
+              <FieldLine label="Prior Incidents (count)" />
+              <FieldLine label="Days Assigned" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <FieldLine label="Behavior Code" />
+              <FieldLine label="Discipline Code" />
+            </div>
+          </FormSection>
+
+          {/* Section 3 — Student Commitments */}
+          <FormSection title="SECTION 3 — Student Commitments (The student agrees to:)">
+            {[1, 2, 3, 4, 5].map(n => (
+              <div key={n} className="flex items-start gap-2 mt-2">
+                <span className="text-xs font-bold text-gray-600 mt-1 w-4">{n}</span>
+                <div className="flex-1 border-b border-gray-300 pb-1 min-h-[22px]"></div>
+              </div>
+            ))}
+          </FormSection>
+
+          {/* Section 4 — School Commitments */}
+          <FormSection title="SECTION 4 — School Commitments (The school agrees to:)">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="flex items-start gap-2 mt-2">
+                <span className="text-xs font-bold text-gray-600 mt-1 w-4">{n}</span>
+                <div className="flex-1 border-b border-gray-300 pb-1 min-h-[22px]"></div>
+              </div>
+            ))}
+          </FormSection>
+
+          {/* Section 5 — Consequences if Agreement is Violated */}
+          <FormSection title="SECTION 5 — Consequences if Agreement is Violated">
+            <p className="text-xs text-gray-500 italic mb-1">Describe consequences for non-compliance...</p>
             <Lines count={3} />
-          </Section>
+          </FormSection>
 
-          <Section title="School Commitments" number="2">
-            <p className="text-xs text-gray-600 mb-2">The school agrees to:</p>
-            <div className="space-y-1 text-xs text-gray-700 mt-2">
-              {[
-                'Communicate with parent/guardian at least weekly about behavior progress',
-                'Provide proactive interventions and supports (specified below)',
-                'Notify parent/guardian within 24 hours of any disciplinary action',
-                'Schedule follow-up conference within _____ weeks',
-                'Other: ___________________________________________',
-              ].map((item, i) => (
-                <label key={i} className="flex items-start gap-2 py-0.5">
-                  <span className="w-3 h-3 border border-gray-400 rounded-sm inline-block shrink-0 mt-0.5"></span>
-                  <span>{item}</span>
+          {/* Section 6 — Signatures & Authorization */}
+          <FormSection title="SECTION 6 — Signatures & Authorization">
+            <div className="space-y-4 mt-2">
+              {['Student Signature', 'Parent / Guardian Signature', 'Administrator Signature', 'Counselor Signature (if present)'].map(label => (
+                <div key={label} className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs font-medium text-gray-700">{label}:</span>
+                    <div className="border-b border-gray-300 mt-1 min-h-[22px]"></div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-700">Date:</span>
+                    <div className="border-b border-gray-300 mt-1 min-h-[22px]"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FormSection>
+
+          {/* Section 7 — 30-Day Review */}
+          <FormSection title="SECTION 7 — 30-Day Review">
+            <div className="grid grid-cols-3 gap-3">
+              <FieldLine label="30-Day Review Date" />
+              <FieldLine label="Conducted By" />
+              <FieldLine label="Review Outcome" />
+            </div>
+            <div className="flex items-center gap-6 mt-3">
+              <span className="text-xs font-medium text-gray-700">Disposition:</span>
+              {['Agreement Extended', 'Agreement Modified', 'Agreement Completed', 'DAEP Extended'].map(d => (
+                <label key={d} className="flex items-center gap-1.5 text-xs text-gray-700">
+                  <span className="w-3.5 h-3.5 border border-gray-400 rounded-sm inline-block shrink-0"></span>
+                  {d}
                 </label>
               ))}
             </div>
-          </Section>
-
-          <Section title="Parent/Guardian Commitments" number="3">
-            <p className="text-xs text-gray-600 mb-2">I agree to:</p>
-            <div className="space-y-1 text-xs text-gray-700 mt-2">
-              {[
-                'Review daily behavior report (CICO sheet) each evening',
-                'Sign and return behavior tracking forms daily',
-                'Reinforce positive behavior at home with praise and encouragement',
-                'Maintain open communication with school staff',
-                'Attend scheduled conferences and respond to school communications within 48 hours',
-                'Support consequences for behavior that does not meet expectations',
-                'Other: ___________________________________________',
-              ].map((item, i) => (
-                <label key={i} className="flex items-start gap-2 py-0.5">
-                  <span className="w-3 h-3 border border-gray-400 rounded-sm inline-block shrink-0 mt-0.5"></span>
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="Student Commitments" number="4">
-            <p className="text-xs text-gray-600 mb-2">I agree to:</p>
-            <div className="space-y-1 text-xs text-gray-700 mt-2">
-              {[
-                'Follow my behavior contract goals every day',
-                'Check in with my mentor each morning and afternoon',
-                'Use the strategies I learned when I feel upset or frustrated',
-                'Ask for help when I need it instead of acting out',
-                'Show my CICO sheet to my parent/guardian every day',
-              ].map((item, i) => (
-                <label key={i} className="flex items-start gap-2 py-0.5">
-                  <span className="w-3 h-3 border border-gray-400 rounded-sm inline-block shrink-0 mt-0.5"></span>
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="Communication Plan" number="5">
-            <p className="text-xs text-gray-600 mb-2">How we will stay in contact:</p>
-            <div className="grid grid-cols-2 gap-4 text-xs mt-2">
-              <div><span className="text-gray-500">Preferred contact method:</span><div className="border-b border-gray-300 mt-1 pb-1"></div></div>
-              <div><span className="text-gray-500">Best time to reach parent:</span><div className="border-b border-gray-300 mt-1 pb-1"></div></div>
-              <div><span className="text-gray-500">Frequency of updates:</span><div className="border-b border-gray-300 mt-1 pb-1"></div></div>
-              <div><span className="text-gray-500">Review conference date:</span><div className="border-b border-gray-300 mt-1 pb-1"></div></div>
-            </div>
-          </Section>
-
-          <Section title="Signatures" number="6">
-            <div className="grid grid-cols-2 gap-6 mt-2">
-              <div><div className="border-b border-gray-300 mt-8 mb-1"></div><p className="text-xs text-gray-500">Parent/Guardian Signature / Date</p></div>
-              <div><div className="border-b border-gray-300 mt-8 mb-1"></div><p className="text-xs text-gray-500">Administrator Signature / Date</p></div>
-              <div><div className="border-b border-gray-300 mt-8 mb-1"></div><p className="text-xs text-gray-500">Student Signature / Date</p></div>
-              <div><div className="border-b border-gray-300 mt-8 mb-1"></div><p className="text-xs text-gray-500">Counselor Signature / Date</p></div>
-            </div>
-          </Section>
+          </FormSection>
         </div>
 
-        <p className="text-[10px] text-gray-400 mt-6 text-center">Navigator by Clear Path Education Group · clearpathedgroup.com</p>
+        <div className="flex justify-between items-center mt-6 pt-3 border-t border-gray-200">
+          <p className="text-[10px] text-gray-400">© Clear Path Education Group | TEC §37.009 | HB 6 | 2025-2026</p>
+          <p className="text-[10px] text-gray-400">Full HB 6 Compliance Toolkit → clearpathedgroup.com/store</p>
+        </div>
       </div>
+    </div>
+  )
+}
+
+function FormSection({ title, children }) {
+  return (
+    <div>
+      <div className="bg-gray-800 text-white px-3 py-1.5 rounded-t text-xs font-bold tracking-wide">{title}</div>
+      <div className="border border-gray-200 border-t-0 rounded-b p-3">{children}</div>
+    </div>
+  )
+}
+
+function FieldLine({ label, span }) {
+  return (
+    <div className={span === 2 ? 'col-span-2' : ''}>
+      <span className="text-xs font-medium text-gray-600">{label}:</span>
+      <div className="border-b border-gray-300 mt-1 pb-1 min-h-[22px]"></div>
     </div>
   )
 }
