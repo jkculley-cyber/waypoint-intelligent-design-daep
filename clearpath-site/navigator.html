@@ -272,7 +272,19 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
   var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
   var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
 
-  // Send to both Formspree + ops Supabase demo_leads
+  // Main Supabase leads table (Waypoint Admin Leads tab)
+  var MAIN = 'https://kvxecksvkimcgwhxxyhw.supabase.co';
+  var MKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.aI5k7bMujWoG6Ak7bl0-w9fwlPxjFP8vxcnCdKKzrWw';
+  var mainLead = {
+    name: f.name.value,
+    email: f.email.value,
+    source: 'navigator_campus_pilot',
+    district: f.school.value,
+    concern: 'Navigator pilot — ' + f.role.value + ' at ' + f.school.value + ' (' + f.campus_size.value + '). Phone: ' + f.phone.value,
+    status: 'new'
+  };
+
+  // Send to all three: Formspree + ops Supabase + main Supabase
   Promise.all([
     fetch('https://formspree.io/f/xpqjngpp', {
       method: 'POST', body: formData, headers: { 'Accept': 'application/json' }
@@ -281,6 +293,11 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify(lead)
+    }).catch(function() {}),
+    fetch(MAIN + '/rest/v1/leads', {
+      method: 'POST',
+      headers: { 'apikey': MKEY, 'Authorization': 'Bearer ' + MKEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(mainLead)
     }).catch(function() {})
   ]).then(function() {
     // Show success inline
