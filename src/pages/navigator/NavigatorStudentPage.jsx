@@ -243,7 +243,7 @@ export default function NavigatorStudentPage() {
         </div>
 
         {/* Progress & Effectiveness Review */}
-        <StudentProgressPanel referrals={referrals} supports={supports} student={student} />
+        <StudentProgressPanel referrals={referrals} placements={placements} supports={supports} student={student} />
 
         {/* Active Supports */}
         {activeSupports.length > 0 && (
@@ -457,11 +457,11 @@ export default function NavigatorStudentPage() {
 const SUPPORT_TYPE_SHORT = { cico: 'CICO', behavior_contract: 'Contract', counseling_referral: 'Counseling', parent_contact: 'Parent', mentoring: 'Mentoring', other: 'Other' }
 const TIER_COLORS = { 1: 'bg-green-100 text-green-700', 2: 'bg-amber-100 text-amber-700', 3: 'bg-red-100 text-red-700' }
 
-function StudentProgressPanel({ referrals, supports, student }) {
+function StudentProgressPanel({ referrals, placements, supports, student }) {
   const completedSupports = supports.filter(s => s.status === 'completed' && s.incidents_before != null)
   const activeSupports = supports.filter(s => s.status === 'active')
 
-  // Referral trend: compare first half to second half of referrals by date
+  // ── Referral trend: compare first half to second half rate ──
   const sortedRefs = [...referrals].sort((a, b) => new Date(a.referral_date) - new Date(b.referral_date))
   const mid = Math.floor(sortedRefs.length / 2)
   const firstHalf = sortedRefs.slice(0, mid)
@@ -472,10 +472,42 @@ function StudentProgressPanel({ referrals, supports, student }) {
   const secondRate = secondHalf.length / secondHalfDays * 30
   const refTrend = referrals.length >= 4 ? (secondRate < firstRate ? 'improving' : secondRate > firstRate * 1.2 ? 'worsening' : 'stable') : 'insufficient'
 
-  // Total incident reduction from completed supports
+  // ── Days since last referral ──
+  const lastRefDate = sortedRefs.length > 0 ? new Date(sortedRefs[sortedRefs.length - 1].referral_date) : null
+  const daysSinceLastRef = lastRefDate ? Math.floor((Date.now() - lastRefDate) / 86400000) : null
+  const refRecency = daysSinceLastRef != null ? (daysSinceLastRef >= 30 ? 'quiet' : daysSinceLastRef >= 14 ? 'cooling' : 'recent') : null
+
+  // ── Placement trend: compare current year to prior year ──
+  const currentYearPlacements = (placements || []).filter(p => p.start_date >= '2025-08-01')
+  const priorYearPlacements = (placements || []).filter(p => p.start_date < '2025-08-01')
+  const placementTrend = priorYearPlacements.length > 0 && currentYearPlacements.length < priorYearPlacements.length ? 'fewer' : priorYearPlacements.length > 0 && currentYearPlacements.length > priorYearPlacements.length ? 'more' : priorYearPlacements.length > 0 ? 'same' : null
+
+  // ── Total incident reduction from completed supports ──
   const totalBefore = completedSupports.reduce((s, c) => s + (c.incidents_before || 0), 0)
   const totalAfter = completedSupports.reduce((s, c) => s + (c.incidents_after || 0), 0)
   const totalReduction = totalBefore > 0 ? Math.round((1 - totalAfter / totalBefore) * 100) : null
+
+  // ── Average support duration (completed) ──
+  const avgDuration = completedSupports.length > 0
+    ? Math.round(completedSupports.reduce((s, c) => s + (c.end_date && c.start_date ? (new Date(c.end_date) - new Date(c.start_date)) / 86400000 : 0), 0) / completedSupports.length)
+    : null
+
+  // ── Overall progress score (0-100) ──
+  let progressScore = 50 // baseline
+  if (refTrend === 'improving') progressScore += 15
+  if (refTrend === 'worsening') progressScore -= 20
+  if (refRecency === 'quiet') progressScore += 15
+  if (refRecency === 'recent') progressScore -= 10
+  if (totalReduction != null && totalReduction > 50) progressScore += 15
+  if (totalReduction != null && totalReduction > 0 && totalReduction <= 50) progressScore += 8
+  if (totalReduction != null && totalReduction < 0) progressScore -= 15
+  if (placementTrend === 'fewer') progressScore += 10
+  if (placementTrend === 'more') progressScore -= 10
+  if (activeSupports.length > 0) progressScore += 5
+  progressScore = Math.max(0, Math.min(100, progressScore))
+
+  const progressLabel = progressScore >= 75 ? 'Strong Progress' : progressScore >= 55 ? 'Making Progress' : progressScore >= 40 ? 'Monitoring' : 'Needs Attention'
+  const progressColor = progressScore >= 75 ? 'green' : progressScore >= 55 ? 'emerald' : progressScore >= 40 ? 'amber' : 'red'
 
   if (referrals.length === 0 && supports.length === 0) return null
 
@@ -496,27 +528,55 @@ function StudentProgressPanel({ referrals, supports, student }) {
       </div>
 
       <div className="p-5 space-y-4">
-        {/* Progress Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Progress Score Bar */}
+        <div className={`rounded-lg p-4 border-2 ${progressColor === 'green' ? 'border-green-300 bg-green-50' : progressColor === 'emerald' ? 'border-emerald-300 bg-emerald-50' : progressColor === 'amber' ? 'border-amber-300 bg-amber-50' : 'border-red-300 bg-red-50'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className={`text-sm font-bold ${progressColor === 'green' ? 'text-green-800' : progressColor === 'emerald' ? 'text-emerald-800' : progressColor === 'amber' ? 'text-amber-800' : 'text-red-800'}`}>
+              {progressLabel}
+            </p>
+            <span className="text-xs font-mono text-gray-500">{progressScore}/100</span>
+          </div>
+          <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${progressColor === 'green' ? 'bg-green-500' : progressColor === 'emerald' ? 'bg-emerald-500' : progressColor === 'amber' ? 'bg-amber-400' : 'bg-red-500'}`} style={{ width: `${progressScore}%` }} />
+          </div>
+        </div>
+
+        {/* Progress Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="bg-gray-50 rounded-lg p-3 text-center">
             <p className="text-lg font-bold text-gray-800">{referrals.length}</p>
             <p className="text-[10px] text-gray-500 uppercase">Total Referrals</p>
           </div>
           <div className={`rounded-lg p-3 text-center ${refTrend === 'improving' ? 'bg-green-50' : refTrend === 'worsening' ? 'bg-red-50' : 'bg-gray-50'}`}>
             <p className={`text-lg font-bold ${refTrend === 'improving' ? 'text-green-700' : refTrend === 'worsening' ? 'text-red-700' : 'text-gray-600'}`}>
-              {refTrend === 'improving' ? '↓' : refTrend === 'worsening' ? '↑' : '—'}
+              {refTrend === 'improving' ? '↓ Fewer' : refTrend === 'worsening' ? '↑ More' : '— Stable'}
             </p>
             <p className="text-[10px] text-gray-500 uppercase">Referral Trend</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <p className="text-lg font-bold text-gray-800">{completedSupports.length}</p>
-            <p className="text-[10px] text-gray-500 uppercase">Supports Completed</p>
+          <div className={`rounded-lg p-3 text-center ${refRecency === 'quiet' ? 'bg-green-50' : refRecency === 'recent' ? 'bg-red-50' : 'bg-gray-50'}`}>
+            <p className={`text-lg font-bold ${refRecency === 'quiet' ? 'text-green-700' : refRecency === 'recent' ? 'text-red-700' : 'text-gray-600'}`}>
+              {daysSinceLastRef != null ? `${daysSinceLastRef}d` : '—'}
+            </p>
+            <p className="text-[10px] text-gray-500 uppercase">Since Last Referral</p>
+          </div>
+          <div className={`rounded-lg p-3 text-center ${placementTrend === 'fewer' ? 'bg-green-50' : placementTrend === 'more' ? 'bg-red-50' : 'bg-gray-50'}`}>
+            <p className={`text-lg font-bold ${placementTrend === 'fewer' ? 'text-green-700' : placementTrend === 'more' ? 'text-red-700' : 'text-gray-600'}`}>
+              {currentYearPlacements.length}
+              {priorYearPlacements.length > 0 && <span className="text-xs font-normal text-gray-400 ml-1">vs {priorYearPlacements.length}</span>}
+            </p>
+            <p className="text-[10px] text-gray-500 uppercase">Placements (YOY)</p>
           </div>
           <div className={`rounded-lg p-3 text-center ${totalReduction != null && totalReduction > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
             <p className={`text-lg font-bold ${totalReduction != null && totalReduction > 0 ? 'text-green-700' : 'text-gray-600'}`}>
               {totalReduction != null ? `${totalReduction}%` : '—'}
             </p>
             <p className="text-[10px] text-gray-500 uppercase">Incident Reduction</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-gray-800">
+              {avgDuration != null ? `${avgDuration}d` : '—'}
+            </p>
+            <p className="text-[10px] text-gray-500 uppercase">Avg Support Duration</p>
           </div>
         </div>
 
@@ -583,29 +643,28 @@ function StudentProgressPanel({ referrals, supports, student }) {
           </div>
         )}
 
-        {/* Progress Assessment */}
-        {(completedSupports.length > 0 || referrals.length >= 4) && (
-          <div className={`rounded-lg p-3 border ${
-            refTrend === 'improving' && totalReduction > 30 ? 'bg-green-50 border-green-200' :
-            refTrend === 'worsening' ? 'bg-red-50 border-red-200' :
-            'bg-amber-50 border-amber-200'
-          }`}>
-            <p className={`text-xs font-bold ${
-              refTrend === 'improving' && totalReduction > 30 ? 'text-green-800' :
-              refTrend === 'worsening' ? 'text-red-800' : 'text-amber-800'
-            }`}>
-              {refTrend === 'improving' && totalReduction > 30
-                ? 'Making Progress — referral frequency declining and interventions showing positive results.'
-                : refTrend === 'worsening'
-                ? 'Needs Attention — referral frequency increasing. Consider adjusting tier level or changing intervention approach.'
-                : refTrend === 'improving'
-                ? 'Early Progress — referral trend improving. Continue current supports and monitor.'
-                : completedSupports.length > 0 && totalReduction > 0
-                ? 'Interventions Effective — supports have reduced incidents. Monitor for sustained improvement.'
-                : 'Monitoring — continue current supports and collect more data before adjusting.'}
-            </p>
+        {/* Score Breakdown */}
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-2">Score Factors</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-[10px]">
+            <span className={refTrend === 'improving' ? 'text-green-700' : refTrend === 'worsening' ? 'text-red-600' : 'text-gray-500'}>
+              {refTrend === 'improving' ? '+15' : refTrend === 'worsening' ? '−20' : '+0'} Referral trend ({refTrend})
+            </span>
+            <span className={refRecency === 'quiet' ? 'text-green-700' : refRecency === 'recent' ? 'text-red-600' : 'text-gray-500'}>
+              {refRecency === 'quiet' ? '+15' : refRecency === 'recent' ? '−10' : '+0'} Days since last ({daysSinceLastRef ?? '—'}d)
+            </span>
+            <span className={placementTrend === 'fewer' ? 'text-green-700' : placementTrend === 'more' ? 'text-red-600' : 'text-gray-500'}>
+              {placementTrend === 'fewer' ? '+10' : placementTrend === 'more' ? '−10' : '+0'} Placement trend ({placementTrend || 'n/a'})
+            </span>
+            <span className={totalReduction > 50 ? 'text-green-700' : totalReduction > 0 ? 'text-emerald-600' : totalReduction < 0 ? 'text-red-600' : 'text-gray-500'}>
+              {totalReduction > 50 ? '+15' : totalReduction > 0 ? '+8' : totalReduction < 0 ? '−15' : '+0'} Incident reduction ({totalReduction ?? 0}%)
+            </span>
+            <span className={activeSupports.length > 0 ? 'text-green-700' : 'text-gray-500'}>
+              {activeSupports.length > 0 ? '+5' : '+0'} Active supports ({activeSupports.length})
+            </span>
+            <span className="text-gray-400">Base: 50</span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
