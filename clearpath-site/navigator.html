@@ -301,7 +301,18 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
     }).catch(function() {})
   ]).then(function() {
     // Show success inline
-    f.innerHTML = '<div style="text-align:center;padding:24px 0"><p style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px">Pilot request submitted!</p><p style="font-size:.85rem;color:var(--text-muted)">We\'ll reach out within 24 hours to schedule your demo.</p></div>';
+    f.innerHTML = '<div style="text-align:center;padding:28px 0">'
+      + '<p style="font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:6px">You\'re in! Explore Navigator now.</p>'
+      + '<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:20px">We\'ll also reach out within 24 hours to walk you through it personally.</p>'
+      + '<div style="background:rgba(0,0,0,.3);border:1px solid rgba(232,134,42,.3);border-radius:12px;padding:20px;max-width:340px;margin:0 auto;text-align:left">'
+      + '<p style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px">Demo Login</p>'
+      + '<div style="margin-bottom:8px"><span style="font-size:.75rem;color:var(--text-muted)">URL:</span> <a href="https://waypoint.clearpathedgroup.com" target="_blank" style="font-size:.85rem;color:var(--amber-light);font-weight:600;text-decoration:none">waypoint.clearpathedgroup.com</a></div>'
+      + '<div style="margin-bottom:8px"><span style="font-size:.75rem;color:var(--text-muted)">Email:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">ap@lincoln-hs.demo</span></div>'
+      + '<div style="margin-bottom:16px"><span style="font-size:.75rem;color:var(--text-muted)">Password:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">Password123!</span></div>'
+      + '<a href="https://waypoint.clearpathedgroup.com" target="_blank" style="display:block;text-align:center;padding:12px;background:linear-gradient(135deg,var(--amber),var(--orange));color:white;font-weight:700;font-size:.88rem;border-radius:8px;text-decoration:none;font-family:Raleway,sans-serif">Open Navigator →</a>'
+      + '</div>'
+      + '<p style="font-size:.72rem;color:var(--text-muted);margin-top:16px">This is sample data from a demo school. Your own account with real student data comes after a signed data agreement.</p>'
+      + '</div>';
   });
 });
 </script>
