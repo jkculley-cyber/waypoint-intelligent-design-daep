@@ -1304,6 +1304,65 @@ const RESOURCE_LIBRARY = {
       { id: 'af6', name: 'Parent: Supporting Without Rescuing', delivery: 'parent', time: '5 min', who: 'Parent', description: 'When your child is frustrated with homework: don\'t do it for them. Ask: "What part is hard?" "What have you tried?" "Who could you ask tomorrow?" Build persistence.', materials: 'Parent tip sheet' },
     ]
   },
+  mindfulness: {
+    title: 'Mindfulness',
+    color: 'border-indigo-200 bg-indigo-50',
+    resources: [
+      { id: 'mn1', name: '4-7-8 Breathing Exercise', delivery: '1on1', time: '10 min', who: 'Counselor', tiers: [1, 2], description: 'Student learns the 4-7-8 technique: breathe in for 4 seconds, hold for 7, exhale for 8. Practice 3 rounds together, then discuss when to use it during the school day.', materials: 'Breathing guide card' },
+      { id: 'mn2', name: '5 Senses Grounding', delivery: 'small_group', time: '10 min', who: 'Counselor', tiers: [1, 2], description: 'Name 5 things you can see, 4 you can hear, 3 you can touch, 2 you can smell, 1 you can taste. Anchors students in the present moment when anxiety or anger builds.', materials: '5 senses poster' },
+      { id: 'mn3', name: 'Body Scan Meditation', delivery: '1on1', time: '10 min', who: 'Counselor', tiers: [2, 3], description: 'Guided relaxation starting at toes, moving up through body. Student notices where tension lives and practices releasing it. Builds awareness of physical stress signals.', materials: 'Audio guide or script' },
+      { id: 'mn4', name: 'Mindful Minute Timer', delivery: 'self_guided', time: '1 min', who: 'Student', tiers: [1], description: 'Set a 60-second timer. Close eyes. Focus only on breathing. When thoughts come, notice them and let them pass. Do once before every class period that\'s a trigger.', materials: 'Timer (phone or classroom clock)' },
+      { id: 'mn5', name: 'Calm Corner Checklist', delivery: 'check_in', time: '5 min', who: 'Teacher / AP', tiers: [1, 2], description: 'Create a designated calm corner in the classroom or office. Checklist: headphones, stress ball, breathing card, coloring sheet, timer. Student knows they can go there before escalating.', materials: 'Calm corner setup checklist' },
+      { id: 'mn6', name: 'Parent: Mindful Moments at Home', delivery: 'parent', time: '5 min', who: 'Parent', tiers: [1], description: 'Three simple mindfulness exercises to do with your child at home: mindful eating (one bite, notice everything), gratitude pause before bed, deep breathing during homework frustration.', materials: 'Parent handout' },
+    ]
+  },
+  positive_thinking: {
+    title: 'Positive Thinking',
+    color: 'border-yellow-200 bg-yellow-50',
+    resources: [
+      { id: 'pt1', name: 'Thought Swap Worksheet', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'Student writes 5 negative thoughts they had this week ("I\'m stupid," "Nobody likes me") and rewrites each as a realistic positive alternative ("This is hard but I can learn," "Some people care about me").', materials: 'Thought swap worksheet' },
+      { id: 'pt2', name: 'Affirmation Cards', delivery: 'self_guided', time: '5 min/day', who: 'Student', tiers: [1, 2], description: 'Student picks 3 affirmations from a set of 12 and reads them silently each morning. Examples: "I belong here," "I can handle hard things," "Today is a new day." Swap out weekly.', materials: 'Affirmation card set (printable)' },
+      { id: 'pt3', name: 'Best Possible Self', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2], description: 'Write about your best possible future self in 5 years. What does your day look like? What are you doing? Who is around you? Research shows this exercise increases optimism and motivation.', materials: 'Writing prompt worksheet' },
+      { id: 'pt4', name: 'Negativity Detector', delivery: 'small_group', time: '20 min', who: 'Counselor', tiers: [2, 3], description: 'Group listens for common negative thinking patterns: all-or-nothing ("I ALWAYS mess up"), mind reading ("They think I\'m dumb"), catastrophizing ("My life is ruined"). Practice catching and reframing.', materials: 'Thinking trap cards' },
+      { id: 'pt5', name: 'Wins Journal', delivery: 'self_guided', time: '3 min/day', who: 'Student', tiers: [1], description: 'Before leaving school each day, write one thing that went well. Even tiny: "I raised my hand." "I didn\'t get in trouble." Over 2 weeks, review the list and see the pattern.', materials: 'Mini journal or index cards' },
+      { id: 'pt6', name: 'Parent: Catching the Good', delivery: 'parent', time: '5 min', who: 'Parent', tiers: [1], description: 'For every 1 correction, aim for 5 positive comments. Not fake praise — specific: "I noticed you handled that calmly." "You got started on homework without being asked." Name what you see.', materials: 'Parent tip card' },
+    ]
+  },
+  gratitude: {
+    title: 'Gratitude',
+    color: 'border-pink-200 bg-pink-50',
+    resources: [
+      { id: 'gr1', name: 'Gratitude Letter', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2], description: 'Write a letter to someone at school who has helped you — a teacher, counselor, friend, coach. You don\'t have to send it. The act of writing it shifts your focus from what\'s wrong to what\'s right.', materials: 'Letter template' },
+      { id: 'gr2', name: '3 Good Things', delivery: 'self_guided', time: '5 min', who: 'Student', tiers: [1], description: 'Each day for one week, write 3 good things that happened and WHY they happened. "I got a good grade because I studied." "My friend was nice because I was nice first." Builds causal awareness.', materials: '3 Good Things worksheet (weekly)' },
+      { id: 'gr3', name: 'Thank You Note to a Teacher', delivery: 'check_in', time: '10 min', who: 'AP / Counselor', tiers: [1, 2], description: 'After a conflict with a teacher, write a short thank-you note for something that teacher HAS done well. Rebuilds the relationship from a place of appreciation, not resentment.', materials: 'Note cards' },
+      { id: 'gr4', name: 'Gratitude Scavenger Hunt', delivery: 'small_group', time: '15 min', who: 'Counselor', tiers: [1], description: 'Walk around campus in pairs. Find 10 things to be grateful for that you normally ignore: clean water fountain, AC, a tree, a friend waving. Share findings with the group. Shifts attention.', materials: 'Scavenger hunt checklist' },
+      { id: 'gr5', name: 'Parent: Gratitude at Dinner', delivery: 'parent', time: '5 min', who: 'Parent', tiers: [1], description: 'Each person at dinner names one thing they\'re grateful for today. Goes around the table. No phones. Takes 3 minutes. Changes the energy of the meal and models positive reflection.', materials: 'None' },
+    ]
+  },
+  empathy: {
+    title: 'Empathy',
+    color: 'border-rose-200 bg-rose-50',
+    resources: [
+      { id: 'em1', name: 'Walk in Their Shoes', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'After a conflict, student writes the entire story from the other person\'s perspective. Not what they DID — what they FELT. "She probably felt embarrassed when I..." Builds cognitive empathy.', materials: 'Perspective worksheet' },
+      { id: 'em2', name: 'Emotion Charades', delivery: 'small_group', time: '15 min', who: 'Counselor', tiers: [1, 2], description: 'Students act out emotions using only facial expressions and body language — no words. Group guesses the emotion. Discussion: "How did you know? What clues did you read?" Builds emotional literacy.', materials: 'Emotion cards' },
+      { id: 'em3', name: 'Impact Mapping', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'Draw a circle with the student\'s name in the center. Draw lines to everyone affected by the incident: other student, teacher, parent, bystanders, themselves. Write one way each person was impacted.', materials: 'Impact map worksheet' },
+      { id: 'em4', name: 'Kindness Challenge', delivery: 'self_guided', time: '5 min/day', who: 'Student', tiers: [1], description: 'Do one intentional act of kindness each day for 5 days. Hold a door. Compliment someone. Help a classmate. Write what you did and how it felt. Small actions build the empathy muscle.', materials: 'Kindness tracker card' },
+      { id: 'em5', name: 'Story Swap', delivery: 'small_group', time: '20 min', who: 'Counselor', tiers: [2], description: 'Partners interview each other: "What\'s something hard you\'ve been through?" Then each person shares their partner\'s story (with permission) to the group. Hearing YOUR story from someone else builds connection.', materials: 'Interview question cards' },
+      { id: 'em6', name: 'Parent: Teaching Empathy at Home', delivery: 'parent', time: '5 min', who: 'Parent', tiers: [1], description: 'When your child tells you about a conflict, ask: "How do you think the other person felt?" before "What did YOU do?" This one question, asked consistently, rewires how they see conflict.', materials: 'Parent tip card' },
+    ]
+  },
+  substance_abuse: {
+    title: 'Substance Abuse Awareness',
+    color: 'border-gray-300 bg-gray-50',
+    resources: [
+      { id: 'sa1', name: 'My Reasons to Stay Clean', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'Student identifies their personal reasons for avoiding substances — not what adults tell them, but what THEY care about. Sports eligibility, a relationship, a goal, their health. Personal stakes matter more than lectures.', materials: 'Reasons worksheet' },
+      { id: 'sa2', name: 'Pressure Map', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'Map the people, places, and situations where pressure to use is highest. For each one, write a specific exit strategy: what to say, where to go, who to call. Practice the hardest one out loud.', materials: 'Pressure map worksheet' },
+      { id: 'sa3', name: 'Refusal Skills Practice', delivery: 'small_group', time: '20 min', who: 'Counselor', tiers: [1, 2], description: 'Role-play 5 real scenarios where someone offers substances. Practice 3 refusal strategies: direct ("No thanks"), excuse ("I have a game tomorrow"), redirect ("Let\'s do something else"). Rate which felt most natural.', materials: 'Scenario cards' },
+      { id: 'sa4', name: 'Consequence Timeline', delivery: 'self_guided', time: '15 min', who: 'Student', tiers: [2], description: 'Draw a timeline from today to 5 years. Mark what happens if you use: school consequences (today), relationship impact (this month), health effects (this year), legal record (5 years). Make it concrete and personal.', materials: 'Timeline worksheet' },
+      { id: 'sa5', name: 'Healthy Coping Alternatives', delivery: 'check_in', time: '10 min', who: 'AP / Counselor', tiers: [2, 3], description: 'Students who use substances are often self-medicating stress or pain. Identify what they\'re trying to escape, then build a menu of healthier alternatives: exercise, music, talking to someone, journaling, art.', materials: 'Alternatives menu card' },
+      { id: 'sa6', name: 'Parent: Warning Signs & Conversations', delivery: 'parent', time: '10 min', who: 'Parent', tiers: [1], description: 'Know the signs: sudden friend changes, declining grades, secretiveness, bloodshot eyes, unusual smells. When you see them, don\'t accuse — ask: "I\'ve noticed [specific change]. Help me understand what\'s going on."', materials: 'Parent guide' },
+    ]
+  },
 }
 
 function ResourceLibrary({ onOpenReflection, onOpenWorksheet }) {
