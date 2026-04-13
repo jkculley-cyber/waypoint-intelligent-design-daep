@@ -34,7 +34,7 @@ const OUTCOME_COLORS = {
 
 
 export default function NavigatorReferralsPage() {
-  const { districtId } = useAuth()
+  const { districtId, isDemoReadonly } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ status: '', campus_id: '', date_from: '', date_to: '' })
@@ -64,14 +64,14 @@ export default function NavigatorReferralsPage() {
       <Topbar
         title="Navigator — Referrals"
         subtitle="Discipline referrals and behavioral incidents"
-        actions={
+        actions={isDemoReadonly ? null : (
           <button
             onClick={() => { setSelectedReferral(null); setShowDrawer(true) }}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             + New Referral
           </button>
-        }
+        )}
       />
 
       <div className="p-6 space-y-4">

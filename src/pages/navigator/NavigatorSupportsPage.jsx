@@ -33,7 +33,7 @@ const STATUS_COLORS = {
 }
 
 export default function NavigatorSupportsPage() {
-  const { districtId } = useAuth()
+  const { districtId, isDemoReadonly } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [typeFilter, setTypeFilter] = useState('')
   const [campusFilter, setCampusFilter] = useState('')
@@ -70,14 +70,14 @@ export default function NavigatorSupportsPage() {
       <Topbar
         title="Navigator — Supports"
         subtitle="Proactive behavioral support tracking"
-        actions={
+        actions={isDemoReadonly ? null : (
           <button
             onClick={() => setShowDrawer(true)}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             + New Support
           </button>
-        }
+        )}
       />
 
       <div className="p-6 space-y-4">

@@ -23,7 +23,7 @@ const RISK_STYLES = {
 export default function NavigatorStudentPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { hasProduct } = useAuth()
+  const { hasProduct, isDemoReadonly } = useAuth()
   const showDaep = hasProduct('waypoint')
   const [showEscalateModal, setShowEscalateModal] = useState(false)
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
@@ -82,7 +82,7 @@ export default function NavigatorStudentPage() {
       <Topbar
         title="Navigator — Student History"
         subtitle={student.first_name + ' ' + student.last_name}
-        actions={
+        actions={isDemoReadonly ? null : (
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(`/navigator/referrals?new=1&student=${id}`)}
@@ -111,7 +111,7 @@ export default function NavigatorStudentPage() {
               </button>
             )}
           </div>
-        }
+        )}
       />
 
       <div className="p-6 space-y-6">

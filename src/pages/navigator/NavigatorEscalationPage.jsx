@@ -21,7 +21,7 @@ const BULK_SUPPORT_TYPES = [
 ]
 
 export default function NavigatorEscalationPage() {
-  const { districtId, profile } = useAuth()
+  const { districtId, profile, isDemoReadonly } = useAuth()
   const { students, loading, error, refetch } = useEscalationRisk()
   const [filter, setFilter] = useState('all')
   const [selected, setSelected] = useState(new Set())
@@ -131,9 +131,11 @@ export default function NavigatorEscalationPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left">
-                    <th className="px-4 py-3 w-8">
-                      <input type="checkbox" checked={selected.size > 0 && selected.size === visible.length} onChange={toggleAll} className="rounded border-gray-300" />
-                    </th>
+                    {!isDemoReadonly && (
+                      <th className="px-4 py-3 w-8">
+                        <input type="checkbox" checked={selected.size > 0 && selected.size === visible.length} onChange={toggleAll} className="rounded border-gray-300" />
+                      </th>
+                    )}
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Student</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Grade</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Campus</th>
@@ -149,9 +151,11 @@ export default function NavigatorEscalationPage() {
                     const st = LEVEL_STYLES[s.risk_level]
                     return (
                       <tr key={s.student_id} className={`hover:bg-gray-50 transition-colors ${selected.has(s.student_id) ? 'bg-blue-50' : ''}`}>
-                        <td className="px-4 py-3">
-                          <input type="checkbox" checked={selected.has(s.student_id)} onChange={() => toggleSelect(s.student_id)} className="rounded border-gray-300" />
-                        </td>
+                        {!isDemoReadonly && (
+                          <td className="px-4 py-3">
+                            <input type="checkbox" checked={selected.has(s.student_id)} onChange={() => toggleSelect(s.student_id)} className="rounded border-gray-300" />
+                          </td>
+                        )}
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {s.student ? `${s.student.first_name} ${s.student.last_name}` : '—'}
                         </td>
@@ -216,7 +220,7 @@ export default function NavigatorEscalationPage() {
       </div>
 
       {/* Floating action bar when students selected */}
-      {selected.size > 0 && (
+      {!isDemoReadonly && selected.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4">
           <span className="text-sm font-medium">{selected.size} student{selected.size !== 1 ? 's' : ''} selected</span>
           <button
@@ -235,7 +239,7 @@ export default function NavigatorEscalationPage() {
       )}
 
       {/* Bulk support modal */}
-      {showBulkModal && (
+      {!isDemoReadonly && showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
             <h2 className="text-base font-semibold text-gray-900">Create Support for {selected.size} Student{selected.size !== 1 ? 's' : ''}</h2>

@@ -192,6 +192,7 @@ export function AuthProvider({ children }) {
   }
 
   const tier = district?.settings?.subscription_tier || 'enterprise'
+  const isDemoReadonly = !!district?.settings?.demo_readonly
 
   function hasFeature(featureName) {
     return hasFeatureAccess(tier, featureName)
@@ -222,6 +223,7 @@ export function AuthProvider({ children }) {
     hasProduct,
     isAdmin,
     isStaff,
+    isDemoReadonly,
     districtId: profile?.district_id || null,
     sessionWarning,
     extendSession,

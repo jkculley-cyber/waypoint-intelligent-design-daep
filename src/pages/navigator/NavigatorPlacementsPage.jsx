@@ -15,7 +15,7 @@ const TABS = [
 ]
 
 export default function NavigatorPlacementsPage() {
-  const { districtId } = useAuth()
+  const { districtId, isDemoReadonly } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('active_iss')
@@ -74,12 +74,14 @@ export default function NavigatorPlacementsPage() {
             >
               Export Excel
             </button>
-            <button
-              onClick={() => setShowDrawer(true)}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              + New Placement
-            </button>
+            {!isDemoReadonly && (
+              <button
+                onClick={() => setShowDrawer(true)}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                + New Placement
+              </button>
+            )}
           </div>
         }
       />
