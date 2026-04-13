@@ -242,6 +242,9 @@ export default function NavigatorStudentPage() {
           </div>
         </div>
 
+        {/* Progress & Effectiveness Review */}
+        <StudentProgressPanel referrals={referrals} supports={supports} student={student} />
+
         {/* Active Supports */}
         {activeSupports.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -445,6 +448,165 @@ export default function NavigatorStudentPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Progress & Effectiveness Panel ──────────────────────────────────────────
+
+const SUPPORT_TYPE_SHORT = { cico: 'CICO', behavior_contract: 'Contract', counseling_referral: 'Counseling', parent_contact: 'Parent', mentoring: 'Mentoring', other: 'Other' }
+const TIER_COLORS = { 1: 'bg-green-100 text-green-700', 2: 'bg-amber-100 text-amber-700', 3: 'bg-red-100 text-red-700' }
+
+function StudentProgressPanel({ referrals, supports, student }) {
+  const completedSupports = supports.filter(s => s.status === 'completed' && s.incidents_before != null)
+  const activeSupports = supports.filter(s => s.status === 'active')
+
+  // Referral trend: compare first half to second half of referrals by date
+  const sortedRefs = [...referrals].sort((a, b) => new Date(a.referral_date) - new Date(b.referral_date))
+  const mid = Math.floor(sortedRefs.length / 2)
+  const firstHalf = sortedRefs.slice(0, mid)
+  const secondHalf = sortedRefs.slice(mid)
+  const firstHalfDays = firstHalf.length > 1 ? (new Date(firstHalf[firstHalf.length - 1]?.referral_date) - new Date(firstHalf[0]?.referral_date)) / 86400000 || 1 : 1
+  const secondHalfDays = secondHalf.length > 1 ? (new Date(secondHalf[secondHalf.length - 1]?.referral_date) - new Date(secondHalf[0]?.referral_date)) / 86400000 || 1 : 1
+  const firstRate = firstHalf.length / firstHalfDays * 30
+  const secondRate = secondHalf.length / secondHalfDays * 30
+  const refTrend = referrals.length >= 4 ? (secondRate < firstRate ? 'improving' : secondRate > firstRate * 1.2 ? 'worsening' : 'stable') : 'insufficient'
+
+  // Total incident reduction from completed supports
+  const totalBefore = completedSupports.reduce((s, c) => s + (c.incidents_before || 0), 0)
+  const totalAfter = completedSupports.reduce((s, c) => s + (c.incidents_after || 0), 0)
+  const totalReduction = totalBefore > 0 ? Math.round((1 - totalAfter / totalBefore) * 100) : null
+
+  if (referrals.length === 0 && supports.length === 0) return null
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+          <h2 className="text-sm font-semibold text-gray-900">Progress & Effectiveness Review</h2>
+        </div>
+        {student.mtss_tier && (
+          <span className={`px-2 py-0.5 rounded text-xs font-bold ${TIER_COLORS[student.mtss_tier]}`}>
+            MTSS Tier {student.mtss_tier}
+          </span>
+        )}
+      </div>
+
+      <div className="p-5 space-y-4">
+        {/* Progress Summary */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-gray-800">{referrals.length}</p>
+            <p className="text-[10px] text-gray-500 uppercase">Total Referrals</p>
+          </div>
+          <div className={`rounded-lg p-3 text-center ${refTrend === 'improving' ? 'bg-green-50' : refTrend === 'worsening' ? 'bg-red-50' : 'bg-gray-50'}`}>
+            <p className={`text-lg font-bold ${refTrend === 'improving' ? 'text-green-700' : refTrend === 'worsening' ? 'text-red-700' : 'text-gray-600'}`}>
+              {refTrend === 'improving' ? '↓' : refTrend === 'worsening' ? '↑' : '—'}
+            </p>
+            <p className="text-[10px] text-gray-500 uppercase">Referral Trend</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-gray-800">{completedSupports.length}</p>
+            <p className="text-[10px] text-gray-500 uppercase">Supports Completed</p>
+          </div>
+          <div className={`rounded-lg p-3 text-center ${totalReduction != null && totalReduction > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
+            <p className={`text-lg font-bold ${totalReduction != null && totalReduction > 0 ? 'text-green-700' : 'text-gray-600'}`}>
+              {totalReduction != null ? `${totalReduction}%` : '—'}
+            </p>
+            <p className="text-[10px] text-gray-500 uppercase">Incident Reduction</p>
+          </div>
+        </div>
+
+        {/* Active Supports Status */}
+        {activeSupports.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Active Supports</p>
+            <div className="space-y-1.5">
+              {activeSupports.map(s => {
+                const daysSinceStart = s.start_date ? Math.floor((Date.now() - new Date(s.start_date)) / 86400000) : 0
+                return (
+                  <div key={s.id} className="flex items-center justify-between p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-blue-800">{SUPPORT_TYPE_SHORT[s.support_type] || s.support_type}</span>
+                      {s.tiers?.map(t => <span key={t} className={`px-1 py-0.5 rounded text-[9px] font-bold ${TIER_COLORS[t]}`}>T{t}</span>)}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-gray-500">{daysSinceStart} days active</span>
+                      {s.end_date && <span className="text-[10px] text-gray-400 ml-2">ends {format(parseISO(s.end_date), 'MMM d')}</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Completed Supports with Effectiveness */}
+        {completedSupports.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Completed Supports — Effectiveness Data</p>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="py-2 text-left text-gray-400 font-medium uppercase text-[10px]">Support</th>
+                  <th className="py-2 text-left text-gray-400 font-medium uppercase text-[10px]">Tier</th>
+                  <th className="py-2 text-center text-gray-400 font-medium uppercase text-[10px]">Before</th>
+                  <th className="py-2 text-center text-gray-400 font-medium uppercase text-[10px]">After</th>
+                  <th className="py-2 text-center text-gray-400 font-medium uppercase text-[10px]">Change</th>
+                  <th className="py-2 text-left text-gray-400 font-medium uppercase text-[10px]">Outcome</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {completedSupports.map(s => {
+                  const change = s.incidents_before - s.incidents_after
+                  const pct = s.incidents_before > 0 ? Math.round((change / s.incidents_before) * 100) : 0
+                  return (
+                    <tr key={s.id}>
+                      <td className="py-2 font-medium text-gray-800">{SUPPORT_TYPE_SHORT[s.support_type] || s.support_type}</td>
+                      <td className="py-2">{s.tiers?.map(t => <span key={t} className={`px-1 py-0.5 rounded text-[9px] font-bold mr-0.5 ${TIER_COLORS[t]}`}>T{t}</span>)}</td>
+                      <td className="py-2 text-center text-gray-600">{s.incidents_before}</td>
+                      <td className="py-2 text-center text-gray-600">{s.incidents_after}</td>
+                      <td className="py-2 text-center">
+                        <span className={`font-bold ${change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                          {change > 0 ? `↓${pct}%` : change < 0 ? `↑${Math.abs(pct)}%` : '—'}
+                        </span>
+                      </td>
+                      <td className="py-2 text-gray-500 max-w-xs truncate">{s.outcome_notes || '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Progress Assessment */}
+        {(completedSupports.length > 0 || referrals.length >= 4) && (
+          <div className={`rounded-lg p-3 border ${
+            refTrend === 'improving' && totalReduction > 30 ? 'bg-green-50 border-green-200' :
+            refTrend === 'worsening' ? 'bg-red-50 border-red-200' :
+            'bg-amber-50 border-amber-200'
+          }`}>
+            <p className={`text-xs font-bold ${
+              refTrend === 'improving' && totalReduction > 30 ? 'text-green-800' :
+              refTrend === 'worsening' ? 'text-red-800' : 'text-amber-800'
+            }`}>
+              {refTrend === 'improving' && totalReduction > 30
+                ? 'Making Progress — referral frequency declining and interventions showing positive results.'
+                : refTrend === 'worsening'
+                ? 'Needs Attention — referral frequency increasing. Consider adjusting tier level or changing intervention approach.'
+                : refTrend === 'improving'
+                ? 'Early Progress — referral trend improving. Continue current supports and monitor.'
+                : completedSupports.length > 0 && totalReduction > 0
+                ? 'Interventions Effective — supports have reduced incidents. Monitor for sustained improvement.'
+                : 'Monitoring — continue current supports and collect more data before adjusting.'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
