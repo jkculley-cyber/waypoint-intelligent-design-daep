@@ -85,7 +85,7 @@ export default function NavigatorFormsPage() {
             </div>
 
             {/* Intervention Resource Library */}
-            <ResourceLibrary onOpenReflection={(key) => setActiveForm('iss_reflection_' + key)} />
+            <ResourceLibrary onOpenReflection={(key) => setActiveForm('iss_reflection_' + key)} onOpenWorksheet={(id) => setActiveForm('worksheet_' + id)} />
           </>
         ) : activeForm === 'iss_reflection' || activeForm.startsWith('iss_reflection_') ? (
           <ISSReflectionForm
@@ -101,6 +101,8 @@ export default function NavigatorFormsPage() {
           <ParentAgreementForm studentId={studentParam} onBack={() => setActiveForm(null)} />
         ) : activeForm === 'stay_away' ? (
           <StayAwayAgreementForm onBack={() => setActiveForm(null)} />
+        ) : activeForm.startsWith('worksheet_') ? (
+          <ResourceWorksheet resourceId={activeForm.replace('worksheet_', '')} onBack={() => setActiveForm(null)} />
         ) : null}
       </div>
     </div>
@@ -467,6 +469,318 @@ function ParentAgreementForm({ studentId, onBack }) {
   )
 }
 
+// ─── Worksheet Data (from Vera/Sage) ─────────────────────────────────────────
+
+const WORKSHEET_DATA = {
+  'er3': {
+    title: 'Coping Strategy Menu',
+    subtitle: 'Emotional Regulation',
+    intro: 'When big feelings show up, having a plan helps. Pick strategies that work FOR YOU — everyone is different.',
+    sections: [
+      { type: 'strategy_menu', items: [
+        { n: 1, title: 'Take 5 deep breaths', desc: 'Count slowly. In through your nose, out through your mouth.' },
+        { n: 2, title: 'Go for a walk', desc: 'Even 2 minutes of movement can reset your brain.' },
+        { n: 3, title: 'Use a fidget or stress ball', desc: 'Something in your hands keeps your body busy.' },
+        { n: 4, title: 'Write it out', desc: 'Dump your thoughts on paper — you don\'t have to show anyone.' },
+        { n: 5, title: 'Listen to music', desc: 'One song can shift your whole mood.' },
+        { n: 6, title: 'Talk to a trusted adult', desc: 'You don\'t have to handle it alone.' },
+        { n: 7, title: 'Count to 10 slowly', desc: 'Pause before you react. Ten seconds changes a lot.' },
+        { n: 8, title: 'Draw or doodle', desc: 'Let your hands create while your mind settles.' },
+        { n: 9, title: 'Drink cold water', desc: 'Cold water activates your body\'s calm-down system.' },
+      ]},
+      { type: 'instruction', text: 'Circle 3 strategies above you want to try. After you use one, rate it:' },
+      { type: 'rating_table', columns: ['Strategy #', 'Situation I used it in', 'Did it help? (1=Not really, 5=Yes!)'], rows: 3 },
+      { type: 'reflection', prompt: 'What makes it hard to calm down? What gets in the way of using these strategies?' },
+    ]
+  },
+  'ic2': {
+    title: 'Decision Tree: Think Before You Act',
+    subtitle: 'Impulse Control',
+    intro: 'Every choice has a consequence — good or not-so-good. Use this tree to think through a real situation.',
+    sections: [
+      { type: 'labeled_write', step: 1, label: 'Describe the Situation', prompt: 'What happened? (Just the facts — no feelings yet.)', lines: 2 },
+      { type: 'feelings_circle', step: 2, label: 'What Were You Feeling?', prompt: 'Circle what fits:', feelings: ['Angry', 'Embarrassed', 'Disrespected', 'Scared', 'Frustrated', 'Left out', 'Confused', 'Hurt'] },
+      { type: 'decision_tree', step: 3, label: 'Your Decision Tree', root: 'THE MOMENT OF CHOICE',
+        left: { label: 'REACTIVE CHOICE (first impulse)', prompt: 'What could happen?', lines: 3 },
+        right: { label: 'THOUGHTFUL CHOICE (pause + think)', prompt: 'What could happen?', lines: 3 },
+      },
+      { type: 'labeled_write', step: 4, label: 'My Choice Going Forward', prompt: 'Next time I\'m in this situation, I will:', lines: 2 },
+    ]
+  },
+  'pc2': {
+    title: '"I" Statement Practice Cards',
+    subtitle: 'Peer Conflict Resolution',
+    intro: '"You always..." starts fights. "I feel..." starts conversations. Practice flipping the script.',
+    sections: [
+      { type: 'formula', parts: [
+        { part: 'I feel...', hint: 'name the emotion' },
+        { part: 'when...', hint: 'describe what happened (no blame)' },
+        { part: 'because...', hint: 'explain why it matters to you' },
+      ]},
+      { type: 'rewrite_scenarios', scenarios: [
+        { n: 1, original: '"You always talk over me in group work!"' },
+        { n: 2, original: '"You told everyone my secret — you\'re so fake."' },
+        { n: 3, original: '"You never let me sit with you at lunch."' },
+        { n: 4, original: '"You always get me in trouble in class."' },
+        { n: 5, original: '"You started a rumor about me online."' },
+      ]},
+      { type: 'reflection', prompt: 'Which one felt hardest to rewrite? Why do you think that is?' },
+    ]
+  },
+  'ac2': {
+    title: 'Requesting Help: Script Cards',
+    subtitle: 'Adult Communication',
+    intro: 'Asking for help is a strength — but HOW you ask matters. These scripts can get you what you need.',
+    sections: [
+      { type: 'contrast_table', label: 'Why the Way You Ask Matters', rows: [
+        { bad: '"You never help me."', good: '"Could I talk to you for a minute?"' },
+        { bad: '"This is stupid. I don\'t get it."', good: '"I\'m stuck on this — can you help me figure it out?"' },
+        { bad: '"Whatever. Forget it."', good: '"I\'m frustrated, but I still need help. Can we try again?"' },
+      ]},
+      { type: 'script_cards', cards: [
+        { n: 1, situation: 'When you need more time on an assignment', script: '"I\'m working hard on this but I need a little more time. Could I turn it in by [day]? I want to do it right."' },
+        { n: 2, situation: 'When you don\'t understand the instructions', script: '"I read the directions but I\'m still confused. Could you explain it a different way? I want to get this."' },
+        { n: 3, situation: 'When you\'re upset and need a break', script: '"I\'m starting to feel overwhelmed. Can I take 5 minutes to calm down so I can come back focused?"' },
+        { n: 4, situation: 'When something feels unfair', script: '"I have a concern about something. Can I share it with you respectfully? I\'d like to understand your thinking too."' },
+        { n: 5, situation: 'When you need to talk about something personal', script: '"Something\'s going on outside of school that\'s affecting me. Can we find time to talk privately?"' },
+      ]},
+      { type: 'reflection', prompt: 'Pick one card. Practice saying it out loud. Which script feels hardest to say? What makes it hard?' },
+    ]
+  },
+  'reentry': {
+    title: 'My Re-Entry Plan',
+    subtitle: 'Re-Entry Support (ISS/OSS)',
+    intro: 'Coming back takes courage. This plan is YOURS — it helps you return strong and stay there.',
+    sections: [
+      { type: 'labeled_write', step: 1, label: 'What Happened & What I Missed', prompt: 'Classes/days missed:', lines: 2 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'Work I need to make up:', lines: 1 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'Relationships affected:', lines: 2 },
+      { type: 'labeled_write', step: null, label: null, prompt: 'What I want to repair:', lines: 1 },
+      { type: 'commitments', step: 2, label: 'My 3 Commitments for This Week', prompt: 'I will:', count: 3 },
+      { type: 'support_team', step: 3, label: 'My Support Team', prompts: [
+        'Adult at school I can go to when I feel overwhelmed:',
+        'Peer I trust to help me stay on track:',
+        'Person at home who knows my plan:',
+      ]},
+      { type: 'daily_rating', step: 4, label: 'First Week Check-In (Daily Self-Rating)', scale: '1 = Rough Day  |  5 = Great Day', days: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+      { type: 'signatures', fields: ['Student Signature', 'Date', 'Staff Signature', 'Date'] },
+    ]
+  },
+  'cico_goal': {
+    title: 'Goal-Setting: My CICO Plan',
+    subtitle: 'CICO / Behavior Support',
+    intro: 'Small, specific goals are easier to hit. Let\'s make this week\'s plan together.',
+    sections: [
+      { type: 'goal_checklist', options: [
+        'Stay in my seat during instruction', 'Use respectful words with teachers', 'Keep my hands and feet to myself',
+        'Complete all assigned work', 'Ask for help before I give up', 'Take a break instead of reacting',
+        'Be on time to every class', 'Other: _____________________________',
+      ]},
+      { type: 'tracking_table', label: 'Fill in each day — Y = Yes I met it, N = Not today',
+        rows: ['Goal #1:', 'Goal #2:', 'Teacher rating:', 'My rating:'],
+        days: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+      { type: 'labeled_write', step: null, label: 'What went WELL this week?', prompt: null, lines: 3 },
+      { type: 'labeled_write', step: null, label: 'What was HARD this week?', prompt: null, lines: 3 },
+      { type: 'labeled_write', step: null, label: 'What I\'ll Try Differently Next Week', prompt: null, lines: 2 },
+      { type: 'celebration', label: 'Color a star for each day you hit your goal', days: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+    ]
+  },
+}
+
+// ─── Resource Worksheet Renderer ─────────────────────────────────────────────
+
+function ResourceWorksheet({ resourceId, onBack }) {
+  const ws = WORKSHEET_DATA[resourceId]
+  if (!ws) return <div><button onClick={onBack} className="text-sm text-blue-600 font-medium mb-4">← Back</button><p className="text-gray-500">Worksheet not found.</p></div>
+
+  return (
+    <div>
+      <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-4 print:hidden">← Back to Resources</button>
+      <div className="flex justify-end mb-2 print:hidden">
+        <button onClick={() => window.print()} className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Print Worksheet</button>
+      </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-8 max-w-3xl mx-auto print:border-none print:shadow-none print:p-4">
+        <div className="text-center mb-6">
+          <h1 className="text-lg font-bold text-gray-900">{ws.title}</h1>
+          <p className="text-sm text-gray-600">{ws.subtitle}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+          <div><span className="text-xs text-gray-500 block">Student Name</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
+          <div><span className="text-xs text-gray-500 block">Date</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
+          <div><span className="text-xs text-gray-500 block">Staff</span><div className="border-b border-gray-300 mt-1 pb-1 min-h-[24px]"></div></div>
+        </div>
+        {ws.intro && <p className="text-xs text-gray-600 italic mb-4 bg-gray-50 rounded-lg p-3">{ws.intro}</p>}
+
+        <div className="space-y-5">
+          {ws.sections.map((s, i) => <WorksheetSection key={i} section={s} />)}
+        </div>
+
+        <p className="text-[10px] text-gray-400 mt-6 text-center">Navigator by Clear Path Education Group · clearpathedgroup.com</p>
+      </div>
+    </div>
+  )
+}
+
+function WorksheetSection({ section: s }) {
+  switch (s.type) {
+    case 'strategy_menu':
+      return (
+        <div className="space-y-2">
+          {s.items.map(item => (
+            <div key={item.n} className="flex items-start gap-3 p-2 border border-gray-100 rounded-lg">
+              <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">{item.n}</span>
+              <div><p className="text-sm font-medium text-gray-800">{item.title}</p><p className="text-xs text-gray-500">{item.desc}</p></div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'instruction':
+      return <p className="text-xs font-semibold text-gray-700 bg-amber-50 border border-amber-200 rounded-lg p-3">{s.text}</p>
+    case 'rating_table':
+      return (
+        <table className="w-full text-xs border border-gray-200">
+          <thead><tr className="bg-gray-50">{s.columns.map(c => <th key={c} className="border border-gray-200 px-2 py-2 text-left font-medium text-gray-600">{c}</th>)}</tr></thead>
+          <tbody>{[...Array(s.rows)].map((_, i) => <tr key={i}>{s.columns.map(c => <td key={c} className="border border-gray-200 px-2 py-3"></td>)}</tr>)}</tbody>
+        </table>
+      )
+    case 'reflection':
+      return <div><p className="text-xs font-semibold text-gray-700 mb-2">{s.prompt}</p><Lines count={3} /></div>
+    case 'labeled_write':
+      return (
+        <div>
+          {s.step && <h3 className="text-sm font-bold text-gray-800 mb-1"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>}
+          {!s.step && s.label && <h3 className="text-sm font-bold text-gray-800 mb-1">{s.label}</h3>}
+          {s.prompt && <p className="text-xs text-gray-600 mb-1">{s.prompt}</p>}
+          <Lines count={s.lines} />
+        </div>
+      )
+    case 'feelings_circle':
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 mb-1"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>
+          <p className="text-xs text-gray-600 mb-2">{s.prompt}</p>
+          <div className="flex flex-wrap gap-2">{s.feelings.map(f => <span key={f} className="px-3 py-1.5 border-2 border-gray-300 rounded-full text-xs font-medium text-gray-700">{f}</span>)}</div>
+        </div>
+      )
+    case 'decision_tree':
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 mb-3"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>
+          <div className="text-center mb-3"><span className="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-lg">{s.root}</span></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border-2 border-red-200 rounded-lg p-3 bg-red-50">
+              <p className="text-xs font-bold text-red-700 mb-1">{s.left.label}</p>
+              <p className="text-xs text-gray-600 mb-2">{s.left.prompt}</p>
+              <Lines count={s.left.lines} />
+            </div>
+            <div className="border-2 border-green-200 rounded-lg p-3 bg-green-50">
+              <p className="text-xs font-bold text-green-700 mb-1">{s.right.label}</p>
+              <p className="text-xs text-gray-600 mb-2">{s.right.prompt}</p>
+              <Lines count={s.right.lines} />
+            </div>
+          </div>
+        </div>
+      )
+    case 'formula':
+      return (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          {s.parts.map((p, i) => (
+            <div key={i} className="flex items-center gap-1">
+              {i > 0 && <span className="text-gray-400">+</span>}
+              <div className="text-center"><p className="text-sm font-bold text-blue-800">{p.part}</p><p className="text-[10px] text-blue-600">{p.hint}</p></div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'rewrite_scenarios':
+      return (
+        <div className="space-y-4">
+          {s.scenarios.map(sc => (
+            <div key={sc.n} className="border border-gray-200 rounded-lg p-3">
+              <p className="text-xs font-semibold text-gray-500 mb-1">#{sc.n}</p>
+              <p className="text-xs text-red-600 font-medium mb-2 line-through">{sc.original}</p>
+              <p className="text-xs text-gray-600 mb-1">Rewrite: I feel ____________ when ________________________ because ________________</p>
+            </div>
+          ))}
+        </div>
+      )
+    case 'contrast_table':
+      return (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">{s.label}</p>
+          <table className="w-full text-xs border border-gray-200">
+            <thead><tr><th className="border border-gray-200 px-3 py-2 bg-red-50 text-red-700 text-left">Closes the Door</th><th className="border border-gray-200 px-3 py-2 bg-green-50 text-green-700 text-left">Opens the Door</th></tr></thead>
+            <tbody>{s.rows.map((r, i) => <tr key={i}><td className="border border-gray-200 px-3 py-2 text-red-600">{r.bad}</td><td className="border border-gray-200 px-3 py-2 text-green-700 font-medium">{r.good}</td></tr>)}</tbody>
+          </table>
+        </div>
+      )
+    case 'script_cards':
+      return (
+        <div className="grid grid-cols-1 gap-3">
+          {s.cards.map(c => (
+            <div key={c.n} className="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
+              <p className="text-[10px] font-bold text-blue-500 uppercase mb-1">Script #{c.n}: {c.situation}</p>
+              <p className="text-sm text-blue-900 font-medium italic">{c.script}</p>
+            </div>
+          ))}
+        </div>
+      )
+    case 'commitments':
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 mb-1"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>
+          <p className="text-xs text-gray-600 mb-2">{s.prompt}</p>
+          {[...Array(s.count)].map((_, i) => <div key={i} className="flex items-start gap-2 mt-2"><span className="text-xs font-bold text-gray-500 mt-1">{i+1}.</span><div className="flex-1 border-b border-gray-300 pb-1 min-h-[22px]"></div></div>)}
+        </div>
+      )
+    case 'support_team':
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 mb-2"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>
+          {s.prompts.map((p, i) => <div key={i} className="mt-2"><p className="text-xs text-gray-600">{p}</p><div className="border-b border-gray-300 mt-1 pb-1 min-h-[22px]"></div></div>)}
+        </div>
+      )
+    case 'daily_rating':
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 mb-1"><span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold mr-2">{s.step}</span>{s.label}</h3>
+          <p className="text-xs text-gray-500 mb-2">{s.scale}</p>
+          <div className="grid grid-cols-5 gap-2">{s.days.map(d => <div key={d} className="text-center"><p className="text-xs font-bold text-gray-600">{d}</p><div className="border-2 border-gray-300 rounded-lg h-10 mt-1"></div></div>)}</div>
+        </div>
+      )
+    case 'signatures':
+      return (
+        <div className="grid grid-cols-2 gap-4 mt-4">{s.fields.map(f => <div key={f}><div className="border-b border-gray-300 mt-6 mb-1"></div><p className="text-xs text-gray-500">{f}</p></div>)}</div>
+      )
+    case 'goal_checklist':
+      return (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">Pick 1-2 goals for this week:</p>
+          <div className="space-y-1">{s.options.map((o, i) => <label key={i} className="flex items-center gap-2 text-xs text-gray-700 py-0.5"><span className="w-3.5 h-3.5 border border-gray-400 rounded-sm inline-block shrink-0"></span>{o}</label>)}</div>
+        </div>
+      )
+    case 'tracking_table':
+      return (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-1">{s.label}</p>
+          <table className="w-full text-xs border border-gray-200">
+            <thead><tr><th className="border border-gray-200 px-2 py-1 bg-gray-50 text-left w-28"></th>{s.days.map(d => <th key={d} className="border border-gray-200 px-2 py-1 bg-gray-50 text-center">{d}</th>)}</tr></thead>
+            <tbody>{s.rows.map(r => <tr key={r}><td className="border border-gray-200 px-2 py-2 font-medium">{r}</td>{s.days.map(d => <td key={d} className="border border-gray-200 px-2 py-3 text-center"></td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      )
+    case 'celebration':
+      return (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">{s.label}</p>
+          <div className="flex justify-center gap-4">{s.days.map(d => <div key={d} className="text-center"><span className="text-2xl">☆</span><p className="text-[10px] text-gray-500 mt-0.5">{d}</p></div>)}</div>
+        </div>
+      )
+    default:
+      return null
+  }
+}
+
 // ─── Intervention Resource Library ────────────────────────────────────────────
 
 const DELIVERY_LABELS = { '1on1': '1-on-1', 'small_group': 'Small Group', 'self_guided': 'Self-Guided', 'parent': 'Parent Resource', 'check_in': 'Check-In' }
@@ -547,7 +861,7 @@ const RESOURCE_LIBRARY = {
   },
 }
 
-function ResourceLibrary({ onOpenReflection }) {
+function ResourceLibrary({ onOpenReflection, onOpenWorksheet }) {
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [deliveryFilter, setDeliveryFilter] = useState('')
 
@@ -606,7 +920,11 @@ function ResourceLibrary({ onOpenReflection }) {
                         <span>Materials: {r.materials}</span>
                       </div>
                     </div>
-                    <button onClick={() => window.print()} className="text-xs text-gray-400 hover:text-gray-600 shrink-0 ml-3">Print</button>
+                    {WORKSHEET_DATA[r.id] ? (
+                      <button onClick={() => onOpenWorksheet(r.id)} className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0 ml-3">Open Worksheet →</button>
+                    ) : (
+                      <button onClick={() => window.print()} className="text-xs text-gray-400 hover:text-gray-600 shrink-0 ml-3">Print</button>
+                    )}
                   </div>
                 </div>
               ))}
