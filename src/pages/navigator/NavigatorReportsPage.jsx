@@ -314,7 +314,14 @@ export default function NavigatorReportsPage() {
           )}
         </div>
         {/* Drill-Down Panel */}
-        {drillDown && (
+        {drillDown && (() => {
+          const drillDownRows = allReferrals.filter(r => {
+            if (drillDown.type === 'campus') return r.campuses?.name === drillDown.key
+            if (drillDown.type === 'offense') return r.offense_codes?.code === drillDown.key
+            if (drillDown.type === 'month') return r.referral_date >= drillDown.start && r.referral_date <= drillDown.end
+            return false
+          })
+          return (
           <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
               <div>
@@ -324,15 +331,7 @@ export default function NavigatorReportsPage() {
                   {drillDown.type === 'month' && `Referrals in ${drillDown.label}`}
                 </h2>
                 <p className="text-xs text-blue-700 mt-0.5">
-                  {(() => {
-                    const filtered = allReferrals.filter(r => {
-                      if (drillDown.type === 'campus') return r.campuses?.name === drillDown.key
-                      if (drillDown.type === 'offense') return r.offense_codes?.code === drillDown.key
-                      if (drillDown.type === 'month') return r.referral_date >= drillDown.start && r.referral_date <= drillDown.end
-                      return false
-                    })
-                    return `${filtered.length} referral${filtered.length !== 1 ? 's' : ''}`
-                  })()}
+                  {drillDownRows.length} referral{drillDownRows.length !== 1 ? 's' : ''}
                 </p>
               </div>
               <button onClick={() => setDrillDown(null)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">Close</button>
@@ -349,14 +348,7 @@ export default function NavigatorReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {allReferrals
-                    .filter(r => {
-                      if (drillDown.type === 'campus') return r.campuses?.name === drillDown.key
-                      if (drillDown.type === 'offense') return r.offense_codes?.code === drillDown.key
-                      if (drillDown.type === 'month') return r.referral_date >= drillDown.start && r.referral_date <= drillDown.end
-                      return false
-                    })
-                    .map(r => (
+                  {drillDownRows.map(r => (
                       <tr key={r.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2">
                           <Link to={`/navigator/students/${r.student_id}`} className="font-medium text-gray-900 hover:text-blue-600">
@@ -381,7 +373,8 @@ export default function NavigatorReportsPage() {
               </table>
             </div>
           </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )

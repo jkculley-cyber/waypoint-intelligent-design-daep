@@ -25,6 +25,12 @@ export default function NavigatorDisproportionalityPage() {
   const avgCampusRate = campusData.length > 0
     ? (campusData.reduce((s, c) => s + (c.rate || 0), 0) / campusData.length).toFixed(1)
     : null
+  const avgGradeRate = gradeData.length > 0
+    ? gradeData.reduce((s, x) => s + (x.rate || 0), 0) / gradeData.length
+    : 0
+  const expandedCampusObj = expandedCampus
+    ? campusData.find(c => c.campus_id === expandedCampus)
+    : null
 
   return (
     <div>
@@ -139,15 +145,15 @@ export default function NavigatorDisproportionalityPage() {
                         </tr>
                       )
                     })}
-                    {expandedCampus && campusData.find(c => c.campus_id === expandedCampus)?.students?.length > 0 && (
+                    {expandedCampusObj?.students?.length > 0 && (
                       <tr>
                         <td colSpan={5} className="p-0">
                           <div className="bg-gray-50 border-t border-b border-gray-200 px-6 py-3">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                              Students at {campusData.find(c => c.campus_id === expandedCampus)?.name} — {campusData.find(c => c.campus_id === expandedCampus)?.students?.length} referred
+                              Students at {expandedCampusObj.name} — {expandedCampusObj.students.length} referred
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                              {campusData.find(c => c.campus_id === expandedCampus).students.map(s => (
+                              {expandedCampusObj.students.map(s => (
                                 <Link
                                   key={s.id}
                                   to={`/navigator/students/${s.id}`}
@@ -209,9 +215,6 @@ export default function NavigatorDisproportionalityPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {gradeData.map(g => {
-                      const avgGradeRate = gradeData.length > 0
-                        ? gradeData.reduce((s, x) => s + (x.rate || 0), 0) / gradeData.length
-                        : 0
                       const diff = g.rate != null ? (g.rate - avgGradeRate).toFixed(1) : null
                       return (
                         <tr key={g.grade} className="hover:bg-gray-50">

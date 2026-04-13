@@ -621,13 +621,10 @@ export function useSkillGapData() {
       if (err) throw err
 
       const counts = {}
-      const studentsBySkill = {}
       const studentDetailsBySkill = {}
       ;(rows || []).forEach(r => {
         const gap = r.skill_gap
         counts[gap] = (counts[gap] || 0) + 1
-        if (!studentsBySkill[gap]) studentsBySkill[gap] = new Set()
-        studentsBySkill[gap].add(r.student_id)
         if (!studentDetailsBySkill[gap]) studentDetailsBySkill[gap] = {}
         if (!studentDetailsBySkill[gap][r.student_id]) {
           studentDetailsBySkill[gap][r.student_id] = {
@@ -642,14 +639,17 @@ export function useSkillGapData() {
       })
 
       const gapData = Object.entries(counts)
-        .map(([gap, count]) => ({
-          gap,
-          label: SKILL_GAP_LABELS[gap] || gap,
-          count,
-          unique_students: studentsBySkill[gap]?.size || 0,
-          interventions: SKILL_INTERVENTIONS[gap] || [],
-          students: Object.values(studentDetailsBySkill[gap] || {}).sort((a, b) => b.referral_count - a.referral_count),
-        }))
+        .map(([gap, count]) => {
+          const students = Object.values(studentDetailsBySkill[gap] || {}).sort((a, b) => b.referral_count - a.referral_count)
+          return {
+            gap,
+            label: SKILL_GAP_LABELS[gap] || gap,
+            count,
+            unique_students: students.length,
+            interventions: SKILL_INTERVENTIONS[gap] || [],
+            students,
+          }
+        })
         .sort((a, b) => b.count - a.count)
 
       setData(gapData)

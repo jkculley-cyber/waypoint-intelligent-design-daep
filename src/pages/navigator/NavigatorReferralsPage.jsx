@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
-import { useNavigatorReferrals } from '../../hooks/useNavigator'
+import { useNavigatorReferrals, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -32,14 +32,6 @@ const OUTCOME_COLORS = {
   escalated_to_daep: 'bg-red-100 text-red-700',
 }
 
-const SKILL_GAP_LABELS = {
-  emotional_regulation: 'Emotional Regulation',
-  executive_functioning: 'Executive Functioning',
-  peer_conflict_resolution: 'Peer Conflict Resolution',
-  academic_frustration_tolerance: 'Academic Frustration Tolerance',
-  impulse_control: 'Impulse Control',
-  adult_communication: 'Adult Communication',
-}
 
 export default function NavigatorReferralsPage() {
   const { districtId } = useAuth()
@@ -201,6 +193,7 @@ export default function NavigatorReferralsPage() {
       {showDrawer && (
         <ReferralDrawer
           referral={selectedReferral}
+          prefilledStudentId={prefilledStudentId}
           onClose={() => setShowDrawer(false)}
           onSaved={(result) => {
             setShowDrawer(false)
@@ -239,7 +232,7 @@ export default function NavigatorReferralsPage() {
 
 // ─── New / Review Drawer ──────────────────────────────────────────────────────
 
-function ReferralDrawer({ referral, onClose, onSaved }) {
+function ReferralDrawer({ referral, onClose, onSaved, prefilledStudentId }) {
   const { districtId, profile } = useAuth()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -248,6 +241,19 @@ function ReferralDrawer({ referral, onClose, onSaved }) {
   const [studentSearch, setStudentSearch] = useState('')
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  // Auto-load prefilled student
+  useEffect(() => {
+    if (!prefilledStudentId || !districtId || referral) return
+    supabase.from('students').select('id, first_name, last_name, grade_level, campus_id, is_sped, is_504')
+      .eq('id', prefilledStudentId).single()
+      .then(({ data }) => {
+        if (data) {
+          setSelectedStudent(data)
+          setForm(f => ({ ...f, campus_id: data.campus_id || f.campus_id }))
+        }
+      })
+  }, [prefilledStudentId, districtId, referral])
   const [campuses, setCampuses] = useState([])
   const [offenseCodes, setOffenseCodes] = useState([])
   const [form, setForm] = useState({

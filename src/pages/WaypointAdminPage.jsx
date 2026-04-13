@@ -785,34 +785,26 @@ function LeadsPanel() {
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
-    // Fetch from main leads table
-    const { data: mainLeads } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    // Also fetch from ops Supabase demo_leads (Navigator pilot form, demo gate)
-    let opsLeads = []
-    try {
-      const { data: opsData } = await opsSupabase
-        .from('demo_leads')
-        .select('*')
-        .order('created_at', { ascending: false })
-      // Normalize ops leads to match main leads shape
-      opsLeads = (opsData || []).map(d => ({
-        id: 'ops-' + d.id,
-        name: d.name,
-        email: d.email,
-        source: d.referrer?.startsWith('navigator_') ? 'navigator_campus_pilot' : (d.utm_source || 'demo_gate'),
-        district: d.district_name,
-        concern: d.referrer ? d.referrer.replace('navigator_campus_pilot|', 'Campus size: ') + (d.phone ? '. Phone: ' + d.phone : '') : (d.phone ? 'Phone: ' + d.phone : ''),
-        notes: null,
-        status: d.status || 'new',
-        created_at: d.created_at,
-        updated_at: d.created_at,
-        _ops: true, // flag to prevent edits (different DB)
-      }))
-    } catch (e) { /* ops Supabase unreachable — show main leads only */ }
+    // Fetch from both sources in parallel
+    const [mainRes, opsRes] = await Promise.allSettled([
+      supabase.from('leads').select('*').order('created_at', { ascending: false }),
+      opsSupabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
+    ])
+    const mainLeads = mainRes.status === 'fulfilled' ? mainRes.value.data : []
+    const opsData = opsRes.status === 'fulfilled' ? opsRes.value.data : []
+    const opsLeads = (opsData || []).map(d => ({
+      id: 'ops-' + d.id,
+      name: d.name,
+      email: d.email,
+      source: d.referrer?.startsWith('navigator_') ? 'navigator_campus_pilot' : (d.utm_source || 'demo_gate'),
+      district: d.district_name,
+      concern: d.referrer ? d.referrer.replace('navigator_campus_pilot|', 'Campus size: ') + (d.phone ? '. Phone: ' + d.phone : '') : (d.phone ? 'Phone: ' + d.phone : ''),
+      notes: null,
+      status: d.status || 'new',
+      created_at: d.created_at,
+      updated_at: d.created_at,
+      _ops: true,
+    }))
 
     // Merge and deduplicate by email
     const seen = new Set()
