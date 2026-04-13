@@ -240,6 +240,8 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
   const [studentSearch, setStudentSearch] = useState('')
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [showAddStudent, setShowAddStudent] = useState(false)
+  const [newStudent, setNewStudent] = useState({ first_name: '', last_name: '', grade_level: '' })
 
   // Auto-load prefilled student
   useEffect(() => {
@@ -360,6 +362,39 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
                         {s.first_name} {s.last_name} <span className="text-gray-400 text-xs">(Grade {s.grade_level})</span>
                       </button>
                     ))}
+                  </div>
+                )}
+                {studentSearch.length >= 2 && students.length === 0 && !showAddStudent && (
+                  <button onClick={() => { setShowAddStudent(true); setNewStudent(ns => ({ ...ns, last_name: studentSearch })) }} className="mt-1 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                    Student not found? + Add new student
+                  </button>
+                )}
+                {showAddStudent && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <p className="text-xs font-semibold text-blue-800">Quick Add Student</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input placeholder="First name" className="px-2 py-1.5 border border-gray-300 rounded text-sm" value={newStudent.first_name} onChange={e => setNewStudent(ns => ({ ...ns, first_name: e.target.value }))} />
+                      <input placeholder="Last name" className="px-2 py-1.5 border border-gray-300 rounded text-sm" value={newStudent.last_name} onChange={e => setNewStudent(ns => ({ ...ns, last_name: e.target.value }))} />
+                    </div>
+                    <select className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" value={newStudent.grade_level} onChange={e => setNewStudent(ns => ({ ...ns, grade_level: e.target.value }))}>
+                      <option value="">Grade level...</option>
+                      {[...Array(14)].map((_, i) => <option key={i} value={i === 0 ? -1 : i - 1}>{i === 0 ? 'PK' : i === 1 ? 'K' : `Grade ${i - 1}`}</option>)}
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={!newStudent.first_name || !newStudent.last_name || newStudent.grade_level === '' || !form.campus_id}
+                        onClick={async () => {
+                          const { data, error: err } = await supabase.from('students').insert({
+                            district_id: districtId, campus_id: form.campus_id, student_id_number: `NAV-${Date.now()}`,
+                            first_name: newStudent.first_name, last_name: newStudent.last_name, grade_level: parseInt(newStudent.grade_level),
+                          }).select('id, first_name, last_name, grade_level, is_sped, is_504').single()
+                          if (err) { setError(err.message); return }
+                          setSelectedStudent(data); setShowAddStudent(false); setStudentSearch('')
+                        }}
+                        className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 disabled:bg-gray-300"
+                      >{!form.campus_id ? 'Select campus first' : 'Add Student'}</button>
+                      <button onClick={() => setShowAddStudent(false)} className="px-3 py-1.5 text-xs text-gray-500">Cancel</button>
+                    </div>
                   </div>
                 )}
               </div>
