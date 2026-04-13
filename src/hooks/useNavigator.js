@@ -765,12 +765,18 @@ export function useDisproportionality() {
         .eq('district_id', districtId)
         .eq('is_active', true)
 
+      let campusQ = supabase
+        .from('campuses')
+        .select('id, name, settings')
+        .eq('district_id', districtId)
+
       if (!isAdmin && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)
         studQ = studQ.in('campus_id', campusIds)
+        campusQ = campusQ.in('id', campusIds)
       }
 
-      const [refRes, studRes] = await Promise.all([refQ, studQ])
+      const [refRes, studRes, campusRes] = await Promise.all([refQ, studQ, campusQ])
 
       if (refRes.error) throw refRes.error
 
@@ -796,9 +802,17 @@ export function useDisproportionality() {
         campusStudents[r.campus_id][r.student_id].referral_count++
       })
 
+      // Build campus enrollment map — prefer settings.enrollment over student count
+      const campusSettings = {}
+      ;(campusRes.data || []).forEach(c => { campusSettings[c.id] = c.settings || {} })
+
       const campusPop = {}
       allStudents.forEach(s => {
         campusPop[s.campus_id] = (campusPop[s.campus_id] || 0) + 1
+      })
+      // Override with settings.enrollment if set
+      Object.entries(campusSettings).forEach(([cid, s]) => {
+        if (s.enrollment) campusPop[cid] = s.enrollment
       })
 
       setCampusData(
@@ -814,6 +828,7 @@ export function useDisproportionality() {
           .sort((a, b) => (b.rate || 0) - (a.rate || 0))
       )
 
+      // Build grade enrollment — prefer settings.enrollment_by_grade over student count
       const gradeRefs = {}
       const gradePop = {}
       referrals.forEach(r => {
@@ -824,6 +839,18 @@ export function useDisproportionality() {
         const g = s.grade_level ?? 'Unknown'
         gradePop[g] = (gradePop[g] || 0) + 1
       })
+      // Override with enrollment_by_grade if any campus has it configured
+      const hasGradeEnrollment = Object.values(campusSettings).some(s => s.enrollment_by_grade)
+      if (hasGradeEnrollment) {
+        Object.keys(gradePop).forEach(k => { gradePop[k] = 0 })
+        Object.values(campusSettings).forEach(s => {
+          if (s.enrollment_by_grade) {
+            Object.entries(s.enrollment_by_grade).forEach(([grade, count]) => {
+              gradePop[grade] = (gradePop[grade] || 0) + count
+            })
+          }
+        })
+      }
 
       setGradeData(
         Object.entries(gradeRefs)

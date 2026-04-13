@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from 'recharts'
+import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
+import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { useDisproportionality } from '../../hooks/useNavigator'
 
 // Color scale for referral rate bars — white → amber → red
@@ -17,8 +20,43 @@ function rateColor(rate, max) {
 }
 
 export default function NavigatorDisproportionalityPage() {
+  const { districtId, isDemoReadonly } = useAuth()
   const { campusData, gradeData, loading, error, refetch } = useDisproportionality()
   const [expandedCampus, setExpandedCampus] = useState(null)
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false)
+  const [campuses, setCampuses] = useState([])
+  const [enrollmentForm, setEnrollmentForm] = useState({})
+  const [savingEnrollment, setSavingEnrollment] = useState(false)
+
+  useEffect(() => {
+    if (!districtId) return
+    supabase.from('campuses').select('id, name, settings, campus_type').eq('district_id', districtId)
+      .then(({ data }) => {
+        setCampuses(data || [])
+        const form = {}
+        ;(data || []).forEach(c => {
+          form[c.id] = {
+            enrollment: c.settings?.enrollment || '',
+            grades: c.settings?.enrollment_by_grade || {},
+          }
+        })
+        setEnrollmentForm(form)
+      })
+  }, [districtId])
+
+  const saveEnrollment = async () => {
+    setSavingEnrollment(true)
+    for (const campus of campuses) {
+      const f = enrollmentForm[campus.id]
+      if (!f) continue
+      const settings = { ...(campus.settings || {}), enrollment: f.enrollment ? Number(f.enrollment) : null, enrollment_by_grade: f.grades }
+      await supabase.from('campuses').update({ settings }).eq('id', campus.id)
+    }
+    setSavingEnrollment(false)
+    setShowEnrollmentModal(false)
+    toast.success('Enrollment updated')
+    refetch()
+  }
 
   const maxCampusRate = Math.max(...campusData.map(c => c.rate || 0), 0)
   const maxGradeRate  = Math.max(...gradeData.map(g => g.rate || 0), 0)
@@ -38,12 +76,22 @@ export default function NavigatorDisproportionalityPage() {
         title="Disproportionality Radar"
         subtitle="Referral concentration by campus and grade — rolling 90-day window"
         actions={
-          <button
-            onClick={refetch}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            {!isDemoReadonly && (
+              <button
+                onClick={() => setShowEnrollmentModal(true)}
+                className="px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Set Enrollment
+              </button>
+            )}
+            <button
+              onClick={refetch}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         }
       />
 
@@ -254,12 +302,63 @@ export default function NavigatorDisproportionalityPage() {
             </div>
 
             <p className="text-xs text-gray-400">
-              Rate = referrals ÷ active enrollment × 100. High rates may indicate targeted intervention needs or systemic referral patterns at that campus/grade.
-              Requires active student records with campus assignments for accurate denominators.
+              Rate = referrals ÷ enrollment × 100. Click "Set Enrollment" to enter your campus enrollment for accurate rates.
+              Without enrollment data, rates are calculated from students in the system only.
             </p>
           </>
         )}
       </div>
+
+      {/* Enrollment Modal */}
+      {showEnrollmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowEnrollmentModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Set Campus Enrollment</h2>
+            <p className="text-xs text-gray-500 mb-4">Enter total enrollment and grade-level breakdown for accurate referral rate calculations.</p>
+            {campuses.map(c => {
+              const f = enrollmentForm[c.id] || { enrollment: '', grades: {} }
+              return (
+                <div key={c.id} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-800 mb-2">{c.name}</p>
+                  <div className="mb-2">
+                    <label className="text-xs font-medium text-gray-500">Total Enrollment</label>
+                    <input
+                      type="number" min="0" placeholder="e.g., 820"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mt-1"
+                      value={f.enrollment}
+                      onChange={e => setEnrollmentForm(prev => ({ ...prev, [c.id]: { ...f, enrollment: e.target.value } }))}
+                    />
+                  </div>
+                  <label className="text-xs font-medium text-gray-500">By Grade (optional)</label>
+                  <div className="grid grid-cols-4 gap-2 mt-1">
+                    {[...(c.campus_type === 'elementary' ? [-1,0,1,2,3,4,5] : c.campus_type === 'middle' ? [6,7,8] : [9,10,11,12])].map(g => (
+                      <div key={g}>
+                        <label className="text-[10px] text-gray-500">{g === -1 ? 'PK' : g === 0 ? 'K' : `Gr ${g}`}</label>
+                        <input
+                          type="number" min="0" placeholder="0"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                          value={f.grades[String(g)] || ''}
+                          onChange={e => {
+                            const grades = { ...f.grades, [String(g)]: e.target.value ? Number(e.target.value) : undefined }
+                            if (!e.target.value) delete grades[String(g)]
+                            setEnrollmentForm(prev => ({ ...prev, [c.id]: { ...f, grades } }))
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setShowEnrollmentModal(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+              <button onClick={saveEnrollment} disabled={savingEnrollment} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg">
+                {savingEnrollment ? 'Saving...' : 'Save Enrollment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
