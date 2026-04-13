@@ -569,7 +569,20 @@ async function run() {
   if (gErr) throw new Error(`Goal insert failed: ${gErr.message}`)
   console.log('  ✓ ISS baseline 12 (target -20%), OSS baseline 8 (target -25%)\n')
 
-  // ─── 9. Verify ────────────────────────────────────────────────────────────
+  // ─── 9. Copy discipline matrix from Lone Star ISD ──────────────────────────
+  console.log('Copying discipline matrix from Lone Star ISD...')
+  const LONE_STAR_ID = '11111111-1111-1111-1111-111111111111'
+  await supabase.from('discipline_matrix').delete().eq('district_id', DISTRICT_ID)
+  const { data: matrixEntries } = await supabase.from('discipline_matrix').select('*').eq('district_id', LONE_STAR_ID)
+  if (matrixEntries?.length) {
+    const copies = matrixEntries.map(e => { const { id, ...rest } = e; return { ...rest, district_id: DISTRICT_ID } })
+    await supabase.from('discipline_matrix').insert(copies)
+    console.log(`  ✓ ${copies.length} matrix entries copied (consequence scales, proactive/restorative options)\n`)
+  } else {
+    console.log('  ⚠ No matrix entries found in Lone Star ISD to copy\n')
+  }
+
+  // ─── 10. Verify ───────────────────────────────────────────────────────────
   console.log('Verifying...')
   const [refRes, placRes, supRes, goalRes, studRes] = await Promise.all([
     supabase.from('navigator_referrals').select('*', { count: 'exact', head: true }).eq('district_id', DISTRICT_ID),
