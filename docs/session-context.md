@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-12 (Session BZ — Navigator standalone campus model, deep audit, workflow chaining, drill-downs, bulk supports, templates, bug fixes)
+> Last updated: 2026-04-13 (Session BZ continued — forms, resource library, MTSS tiers, progress scoring, lead capture fix, demo polish, product page carousel)
 
 ---
 
@@ -104,14 +104,14 @@
 
 ## Next Session Priority
 
-1. **Navigator campus pilot outreach** — pilot form live at clearpathedgroup.com/navigator.html#pilot. Monitor Formspree + ops Supabase demo_leads for submissions.
-2. **Test Navigator in browser** — login as ap@lincoln-hs.demo, walk through entire workflow: create referral → review → create placement → end → create support → complete with effectiveness data
-3. **Campus-scoped dashboard filter** — top remaining gap: principals see all campuses, need campus dropdown on Dashboard/Goals/Placements
-4. **Facebook Live recording** — script at `docs/brand/facebook-live-script.md`
-5. **Store redesign** — clearpathedgroup.com/store visual product grid
-6. **Google Custom Search API** — still 403 (carryover)
-7. **SIGNAL custom domain** — signal.clearpathedgroup.com
-8. **Google Search Console** — register clearpathedgroup.com
+1. **Send demo emails** to 10 existing Formspree leads with ap@lincoln-hs.demo credentials
+2. **Monitor pilot form submissions** — Formspree + ops Supabase demo_leads + Waypoint Admin Leads tab
+3. **Vera/Sage content** — more intervention worksheets incoming, drop into WORKSHEET_DATA as they deliver
+4. **Campus-scoped dashboard filter** — principals see all campuses, need campus dropdown
+5. **Facebook Live recording** — script at `docs/brand/facebook-live-script.md`
+6. **Store redesign** — clearpathedgroup.com/store visual product grid
+7. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
+8. **Google Custom Search API** — still 403 (carryover)
 9. **Meridian deep audit** when ready
 
 ---
