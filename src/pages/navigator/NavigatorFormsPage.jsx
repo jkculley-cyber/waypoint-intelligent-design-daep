@@ -1236,7 +1236,7 @@ const RESOURCE_LIBRARY = {
     title: 'Emotional Regulation',
     color: 'border-blue-200 bg-blue-50',
     resources: [
-      { id: 'er1', name: 'Feelings Thermometer', delivery: '1on1', time: '15 min', who: 'Counselor', description: 'Student identifies triggers at each temperature level (calm → frustrated → angry → explosive). Creates a personalized cool-down plan for each stage.', materials: 'Feelings thermometer worksheet (printable)' },
+      { id: 'er1', name: 'Feelings Thermometer', delivery: '1on1', time: '15 min', who: 'Counselor', tiers: [2, 3], description: 'Student identifies triggers at each temperature level (calm → frustrated → angry → explosive). Creates a personalized cool-down plan for each stage.', materials: 'Feelings thermometer worksheet (printable)' },
       { id: 'er2', name: 'Body Scan Activity', delivery: '1on1', time: '10 min', who: 'Counselor', description: 'Where do you feel anger or anxiety physically? Student maps body sensations to emotions and identifies early warning signs before escalation.', materials: 'Body outline worksheet' },
       { id: 'er3', name: 'Coping Strategy Menu', delivery: 'self_guided', time: '15 min', who: 'Student', description: 'Pick 3 strategies from a menu of 12 options. Try each one this week. Rate how well they worked (1-5). Report back at next check-in.', materials: 'Strategy menu card (printable)' },
       { id: 'er4', name: 'Cool-Down Plan Card', delivery: 'check_in', time: '10 min', who: 'AP / Counselor', description: 'Student creates a personalized 4-step cool-down plan they carry with them. Steps: recognize → remove → regulate → return. Laminate and keep in pocket.', materials: 'Plan card template' },
@@ -1357,6 +1357,7 @@ function ResourceLibrary({ onOpenReflection, onOpenWorksheet }) {
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="text-sm font-semibold text-gray-900">{r.name}</h4>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${DELIVERY_COLORS[r.delivery]}`}>{DELIVERY_LABELS[r.delivery]}</span>
+                        {r.tiers?.map(t => <span key={t} className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${t === 3 ? 'bg-red-100 text-red-700' : t === 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>T{t}</span>)}
                       </div>
                       <p className="text-xs text-gray-700 leading-relaxed">{r.description}</p>
                       <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">

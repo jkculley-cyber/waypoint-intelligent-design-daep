@@ -38,7 +38,7 @@ export default function NavigatorStudentsListPage() {
     // Fetch student details
     let studentQ = supabase
       .from('students')
-      .select('id, first_name, last_name, grade_level, campus_id, is_sped, is_504, is_ell, is_mtss, campus:campuses!campus_id(id, name)')
+      .select('id, first_name, last_name, grade_level, campus_id, is_sped, is_504, is_ell, is_mtss, mtss_tier, campus:campuses!campus_id(id, name)')
       .in('id', [...studentIds])
       .eq('is_active', true)
       .order('last_name')
@@ -86,6 +86,9 @@ export default function NavigatorStudentsListPage() {
     if (filter === 'at_daep') return s.atDaep
     if (filter === 'prior_daep') return s.priorDaepCount > 0
     if (filter === 'active_support') return s.activeSupportCount > 0
+    if (filter === 'tier_1') return s.mtss_tier === 1
+    if (filter === 'tier_2') return s.mtss_tier === 2
+    if (filter === 'tier_3') return s.mtss_tier === 3
     return true
   })
 
@@ -106,6 +109,9 @@ export default function NavigatorStudentsListPage() {
               { key: 'prior_daep', label: 'Prior DAEP', color: 'gray' },
             ] : []),
             { key: 'active_support', label: 'Active Supports', color: 'green' },
+            { key: 'tier_1', label: 'Tier 1', color: 'green' },
+            { key: 'tier_2', label: 'Tier 2', color: 'amber' },
+            { key: 'tier_3', label: 'Tier 3', color: 'red' },
           ].map(f => (
             <button
               key={f.key}
@@ -121,7 +127,11 @@ export default function NavigatorStudentsListPage() {
                 <span className="ml-1.5 opacity-70">
                   ({f.key === 'at_daep' ? students.filter(s => s.atDaep).length
                     : f.key === 'prior_daep' ? students.filter(s => s.priorDaepCount > 0).length
-                    : students.filter(s => s.activeSupportCount > 0).length})
+                    : f.key === 'active_support' ? students.filter(s => s.activeSupportCount > 0).length
+                    : f.key === 'tier_1' ? students.filter(s => s.mtss_tier === 1).length
+                    : f.key === 'tier_2' ? students.filter(s => s.mtss_tier === 2).length
+                    : f.key === 'tier_3' ? students.filter(s => s.mtss_tier === 3).length
+                    : 0})
                 </span>
               )}
             </button>
@@ -163,7 +173,8 @@ export default function NavigatorStudentsListPage() {
                           {s.is_sped && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700">SPED</span>}
                           {s.is_504 && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">504</span>}
                           {s.is_ell && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">EB</span>}
-                          {s.is_mtss && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">MTSS</span>}
+                          {s.mtss_tier && <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${s.mtss_tier === 3 ? 'bg-red-100 text-red-700' : s.mtss_tier === 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>Tier {s.mtss_tier}</span>}
+                          {!s.mtss_tier && s.is_mtss && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">MTSS</span>}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{s.campus?.name || '—'}</td>

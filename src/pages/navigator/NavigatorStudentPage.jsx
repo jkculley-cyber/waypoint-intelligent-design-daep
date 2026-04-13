@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
 import toast from 'react-hot-toast'
 
@@ -145,6 +146,31 @@ export default function NavigatorStudentPage() {
               <h2 className="text-xl font-semibold text-gray-900">{student.first_name} {student.last_name}</h2>
               {student.is_sped && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">SPED</span>}
               {student.is_504 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">504</span>}
+              {student.mtss_tier && (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${
+                  student.mtss_tier === 3 ? 'bg-red-100 text-red-700 border-red-200' :
+                  student.mtss_tier === 2 ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                  'bg-green-100 text-green-700 border-green-200'
+                }`}>MTSS Tier {student.mtss_tier}</span>
+              )}
+              {!isDemoReadonly && (
+                <select
+                  value={student.mtss_tier || ''}
+                  onChange={async (e) => {
+                    const tier = e.target.value ? parseInt(e.target.value) : null
+                    await supabase.from('students').update({ mtss_tier: tier }).eq('id', student.id)
+                    toast.success(tier ? `Set to MTSS Tier ${tier}` : 'MTSS tier removed')
+                    window.location.reload()
+                  }}
+                  className="text-[10px] px-1.5 py-0.5 border border-gray-300 rounded text-gray-600 bg-white"
+                  title="Set MTSS Tier"
+                >
+                  <option value="">No Tier</option>
+                  <option value="1">Tier 1</option>
+                  <option value="2">Tier 2</option>
+                  <option value="3">Tier 3</option>
+                </select>
+              )}
               {daepStatus.atDaep && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">AT DAEP</span>}
               {!daepStatus.atDaep && daepStatus.priorDaep?.length > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300">PRIOR DAEP ({daepStatus.priorDaep.length})</span>}
             </div>

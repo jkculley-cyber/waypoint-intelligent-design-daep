@@ -260,6 +260,7 @@ function NewSupportDrawer({ onClose, onSaved, prefilledStudentId }) {
     end_date: '',
     notes: '',
     contact_method: '',
+    tiers: [],
   })
 
   const applyTemplate = (templateId) => {
@@ -311,6 +312,7 @@ function NewSupportDrawer({ onClose, onSaved, prefilledStudentId }) {
       end_date: form.end_date || null,
       notes: form.notes || null,
       contact_method: form.contact_method || null,
+      tiers: form.tiers.length > 0 ? form.tiers : null,
     })
     setSaving(false)
     if (err) { setError(err.message); return }
@@ -446,6 +448,30 @@ function NewSupportDrawer({ onClose, onSaved, prefilledStudentId }) {
               <input className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400" placeholder="e.g. Phone, Email, In-person" value={form.contact_method} onChange={e => setForm(f => ({ ...f, contact_method: e.target.value }))} />
             </div>
           )}
+
+          {/* MTSS Tier Tags */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">MTSS Tier (optional)</label>
+            <div className="flex gap-2">
+              {[1, 2, 3].map(t => {
+                const isSelected = form.tiers.includes(t)
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, tiers: isSelected ? f.tiers.filter(x => x !== t) : [...f.tiers, t] }))}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                      isSelected
+                        ? t === 3 ? 'bg-red-100 text-red-700 border-red-300' : t === 2 ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-green-100 text-green-700 border-green-300'
+                        : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    Tier {t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
