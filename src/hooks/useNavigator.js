@@ -1280,3 +1280,67 @@ export function useStudentDaepStatus(studentId) {
 
   return status
 }
+
+// ─── Student Monitors (Dashboard Alerts) ─────────────────────────────────────
+
+const MONITOR_TYPE_LABELS = {
+  new_referral: 'New Referral Watch',
+  review_due: 'Review Due',
+  support_ending: 'Support Ending Soon',
+  reentry_check: 'Re-Entry Check',
+  weekly_check: 'Weekly Check-In',
+  custom: 'Custom Reminder',
+}
+export { MONITOR_TYPE_LABELS }
+
+export function useStudentMonitors() {
+  const { districtId, campusIds, isAdmin } = useAuth()
+  const [monitors, setMonitors] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchMonitors = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true)
+    try {
+      let q = supabase
+        .from('navigator_student_monitors')
+        .select('*, students(id, first_name, last_name, grade_level, campus_id)')
+        .eq('district_id', districtId)
+        .eq('is_active', true)
+        .is('dismissed_at', null)
+        .order('alert_date', { ascending: true, nullsFirst: false })
+
+      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+
+      const { data, error } = await q
+      if (error) throw error
+      setMonitors(data || [])
+    } catch (e) {
+      console.error('Monitors fetch error:', e.message)
+      setMonitors([])
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, isAdmin, campusIds])
+
+  useEffect(() => { fetchMonitors() }, [fetchMonitors])
+
+  const createMonitor = async (monitor) => {
+    const { error } = await supabase.from('navigator_student_monitors').insert(monitor)
+    if (error) return { error: error.message }
+    fetchMonitors()
+    return { error: null }
+  }
+
+  const dismissMonitor = async (id) => {
+    await supabase.from('navigator_student_monitors').update({ dismissed_at: new Date().toISOString() }).eq('id', id)
+    fetchMonitors()
+  }
+
+  const deactivateMonitor = async (id) => {
+    await supabase.from('navigator_student_monitors').update({ is_active: false }).eq('id', id)
+    fetchMonitors()
+  }
+
+  return { monitors, loading, refetch: fetchMonitors, createMonitor, dismissMonitor, deactivateMonitor }
+}

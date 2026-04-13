@@ -9,6 +9,7 @@ const FORMS = [
   { id: 'cico', label: 'CICO Daily Tracking Sheet', icon: '✓', description: 'Check-In/Check-Out daily behavior tracking — morning check-in, period-by-period rating, afternoon check-out.' },
   { id: 'behavior_contract', label: 'Behavior Contract', icon: '📋', description: 'Student-staff agreement on specific behavior expectations, consequences, and rewards.' },
   { id: 'parent_agreement', label: 'Parent-Student Behavior Agreement (HB 6)', icon: '👥', description: 'HB 6 required — DAEP conference documentation with student/school commitments, incident summary, 30-day review disposition.' },
+  { id: 'stay_away', label: 'Stay-Away / No-Contact Agreement', icon: '🚫', description: 'No-contact order between two students — terms, boundaries, consequences for violation, review date.' },
 ]
 
 const SKILL_GAP_ACTIVITIES = {
@@ -115,6 +116,8 @@ export default function NavigatorFormsPage() {
           <BehaviorContractForm studentId={studentParam} onBack={() => setActiveForm(null)} />
         ) : activeForm === 'parent_agreement' ? (
           <ParentAgreementForm studentId={studentParam} onBack={() => setActiveForm(null)} />
+        ) : activeForm === 'stay_away' ? (
+          <StayAwayAgreementForm onBack={() => setActiveForm(null)} />
         ) : null}
       </div>
     </div>
@@ -475,6 +478,154 @@ function ParentAgreementForm({ studentId, onBack }) {
         <div className="flex justify-between items-center mt-6 pt-3 border-t border-gray-200">
           <p className="text-[10px] text-gray-400">© Clear Path Education Group | TEC §37.009 | HB 6 | 2025-2026</p>
           <p className="text-[10px] text-gray-400">Full HB 6 Compliance Toolkit → clearpathedgroup.com/store</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Stay-Away / No-Contact Agreement ────────────────────────────────────────
+
+function StayAwayAgreementForm({ onBack }) {
+  return (
+    <div>
+      <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-4 print:hidden">← Back to Forms</button>
+      <div className="flex justify-end mb-2 print:hidden">
+        <button onClick={() => window.print()} className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Print Form</button>
+      </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-8 max-w-3xl mx-auto print:border-none print:shadow-none print:p-4">
+        <div className="text-center mb-6">
+          <h1 className="text-xl font-bold text-gray-900">Stay-Away / No-Contact Agreement</h1>
+          <p className="text-sm text-gray-600">Campus Safety &bull; Student Separation Order</p>
+          <p className="text-xs text-gray-500 mt-1">This agreement prohibits contact between the named students to ensure campus safety and prevent further incidents.</p>
+        </div>
+
+        <div className="space-y-4">
+          <FormSection title="SECTION 1 — Student Information">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-700 uppercase">Student A</p>
+                <FieldLine label="Name" />
+                <FieldLine label="Student ID" />
+                <FieldLine label="Grade / Campus" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-700 uppercase">Student B</p>
+                <FieldLine label="Name" />
+                <FieldLine label="Student ID" />
+                <FieldLine label="Grade / Campus" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <FieldLine label="Date of Agreement" />
+              <FieldLine label="Issuing Administrator" />
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 2 — Incident Leading to This Agreement">
+            <div className="grid grid-cols-2 gap-3">
+              <FieldLine label="Date of Incident" />
+              <FieldLine label="Location" />
+            </div>
+            <div className="mt-2">
+              <span className="text-xs font-medium text-gray-600">Description of Incident:</span>
+              <Lines count={3} />
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 3 — Terms of the No-Contact Agreement">
+            <p className="text-xs text-gray-600 mb-2">Both students named above agree to the following terms:</p>
+            <div className="space-y-1.5 text-xs text-gray-700">
+              {[
+                'No verbal communication (including through other students)',
+                'No physical contact of any kind',
+                'No electronic communication (text, social media, messaging apps)',
+                'No gestures, staring, or intimidating behavior',
+                'Maintain a reasonable distance at all times on campus',
+                'Report immediately to an adult if the other student initiates contact',
+                'Follow any modified schedule, seating, or routing assigned by administration',
+              ].map((term, i) => (
+                <label key={i} className="flex items-start gap-2">
+                  <span className="w-3.5 h-3.5 border border-gray-400 rounded-sm inline-block shrink-0 mt-0.5"></span>
+                  <span>{term}</span>
+                </label>
+              ))}
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 4 — Schedule / Routing Modifications">
+            <p className="text-xs text-gray-600 mb-2">The following modifications are in effect to minimize contact:</p>
+            <div className="space-y-1.5 text-xs text-gray-700">
+              {[
+                'Lunch period: ___________________________________________',
+                'Class transitions: ______________________________________',
+                'Arrival / dismissal: ____________________________________',
+                'Shared classes (if any): _________________________________',
+                'Other: __________________________________________________',
+              ].map((mod, i) => (
+                <p key={i} className="py-0.5">{mod}</p>
+              ))}
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 5 — Consequences for Violation">
+            <p className="text-xs text-gray-600 mb-2">If either student violates the terms of this agreement, the following consequences may apply:</p>
+            <div className="space-y-1.5 text-xs text-gray-700">
+              {[
+                'First violation: conference with administrator + parent notification',
+                'Second violation: ISS placement + parent conference',
+                'Third violation: OSS placement + possible DAEP referral',
+                'Any violation involving threats or physical contact: immediate disciplinary action per Student Code of Conduct',
+              ].map((c, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="font-bold text-gray-500 w-4 shrink-0">{i + 1}.</span>
+                  <span>{c}</span>
+                </div>
+              ))}
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 6 — Acknowledgment & Signatures">
+            <p className="text-xs text-gray-600 mb-3">By signing below, all parties acknowledge they understand the terms of this agreement and the consequences for violation.</p>
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-gray-700 uppercase">Student A</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Student A Signature / Date</p></div>
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Parent/Guardian of Student A / Date</p></div>
+              </div>
+              <p className="text-xs font-bold text-gray-700 uppercase mt-3">Student B</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Student B Signature / Date</p></div>
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Parent/Guardian of Student B / Date</p></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Administrator Signature / Date</p></div>
+                <div><div className="border-b border-gray-300 mt-4 mb-1"></div><p className="text-xs text-gray-500">Counselor Signature (if present) / Date</p></div>
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="SECTION 7 — Review">
+            <div className="grid grid-cols-3 gap-3">
+              <FieldLine label="Review Date" />
+              <FieldLine label="Reviewed By" />
+              <FieldLine label="Outcome" />
+            </div>
+            <div className="flex items-center gap-6 mt-3">
+              <span className="text-xs font-medium text-gray-700">Disposition:</span>
+              {['Agreement Continues', 'Agreement Modified', 'Agreement Lifted', 'Escalated'].map(d => (
+                <label key={d} className="flex items-center gap-1.5 text-xs text-gray-700">
+                  <span className="w-3.5 h-3.5 border border-gray-400 rounded-sm inline-block shrink-0"></span>
+                  {d}
+                </label>
+              ))}
+            </div>
+          </FormSection>
+        </div>
+
+        <div className="flex justify-between items-center mt-6 pt-3 border-t border-gray-200">
+          <p className="text-[10px] text-gray-400">© Clear Path Education Group | 2025-2026</p>
+          <p className="text-[10px] text-gray-400">Navigator by Clear Path Education Group · clearpathedgroup.com</p>
         </div>
       </div>
     </div>

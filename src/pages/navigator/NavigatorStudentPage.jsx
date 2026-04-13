@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
-import { useNavigatorStudentHistory, useStudentDaepStatus } from '../../hooks/useNavigator'
+import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
+import toast from 'react-hot-toast'
 
 const SUPPORT_TYPE_LABELS = {
   cico: 'CICO',
@@ -23,9 +24,12 @@ const RISK_STYLES = {
 export default function NavigatorStudentPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { hasProduct, isDemoReadonly } = useAuth()
+  const { hasProduct, isDemoReadonly, profile } = useAuth()
   const showDaep = hasProduct('waypoint')
   const [showEscalateModal, setShowEscalateModal] = useState(false)
+  const [showMonitorModal, setShowMonitorModal] = useState(false)
+  const [monitorForm, setMonitorForm] = useState({ monitor_type: 'review_due', alert_date: '', notes: '' })
+  const { createMonitor } = useStudentMonitors()
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
   const daepStatus = useStudentDaepStatus(id)
 
@@ -107,6 +111,14 @@ export default function NavigatorStudentPage() {
               className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-emerald-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-700'}`}
             >
               + Support
+            </button>
+            <button
+              onClick={isDemoReadonly ? undefined : () => setShowMonitorModal(true)}
+              disabled={isDemoReadonly}
+              title={isDemoReadonly ? 'Available in your pilot account' : 'Set a monitoring alert for this student'}
+              className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-amber-300 cursor-not-allowed opacity-60' : 'bg-amber-500 hover:bg-amber-600'}`}
+            >
+              Monitor
             </button>
             {showDaep && (
               <button
@@ -354,6 +366,54 @@ export default function NavigatorStudentPage() {
                 className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 Continue to DAEP →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Monitor Modal */}
+      {showMonitorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowMonitorModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-900">Set Monitoring Alert — {student.first_name} {student.last_name}</h2>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Alert Type</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={monitorForm.monitor_type} onChange={e => setMonitorForm(f => ({ ...f, monitor_type: e.target.value }))}>
+                {Object.entries(MONITOR_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+            {monitorForm.monitor_type !== 'new_referral' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Alert Date</label>
+                <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={monitorForm.alert_date} onChange={e => setMonitorForm(f => ({ ...f, alert_date: e.target.value }))} />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Notes / What to Check</label>
+              <textarea className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none" rows={2} placeholder="e.g., Review behavior contract progress..." value={monitorForm.notes} onChange={e => setMonitorForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setShowMonitorModal(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+              <button
+                onClick={async () => {
+                  const { error } = await createMonitor({
+                    district_id: profile.district_id,
+                    campus_id: student.campus_id,
+                    student_id: student.id,
+                    created_by: profile.id,
+                    monitor_type: monitorForm.monitor_type,
+                    alert_date: monitorForm.alert_date || null,
+                    notes: monitorForm.notes || null,
+                  })
+                  if (error) { toast.error(error); return }
+                  toast.success(`Monitoring alert set for ${student.first_name}`)
+                  setShowMonitorModal(false)
+                  setMonitorForm({ monitor_type: 'review_due', alert_date: '', notes: '' })
+                }}
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg"
+              >
+                Set Alert
               </button>
             </div>
           </div>
