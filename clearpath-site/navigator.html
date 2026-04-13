@@ -78,6 +78,10 @@
   footer a{font-size:.75rem;color:var(--text-muted);text-decoration:none}
   footer a:hover{color:var(--amber-light)}
 
+  .carousel-dot{width:10px;height:10px;border-radius:50%;border:2px solid rgba(240,230,211,.3);background:transparent;cursor:pointer;padding:0;transition:all .2s}
+  .carousel-dot.active{background:var(--amber);border-color:var(--amber)}
+  .carousel-dot:hover{border-color:var(--amber-light)}
+
   @media(max-width:768px){
     .hero{padding:100px 5% 40px}
     .features{grid-template-columns:1fr}
@@ -114,11 +118,18 @@
 <section>
   <div class="section-label" style="text-align:center">Product Preview</div>
   <div class="section-title" style="text-align:center;margin-bottom:24px">See Navigator in action</div>
-  <div style="max-width:900px;margin:0 auto">
-    <img src="navigator-dashboard.png" alt="Navigator Dashboard — ISS/OSS tracking with referral stats, active placements, and recent referrals" style="width:100%;border-radius:14px;border:2px solid rgba(20,184,166,.4);box-shadow:0 20px 60px rgba(0,0,0,.4)" />
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <img src="navigator-escalation.png" alt="Escalation Engine — predictive risk scoring for at-risk students" style="width:100%;border-radius:10px;border:1px solid rgba(20,184,166,.3);box-shadow:0 10px 30px rgba(0,0,0,.3)" />
-      <img src="navigator-skillmap.png" alt="Skill Gap Map — identify behavioral skill deficits and recommended interventions" style="width:100%;border-radius:10px;border:1px solid rgba(20,184,166,.3);box-shadow:0 10px 30px rgba(0,0,0,.3)" />
+  <div id="carousel" style="max-width:900px;margin:0 auto;position:relative">
+    <div style="position:relative;border-radius:14px;overflow:hidden;border:2px solid rgba(20,184,166,.4);box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <img id="carouselImg" src="navigator-dashboard.png" alt="Navigator Dashboard" style="width:100%;display:block;transition:opacity .4s" />
+    </div>
+    <p id="carouselLabel" style="text-align:center;font-size:.8rem;color:var(--text-muted);margin-top:12px;font-weight:600">Dashboard — Real-time ISS/OSS stats and recent referrals</p>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:12px">
+      <button onclick="showSlide(0)" class="carousel-dot active" id="dot0"></button>
+      <button onclick="showSlide(1)" class="carousel-dot" id="dot1"></button>
+      <button onclick="showSlide(2)" class="carousel-dot" id="dot2"></button>
+      <button onclick="showSlide(3)" class="carousel-dot" id="dot3"></button>
+      <button onclick="showSlide(4)" class="carousel-dot" id="dot4"></button>
+      <button onclick="showSlide(5)" class="carousel-dot" id="dot5"></button>
     </div>
   </div>
 </section>
@@ -251,6 +262,34 @@
   </div>
 </footer>
 
+<script>
+// Screenshot carousel
+var slides = [
+  { src: 'navigator-dashboard.png', label: 'Dashboard — Real-time ISS/OSS stats and recent referrals' },
+  { src: 'navigator-escalation.png', label: 'Escalation Engine — Predictive risk scoring with bulk support creation' },
+  { src: 'navigator-skillmap.png', label: 'Skill Gap Map — Identify behavioral deficits and match interventions' },
+  { src: 'navigator-student.png', label: 'Student Detail — Progress scoring, tier tracking, and support history' },
+  { src: 'navigator-forms.png', label: 'Forms & Resources — ISS reflections, CICO sheets, and 66 intervention activities' },
+  { src: 'navigator-summary.png', label: 'Leadership Report — Annual impact metrics and narrative summary' },
+];
+var currentSlide = 0;
+function showSlide(n) {
+  currentSlide = n;
+  var img = document.getElementById('carouselImg');
+  img.style.opacity = '0';
+  setTimeout(function() {
+    img.src = slides[n].src;
+    img.alt = slides[n].label;
+    document.getElementById('carouselLabel').textContent = slides[n].label;
+    img.style.opacity = '1';
+  }, 200);
+  for (var i = 0; i < slides.length; i++) {
+    var dot = document.getElementById('dot' + i);
+    if (dot) dot.className = i === n ? 'carousel-dot active' : 'carousel-dot';
+  }
+}
+setInterval(function() { showSlide((currentSlide + 1) % slides.length); }, 5000);
+</script>
 <script>
 // Intercept form submit — send to BOTH Formspree and ops Supabase, then show success
 document.getElementById('pilotForm').addEventListener('submit', function(e) {
