@@ -63,6 +63,7 @@ const NavigatorStudentPage          = lazy(() => import('./pages/navigator/Navig
 const NavigatorReportsPage          = lazy(() => import('./pages/navigator/NavigatorReportsPage'))
 const NavigatorGoalsPage            = lazy(() => import('./pages/navigator/NavigatorGoalsPage'))
 const NavigatorImportPage           = lazy(() => import('./pages/navigator/NavigatorImportPage'))
+const NavigatorFormsPage            = lazy(() => import('./pages/navigator/NavigatorFormsPage'))
 const NavigatorEscalationPage       = lazy(() => import('./pages/navigator/NavigatorEscalationPage'))
 const NavigatorSkillMapPage         = lazy(() => import('./pages/navigator/NavigatorSkillMapPage'))
 const NavigatorEffectivenessPage    = lazy(() => import('./pages/navigator/NavigatorEffectivenessPage'))
@@ -166,6 +167,7 @@ function App() {
                 <Route path="/navigator/students/:id" element={<RequireRole roles={STAFF_ROLES}><NavigatorStudentPage /></RequireRole>} />
                 <Route path="/navigator/reports" element={<RequireRole roles={STAFF_ROLES}><NavigatorReportsPage /></RequireRole>} />
                 <Route path="/navigator/goals" element={<RequireRole roles={STAFF_ROLES}><NavigatorGoalsPage /></RequireRole>} />
+                <Route path="/navigator/forms" element={<RequireRole roles={STAFF_ROLES}><NavigatorFormsPage /></RequireRole>} />
                 <Route path="/navigator/import" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><NavigatorImportPage /></RequireRole>} />
                 <Route path="/navigator/escalation" element={<RequireRole roles={STAFF_ROLES}><NavigatorEscalationPage /></RequireRole>} />
                 <Route path="/navigator/skill-map" element={<RequireRole roles={STAFF_ROLES}><NavigatorSkillMapPage /></RequireRole>} />

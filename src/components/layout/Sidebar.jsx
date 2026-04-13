@@ -22,6 +22,7 @@ const navigatorNavigation = [
   { name: 'Skill Gap Map',      path: '/navigator/skill-map',          icon: BrainIcon           },
   { name: 'Effectiveness',      path: '/navigator/effectiveness',      icon: TrendingUpIcon      },
   { name: 'Disproportionality', path: '/navigator/disproportionality', icon: ScaleIcon           },
+  { name: 'Forms & Resources',   path: '/navigator/forms',              icon: ClipboardListIcon   },
   { name: 'ISS Kiosk',           path: '/navigator/iss-kiosk',          icon: ClipboardListIcon, external: true },
   { name: 'Pilot Summary',      path: '/navigator/pilot',              icon: ClipboardListIcon   },
   { name: 'Data Import',        path: '/navigator/import',             icon: ImportIcon          },
