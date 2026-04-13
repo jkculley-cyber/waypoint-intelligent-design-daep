@@ -629,6 +629,58 @@ const WORKSHEET_DATA = {
       { type: 'certificate' },
     ]
   },
+  'discussion': {
+    title: 'Discussion Starter Cards — Facilitator Guide',
+    subtitle: 'All Skill Gaps — Mentoring, Counseling, CICO, Re-Entry',
+    intro: null,
+    sections: [
+      { type: 'how_to_use',
+        when: 'CICO check-ins, re-entry meetings, mentor sessions, counseling intakes, or any time you need to open a real conversation fast.',
+        how: 'Pick 1–2 prompts per session. Don\'t rush. The follow-up questions matter as much as the opener. Let silence breathe.',
+        document: 'Note what the student says verbatim when possible. Exact language reveals more than summaries. Log in Navigator under Interventions.',
+      },
+      { type: 'discussion_prompts', prompts: [
+        { n: 1, cat: 'Vision', q: 'What would your best day at school look like?',
+          why: 'Opens the conversation with possibility instead of problems. Reveals what the student values and what they\'re capable of imagining for themselves.',
+          followups: ['What\'s one thing that would have to change for that day to happen?', 'Have you ever had a day close to that? What made it different?'],
+          listen: 'Specific details — a class they like, a teacher they trust, a feeling of being successful.' },
+        { n: 2, cat: 'Trust', q: 'Who at this school do you trust? What makes you trust them?',
+          why: 'Identifies protective relationships and reveals what the student needs to feel safe. Trust patterns here often mirror patterns outside school.',
+          followups: ['Is there anyone at school you used to trust but don\'t anymore?', 'What would it take for you to trust someone new?'],
+          listen: 'Who they name — and who they don\'t. Silence here is also data.' },
+        { n: 3, cat: 'Learning Environment', q: 'What\'s one thing teachers do that helps you? One thing that makes it harder?',
+          why: 'Surfaces environmental triggers and strengths without requiring the student to critique adults directly. Gives you actionable intel.',
+          followups: ['Have you ever told a teacher what helps you? What happened?', 'If you could change one thing about how your classes run, what would it be?'],
+          listen: 'Patterns — do the same teacher behaviors come up? Is it tone, fairness, consistency, or something else?' },
+        { n: 4, cat: 'Accountability', q: 'If you could change one thing about how you handled [the incident], what would it be?',
+          why: 'Invites reflection without shame. The bracket allows you to name the specific incident — keeps it concrete, not abstract.',
+          followups: ['What would you have needed in that moment to make a different choice?', 'Who else was affected by what happened?'],
+          listen: 'Does the student take any ownership? Do they show empathy for others affected? Both are significant.' },
+        { n: 5, cat: 'Respect', q: 'What does respect look like to you? Do you feel respected here?',
+          why: 'Uncovers mismatches between how students define respect and how adults show it. Most conflict at school traces back to perceived disrespect.',
+          followups: ['Has anyone at school made you feel respected recently? What did they do?', 'Do you think you always show respect to others? Is it easy or hard?'],
+          listen: 'Specific behaviors they associate with respect — tone, eye contact, fairness, being heard.' },
+        { n: 6, cat: 'Outside Factors', q: 'What\'s going on outside of school that affects how you show up here?',
+          why: 'Acknowledges that school behavior doesn\'t exist in a vacuum. Creates space for the student to name stress without having to volunteer it unprompted.',
+          followups: ['Is there anything going on right now that\'s making school harder than usual?', 'Is there a trusted adult at home you can talk to when things get hard?'],
+          listen: 'Housing instability, family stress, relationship conflict, grief. Any of these require a different kind of support.' },
+        { n: 7, cat: 'Self-Awareness', q: 'When you\'re having a bad day, what\'s the first sign? What could someone do to help?',
+          why: 'Builds metacognitive awareness and gives the support team actionable information. Students who can name their early warning signs can also learn to interrupt them.',
+          followups: ['Have you ever told someone at school what helps when you\'re struggling?', 'What\'s the worst thing someone could do when you\'re already having a bad day?'],
+          listen: 'Physical cues (getting quiet, jaw tightening), behavioral cues (avoiding eye contact, asking to leave). These become your early intervention signals.' },
+        { n: 8, cat: 'Wins', q: 'What are you proud of this week — even something small?',
+          why: 'Ends check-ins on strength. Redirects the student\'s attention to evidence of their own capability. Small wins compound.',
+          followups: ['Did anyone notice that? Would it matter to you if they did?', 'What would it take to have more weeks like that?'],
+          listen: 'What they count as a win — it tells you what they value and where their confidence lives.' },
+      ]},
+      { type: 'facilitator_tips', tips: [
+        { tip: 'One prompt per 15-minute session is enough.', detail: 'Depth beats breadth. A real answer to one question is worth more than surface answers to five.' },
+        { tip: 'Don\'t lead the witness.', detail: 'Ask the question and then stop. Resist the urge to fill silence or rephrase before the student has answered.' },
+        { tip: 'Mirror before you move on.', detail: 'Repeat back what you heard before asking a follow-up: "So what I\'m hearing is..." This builds trust and clarifies meaning.' },
+        { tip: 'Log it.', detail: 'Note key phrases in Navigator under the student\'s intervention record. Patterns across sessions are your most important data.' },
+      ]},
+    ]
+  },
   'cico_goal': {
     title: 'Goal-Setting: My CICO Plan',
     subtitle: 'CICO / Behavior Support',
@@ -905,6 +957,56 @@ function WorksheetSection({ section: s }) {
           <p className="text-xs text-amber-700 italic mb-2">{s.situation}</p>
           <p className="text-xs font-semibold text-gray-700 mb-1">{s.prompt}</p>
           <Lines count={s.lines} />
+        </div>
+      )
+    case 'how_to_use':
+      return (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">How to Use This Guide</p>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div><p className="font-semibold text-gray-700 mb-0.5">When</p><p className="text-gray-500">{s.when}</p></div>
+            <div><p className="font-semibold text-gray-700 mb-0.5">How</p><p className="text-gray-500">{s.how}</p></div>
+            <div><p className="font-semibold text-gray-700 mb-0.5">Document</p><p className="text-gray-500">{s.document}</p></div>
+          </div>
+        </div>
+      )
+    case 'discussion_prompts':
+      return (
+        <div className="space-y-4">
+          {s.prompts.map(p => (
+            <div key={p.n} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-blue-50 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">{p.n}</span>
+                  <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{p.cat}</span>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                <p className="text-sm font-bold text-gray-900 italic">"{p.q}"</p>
+                <div className="bg-gray-50 rounded p-2"><p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Why this works</p><p className="text-xs text-gray-600">{p.why}</p></div>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Follow-up questions</p>
+                  {p.followups.map((f, i) => <p key={i} className="text-xs text-gray-700 pl-3 border-l-2 border-blue-300 mb-1">"{f}"</p>)}
+                </div>
+                <div className="bg-amber-50 rounded p-2"><p className="text-[10px] text-amber-700 uppercase font-bold tracking-wider mb-0.5">Listen for</p><p className="text-xs text-amber-800">{p.listen}</p></div>
+                <div><p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Notes</p><Lines count={2} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'facilitator_tips':
+      return (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-xs font-bold text-green-800 uppercase tracking-wider mb-2">Facilitator Tips</p>
+          <div className="space-y-2">
+            {s.tips.map((t, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-green-600 font-bold text-xs mt-0.5 shrink-0">•</span>
+                <div><p className="text-xs font-semibold text-green-900">{t.tip}</p><p className="text-xs text-green-700">{t.detail}</p></div>
+              </div>
+            ))}
+          </div>
         </div>
       )
     case 'certificate':
