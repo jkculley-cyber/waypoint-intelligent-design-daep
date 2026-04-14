@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-13 (Session BZ continued — forms, resource library, MTSS tiers, progress scoring, lead capture fix, demo polish, product page carousel)
+> Last updated: 2026-04-14 (Session CA — ops command center readability, SCOUT Brave Search integration for IB Schools, Anthropic key exposure discovered and revoked)
 
 ---
 
