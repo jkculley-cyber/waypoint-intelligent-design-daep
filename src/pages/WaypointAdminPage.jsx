@@ -3285,22 +3285,24 @@ function LicenseFormModal({ existing, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Customer Name</label>
+              <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Customer Name *</label>
               <input
                 type="text"
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
                 placeholder="Ms. Sarah Johnson"
+                required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Email</label>
+              <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Email *</label>
               <input
                 type="email"
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
                 placeholder="customer@district.edu"
+                required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
               />
             </div>
@@ -3367,7 +3369,7 @@ function LicenseFormModal({ existing, onClose, onSaved }) {
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
           <button
             onClick={save}
-            disabled={saving || !customerEmail || !licenseKey}
+            disabled={saving || !customerEmail || !licenseKey || !customerName.trim()}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Create License')}
