@@ -803,6 +803,20 @@
     .then(function(response) {
       if (response.ok) {
         localStorage.setItem('cpeg_whitepaper_unlocked', '1');
+        var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+        var OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+        fetch(OPS + '/rest/v1/demo_leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+          body: JSON.stringify({
+            email: data.get('email'),
+            name: data.get('name') || '',
+            district_name: data.get('district') || '',
+            role: data.get('role') || null,
+            referrer: 'whitepaper_gate',
+            status: 'new'
+          })
+        }).catch(function() {});
         gate.style.transition = 'opacity 0.5s ease';
         gate.style.opacity = '0';
         setTimeout(function() { gate.style.display = 'none'; }, 500);

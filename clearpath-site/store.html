@@ -935,6 +935,21 @@ async function submitBeaconRequest(e) {
     });
     if (!res.ok) throw new Error('Submit failed');
 
+    // Also log to ops Supabase so it shows in the Leads tracker
+    var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+    var OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+    fetch(OPS + '/rest/v1/demo_leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+      body: JSON.stringify({
+        email: data.email,
+        name: data.name || '',
+        district_name: data.district || data.school_name || '',
+        referrer: 'beacon_request|' + (data.school_name || ''),
+        status: 'new'
+      })
+    }).catch(function() {});
+
     // Show success
     document.getElementById('beacon-form-content').style.display = 'none';
     document.getElementById('beacon-success').style.display = 'block';

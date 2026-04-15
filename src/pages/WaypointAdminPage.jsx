@@ -830,15 +830,27 @@ function LeadsPanel() {
       return
     }
     setUpdatingId(id)
-    await supabase.from('leads').update({ status }).eq('id', id)
+    if (typeof id === 'string' && id.startsWith('ops-')) {
+      const opsId = id.replace('ops-', '')
+      await opsSupabase.from('demo_leads').update({ status }).eq('id', opsId)
+    } else {
+      await supabase.from('leads').update({ status }).eq('id', id)
+    }
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l))
     setUpdatingId(null)
   }
 
   async function confirmNotInterested() {
     setUpdatingId(niModal.id)
-    await supabase.from('leads').update({ status: 'not_interested', notes: niReason }).eq('id', niModal.id)
-    setLeads(prev => prev.map(l => l.id === niModal.id ? { ...l, status: 'not_interested', notes: niReason } : l))
+    const id = niModal.id
+    if (typeof id === 'string' && id.startsWith('ops-')) {
+      // ops demo_leads has no notes column — only status persists
+      const opsId = id.replace('ops-', '')
+      await opsSupabase.from('demo_leads').update({ status: 'not_interested' }).eq('id', opsId)
+    } else {
+      await supabase.from('leads').update({ status: 'not_interested', notes: niReason }).eq('id', id)
+    }
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'not_interested', notes: niReason } : l))
     setUpdatingId(null)
     setNiModal(null)
     setNiReason('')

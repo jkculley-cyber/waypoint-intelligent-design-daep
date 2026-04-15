@@ -1498,10 +1498,18 @@
         if (res.ok) {
           form.style.display = 'none';
           success.style.display = 'block';
-          fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead', {
+          var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+          var OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+          fetch(OPS + '/rest/v1/demo_leads', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY' },
-            body: JSON.stringify({ name: data.get('name') || '', email: data.get('email'), source: 'demo_request', district: data.get('district'), concern: data.get('concern') })
+            headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+            body: JSON.stringify({
+              email: data.get('email'),
+              name: data.get('name') || '',
+              district_name: data.get('district') || '',
+              referrer: 'demo_request|' + (data.get('concern') || '') + '|' + (data.get('timeline') || ''),
+              status: 'new'
+            })
           }).catch(function() {});
         } else {
           btn.disabled = false;
@@ -1718,12 +1726,22 @@
       if (r.ok) {
         document.getElementById('pilot-form').style.display = 'none';
         document.getElementById('pilot-success').style.display = 'block';
-        var pilotEmail = document.querySelector('#pilot-form [name="email"]');
-        if (pilotEmail && pilotEmail.value) {
-          fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead', {
+        var pf = document.getElementById('pilot-form');
+        var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+        var OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+        var pEmail = pf.querySelector('[name="email"]').value;
+        if (pEmail) {
+          fetch(OPS + '/rest/v1/demo_leads', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY' },
-            body: JSON.stringify({ email: pilotEmail.value, source: 'pilot_application' })
+            headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+            body: JSON.stringify({
+              email: pEmail,
+              name: '',
+              district_name: pf.querySelector('[name="district_name"]').value || '',
+              role: pf.querySelector('[name="role"]').value || null,
+              referrer: 'pilot_application|' + (pf.querySelector('[name="district_size"]').value || '') + '|' + (pf.querySelector('[name="urgency"]').value || ''),
+              status: 'new'
+            })
           }).catch(function() {});
         }
       } else {
@@ -1772,10 +1790,18 @@
         document.getElementById('lc-success').style.display = 'block';
         var lcEmail = document.querySelector('#lc-form [name="email"]');
         if (lcEmail && lcEmail.value) {
-          fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead', {
+          var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+          var OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+          fetch(OPS + '/rest/v1/demo_leads', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY' },
-            body: JSON.stringify({ email: lcEmail.value, source: 'chat_widget' })
+            headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+            body: JSON.stringify({
+              email: lcEmail.value,
+              name: '',
+              district_name: '',
+              referrer: 'chat_widget|' + challenge,
+              status: 'new'
+            })
           }).catch(function() {});
         }
       } else {
