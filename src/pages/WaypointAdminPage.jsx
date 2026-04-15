@@ -847,7 +847,13 @@ function LeadsPanel() {
   async function deleteLead(id) {
     if (!window.confirm('Delete this lead permanently?')) return
     setDeletingId(id)
-    await supabase.from('leads').delete().eq('id', id)
+    if (typeof id === 'string' && id.startsWith('ops-')) {
+      // Ops Supabase lead — strip prefix and delete from demo_leads
+      const opsId = id.replace('ops-', '')
+      await opsSupabase.from('demo_leads').delete().eq('id', opsId)
+    } else {
+      await supabase.from('leads').delete().eq('id', id)
+    }
     setLeads(prev => prev.filter(l => l.id !== id))
     setDeletingId(null)
   }
