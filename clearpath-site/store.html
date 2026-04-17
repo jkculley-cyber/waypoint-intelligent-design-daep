@@ -702,17 +702,18 @@ function renderProducts() {
           <span class="pc-price" style="font-size:1.3rem">$8<span style="font-size:.7rem;font-weight:400;color:var(--text-muted)">/mo</span></span>
           <span style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:4px">or $79/school year</span>
           <span style="font-size:.72rem;color:var(--amber-light);display:block;margin-bottom:16px">14-day free trial included</span>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <a href="mailto:support@clearpathedgroup.com?subject=Beacon%20Purchase%20—%20License%20Key%20Request&body=Hi%2C%20I%27d%20like%20to%20purchase%20Beacon.%0A%0APlan%3A%20%5B%20%248%2Fmo%20%7C%20%2479%2Fyr%20%5D%0AName%3A%0ASchool%3A%0A" class="pc-buy" style="background:linear-gradient(135deg,#22c55e,#0e7490);text-decoration:none;display:block;text-align:center">Buy Now →</a>
-            <a href="/activate" style="font-size:.72rem;font-weight:600;color:#4ade80;text-decoration:none;display:block;text-align:center;padding:6px 0">Already have a license? Download App →</a>
+          <button onclick="document.getElementById('beacon-zelle').style.display=document.getElementById('beacon-zelle').style.display==='none'?'block':'none'" class="pc-buy" style="background:linear-gradient(135deg,#22c55e,#0e7490);border:none;cursor:pointer;display:block;width:100%;text-align:center;color:#fff;font-size:inherit;font-weight:inherit;padding:inherit;border-radius:inherit">Buy Now →</button>
+          <div id="beacon-zelle" style="display:none;margin-top:12px;background:rgba(42,122,80,.1);border:1px solid rgba(42,122,80,.3);border-radius:10px;padding:16px">
+            <div style="font-size:.82rem;font-weight:700;color:#4ade80;margin-bottom:10px;text-align:center">Pay via Zelle</div>
+            <div style="text-align:center;margin-bottom:12px">
+              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:180px;height:180px;border-radius:8px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:4px">
+            </div>
+            <div style="font-size:.76rem;color:var(--text-muted);margin-bottom:6px"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#4ade80">$8 (monthly)</strong> or <strong style="color:#4ade80">$79 (annual)</strong> via Zelle to:</div>
+            <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:.85rem;color:var(--amber-glow);letter-spacing:.03em;margin-bottom:8px;text-align:center">clearpathedgroup</div>
+            <div style="font-size:.76rem;color:var(--text-muted);margin-bottom:4px"><strong style="color:var(--text)">2.</strong> Include <strong>"Beacon"</strong> + your email in the memo</div>
+            <div style="font-size:.76rem;color:var(--text-muted)"><strong style="color:var(--text)">3.</strong> We'll send your license key within minutes</div>
           </div>
-          <div class="pc-note" style="margin-top:8px">
-            <strong>How it works:</strong><br>
-            1. Click Buy Now to email us<br>
-            2. We send a Zelle payment link<br>
-            3. You get your license key instantly<br>
-            4. Download & activate the app
-          </div>
+          <a href="/activate" style="font-size:.72rem;font-weight:600;color:#4ade80;text-decoration:none;display:block;text-align:center;padding:6px 0;margin-top:8px">Already have a license? Download App →</a>
         </div>
       </div>
     </div>
