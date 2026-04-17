@@ -703,17 +703,22 @@ function renderProducts() {
           <span style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:4px">or $79/school year</span>
           <span style="font-size:.72rem;color:var(--amber-light);display:block;margin-bottom:16px">14-day free trial included</span>
           <button onclick="document.getElementById('beacon-zelle').style.display=document.getElementById('beacon-zelle').style.display==='none'?'block':'none'" class="pc-buy" style="background:linear-gradient(135deg,#22c55e,#0e7490);border:none;cursor:pointer;display:block;width:100%;text-align:center;color:#fff;font-size:inherit;font-weight:inherit;padding:inherit;border-radius:inherit">Buy Now →</button>
-          <div id="beacon-zelle" style="display:none;margin-top:12px;background:rgba(42,122,80,.1);border:1px solid rgba(42,122,80,.3);border-radius:10px;padding:16px">
-            <div style="font-size:.82rem;font-weight:700;color:#4ade80;margin-bottom:10px;text-align:center">Pay via Zelle</div>
-            <div style="text-align:center;margin-bottom:12px">
-              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:8px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
-            </div>
-            <div style="font-size:.76rem;color:var(--text-muted);margin-bottom:6px"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#4ade80">$8 (monthly)</strong> or <strong style="color:#4ade80">$79 (annual)</strong> via Zelle to:</div>
-            <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:.85rem;color:var(--amber-glow);letter-spacing:.03em;margin-bottom:8px;text-align:center">clearpathedgroup</div>
-            <div style="font-size:.76rem;color:var(--text-muted);margin-bottom:4px"><strong style="color:var(--text)">2.</strong> Include <strong>"Beacon"</strong> + your email in the memo</div>
-            <div style="font-size:.76rem;color:var(--text-muted)"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
-          </div>
           <a href="/activate" style="font-size:.72rem;font-weight:600;color:#4ade80;text-decoration:none;display:block;text-align:center;padding:6px 0;margin-top:8px">Already have a license? Download App →</a>
+        </div>
+      </div>
+      <div id="beacon-zelle" style="display:none;margin-top:0;background:rgba(42,122,80,.06);border-top:1px solid rgba(42,122,80,.25);padding:32px 28px">
+        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
+          <div style="flex-shrink:0;text-align:center">
+            <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
+            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
+          </div>
+          <div style="flex:1;min-width:220px;padding-top:8px">
+            <div style="font-size:1rem;font-weight:700;color:#4ade80;margin-bottom:16px">Complete Your Purchase</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#4ade80">$8 (monthly)</strong> or <strong style="color:#4ade80">$79 (annual)</strong> via Zelle to:</div>
+            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Beacon"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
+            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
+          </div>
         </div>
       </div>
     </div>
