@@ -1,8 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { useNavigatorReferrals, useNavigatorPlacements } from '../../hooks/useNavigator'
 
 const FORMS = [
   { id: 'iss_reflection', label: 'ISS Reflection Form', icon: '📝', description: 'Restorative reflection for students during ISS — what happened, who was affected, re-entry goal.' },
@@ -10,6 +13,16 @@ const FORMS = [
   { id: 'behavior_contract', label: 'Behavior Contract', icon: '📋', description: 'Student-staff agreement on specific behavior expectations, consequences, and rewards.' },
   { id: 'parent_agreement', label: 'Parent-Student Behavior Agreement (HB 6)', icon: '👥', description: 'HB 6 required — DAEP conference documentation with student/school commitments, incident summary, 30-day review disposition.' },
   { id: 'stay_away', label: 'Stay-Away / No-Contact Agreement', icon: '🚫', description: 'No-contact order between two students — terms, boundaries, consequences for violation, review date.' },
+]
+
+const DOCUMENT_TEMPLATES = [
+  { id: 'iss_letter', label: 'ISS Assignment Letter', icon: '📄', description: 'Formal parent notification of ISS placement with appeal rights and daily expectations.', needsPlacement: true, placementType: 'iss' },
+  { id: 'oss_letter', label: 'OSS Assignment Letter', icon: '📄', description: 'Formal parent notification of OSS with TEC §37.005 legal notice and return conditions.', needsPlacement: true, placementType: 'oss' },
+  { id: 'referral_ack', label: 'Referral Acknowledgment', icon: '📨', description: 'Parent notification when a behavior referral is received, with next steps and contact info.', needsReferral: true },
+  { id: 'behavior_support_plan', label: 'Behavior Support Plan', icon: '📋', description: 'Formal intervention document with target behaviors, strategies, and review cycle.', standalone: true },
+  { id: 'return_letter', label: 'Return / Reentry Letter', icon: '🏫', description: 'Notification that student has completed ISS/OSS and return conditions.', needsPlacement: true },
+  { id: 'parent_conference', label: 'Parent Conference Summary', icon: '👥', description: 'Documents a parent meeting — attendees, discussion, action items, follow-up date.', standalone: true },
+  { id: 'restorative_conference', label: 'Restorative Conference Summary', icon: '🤝', description: 'Documents a restorative justice conference — participants, agreements, accountability steps.', standalone: true },
 ]
 
 const SKILL_GAP_ACTIVITIES = {
@@ -86,6 +99,9 @@ export default function NavigatorFormsPage() {
 
             {/* Intervention Resource Library */}
             <ResourceLibrary onOpenReflection={(key) => setActiveForm('iss_reflection_' + key)} onOpenWorksheet={(id) => setActiveForm('worksheet_' + id)} />
+
+            {/* Document Templates */}
+            <DocumentTemplatesSection />
           </>
         ) : activeForm === 'iss_reflection' || activeForm.startsWith('iss_reflection_') ? (
           <ISSReflectionForm
@@ -1645,6 +1661,788 @@ function FieldLine({ label, span }) {
     <div className={span === 2 ? 'col-span-2' : ''}>
       <span className="text-xs font-medium text-gray-600">{label}:</span>
       <div className="border-b border-gray-300 mt-1 pb-1 min-h-[22px]"></div>
+    </div>
+  )
+}
+
+// ─── Document Templates Section ─────────────────────────────────────────────
+
+function DocumentTemplatesSection() {
+  const { profile, district } = useAuth()
+  const [openTemplate, setOpenTemplate] = useState(null)
+  const [studentName, setStudentName] = useState('')
+  const [studentGrade, setStudentGrade] = useState('')
+  const [dates, setDates] = useState({ start: '', end: '', return: '' })
+  const [behaviorDescription, setBehaviorDescription] = useState('')
+  const [generating, setGenerating] = useState(false)
+
+  const districtName = district?.name || '___________________'
+  const campusName = profile?.campus_name || profile?.campuses?.[0]?.name || '___________________'
+  const adminName = profile?.full_name || '___________________'
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+
+  const resetForm = () => {
+    setStudentName('')
+    setStudentGrade('')
+    setDates({ start: '', end: '', return: '' })
+    setBehaviorDescription('')
+  }
+
+  const openModal = (templateId) => {
+    resetForm()
+    setOpenTemplate(templateId)
+  }
+
+  const closeModal = () => {
+    setOpenTemplate(null)
+    resetForm()
+  }
+
+  // ── PDF helpers ──
+
+  const addHeader = (doc, title) => {
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.text(districtName, 105, 20, { align: 'center' })
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.text(campusName, 105, 26, { align: 'center' })
+    doc.setDrawColor(0)
+    doc.setLineWidth(0.5)
+    doc.line(18, 30, 192, 30)
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.text(title, 105, 40, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    return 48
+  }
+
+  const addFooter = (doc) => {
+    const pageCount = doc.internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+      doc.setFontSize(8)
+      doc.setTextColor(130, 130, 130)
+      doc.text('Generated by Navigator | clearpathedgroup.com', 105, 282, { align: 'center' })
+      doc.text(`Page ${i} of ${pageCount}`, 192, 282, { align: 'right' })
+      doc.setTextColor(0, 0, 0)
+    }
+  }
+
+  const addField = (doc, label, value, x, y, width) => {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.text(label + ':', x, y)
+    const labelWidth = doc.getTextWidth(label + ': ')
+    doc.setFont('helvetica', 'normal')
+    doc.text(value || '________________________', x + labelWidth, y)
+    doc.setDrawColor(180)
+    doc.line(x + labelWidth, y + 1, x + width, y + 1)
+    return y + 8
+  }
+
+  const addParagraph = (doc, text, x, y, maxWidth) => {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    const lines = doc.splitTextToSize(text, maxWidth)
+    doc.text(lines, x, y)
+    return y + lines.length * 5
+  }
+
+  const addSectionTitle = (doc, title, y) => {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text(title, 18, y)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    return y + 7
+  }
+
+  const addSignatureLine = (doc, label, x, y, width) => {
+    doc.setDrawColor(0)
+    doc.line(x, y, x + width, y)
+    doc.setFontSize(8)
+    doc.text(label, x, y + 4)
+    return y + 12
+  }
+
+  const addBlankLines = (doc, count, x, y, width) => {
+    let cy = y
+    for (let i = 0; i < count; i++) {
+      doc.setDrawColor(200)
+      doc.line(x, cy, x + width, cy)
+      cy += 8
+    }
+    return cy
+  }
+
+  const addCheckbox = (doc, label, x, y, checked = false) => {
+    doc.rect(x, y - 3, 3.5, 3.5)
+    if (checked) {
+      doc.setFont('helvetica', 'bold')
+      doc.text('X', x + 0.5, y)
+      doc.setFont('helvetica', 'normal')
+    }
+    doc.setFontSize(9)
+    doc.text(label, x + 5.5, y)
+    return y + 6
+  }
+
+  const sn = studentName || '________________________'
+  const sg = studentGrade || '______'
+
+  // ── Generate ISS Assignment Letter ──
+
+  const generateISSLetter = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'In-School Suspension Assignment Letter')
+
+      doc.setFontSize(10)
+      doc.text(today, 18, y)
+      y += 10
+
+      y = addParagraph(doc, 'Dear Parent/Guardian of ' + sn + ',', 18, y, 174)
+      y += 3
+      y = addParagraph(doc, 'This letter is to notify you that your child has been assigned to In-School Suspension (ISS) as a result of a violation of the Student Code of Conduct.', 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y = addField(doc, 'ISS Start Date', dates.start, 120, y - 8, 192)
+      y = addField(doc, 'ISS End Date', dates.end, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'ISS Expectations', y)
+      const expectations = [
+        'The student will report to the ISS room at the start of each school day for the duration of the assignment.',
+        'The student is expected to complete all assigned academic work during ISS. Teachers will provide assignments.',
+        'The student must follow all ISS behavioral expectations, including remaining on task, following staff directions, and maintaining appropriate behavior.',
+        'Failure to comply with ISS expectations may result in additional disciplinary consequences, including Out-of-School Suspension.',
+        'The student may not participate in extracurricular activities during the ISS assignment period.'
+      ]
+      expectations.forEach((exp, i) => {
+        const lines = doc.splitTextToSize((i + 1) + '. ' + exp, 168)
+        doc.text(lines, 22, y)
+        y += lines.length * 5 + 2
+      })
+      y += 3
+
+      y = addSectionTitle(doc, 'Academic Work Policy', y)
+      y = addParagraph(doc, 'Your child will receive all regular classroom assignments during ISS. Completed work will be returned to teachers for grading. ISS assignments are due upon the student\'s return to the regular classroom.', 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Appeal Rights', y)
+      y = addParagraph(doc, 'You have the right to appeal this disciplinary assignment per district policy FNG(LOCAL). To initiate an appeal, contact the campus administration within the timeline specified in district policy. An appeal does not suspend the ISS assignment unless otherwise directed by administration.', 18, y, 174)
+      y += 8
+
+      y = addParagraph(doc, 'If you have questions or concerns, please contact the campus at the number below.', 18, y, 174)
+      y += 8
+
+      y = addParagraph(doc, 'Sincerely,', 18, y, 174)
+      y += 3
+      y = addSignatureLine(doc, 'Administrator Signature / Date', 18, y + 10, 80)
+      y = addSignatureLine(doc, 'Print Name: ' + adminName, 18, y, 80)
+      y += 3
+
+      doc.setFontSize(9)
+      doc.text('cc: Student Cumulative File', 18, y)
+      y += 4
+      doc.text('cc: Parent/Guardian (copy provided)', 18, y)
+
+      addFooter(doc)
+      doc.save('ISS_Assignment_Letter_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate OSS Assignment Letter ──
+
+  const generateOSSLetter = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Out-of-School Suspension Assignment Letter')
+
+      doc.setFontSize(10)
+      doc.text(today, 18, y)
+      y += 10
+
+      y = addParagraph(doc, 'Dear Parent/Guardian of ' + sn + ',', 18, y, 174)
+      y += 3
+      y = addParagraph(doc, 'This letter is to formally notify you that your child has been suspended from school in accordance with the Texas Education Code \u00A737.005. The details of this suspension are provided below.', 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Suspension Details', y)
+      y = addField(doc, 'Suspension Start Date', dates.start, 18, y, 110)
+      y = addField(doc, 'Suspension End Date', dates.end, 18, y, 110)
+      y = addField(doc, 'Return to School Date', dates.return, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Reason for Suspension', y)
+      y = addParagraph(doc, behaviorDescription || '(See attached referral documentation)', 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Important Information', y)
+      const items = [
+        'During the suspension period, the student may not enter school grounds or attend any school-sponsored activities without prior administrative approval.',
+        'Academic work may be picked up from the campus front office during regular business hours. Please contact the campus to arrange pickup.',
+        'The student is expected to return to campus on the designated return date. A parent/guardian conference may be required prior to re-admission.',
+        'Per TEC \u00A737.005, a principal or designee may suspend a student for no more than three (3) school days per occurrence. Extensions require additional proceedings.'
+      ]
+      items.forEach((item, i) => {
+        const lines = doc.splitTextToSize((i + 1) + '. ' + item, 168)
+        doc.text(lines, 22, y)
+        y += lines.length * 5 + 2
+      })
+      y += 3
+
+      y = addSectionTitle(doc, 'Appeal Rights', y)
+      y = addParagraph(doc, 'You have the right to appeal this suspension per district policy FNG(LOCAL). To initiate an appeal, contact the campus administration within the timeline specified in district policy. An appeal does not automatically stay the suspension unless otherwise directed.', 18, y, 174)
+      y += 8
+
+      y = addParagraph(doc, 'Sincerely,', 18, y, 174)
+      y += 3
+      y = addSignatureLine(doc, 'Administrator Signature / Date', 18, y + 10, 80)
+      y = addSignatureLine(doc, 'Print Name: ' + adminName, 18, y, 80)
+      y += 3
+
+      doc.setFontSize(9)
+      doc.text('cc: Student Cumulative File', 18, y)
+      y += 4
+      doc.text('cc: Parent/Guardian (copy provided)', 18, y)
+
+      addFooter(doc)
+      doc.save('OSS_Assignment_Letter_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate Referral Acknowledgment ──
+
+  const generateReferralAck = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Behavior Referral Acknowledgment')
+
+      doc.setFontSize(10)
+      doc.text(today, 18, y)
+      y += 10
+
+      y = addParagraph(doc, 'Dear Parent/Guardian of ' + sn + ',', 18, y, 174)
+      y += 3
+      y = addParagraph(doc, 'This letter is to inform you that your child received a behavior referral at ' + campusName + '. We want to ensure you are aware of the situation and the steps being taken.', 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Referral Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Referral Date', dates.start, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Behavior Reported', y)
+      if (behaviorDescription) {
+        y = addParagraph(doc, behaviorDescription, 18, y, 174)
+      } else {
+        y = addBlankLines(doc, 3, 18, y, 174)
+      }
+      y += 5
+
+      y = addSectionTitle(doc, 'Next Steps', y)
+      const steps = [
+        'The referral has been received and is being reviewed by campus administration.',
+        'Appropriate consequences and/or support interventions will be determined in accordance with the Student Code of Conduct.',
+        'You may be contacted to discuss the incident further or to schedule a parent conference.',
+        'If your child receives support services (Special Education, Section 504), those will be considered during the review process.'
+      ]
+      steps.forEach((step, i) => {
+        const lines = doc.splitTextToSize((i + 1) + '. ' + step, 168)
+        doc.text(lines, 22, y)
+        y += lines.length * 5 + 2
+      })
+      y += 5
+
+      y = addParagraph(doc, 'We encourage open communication between home and school. If you have any questions or would like to discuss this matter, please do not hesitate to contact us.', 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Contact Information', y)
+      y = addField(doc, 'Campus', campusName, 18, y, 174)
+      y = addField(doc, 'Administrator', adminName, 18, y, 174)
+      y += 5
+
+      y = addParagraph(doc, 'Sincerely,', 18, y, 174)
+      y += 3
+      y = addSignatureLine(doc, 'Administrator Signature / Date', 18, y + 10, 80)
+
+      addFooter(doc)
+      doc.save('Referral_Acknowledgment_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate Behavior Support Plan ──
+
+  const generateBehaviorSupportPlan = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Behavior Support Plan')
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y = addField(doc, 'Date', today, 120, y - 8, 192)
+      y += 5
+
+      y = addSectionTitle(doc, 'Target Behaviors', y)
+      doc.setFontSize(9)
+      doc.text('Identify the specific behaviors to be addressed:', 18, y)
+      y += 5
+      for (let i = 1; i <= 3; i++) {
+        doc.text(i + '.', 22, y)
+        doc.setDrawColor(200)
+        doc.line(28, y + 1, 192, y + 1)
+        y += 8
+      }
+      y += 3
+
+      y = addSectionTitle(doc, 'Replacement Behaviors', y)
+      doc.setFontSize(9)
+      doc.text('What the student will do instead:', 18, y)
+      y += 5
+      for (let i = 1; i <= 3; i++) {
+        doc.text(i + '.', 22, y)
+        doc.setDrawColor(200)
+        doc.line(28, y + 1, 192, y + 1)
+        y += 8
+      }
+      y += 3
+
+      y = addSectionTitle(doc, 'Support Strategies', y)
+      doc.setFontSize(9)
+      const strategies = [
+        'Check-In/Check-Out (CICO)',
+        'Mentoring program',
+        'Schedule modification',
+        'Individual counseling',
+        'Parent communication plan',
+        'Peer mediation',
+        'Restorative practices',
+        'Other: _______________'
+      ]
+      let col = 0
+      let startY = y
+      strategies.forEach((s, i) => {
+        const cx = 22 + (col * 88)
+        const cy = startY + Math.floor(i / 2) * 6
+        doc.rect(cx, cy - 3, 3.5, 3.5)
+        doc.text(s, cx + 5.5, cy)
+        col = (col + 1) % 2
+      })
+      y = startY + Math.ceil(strategies.length / 2) * 6 + 5
+
+      y = addSectionTitle(doc, 'Responsible Parties', y)
+      y = addField(doc, 'Teacher(s)', '', 18, y, 174)
+      y = addField(doc, 'Counselor', '', 18, y, 174)
+      y = addField(doc, 'Administrator', adminName, 18, y, 174)
+      y = addField(doc, 'Parent/Guardian', '', 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Review Schedule', y)
+      y = addField(doc, 'Next Review Date', '', 18, y, 110)
+      doc.setFontSize(9)
+      y += 2
+      doc.text('Review Cycle:', 18, y)
+      const cycles = ['Weekly', 'Bi-weekly', 'Monthly', 'Quarterly']
+      let cx = 50
+      cycles.forEach(c => {
+        doc.rect(cx, y - 3, 3.5, 3.5)
+        doc.text(c, cx + 5, y)
+        cx += 30
+      })
+      y += 8
+
+      y = addSectionTitle(doc, 'Success Criteria', y)
+      doc.setFontSize(9)
+      doc.text('The plan will be considered successful when:', 18, y)
+      y += 5
+      y = addBlankLines(doc, 2, 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Signatures', y)
+      const sigY = y + 8
+      addSignatureLine(doc, 'Student Signature / Date', 18, sigY, 75)
+      addSignatureLine(doc, 'Administrator Signature / Date', 110, sigY, 75)
+      addSignatureLine(doc, 'Parent/Guardian Signature / Date', 18, sigY + 15, 75)
+      addSignatureLine(doc, 'Counselor Signature / Date', 110, sigY + 15, 75)
+
+      addFooter(doc)
+      doc.save('Behavior_Support_Plan_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate Return/Reentry Letter ──
+
+  const generateReturnLetter = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Return / Reentry Letter')
+
+      doc.setFontSize(10)
+      doc.text(today, 18, y)
+      y += 10
+
+      y = addParagraph(doc, 'Dear Parent/Guardian of ' + sn + ',', 18, y, 174)
+      y += 3
+      y = addParagraph(doc, 'We are pleased to inform you that your child has successfully completed their disciplinary assignment and is eligible to return to the regular school setting.', 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Placement Information', y)
+      y = addField(doc, 'Placement Type', '', 18, y, 110)
+      y = addField(doc, 'Placement Start Date', dates.start, 18, y, 110)
+      y = addField(doc, 'Placement End Date', dates.end, 18, y, 110)
+      y = addField(doc, 'Return to Campus Date', dates.return, 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Welcome Back', y)
+      y = addParagraph(doc, 'We welcome your child back and are committed to supporting their successful transition. Our goal is to ensure a positive and productive learning environment for all students.', 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Ongoing Support', y)
+      const supports = [
+        'Your child may be assigned a check-in mentor or counselor to support their transition.',
+        'Teachers have been notified of the return date and will provide any necessary academic support.',
+        'If your child receives Special Education or Section 504 services, the appropriate staff will coordinate continued support.',
+        'A follow-up meeting may be scheduled to review progress within the first two weeks of return.'
+      ]
+      supports.forEach((s, i) => {
+        const lines = doc.splitTextToSize('\u2022 ' + s, 168)
+        doc.text(lines, 22, y)
+        y += lines.length * 5 + 2
+      })
+      y += 3
+
+      y = addSectionTitle(doc, 'Expectations Upon Return', y)
+      y = addParagraph(doc, 'We expect all students to adhere to the Student Code of Conduct. Continued positive behavior is essential. Please review the Code of Conduct with your child before their return.', 18, y, 174)
+      y += 5
+
+      y = addParagraph(doc, 'If you have questions or would like to schedule a conference, please contact us at the number below.', 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Contact Information', y)
+      y = addField(doc, 'Campus', campusName, 18, y, 174)
+      y = addField(doc, 'Administrator', adminName, 18, y, 174)
+      y += 5
+
+      y = addParagraph(doc, 'Sincerely,', 18, y, 174)
+      y += 3
+      y = addSignatureLine(doc, 'Administrator Signature / Date', 18, y + 10, 80)
+      y += 3
+
+      doc.setFontSize(9)
+      doc.text('cc: Student Cumulative File', 18, y)
+      y += 4
+      doc.text('cc: Parent/Guardian (copy provided)', 18, y)
+
+      addFooter(doc)
+      doc.save('Return_Reentry_Letter_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate Parent Conference Summary ──
+
+  const generateParentConference = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Parent Conference Summary')
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y = addField(doc, 'Conference Date', dates.start || today, 120, y - 8, 192)
+      y += 5
+
+      y = addSectionTitle(doc, 'Attendees', y)
+      doc.setFontSize(9)
+      const attendees = [
+        'Parent/Guardian', 'Student', 'Assistant Principal',
+        'Principal', 'Counselor', 'Teacher(s)',
+        'SPED Coordinator', 'SRO', 'Other: _______________'
+      ]
+      let aCol = 0
+      let aStartY = y
+      attendees.forEach((a, i) => {
+        const ax = 22 + (aCol * 60)
+        const ay = aStartY + Math.floor(i / 3) * 6
+        doc.rect(ax, ay - 3, 3.5, 3.5)
+        doc.text(a, ax + 5.5, ay)
+        aCol = (aCol + 1) % 3
+      })
+      y = aStartY + Math.ceil(attendees.length / 3) * 6 + 5
+
+      y = addSectionTitle(doc, 'Discussion Summary', y)
+      y = addBlankLines(doc, 8, 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Action Items', y)
+      for (let i = 1; i <= 5; i++) {
+        doc.setFontSize(9)
+        doc.text(i + '.', 22, y)
+        doc.setDrawColor(200)
+        doc.line(28, y + 1, 140, y + 1)
+        doc.text('Responsible:', 144, y)
+        doc.line(164, y + 1, 192, y + 1)
+        y += 8
+      }
+      y += 3
+
+      y = addField(doc, 'Follow-Up Date', '', 18, y, 110)
+      y += 5
+
+      y = addSectionTitle(doc, 'Signatures', y)
+      const csigY = y + 8
+      addSignatureLine(doc, 'Parent/Guardian Signature / Date', 18, csigY, 75)
+      addSignatureLine(doc, 'Administrator Signature / Date', 110, csigY, 75)
+      addSignatureLine(doc, 'Student Signature / Date (if present)', 18, csigY + 15, 75)
+      addSignatureLine(doc, 'Counselor Signature / Date', 110, csigY + 15, 75)
+
+      addFooter(doc)
+      doc.save('Parent_Conference_Summary_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Generate Restorative Conference Summary ──
+
+  const generateRestorativeConference = () => {
+    setGenerating(true)
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+      let y = addHeader(doc, 'Restorative Conference Summary')
+
+      y = addSectionTitle(doc, 'Student Information', y)
+      y = addField(doc, 'Student Name', studentName, 18, y, 110)
+      y = addField(doc, 'Grade', studentGrade, 120, y - 8, 192)
+      y = addField(doc, 'Campus', campusName, 18, y, 110)
+      y = addField(doc, 'Conference Date', dates.start || today, 120, y - 8, 192)
+      y += 5
+
+      y = addSectionTitle(doc, 'Participants', y)
+      y = addBlankLines(doc, 3, 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'What Happened', y)
+      doc.setFontSize(9)
+      doc.text('Describe the incident or situation that led to this conference:', 18, y)
+      y += 5
+      y = addBlankLines(doc, 4, 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Who Was Affected and How', y)
+      doc.setFontSize(9)
+      doc.text('Identify all individuals impacted and describe how they were affected:', 18, y)
+      y += 5
+      y = addBlankLines(doc, 4, 18, y, 174)
+      y += 3
+
+      y = addSectionTitle(doc, 'Agreements', y)
+      doc.setFontSize(9)
+      doc.text('The following agreements were reached during this conference:', 18, y)
+      y += 5
+      for (let i = 1; i <= 5; i++) {
+        doc.text(i + '.', 22, y)
+        doc.setDrawColor(200)
+        doc.line(28, y + 1, 192, y + 1)
+        y += 8
+      }
+      y += 3
+
+      y = addSectionTitle(doc, 'Follow-Up', y)
+      y = addField(doc, 'Follow-Up Date', '', 18, y, 110)
+      y += 3
+
+      y = addSectionTitle(doc, 'Accountability Steps', y)
+      doc.setFontSize(9)
+      doc.text('How will we check that agreements are being honored?', 18, y)
+      y += 5
+      y = addBlankLines(doc, 3, 18, y, 174)
+      y += 5
+
+      y = addSectionTitle(doc, 'Signatures', y)
+      const rsigY = y + 8
+      addSignatureLine(doc, 'Student Signature / Date', 18, rsigY, 50)
+      addSignatureLine(doc, 'Affected Party Signature / Date', 75, rsigY, 50)
+      addSignatureLine(doc, 'Facilitator Signature / Date', 132, rsigY, 53)
+
+      addFooter(doc)
+      doc.save('Restorative_Conference_' + (studentName || 'Student').replace(/\s+/g, '_') + '.pdf')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // ── Template dispatch ──
+
+  const generators = {
+    iss_letter: generateISSLetter,
+    oss_letter: generateOSSLetter,
+    referral_ack: generateReferralAck,
+    behavior_support_plan: generateBehaviorSupportPlan,
+    return_letter: generateReturnLetter,
+    parent_conference: generateParentConference,
+    restorative_conference: generateRestorativeConference,
+  }
+
+  const activeTemplate = DOCUMENT_TEMPLATES.find(t => t.id === openTemplate)
+
+  // Fields needed per template
+  const needsDates = openTemplate && ['iss_letter', 'oss_letter', 'return_letter'].includes(openTemplate)
+  const needsReturnDate = openTemplate && ['oss_letter', 'return_letter'].includes(openTemplate)
+  const needsBehavior = openTemplate && ['oss_letter', 'referral_ack'].includes(openTemplate)
+  const needsConferenceDate = openTemplate && ['parent_conference', 'restorative_conference'].includes(openTemplate)
+
+  return (
+    <div>
+      <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
+        <span className="text-xl">{'📄'}</span> Document Templates
+      </h2>
+      <p className="text-xs text-gray-500 mb-4">Generate professional PDF letters and documents. Pre-filled with district and campus information.</p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {DOCUMENT_TEMPLATES.map(t => (
+          <button
+            key={t.id}
+            onClick={() => openModal(t.id)}
+            className="bg-white border border-gray-200 rounded-xl p-5 text-left hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">{t.icon}</span>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">{t.label}</h3>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{t.description}</p>
+                <span className="inline-block mt-2 text-xs text-blue-600 font-medium">Generate PDF &rarr;</span>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Modal */}
+      {openTemplate && activeTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closeModal}>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">{activeTemplate.label}</h3>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">{activeTemplate.description}</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Student Name</label>
+                <input
+                  type="text"
+                  value={studentName}
+                  onChange={e => setStudentName(e.target.value)}
+                  placeholder="Enter student name"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Grade Level</label>
+                <input
+                  type="text"
+                  value={studentGrade}
+                  onChange={e => setStudentGrade(e.target.value)}
+                  placeholder="e.g. 9th"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none"
+                />
+              </div>
+
+              {needsDates && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">Start Date</label>
+                      <input type="date" value={dates.start} onChange={e => setDates(d => ({ ...d, start: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">End Date</label>
+                      <input type="date" value={dates.end} onChange={e => setDates(d => ({ ...d, end: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none" />
+                    </div>
+                  </div>
+                  {needsReturnDate && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">Return Date</label>
+                      <input type="date" value={dates.return} onChange={e => setDates(d => ({ ...d, return: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none" />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {needsConferenceDate && (
+                <div>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">Conference Date</label>
+                  <input type="date" value={dates.start} onChange={e => setDates(d => ({ ...d, start: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none" />
+                </div>
+              )}
+
+              {needsBehavior && (
+                <div>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">Behavior / Reason (optional)</label>
+                  <textarea
+                    value={behaviorDescription}
+                    onChange={e => setBehaviorDescription(e.target.value)}
+                    placeholder="Brief description of the behavior or reason"
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
+              <button
+                onClick={() => { generators[openTemplate](); closeModal() }}
+                disabled={generating}
+                className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+              >
+                {generating ? 'Generating...' : 'Generate PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
