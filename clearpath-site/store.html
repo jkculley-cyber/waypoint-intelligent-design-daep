@@ -654,8 +654,24 @@ function renderProducts() {
           <span class="pc-price" style="font-size:1.3rem">$10<span style="font-size:.7rem;font-weight:400;color:var(--text-muted)">/mo</span></span>
           <span style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:4px">or $100/school year</span>
           <span style="font-size:.72rem;color:var(--amber-light);display:block;margin-bottom:16px">14-day free trial included</span>
-          <a href="https://clearpath-apex.pages.dev" target="_blank" class="pc-buy" style="background:linear-gradient(135deg,#ea580c,#f97316);text-decoration:none;display:block;text-align:center">Start Free Trial →</a>
-          <div class="pc-note">No credit card required.<br>Voice-first. AI-powered. Texas-built.</div>
+          <a href="https://clearpath-apex.pages.dev" target="_blank" class="pc-buy" style="background:linear-gradient(135deg,#ea580c,#f97316);text-decoration:none;display:block;text-align:center;margin-bottom:8px">Start Free Trial →</a>
+          <button onclick="document.getElementById('apex-zelle').style.display=document.getElementById('apex-zelle').style.display==='none'?'block':'none'" style="background:none;border:1px solid rgba(249,115,22,.4);cursor:pointer;display:block;width:100%;text-align:center;color:#f97316;font-size:.82rem;font-weight:700;padding:10px 16px;border-radius:8px">Already using Apex? Buy Now →</button>
+          <div class="pc-note" style="margin-top:8px">No credit card required for trial.<br>Voice-first. AI-powered. Texas-built.</div>
+        </div>
+      </div>
+      <div id="apex-zelle" style="display:none;margin-top:0;background:rgba(249,115,22,.04);border-top:1px solid rgba(249,115,22,.2);padding:32px 28px">
+        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
+          <div style="flex-shrink:0;text-align:center">
+            <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
+            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(249,115,22,.25);background:#fff;padding:6px">
+          </div>
+          <div style="flex:1;min-width:220px;padding-top:8px">
+            <div style="font-size:1rem;font-weight:700;color:#f97316;margin-bottom:16px">Complete Your Purchase</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#f97316">$10 (monthly)</strong> or <strong style="color:#f97316">$100 (annual)</strong> via Zelle to:</div>
+            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Apex"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
+            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll activate your account after payment is confirmed</div>
+          </div>
         </div>
       </div>
     </div>
