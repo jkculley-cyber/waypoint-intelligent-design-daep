@@ -216,6 +216,25 @@
           <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:8px;border:2px solid var(--border-purple);background:#fff;padding:6px">
         </div>
       </div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--border-purple)">
+        <div id="co-paid-form">
+          <div style="font-size:.82rem;font-weight:700;color:var(--purple-light);margin-bottom:4px">✓ Already sent your Zelle payment?</div>
+          <div style="font-size:.74rem;color:var(--text-muted);margin-bottom:12px">Tell us here so we can email your files within one business day.</div>
+          <form onsubmit="submitCheckoutPaid(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <input class="form-input" name="name" placeholder="Your name *" required>
+              <input class="form-input" name="email" type="email" placeholder="Your email *" required>
+            </div>
+            <div id="co-paid-msg" style="display:none;padding:8px 12px;margin-top:8px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.76rem;color:#fca5a5"></div>
+            <button id="co-paid-btn" type="submit" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#6b2fa0,#8b5cf6);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.84rem;cursor:pointer">Notify us — I paid →</button>
+          </form>
+        </div>
+        <div id="co-paid-success" style="display:none;text-align:center;padding:8px 0">
+          <div style="font-size:1.6rem;margin-bottom:4px">✓</div>
+          <div style="font-weight:700;color:var(--purple-light);margin-bottom:4px">Got it — we'll email your files soon</div>
+          <div style="font-size:.78rem;color:var(--text-muted)">Questions? <a href="mailto:support@clearpathedgroup.com" style="color:var(--purple-light)">support@clearpathedgroup.com</a></div>
+        </div>
+      </div>
     </div>
 
     <p style="font-size:.72rem;color:var(--text-muted);text-align:center;line-height:1.5">
@@ -673,6 +692,32 @@ function renderProducts() {
             <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll activate your account after payment is confirmed</div>
           </div>
         </div>
+        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(249,115,22,.25)">
+          <div id="apex-paid-form">
+            <div style="font-size:.88rem;font-weight:700;color:#f97316;margin-bottom:4px">✓ Already sent your Zelle payment?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">Tell us here so we can activate your account within one business day.</div>
+            <form onsubmit="submitPaidNotification(event, 'Apex', 'apex')">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <input class="form-input" name="name" placeholder="Your name *" required>
+                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+                <input class="form-input" name="school" placeholder="School (optional)">
+                <select class="form-input" name="plan">
+                  <option value="monthly_$10">Monthly — $10</option>
+                  <option value="annual_$100">Annual — $100</option>
+                </select>
+              </div>
+              <div id="apex-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+              <button id="apex-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Notify us — I paid →</button>
+            </form>
+          </div>
+          <div id="apex-paid-success" style="display:none;text-align:center;padding:8px 0">
+            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
+            <div style="font-weight:700;color:#f97316;margin-bottom:4px">Got it — we'll be in touch soon</div>
+            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#f97316">support@clearpathedgroup.com</a></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -736,6 +781,32 @@ function renderProducts() {
             <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
           </div>
         </div>
+        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(42,122,80,.3)">
+          <div id="beacon-paid-form">
+            <div style="font-size:.88rem;font-weight:700;color:#4ade80;margin-bottom:4px">✓ Already sent your Zelle payment?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">Tell us here so we can send your license key within one business day.</div>
+            <form onsubmit="submitPaidNotification(event, 'Beacon', 'beacon')">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <input class="form-input" name="name" placeholder="Your name *" required>
+                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+                <input class="form-input" name="school" placeholder="School (optional)">
+                <select class="form-input" name="plan">
+                  <option value="monthly_$8">Monthly — $8</option>
+                  <option value="annual_$79">Annual — $79</option>
+                </select>
+              </div>
+              <div id="beacon-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+              <button id="beacon-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#0e7490);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Notify us — I paid →</button>
+            </form>
+          </div>
+          <div id="beacon-paid-success" style="display:none;text-align:center;padding:8px 0">
+            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
+            <div style="font-weight:700;color:#4ade80;margin-bottom:4px">Got it — license key coming your way</div>
+            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#4ade80">support@clearpathedgroup.com</a></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -794,6 +865,32 @@ function renderProducts() {
             <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
             <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Investigator Toolkit"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
             <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
+          </div>
+        </div>
+        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(99,102,241,.25)">
+          <div id="toolkit-paid-form">
+            <div style="font-size:.88rem;font-weight:700;color:#818cf8;margin-bottom:4px">✓ Already sent your Zelle payment?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">Tell us here so we can send your license key within one business day.</div>
+            <form onsubmit="submitPaidNotification(event, 'Investigator Toolkit', 'toolkit')">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <input class="form-input" name="name" placeholder="Your name *" required>
+                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+                <input class="form-input" name="school" placeholder="School / campus (optional)">
+                <select class="form-input" name="plan">
+                  <option value="monthly_$5">Monthly — $5</option>
+                  <option value="annual_$49">Annual — $49</option>
+                </select>
+              </div>
+              <div id="toolkit-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+              <button id="toolkit-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#4338ca,#6366f1);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Notify us — I paid →</button>
+            </form>
+          </div>
+          <div id="toolkit-paid-success" style="display:none;text-align:center;padding:8px 0">
+            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
+            <div style="font-weight:700;color:#818cf8;margin-bottom:4px">Got it — license key coming your way</div>
+            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#818cf8">support@clearpathedgroup.com</a></div>
           </div>
         </div>
       </div>
@@ -1005,6 +1102,63 @@ async function submitBeaconRequest(e) {
     btn.disabled = false;
     btn.textContent = 'Request Access →';
   }
+}
+
+async function submitPaidNotification(e, product, idPrefix) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById(idPrefix + '-paid-btn');
+  const msg = document.getElementById(idPrefix + '-paid-msg');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  msg.style.display = 'none';
+
+  const data = {
+    name: form.name.value.trim(),
+    email: form.email.value.trim(),
+    school: form.school ? form.school.value.trim() : '',
+    plan: form.plan ? form.plan.value : '',
+    source: 'purchase_notification',
+    product: product,
+    subject: 'PAID: ' + product + ' — ' + form.email.value.trim(),
+  };
+
+  try {
+    const res = await fetch('https://formspree.io/f/xpqjngpp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Submit failed');
+
+    const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+    const OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+    fetch(OPS + '/rest/v1/demo_leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
+      body: JSON.stringify({
+        email: data.email,
+        name: data.name,
+        district_name: data.school || '',
+        referrer: 'PAID: ' + product + ' (' + data.plan + ')',
+        status: 'new',
+      }),
+    }).catch(function () {});
+
+    document.getElementById(idPrefix + '-paid-form').style.display = 'none';
+    document.getElementById(idPrefix + '-paid-success').style.display = 'block';
+  } catch (err) {
+    msg.textContent = "Couldn't reach our server. Please email support@clearpathedgroup.com with your name, email, and product.";
+    msg.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Notify us — I paid →';
+  }
+}
+
+function submitCheckoutPaid(e) {
+  const productEl = document.getElementById('co-product-name');
+  const product = productEl && productEl.textContent ? productEl.textContent : 'Store product';
+  return submitPaidNotification(e, product, 'co');
 }
 
 renderProducts();
