@@ -72,7 +72,7 @@
   .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:40px}
   .feature-card{background:var(--card-bg);border:1px solid var(--border-purple);border-radius:12px;padding:22px;backdrop-filter:blur(8px);transition:border-color .2s}
   .feature-card:hover{border-color:var(--amber)}
-  .feature-card h3{font-size:.9rem;font-weight:700;color:var(--text);margin:0 0 6px}
+  .feature-card h3{font-size:1rem;font-weight:700;letter-spacing:.01em;color:var(--text);margin:0 0 8px}
   .feature-card p{font-size:.82rem;color:var(--text-muted);line-height:1.6;margin:0}
 
   .founding-card{background:linear-gradient(135deg,rgba(232,134,42,.08),rgba(26,10,46,.7));border:2px solid rgba(232,134,42,.3);border-radius:16px;padding:40px;text-align:center;margin-bottom:40px}
@@ -94,6 +94,8 @@
     .features{grid-template-columns:1fr}
     .pricing-row{grid-template-columns:1fr}
     .hero-actions{flex-direction:column;align-items:center}
+    input,select,textarea{min-height:44px;font-size:1rem}
+    .btn-primary,.btn-ghost,button{min-height:44px}
   }
 </style>
 </head>
@@ -187,6 +189,42 @@
 </section>
 
 <!-- FOOTER -->
+<!-- CROSS-NAV — Also from Clear Path -->
+<section style="padding:60px 5% 40px;border-top:1px solid var(--border-purple)">
+  <div style="max-width:1080px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Also from Clear Path</div>
+      <h2 style="font-family:'Cinzel',serif;font-size:clamp(1.2rem,2.6vw,1.6rem);font-weight:700;color:var(--text);margin:0">Explore the rest of the suite</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
+      <a href="/waypoint.html" style="text-decoration:none;color:inherit;background:rgba(26,10,46,0.7);border:1px solid var(--border-purple);border-top:3px solid #f4a84a;border-radius:12px;padding:18px;transition:transform .2s,border-color .2s;display:block" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='#f4a84a'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#f4a84a;margin-bottom:6px">Waypoint</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:6px">DAEP &amp; Discipline Compliance</div>
+        <div style="font-size:.72rem;color:var(--text-muted);line-height:1.5">TEC Chapter 37 workflows, SPED/504 blocking, PEIMS export.</div>
+        <div style="font-size:.7rem;color:#f4a84a;font-weight:700;margin-top:10px">Learn more →</div>
+      </a>
+      <a href="/navigator.html" style="text-decoration:none;color:inherit;background:rgba(26,10,46,0.7);border:1px solid var(--border-purple);border-top:3px solid #3b82f6;border-radius:12px;padding:18px;transition:transform .2s,border-color .2s;display:block" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='#3b82f6'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#3b82f6;margin-bottom:6px">Navigator</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:6px">ISS/OSS &amp; Behavior Supports</div>
+        <div style="font-size:.72rem;color:var(--text-muted);line-height:1.5">Risk scoring, referral pipeline, disproportionality analytics.</div>
+        <div style="font-size:.7rem;color:#3b82f6;font-weight:700;margin-top:10px">Learn more →</div>
+      </a>
+      <a href="/investigator.html" style="text-decoration:none;color:inherit;background:rgba(26,10,46,0.7);border:1px solid var(--border-purple);border-top:3px solid #6366f1;border-radius:12px;padding:18px;transition:transform .2s,border-color .2s;display:block" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='#6366f1'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6366f1;margin-bottom:6px">Investigator Toolkit</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:6px">Campus Case Management</div>
+        <div style="font-size:.72rem;color:var(--text-muted);line-height:1.5">10-section investigation workflow, MDR alerts, appeal forms.</div>
+        <div style="font-size:.7rem;color:#6366f1;font-weight:700;margin-top:10px">Learn more →</div>
+      </a>
+      <a href="/beacon-product.html" style="text-decoration:none;color:inherit;background:rgba(26,10,46,0.7);border:1px solid var(--border-purple);border-top:3px solid #2A9D8F;border-radius:12px;padding:18px;transition:transform .2s,border-color .2s;display:block" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='#2A9D8F'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-purple)'">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2A9D8F;margin-bottom:6px">Beacon</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:6px">Elementary Counselor Center</div>
+        <div style="font-size:.72rem;color:var(--text-muted);line-height:1.5">Caseload, SB 179 80/20 compliance, sessions. On-device.</div>
+        <div style="font-size:.7rem;color:#2A9D8F;font-weight:700;margin-top:10px">Learn more →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
 <footer>
   <p>© 2026 Clear Path Education Group, LLC · All rights reserved</p>
   <div style="display:flex;gap:20px">
