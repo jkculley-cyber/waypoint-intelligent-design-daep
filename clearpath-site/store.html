@@ -587,7 +587,7 @@ function renderProducts() {
   if (flagship) {
     html += `<div class="store-section">
       <div class="section-label">Best Value</div>
-      <div class="section-desc">Get everything at once and save $${flagship.save}.</div>
+      <div class="section-desc">Get everything at once — all ${flagship.includes.length} tools in a single bundle.</div>
       ${renderBundleCard(flagship)}
     </div>`;
   }
@@ -1020,12 +1020,10 @@ function renderBundleCard(b) {
         <span class="pc-tag">${esc(b.tag)}</span>
         <div class="pc-title">${esc(b.title)}</div>
         <div class="pc-short">${esc(b.short)}</div>
-        <div class="pc-save">Save $${b.save}</div>
         <ul class="pc-includes">${b.includes.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
       </div>
       <div class="pc-sidebar">
         <span class="pc-price">$${b.price}</span>
-        <span class="pc-orig-price">$${b.origPrice} value</span>
         <button class="pc-buy" onclick="openCheckout('${b.id}')">Buy Now →</button>
         <div class="pc-note">TpT instant download or buy direct.<br>All products included.</div>
       </div>
