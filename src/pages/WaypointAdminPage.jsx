@@ -787,6 +787,20 @@ function ApexPanel() {
 
 // ─── Leads Panel ──────────────────────────────────────────────────────────────
 
+function parseClaim(concern) {
+  if (!concern || !concern.startsWith('CLAIM:')) return null
+  const m = concern.match(/^CLAIM:\s*([^(]+?)\s*\(([^)]+)\)(?:\s+conf#(.+))?/)
+  if (!m) return null
+  const productName = m[1].trim()
+  const plan = m[2].trim()
+  const confirmation = (m[3] || '').trim()
+  let product = null
+  if (/beacon/i.test(productName)) product = 'beacon'
+  else if (/toolkit|investigator/i.test(productName)) product = 'investigator'
+  else if (/apex/i.test(productName)) product = 'apex'
+  return { product, productName, plan, isAnnual: /annual/i.test(plan), confirmation }
+}
+
 function LeadsPanel() {
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
@@ -795,6 +809,8 @@ function LeadsPanel() {
   const [niModal, setNiModal] = useState(null) // { id, currentReason }
   const [niReason, setNiReason] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [claimContext, setClaimContext] = useState(null) // { leadId, prefill }
+  const [generatedKey, setGeneratedKey] = useState(null) // { key, email, productName, lead }
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
@@ -881,6 +897,46 @@ function LeadsPanel() {
     }
     setLeads(prev => prev.filter(l => l.id !== id))
     setDeletingId(null)
+  }
+
+  function openLicenseFromClaim(lead) {
+    const claim = parseClaim(lead.concern)
+    if (!claim?.product) {
+      alert('Could not detect product from claim. Open the Licenses tab to create manually.')
+      return
+    }
+    if (claim.product === 'apex') {
+      alert('Apex activation is handled in the Apex tab — use Activate on the principal row.')
+      return
+    }
+    const extraDays = claim.isAnnual ? 365 : 31
+    setClaimContext({
+      leadId: lead.id,
+      productName: claim.productName,
+      prefill: {
+        product: claim.product,
+        customer_name: lead.name || '',
+        customer_email: lead.email,
+        district_name: lead.district || '',
+        expires_at: format(addDays(new Date(), extraDays), 'yyyy-MM-dd'),
+        notes: `Zelle payment${claim.confirmation ? ' · conf#' + claim.confirmation : ''}. Plan: ${claim.plan}.`,
+      },
+    })
+  }
+
+  async function handleLicenseSaved(newKey) {
+    const ctx = claimContext
+    setClaimContext(null)
+    if (!ctx) return
+    const lead = leads.find(l => l.id === ctx.leadId)
+    if (typeof ctx.leadId === 'string' && ctx.leadId.startsWith('ops-')) {
+      const opsId = ctx.leadId.replace('ops-', '')
+      await opsSupabase.from('demo_leads').update({ status: 'closed' }).eq('id', opsId)
+    } else {
+      await supabase.from('leads').update({ status: 'closed' }).eq('id', ctx.leadId)
+    }
+    setLeads(prev => prev.map(l => l.id === ctx.leadId ? { ...l, status: 'closed' } : l))
+    setGeneratedKey({ key: newKey, email: lead?.email || '', name: lead?.name || '', productName: ctx.productName })
   }
 
   const bySource = leads.reduce((acc, l) => {
@@ -1016,16 +1072,27 @@ function LeadsPanel() {
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => deleteLead(lead.id)}
-                      disabled={deletingId === lead.id}
-                      title="Delete lead"
-                      className="text-gray-600 hover:text-red-400 transition-colors disabled:opacity-40"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center gap-2 justify-end">
+                      {parseClaim(lead.concern) && lead.status !== 'closed' && (
+                        <button
+                          onClick={() => openLicenseFromClaim(lead)}
+                          title="Verify Zelle payment in your bank first, then generate + send license"
+                          className="text-xs font-medium bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-800 px-2 py-1 rounded whitespace-nowrap"
+                        >
+                          Generate License
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteLead(lead.id)}
+                        disabled={deletingId === lead.id}
+                        title="Delete lead"
+                        className="text-gray-600 hover:text-red-400 transition-colors disabled:opacity-40"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1034,8 +1101,83 @@ function LeadsPanel() {
         )}
       </div>
 
+      {/* License generation modal — opened from CLAIM lead rows */}
+      {claimContext && (
+        <LicenseFormModal
+          key={claimContext.leadId}
+          prefill={claimContext.prefill}
+          onClose={() => setClaimContext(null)}
+          onSaved={handleLicenseSaved}
+        />
+      )}
+
+      {/* Post-generation: show key + copy-paste email template */}
+      {generatedKey && (
+        <GeneratedKeyDialog
+          data={generatedKey}
+          onClose={() => setGeneratedKey(null)}
+        />
+      )}
+
       {/* Demo Leads from Waypoint explore */}
       <DemoLeadsSection />
+    </div>
+  )
+}
+
+function GeneratedKeyDialog({ data, onClose }) {
+  const { key, email, name, productName } = data
+  const activateUrl = `https://clearpathedgroup.com/activate?key=${encodeURIComponent(key)}`
+  const emailBody = `Hi ${name || 'there'},\n\nThank you for your purchase of ${productName}. Your license is active.\n\nLicense key: ${key}\n\nActivate here: ${activateUrl}\n\nQuestions? Reply to this email or reach us at support@clearpathedgroup.com.\n\nThanks,\nClear Path Education Group`
+  const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Your ' + productName + ' license key')}&body=${encodeURIComponent(emailBody)}`
+
+  function copy(text) {
+    navigator.clipboard?.writeText(text)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-lg w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">License generated</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+        </div>
+
+        <p className="text-sm text-gray-400 mb-4">
+          Lead marked closed. Send the key to <span className="text-white">{email}</span>.
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">License key</label>
+            <div className="flex gap-2">
+              <input readOnly value={key} className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+              <button onClick={() => copy(key)} className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg">Copy</button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Activation URL</label>
+            <div className="flex gap-2">
+              <input readOnly value={activateUrl} className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white" />
+              <button onClick={() => copy(activateUrl)} className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg">Copy</button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 uppercase tracking-wider mb-1">Email template</label>
+            <textarea readOnly value={emailBody} rows={7} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 font-mono resize-none" />
+            <div className="flex gap-2 mt-2">
+              <button onClick={() => copy(emailBody)} className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg">Copy email</button>
+              <a href={mailto} className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg">Open in mail app →</a>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-5">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg">Done</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -3190,20 +3332,21 @@ function StatPill({ label, value, tone }) {
   )
 }
 
-function LicenseFormModal({ existing, onClose, onSaved }) {
+function LicenseFormModal({ existing, prefill, onClose, onSaved }) {
   const isEdit = !!existing
-  const [product, setProduct] = useState(existing?.product || 'beacon')
-  const [licenseKey, setLicenseKey] = useState(existing?.license_key || generateLicenseKey('beacon'))
-  const [customerName, setCustomerName] = useState(existing?.customer_name || '')
-  const [customerEmail, setCustomerEmail] = useState(existing?.customer_email || '')
-  const [districtName, setDistrictName] = useState(existing?.district_name || '')
+  const initialProduct = existing?.product || prefill?.product || 'beacon'
+  const [product, setProduct] = useState(initialProduct)
+  const [licenseKey, setLicenseKey] = useState(existing?.license_key || generateLicenseKey(initialProduct))
+  const [customerName, setCustomerName] = useState(existing?.customer_name || prefill?.customer_name || '')
+  const [customerEmail, setCustomerEmail] = useState(existing?.customer_email || prefill?.customer_email || '')
+  const [districtName, setDistrictName] = useState(existing?.district_name || prefill?.district_name || '')
   const [expiresAt, setExpiresAt] = useState(
     existing?.expires_at
       ? existing.expires_at.slice(0, 10)
-      : format(addDays(new Date(), 365), 'yyyy-MM-dd')
+      : (prefill?.expires_at || format(addDays(new Date(), 365), 'yyyy-MM-dd'))
   )
   const [status, setStatus] = useState(existing?.status || 'active')
-  const [notes, setNotes] = useState(existing?.notes || '')
+  const [notes, setNotes] = useState(existing?.notes || prefill?.notes || '')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState(null)
 
@@ -3239,7 +3382,7 @@ function LicenseFormModal({ existing, onClose, onSaved }) {
       return
     }
     setSaving(false)
-    onSaved()
+    onSaved(payload.license_key)
   }
 
   return (
