@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-18 (Session CC4 — Beacon PDF drawInfo fix + SB 179 auto-generated report)
+> Last updated: 2026-04-18 (Session CC5 — SB 179 report moves to Time Tracker with period selector)
 
 ---
 
