@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-17 (Session CB — store Buy Now flow, Investigator Toolkit audit + major features, Beacon content expansion, Navigator templates)
+> Last updated: 2026-04-17 (Session CB — store Buy Now, Toolkit audit + features, Beacon content + resources, Navigator templates, PDF formatting audit across all products)
 
 ---
 
@@ -107,13 +107,12 @@
 1. **Investigator Toolkit screenshots** — demo data loaded, capture 5 money shots, add to store page
 2. **Beacon customer** — someone trying to purchase; generate license key after Zelle confirmed
 3. **Build Toolkit single-file** — `node build-single-file.mjs` for distributable version with all new features
-4. **Test all new PDF templates** — verify formatting across Toolkit (12), Beacon (14+7 visuals), Navigator (7)
-5. **Fix Crisis Response Card PDF** — readability issue flagged, review all Beacon visual PDFs
-6. **Send demo emails** to 10 Formspree leads (carryover)
-7. **Monitor pilot form submissions** — Formspree + ops Supabase + Waypoint Admin Leads tab
-8. **Investigator Toolkit grade improvements** — completeness indicator, contextual help, email case PDF (B- → B+)
-9. **Campus-scoped dashboard filter** — principals need campus dropdown
-10. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
+4. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
+5. **Send demo emails** to 10 Formspree leads (carryover)
+6. **Monitor pilot form submissions** — Formspree + ops Supabase + Waypoint Admin Leads tab
+7. **Investigator Toolkit grade improvements** — completeness indicator, contextual help, email case PDF (B- → B+)
+8. **Campus-scoped dashboard filter** — principals need campus dropdown
+9. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
 
 ---
 

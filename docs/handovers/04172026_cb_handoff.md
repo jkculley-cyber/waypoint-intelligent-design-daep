@@ -119,8 +119,24 @@ bd43926 fix: Student History icon — people icon instead of phone
 
 ---
 
+### 5. PDF Formatting Audit (all 3 products)
+- Full audit of every PDF generator across Beacon (21), Navigator (7), and Toolkit (15+)
+- **Beacon**: 7 fixes — page breaks for Referral Ack, Group Permission, Student Goal Sheet, Parent Conference, Feelings Check-In; Safety Plan spacing (988 hotline was off-page); Coping Wheel instruction text removed
+- **Navigator**: footer moved from y=282→270 (was past page height); added checkPageBreak helper to all 7 templates; blank line spacing 8mm→7mm
+- **Toolkit**: appeal form thresholds lowered 220→200 with more break points; drawLinedArea now breaks mid-draw; backup case PDF uses dynamic space calculation
+
+### Commits (PDF fixes)
+```
+2c4da59 fix: Navigator PDF templates — page breaks + footer position (Waypoint)
+406a106 fix: PDF overflow — page breaks + spacing for 5 Beacon templates (Beacon)
+d387520 fix: PDF overflow — page breaks for appeals, statements, case export (Toolkit)
+```
+
+---
+
 ## Lessons This Session
 
 - Customer found dead-end purchase flow — "Download App" instead of "Buy Now" with payment. Store CTAs must lead to payment, not just download.
 - Hardcoded appeal timelines were wrong — TEC doesn't specify days, districts set their own via FNG(LOCAL). Never hardcode legal timelines.
 - Section 9 SPED/504 Finding was pushed off-screen by stacked layout. Always consider viewport when adding content to long pages.
+- Every PDF generator must be audited for page overflow before shipping. Calculate Y positions through the entire document. jsPDF has no auto-pagination — every page break must be explicit.
