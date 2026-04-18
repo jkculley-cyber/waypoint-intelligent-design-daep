@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-18 (Session CC3 — Toolkit single-file rebuild + migration 064 verification)
+> Last updated: 2026-04-18 (Session CC4 — Beacon PDF drawInfo fix + SB 179 auto-generated report)
 
 ---
 
