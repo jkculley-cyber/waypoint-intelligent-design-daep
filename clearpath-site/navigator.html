@@ -101,9 +101,17 @@
     input,select,textarea{min-height:44px;font-size:1rem}
     .btn-primary,.btn-ghost,button{min-height:44px}
   }
+
+  /* Accessibility — skip link + keyboard focus */
+  .skip-link{position:absolute;top:-60px;left:12px;background:var(--amber);color:#0a0015;padding:10px 18px;border-radius:8px;font-weight:700;font-size:.86rem;z-index:9999;text-decoration:none;transition:top .2s}
+  .skip-link:focus{top:12px;outline:3px solid var(--amber-glow);outline-offset:2px}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 
 <nav>
   <a class="nav-logo" href="/">
@@ -117,7 +125,7 @@
 </nav>
 
 <!-- HERO -->
-<div class="hero">
+<div class="hero" id="main">
   <div class="hero-badge"><span></span> ISS/OSS Behavior Tracking</div>
   <h1>95% of discipline never reaches DAEP. Navigator tracks the rest.</h1>
   <p>Most student behavior is handled at the campus level — referrals, ISS, OSS, parent conferences. Navigator gives you risk scoring, escalation detection, intervention tracking, and disproportionality analytics for the discipline that lives in your building every day.</p>

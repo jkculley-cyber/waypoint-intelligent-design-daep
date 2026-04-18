@@ -109,9 +109,17 @@
     input,select,textarea{min-height:44px;font-size:1rem}
     .btn-primary,.btn-ghost,button{min-height:44px}
   }
+
+  /* Accessibility — skip link + keyboard focus */
+  .skip-link{position:absolute;top:-60px;left:12px;background:var(--amber);color:#0a0015;padding:10px 18px;border-radius:8px;font-weight:700;font-size:.86rem;z-index:9999;text-decoration:none;transition:top .2s}
+  .skip-link:focus{top:12px;outline:3px solid var(--amber-glow);outline-offset:2px}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 
 <nav>
   <a class="nav-logo" href="/">
@@ -125,7 +133,7 @@
 </nav>
 
 <!-- HERO -->
-<div class="hero">
+<div class="hero" id="main">
   <div class="hero-badge"><span></span> Campus Investigation Case Management</div>
   <h1>Professional investigation records. On your phone. In your pocket.</h1>
   <p>10-section investigation templates for every offense type — evidence tracking, witness statements, chain of custody, and due process checklists. 100% on-device, no student data leaves your browser.</p>

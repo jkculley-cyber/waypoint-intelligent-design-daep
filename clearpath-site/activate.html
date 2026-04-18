@@ -106,9 +106,17 @@
   footer p{font-size:.78rem;color:rgba(240,230,211,.25)}
   footer a{font-size:.78rem;color:var(--text-muted);text-decoration:none}
   footer a:hover{color:var(--amber-light)}
+
+  /* Accessibility — skip link + keyboard focus */
+  .skip-link{position:absolute;top:-60px;left:12px;background:#e8862a;color:#0a0015;padding:10px 18px;border-radius:8px;font-weight:700;font-size:.86rem;z-index:9999;text-decoration:none;transition:top .2s}
+  .skip-link:focus{top:12px;outline:3px solid #ffcc66;outline-offset:2px}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid #e8862a;outline-offset:3px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #e8862a;outline-offset:2px}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 
 <nav>
   <a class="nav-logo" href="/">
@@ -121,7 +129,7 @@
   <a class="nav-back" href="/store.html">← Back to Store</a>
 </nav>
 
-<div class="page">
+<div class="page" id="main">
   <h1>Activate Your Product</h1>
   <p class="subtitle">Enter the license key from your purchase confirmation to download your product.</p>
 

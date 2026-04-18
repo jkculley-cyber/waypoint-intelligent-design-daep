@@ -308,9 +308,17 @@
     body { font-size: 14px; }
     .hero { background: #1A3A5C !important; -webkit-print-color-adjust: exact; }
   }
+
+  /* Accessibility — skip link + keyboard focus */
+  .skip-link{position:absolute;top:-60px;left:12px;background:#e8862a;color:#0a0015;padding:10px 18px;border-radius:8px;font-weight:700;font-size:.86rem;z-index:9999;text-decoration:none;transition:top .2s}
+  .skip-link:focus{top:12px;outline:3px solid #ffcc66;outline-offset:2px}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid #e8862a;outline-offset:3px;border-radius:4px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #e8862a;outline-offset:2px}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -319,7 +327,7 @@
 </div>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" id="main">
   <div class="hero-inner">
     <div class="hero-label">Research Brief · 2026 Edition</div>
     <h1>DAEP Compliance in Texas:<br><em>The Hidden Gap</em></h1>
