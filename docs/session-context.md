@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-17 (Session CB — store Buy Now, Toolkit audit + features, Beacon content + resources, Navigator templates, PDF formatting audit across all products)
+> Last updated: 2026-04-18 (Session CC — purchase claim → license pipeline, website audit + polish, homepage reorder, OG tags site-wide)
 
 ---
 
@@ -17,6 +17,7 @@
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
+- **Purchase-to-license loop:** Customer submits CLAIM form on store.html → Formspree email (`CLAIM: <Product> — <email>`) + ops `demo_leads` row with `CLAIM:` prefix → you verify Zelle deposit in bank → click "Generate License" button on the lead row → dialog opens with key + mailto-ready email template → lead auto-marked closed
 - **Email notifications:** Live via Resend — sandbox sender `onboarding@resend.dev` still active. Sender domain is `clearpathedgroup.com` (not waypointdaep.com). DKIM record (`resend._domainkey.clearpathedgroup.com`) already set in Cloudflare. SPF needs `include:spf.resend.com` added. Edge Function default updated to `noreply@clearpathedgroup.com`. Still needed: set `FROM_EMAIL` + `RESEND_API_KEY` Supabase secrets → redeploy `send-notification` Edge Function.
 - **All demo accounts:** See `docs/demo-accounts.md`
 
@@ -104,15 +105,16 @@
 
 ## Next Session Priority
 
-1. **Investigator Toolkit screenshots** — demo data loaded, capture 5 money shots, add to store page
-2. **Beacon customer** — someone trying to purchase; generate license key after Zelle confirmed
-3. **Build Toolkit single-file** — `node build-single-file.mjs` for distributable version with all new features
-4. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
-5. **Send demo emails** to 10 Formspree leads (carryover)
-6. **Monitor pilot form submissions** — Formspree + ops Supabase + Waypoint Admin Leads tab
-7. **Investigator Toolkit grade improvements** — completeness indicator, contextual help, email case PDF (B- → B+)
-8. **Campus-scoped dashboard filter** — principals need campus dropdown
+1. **Watch for Beacon Zelle payment** — customer waiting; click "Generate License" on CLAIM row in Waypoint Admin → Leads when deposit confirmed
+2. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
+3. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
+4. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
+5. **Consider publishing Waypoint pricing** with seat counts + term length — biggest remaining conversion lever to hit site grade A
+6. **Social proof** — get one named testimonial to move credibility score 6 → 8
+7. **Send demo emails** to 10 Formspree leads (carryover)
+8. **Monitor pilot form + CLAIM submissions** — Formspree + ops `demo_leads` + Waypoint Admin Leads tab
 9. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
+10. **Campus-scoped dashboard filter** — principals need campus dropdown
 
 ---
 
