@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-18 (Session CC — purchase claim → license pipeline, website audit + polish, homepage reorder, OG tags site-wide)
+> Last updated: 2026-04-18 (Session CC2 — tier-2 aesthetics polish + Apex multi-framework copy)
 
 ---
 
