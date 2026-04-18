@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-14 (Session CA — ops command center readability, SCOUT Brave Search integration for IB Schools, Anthropic key exposure discovered and revoked)
+> Last updated: 2026-04-17 (Session CB — store Buy Now flow, Investigator Toolkit audit + major features, Beacon content expansion, Navigator templates)
 
 ---
 
@@ -104,15 +104,16 @@
 
 ## Next Session Priority
 
-1. **Send demo emails** to 10 existing Formspree leads with ap@lincoln-hs.demo credentials
-2. **Monitor pilot form submissions** — Formspree + ops Supabase demo_leads + Waypoint Admin Leads tab
-3. **Vera/Sage content** — more intervention worksheets incoming, drop into WORKSHEET_DATA as they deliver
-4. **Campus-scoped dashboard filter** — principals see all campuses, need campus dropdown
-5. **Facebook Live recording** — script at `docs/brand/facebook-live-script.md`
-6. **Store redesign** — clearpathedgroup.com/store visual product grid
-7. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
-8. **Google Custom Search API** — still 403 (carryover)
-9. **Meridian deep audit** when ready
+1. **Investigator Toolkit screenshots** — demo data loaded, capture 5 money shots, add to store page
+2. **Beacon customer** — someone trying to purchase; generate license key after Zelle confirmed
+3. **Build Toolkit single-file** — `node build-single-file.mjs` for distributable version with all new features
+4. **Test all new PDF templates** — verify formatting across Toolkit (12), Beacon (14+7 visuals), Navigator (7)
+5. **Fix Crisis Response Card PDF** — readability issue flagged, review all Beacon visual PDFs
+6. **Send demo emails** to 10 Formspree leads (carryover)
+7. **Monitor pilot form submissions** — Formspree + ops Supabase + Waypoint Admin Leads tab
+8. **Investigator Toolkit grade improvements** — completeness indicator, contextual help, email case PDF (B- → B+)
+9. **Campus-scoped dashboard filter** — principals need campus dropdown
+10. **Migration 064** (student monitors) — apply via SQL Editor if not yet done
 
 ---
 
