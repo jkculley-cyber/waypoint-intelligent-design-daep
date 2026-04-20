@@ -222,40 +222,44 @@
         <div style="flex-shrink:0;width:42px;height:42px;background:rgba(107,47,160,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;color:var(--purple-light)">Z</div>
         <div>
           <div style="font-weight:700;font-size:.9rem;color:var(--text)">Buy Direct — Zelle (save TpT fees)</div>
-          <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">Send payment via Zelle, we email your files.</div>
+          <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">Enter your email, then send Zelle. We email your files after payment clears.</div>
         </div>
       </div>
-      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-        <div style="flex:1;min-width:180px">
-          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px"><strong style="color:var(--text)">Step 1:</strong> Send <strong id="co-zelle-amount" style="color:var(--amber-light)">$00</strong> via Zelle to:</div>
-          <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:10px 14px;font-family:monospace;font-size:.88rem;color:var(--amber-glow);letter-spacing:.03em;margin-bottom:8px">clearpathedgroup</div>
-          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:4px"><strong style="color:var(--text)">Step 2:</strong> Include the product name in the Zelle memo.</div>
-          <div style="font-size:.78rem;color:var(--text-muted)"><strong style="color:var(--text)">Step 3:</strong> We'll email your files shortly after payment is confirmed.</div>
-        </div>
-        <div style="flex-shrink:0;text-align:center">
-          <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:4px">Scan to pay</div>
-          <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:8px;border:2px solid var(--border-purple);background:#fff;padding:6px">
-        </div>
+      <!-- STEP 1: Register (email capture BEFORE payment) -->
+      <div id="co-paid-form">
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple-light);margin-bottom:4px">Step 1 of 2 · Register your purchase</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px">We need your email to send your files after your Zelle payment clears. You'll see the Zelle QR and memo instructions on the next screen.</div>
+        <form onsubmit="submitCheckoutPaid(event)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input class="form-input" name="name" placeholder="Your name *" required autocomplete="name">
+            <input class="form-input" name="email" type="email" placeholder="Your email *" required autocomplete="email" inputmode="email">
+          </div>
+          <div id="co-paid-msg" style="display:none;padding:8px 12px;margin-top:8px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.76rem;color:#fca5a5"></div>
+          <button id="co-paid-btn" type="submit" style="margin-top:10px;width:100%;padding:11px;background:linear-gradient(135deg,#6b2fa0,#8b5cf6);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Continue to payment →</button>
+          <div style="font-size:.68rem;color:var(--text-muted);margin-top:6px;text-align:center;line-height:1.4">We'll only email you about your purchase. No marketing.</div>
+        </form>
       </div>
-      <div style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--border-purple)">
-        <div id="co-paid-form">
-          <div style="font-size:.82rem;font-weight:700;color:var(--purple-light);margin-bottom:4px">Sent your Zelle? Claim your files</div>
-          <div style="font-size:.74rem;color:var(--text-muted);margin-bottom:12px">After we confirm your deposit has cleared our bank, we'll email your files within one business day.</div>
-          <form onsubmit="submitCheckoutPaid(event)">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <input class="form-input" name="name" placeholder="Your name *" required>
-              <input class="form-input" name="email" type="email" placeholder="Your email *" required>
-            </div>
-            <input class="form-input" name="confirmation" placeholder="Zelle confirmation # (optional — helps us match faster)" style="margin-top:8px">
-            <div id="co-paid-msg" style="display:none;padding:8px 12px;margin-top:8px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.76rem;color:#fca5a5"></div>
-            <button id="co-paid-btn" type="submit" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#6b2fa0,#8b5cf6);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.84rem;cursor:pointer">Submit for verification →</button>
-            <div style="font-size:.68rem;color:var(--text-muted);margin-top:6px;text-align:center;line-height:1.4">Files are only sent after your Zelle deposit is confirmed in our bank.</div>
-          </form>
+      <!-- STEP 2: Payment (revealed after email capture succeeds) -->
+      <div id="co-paid-success" style="display:none">
+        <div style="margin-bottom:16px">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple-light);margin-bottom:4px">Step 2 of 2 · Send your Zelle payment</div>
+          <div style="font-size:.88rem;font-weight:700;color:var(--text)">Thanks <span id="co-success-name"></span> — you're registered.</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">We'll email your files to <strong id="co-success-email" style="color:var(--purple-light)"></strong> within one business day of your Zelle deposit clearing.</div>
         </div>
-        <div id="co-paid-success" style="display:none;text-align:center;padding:8px 0">
-          <div style="font-size:1.6rem;margin-bottom:4px">✓</div>
-          <div style="font-weight:700;color:var(--purple-light);margin-bottom:4px">Got it — we'll match your payment and email your files</div>
-          <div style="font-size:.78rem;color:var(--text-muted)">Questions? <a href="mailto:support@clearpathedgroup.com" style="color:var(--purple-light)">support@clearpathedgroup.com</a></div>
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px"><strong style="color:var(--text)">Step A:</strong> Send <strong id="co-zelle-amount" style="color:var(--amber-light)">$00</strong> via Zelle to:</div>
+            <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:10px 14px;font-family:monospace;font-size:.88rem;color:var(--amber-glow);letter-spacing:.03em;margin-bottom:8px">clearpathedgroup</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:4px"><strong style="color:var(--text)">Step B:</strong> Include the product name in the Zelle memo.</div>
+            <div style="font-size:.78rem;color:var(--text-muted)"><strong style="color:var(--text)">Step C:</strong> We'll email your files after payment is confirmed.</div>
+          </div>
+          <div style="flex-shrink:0;text-align:center">
+            <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:4px">Scan to pay</div>
+            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:8px;border:2px solid var(--border-purple);background:#fff;padding:6px">
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:rgba(107,47,160,.08);border:1px solid rgba(107,47,160,.25);border-radius:8px;text-align:center">
+          <div style="font-size:.76rem;color:var(--text-muted)">Already sent? We'll match it to your registration. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:var(--purple-light)">support@clearpathedgroup.com</a></div>
         </div>
       </div>
     </div>
@@ -702,45 +706,51 @@ function renderProducts() {
         </div>
       </div>
       <div id="apex-zelle" style="display:none;margin-top:0;background:rgba(249,115,22,.04);border-top:1px solid rgba(249,115,22,.2);padding:32px 28px">
-        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
-          <div style="flex-shrink:0;text-align:center">
-            <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
-            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(249,115,22,.25);background:#fff;padding:6px">
-          </div>
-          <div style="flex:1;min-width:220px;padding-top:8px">
-            <div style="font-size:1rem;font-weight:700;color:#f97316;margin-bottom:16px">Complete Your Purchase</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#f97316">$10 (monthly)</strong> or <strong style="color:#f97316">$100 (annual)</strong> via Zelle to:</div>
-            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Apex"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
-            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll activate your account after payment is confirmed</div>
-          </div>
+        <!-- STEP 1: Register (email capture BEFORE payment) -->
+        <div id="apex-paid-form" style="max-width:640px;margin:0 auto">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#f97316;margin-bottom:4px">Step 1 of 2 · Register your purchase</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px">Enter your info to continue</div>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">We need your email to activate your Apex account after your Zelle payment clears. You'll see the Zelle QR and memo instructions on the next screen.</div>
+          <form onsubmit="submitPaidNotification(event, 'Apex', 'apex')">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <input class="form-input" name="name" placeholder="Your name *" required autocomplete="name">
+              <input class="form-input" name="email" type="email" placeholder="Your email *" required autocomplete="email" inputmode="email">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+              <input class="form-input" name="school" placeholder="School (optional)" autocomplete="organization">
+              <select class="form-input" name="plan">
+                <option value="monthly_$10">Monthly — $10</option>
+                <option value="annual_$100">Annual — $100</option>
+              </select>
+            </div>
+            <div id="apex-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+            <button id="apex-paid-btn" type="submit" style="margin-top:14px;width:100%;padding:13px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.92rem;cursor:pointer">Continue to payment →</button>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">We'll only email you about your account. No marketing, no spam.</div>
+          </form>
         </div>
-        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(249,115,22,.25)">
-          <div id="apex-paid-form">
-            <div style="font-size:.88rem;font-weight:700;color:#f97316;margin-bottom:4px">Sent your Zelle? Claim your license</div>
-            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">After we confirm your deposit has cleared our bank, we'll activate your account within one business day.</div>
-            <form onsubmit="submitPaidNotification(event, 'Apex', 'apex')">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <input class="form-input" name="name" placeholder="Your name *" required>
-                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-                <input class="form-input" name="school" placeholder="School (optional)">
-                <select class="form-input" name="plan">
-                  <option value="monthly_$10">Monthly — $10</option>
-                  <option value="annual_$100">Annual — $100</option>
-                </select>
-              </div>
-              <input class="form-input" name="confirmation" placeholder="Zelle confirmation # (optional — helps us match faster)" style="margin-top:10px">
-              <div id="apex-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
-              <button id="apex-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Submit for verification →</button>
-              <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">Keys are only issued after your Zelle deposit is confirmed in our bank.</div>
-            </form>
+        <!-- STEP 2: Payment (revealed only after email capture succeeds) -->
+        <div id="apex-paid-success" style="display:none">
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#f97316;margin-bottom:4px">Step 2 of 2 · Send your Zelle payment</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text)">Thanks <span id="apex-success-name"></span> — you're registered.</div>
+            <div style="font-size:.82rem;color:var(--text-muted);margin-top:4px">We'll activate <strong id="apex-success-email" style="color:#f97316"></strong> within one business day of your Zelle deposit clearing.</div>
           </div>
-          <div id="apex-paid-success" style="display:none;text-align:center;padding:8px 0">
-            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
-            <div style="font-weight:700;color:#f97316;margin-bottom:4px">Got it — we'll match your payment and activate</div>
-            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#f97316">support@clearpathedgroup.com</a></div>
+          <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
+            <div style="flex-shrink:0;text-align:center">
+              <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
+              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(249,115,22,.25);background:#fff;padding:6px">
+            </div>
+            <div style="flex:1;min-width:220px;padding-top:8px">
+              <div style="font-size:1rem;font-weight:700;color:#f97316;margin-bottom:16px">Complete Your Payment</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#f97316"><span id="apex-success-amount">$10</span></strong> via Zelle to:</div>
+              <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Apex"</strong> in the Zelle memo</div>
+              <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll activate your account after payment is confirmed</div>
+            </div>
+          </div>
+          <div style="max-width:700px;margin:24px auto 0;padding:14px 18px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:10px;text-align:center">
+            <div style="font-size:.84rem;color:#f97316;font-weight:600">Already sent your Zelle?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">We'll match it to your registration automatically. Questions? Email <a href="mailto:support@clearpathedgroup.com" style="color:#f97316">support@clearpathedgroup.com</a>.</div>
           </div>
         </div>
       </div>
@@ -793,45 +803,51 @@ function renderProducts() {
         </div>
       </div>
       <div id="beacon-zelle" style="display:none;margin-top:0;background:rgba(42,122,80,.06);border-top:1px solid rgba(42,122,80,.25);padding:32px 28px">
-        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
-          <div style="flex-shrink:0;text-align:center">
-            <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
-            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
-          </div>
-          <div style="flex:1;min-width:220px;padding-top:8px">
-            <div style="font-size:1rem;font-weight:700;color:#4ade80;margin-bottom:16px">Complete Your Purchase</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#4ade80">$8 (monthly)</strong> or <strong style="color:#4ade80">$79 (annual)</strong> via Zelle to:</div>
-            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Beacon"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
-            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
-          </div>
+        <!-- STEP 1: Register (email capture BEFORE payment) -->
+        <div id="beacon-paid-form" style="max-width:640px;margin:0 auto">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4ade80;margin-bottom:4px">Step 1 of 2 · Register your purchase</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px">Enter your info to continue</div>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">We need your email to send you the license key after your Zelle payment clears. You'll see the Zelle QR code and memo instructions on the next screen.</div>
+          <form onsubmit="submitPaidNotification(event, 'Beacon', 'beacon')">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <input class="form-input" name="name" placeholder="Your name *" required autocomplete="name">
+              <input class="form-input" name="email" type="email" placeholder="Your email *" required autocomplete="email" inputmode="email">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+              <input class="form-input" name="school" placeholder="School (optional)" autocomplete="organization">
+              <select class="form-input" name="plan">
+                <option value="monthly_$8">Monthly — $8</option>
+                <option value="annual_$79">Annual — $79</option>
+              </select>
+            </div>
+            <div id="beacon-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+            <button id="beacon-paid-btn" type="submit" style="margin-top:14px;width:100%;padding:13px;background:linear-gradient(135deg,#22c55e,#0e7490);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.92rem;cursor:pointer">Continue to payment →</button>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">We'll only email you about your license. No marketing, no spam.</div>
+          </form>
         </div>
-        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(42,122,80,.3)">
-          <div id="beacon-paid-form">
-            <div style="font-size:.88rem;font-weight:700;color:#4ade80;margin-bottom:4px">Sent your Zelle? Claim your license</div>
-            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">After we confirm your deposit has cleared our bank, we'll email your license key within one business day.</div>
-            <form onsubmit="submitPaidNotification(event, 'Beacon', 'beacon')">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <input class="form-input" name="name" placeholder="Your name *" required>
-                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-                <input class="form-input" name="school" placeholder="School (optional)">
-                <select class="form-input" name="plan">
-                  <option value="monthly_$8">Monthly — $8</option>
-                  <option value="annual_$79">Annual — $79</option>
-                </select>
-              </div>
-              <input class="form-input" name="confirmation" placeholder="Zelle confirmation # (optional — helps us match faster)" style="margin-top:10px">
-              <div id="beacon-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
-              <button id="beacon-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#0e7490);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Submit for verification →</button>
-              <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">Keys are only issued after your Zelle deposit is confirmed in our bank.</div>
-            </form>
+        <!-- STEP 2: Payment (revealed only after email capture succeeds) -->
+        <div id="beacon-paid-success" style="display:none">
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4ade80;margin-bottom:4px">Step 2 of 2 · Send your Zelle payment</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text)">Thanks <span id="beacon-success-name"></span> — you're registered.</div>
+            <div style="font-size:.82rem;color:var(--text-muted);margin-top:4px">We'll email your license key to <strong id="beacon-success-email" style="color:#4ade80"></strong> within one business day of your Zelle deposit clearing.</div>
           </div>
-          <div id="beacon-paid-success" style="display:none;text-align:center;padding:8px 0">
-            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
-            <div style="font-weight:700;color:#4ade80;margin-bottom:4px">Got it — we'll match your payment and email your key</div>
-            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#4ade80">support@clearpathedgroup.com</a></div>
+          <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
+            <div style="flex-shrink:0;text-align:center">
+              <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
+              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
+            </div>
+            <div style="flex:1;min-width:220px;padding-top:8px">
+              <div style="font-size:1rem;font-weight:700;color:#4ade80;margin-bottom:16px">Complete Your Payment</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#4ade80"><span id="beacon-success-amount">$8</span></strong> via Zelle to:</div>
+              <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Beacon"</strong> in the Zelle memo</div>
+              <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll email your license key after payment is confirmed</div>
+            </div>
+          </div>
+          <div style="max-width:700px;margin:24px auto 0;padding:14px 18px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;text-align:center">
+            <div style="font-size:.84rem;color:#4ade80;font-weight:600">Already sent your Zelle?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">We'll match it to your registration automatically. Questions? Email <a href="mailto:support@clearpathedgroup.com" style="color:#4ade80">support@clearpathedgroup.com</a>.</div>
           </div>
         </div>
       </div>
@@ -885,45 +901,51 @@ function renderProducts() {
         </div>
       </div>
       <div id="toolkit-zelle" style="display:none;margin-top:0;background:rgba(99,102,241,.04);border-top:1px solid rgba(99,102,241,.2);padding:32px 28px">
-        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
-          <div style="flex-shrink:0;text-align:center">
-            <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
-            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(99,102,241,.25);background:#fff;padding:6px">
-          </div>
-          <div style="flex:1;min-width:220px;padding-top:8px">
-            <div style="font-size:1rem;font-weight:700;color:#818cf8;margin-bottom:16px">Complete Your Purchase</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#818cf8">$5 (monthly)</strong> or <strong style="color:#818cf8">$49 (annual)</strong> via Zelle to:</div>
-            <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
-            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Investigator Toolkit"</strong> and your <strong style="color:var(--text)">email address</strong> in the memo</div>
-            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll send your license key after payment is confirmed</div>
-          </div>
+        <!-- STEP 1: Register (email capture BEFORE payment) -->
+        <div id="toolkit-paid-form" style="max-width:640px;margin:0 auto">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#818cf8;margin-bottom:4px">Step 1 of 2 · Register your purchase</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px">Enter your info to continue</div>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">We need your email to send your Toolkit license key after your Zelle payment clears. You'll see the Zelle QR and memo instructions on the next screen.</div>
+          <form onsubmit="submitPaidNotification(event, 'Investigator Toolkit', 'toolkit')">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <input class="form-input" name="name" placeholder="Your name *" required autocomplete="name">
+              <input class="form-input" name="email" type="email" placeholder="Your email *" required autocomplete="email" inputmode="email">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+              <input class="form-input" name="school" placeholder="School / campus (optional)" autocomplete="organization">
+              <select class="form-input" name="plan">
+                <option value="monthly_$5">Monthly — $5</option>
+                <option value="annual_$49">Annual — $49</option>
+              </select>
+            </div>
+            <div id="toolkit-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
+            <button id="toolkit-paid-btn" type="submit" style="margin-top:14px;width:100%;padding:13px;background:linear-gradient(135deg,#4338ca,#6366f1);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.92rem;cursor:pointer">Continue to payment →</button>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">We'll only email you about your license. No marketing, no spam.</div>
+          </form>
         </div>
-        <div style="max-width:700px;margin:24px auto 0;padding-top:20px;border-top:1px dashed rgba(99,102,241,.25)">
-          <div id="toolkit-paid-form">
-            <div style="font-size:.88rem;font-weight:700;color:#818cf8;margin-bottom:4px">Sent your Zelle? Claim your license</div>
-            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">After we confirm your deposit has cleared our bank, we'll email your license key within one business day.</div>
-            <form onsubmit="submitPaidNotification(event, 'Investigator Toolkit', 'toolkit')">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <input class="form-input" name="name" placeholder="Your name *" required>
-                <input class="form-input" name="email" type="email" placeholder="Your email *" required>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-                <input class="form-input" name="school" placeholder="School / campus (optional)">
-                <select class="form-input" name="plan">
-                  <option value="monthly_$5">Monthly — $5</option>
-                  <option value="annual_$49">Annual — $49</option>
-                </select>
-              </div>
-              <input class="form-input" name="confirmation" placeholder="Zelle confirmation # (optional — helps us match faster)" style="margin-top:10px">
-              <div id="toolkit-paid-msg" style="display:none;padding:8px 12px;margin-top:10px;background:rgba(185,28,28,.15);border:1px solid rgba(185,28,28,.3);border-radius:6px;font-size:.78rem;color:#fca5a5"></div>
-              <button id="toolkit-paid-btn" type="submit" style="margin-top:12px;width:100%;padding:12px;background:linear-gradient(135deg,#4338ca,#6366f1);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">Submit for verification →</button>
-              <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.4">Keys are only issued after your Zelle deposit is confirmed in our bank.</div>
-            </form>
+        <!-- STEP 2: Payment (revealed only after email capture succeeds) -->
+        <div id="toolkit-paid-success" style="display:none">
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#818cf8;margin-bottom:4px">Step 2 of 2 · Send your Zelle payment</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text)">Thanks <span id="toolkit-success-name"></span> — you're registered.</div>
+            <div style="font-size:.82rem;color:var(--text-muted);margin-top:4px">We'll email your license key to <strong id="toolkit-success-email" style="color:#818cf8"></strong> within one business day of your Zelle deposit clearing.</div>
           </div>
-          <div id="toolkit-paid-success" style="display:none;text-align:center;padding:8px 0">
-            <div style="font-size:1.6rem;margin-bottom:6px">✓</div>
-            <div style="font-weight:700;color:#818cf8;margin-bottom:4px">Got it — we'll match your payment and email your key</div>
-            <div style="font-size:.82rem;color:var(--text-muted)">Watch your inbox. Questions? <a href="mailto:support@clearpathedgroup.com" style="color:#818cf8">support@clearpathedgroup.com</a></div>
+          <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
+            <div style="flex-shrink:0;text-align:center">
+              <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
+              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(99,102,241,.25);background:#fff;padding:6px">
+            </div>
+            <div style="flex:1;min-width:220px;padding-top:8px">
+              <div style="font-size:1rem;font-weight:700;color:#818cf8;margin-bottom:16px">Complete Your Payment</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><strong style="color:var(--text)">1.</strong> Send <strong style="color:#818cf8"><span id="toolkit-success-amount">$5</span></strong> via Zelle to:</div>
+              <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.04em;margin-bottom:14px;text-align:center;border:1px solid rgba(232,134,42,.15)">clearpathedgroup</div>
+              <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6"><strong style="color:var(--text)">2.</strong> Include <strong style="color:var(--text)">"Investigator Toolkit"</strong> in the Zelle memo</div>
+              <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">3.</strong> We'll email your license key after payment is confirmed</div>
+            </div>
+          </div>
+          <div style="max-width:700px;margin:24px auto 0;padding:14px 18px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px;text-align:center">
+            <div style="font-size:.84rem;color:#818cf8;font-weight:600">Already sent your Zelle?</div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">We'll match it to your registration automatically. Questions? Email <a href="mailto:support@clearpathedgroup.com" style="color:#818cf8">support@clearpathedgroup.com</a>.</div>
           </div>
         </div>
       </div>
@@ -1141,51 +1163,72 @@ async function submitPaidNotification(e, product, idPrefix) {
   const btn = document.getElementById(idPrefix + '-paid-btn');
   const msg = document.getElementById(idPrefix + '-paid-msg');
   btn.disabled = true;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Registering…';
   msg.style.display = 'none';
 
-  const confirmation = form.confirmation ? form.confirmation.value.trim() : '';
+  const name = form.name.value.trim();
+  const email = form.email.value.trim();
+  const school = form.school ? form.school.value.trim() : '';
+  const plan = form.plan ? form.plan.value : '';
   const data = {
-    name: form.name.value.trim(),
-    email: form.email.value.trim(),
-    school: form.school ? form.school.value.trim() : '',
-    plan: form.plan ? form.plan.value : '',
-    zelle_confirmation: confirmation,
-    source: 'purchase_notification',
+    name: name,
+    email: email,
+    school: school,
+    plan: plan,
+    source: 'purchase_registration',
     product: product,
-    subject: 'CLAIM: ' + product + ' — ' + form.email.value.trim() + (confirmation ? ' [conf:' + confirmation + ']' : ' [no conf#]'),
+    subject: 'REGISTER: ' + product + ' — ' + email + ' (' + (plan || 'no plan') + ')',
   };
 
-  try {
-    const res = await fetch('https://formspree.io/f/xpqjngpp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Submit failed');
+  const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+  const OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
 
-    const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
-    const OPSKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
-    fetch(OPS + '/rest/v1/demo_leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY },
-      body: JSON.stringify({
-        email: data.email,
-        name: data.name,
-        district_name: data.school || '',
-        referrer: 'CLAIM: ' + product + ' (' + data.plan + ')' + (confirmation ? ' conf#' + confirmation : ''),
-        status: 'new',
-      }),
-    }).catch(function () {});
+  // Fire both channels in parallel. We require at least ONE to succeed before
+  // revealing the payment QR, otherwise the buyer pays and we have no record.
+  const opsPromise = fetch(OPS + '/rest/v1/demo_leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': OPSKEY, 'Authorization': 'Bearer ' + OPSKEY, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({
+      email: email,
+      name: name,
+      district_name: school || '',
+      referrer: 'REGISTER: ' + product + ' (' + plan + ')',
+      status: 'new',
+    }),
+  }).then(r => r.ok).catch(() => false);
 
-    document.getElementById(idPrefix + '-paid-form').style.display = 'none';
-    document.getElementById(idPrefix + '-paid-success').style.display = 'block';
-  } catch (err) {
-    msg.textContent = "Couldn't reach our server. Please email support@clearpathedgroup.com with your name, email, and product.";
+  const fsPromise = fetch('https://formspree.io/f/xpqjngpp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(r => r.ok).catch(() => false);
+
+  const [opsOk, fsOk] = await Promise.all([opsPromise, fsPromise]);
+
+  if (!opsOk && !fsOk) {
+    msg.textContent = "We couldn't register your purchase right now. DON'T send your Zelle yet — please email support@clearpathedgroup.com with your name, email, and \"" + product + "\" and we'll take care of it.";
     msg.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Submit for verification →';
+    btn.textContent = 'Try again →';
+    return;
   }
+
+  // Populate the Step-2 confirmation with the buyer's info
+  const nameEl = document.getElementById(idPrefix + '-success-name');
+  const emailEl = document.getElementById(idPrefix + '-success-email');
+  const amtEl = document.getElementById(idPrefix + '-success-amount');
+  if (nameEl) nameEl.textContent = name;
+  if (emailEl) emailEl.textContent = email;
+  if (amtEl) {
+    // plan looks like "monthly_$8" or "annual_$79"
+    const amt = (plan.match(/\$\d+/) || [''])[0];
+    if (amt) amtEl.textContent = amt;
+  }
+
+  document.getElementById(idPrefix + '-paid-form').style.display = 'none';
+  document.getElementById(idPrefix + '-paid-success').style.display = 'block';
+  // Scroll the payment panel into view so the buyer can't miss it
+  document.getElementById(idPrefix + '-paid-success').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function submitCheckoutPaid(e) {
