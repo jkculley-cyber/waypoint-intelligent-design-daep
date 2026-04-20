@@ -1,8 +1,9 @@
 # Vera — Beacon User Guide Brief
-**Date:** 2026-04-20
+**Date:** 2026-04-20 (revised after Kim's review)
 **Author:** Archer (CTO)
 **Owner on pickup:** Vera (COO / documentation)
 **Deliverable:** Rewrite `clearpath-beacon/docs/user-guide-beacon.md` (existing file is stale)
+**Source of truth for what exists:** `clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`
 
 ---
 
@@ -47,11 +48,11 @@ One subsection per feature area. Cover these, in this order:
 
 1. **Data modes — Local vs Cloud.** Local is the default and stores everything in her browser's IndexedDB. Cloud mode is dormant (not yet built — DO NOT document a Cloud signup flow, it does not exist). Emphasize the privacy story: student data never leaves her computer in Local mode.
 2. **Students and caseload.** Add individually or CSV bulk import. MTSS tier tagging (1/2/3). Profile with session history, referral history, timeline view, counselor notes, student goals, needs assessment.
-3. **Referrals.** Manual entry + CSV import. Workflow: Open → In Progress → Closed. Include a public-facing referral form if present in the shipped build (Explore report says it's there — Vera should verify in the app before documenting).
+3. **Referrals.** Manual entry + CSV import. Workflow: Open → In Progress → Closed. Public-facing referral form page (confirmed shipped per feature inventory — `ReferralFormPage` route). Direct link the counselor can share with teachers.
 4. **Groups.** Create a group, add students, log group sessions, track attendance per student, progress ratings 1–3. Group Starter Kits (5 pre-made: anxiety, friendship, grief, behavior, social skills) with auto-generated lesson plans. Completion tracking.
 5. **Sessions + Time Logging (SB 179).** Log individual or group session with domain tagging (guidance / planning / responsive / system / non-counseling). The Dashboard compliance meter recalculates in real time. **Calendar import is the feature to spotlight here** — upload an `.ics` export from Google Calendar or Outlook, Beacon parses events and classifies them by keyword into the correct SB 179 domain. This is the single biggest time-saver in the app.
 6. **Lessons Library (35 bundled).** Academic / social-emotional / career. K–5. Each lesson has objective, materials, minute-by-minute activities, assessment notes. Lessons can be attached to session logs so the counselor has a record of which lesson she delivered. Includes an SB 179 documentation template.
-7. **Communication Templates (14 EN + 14 ES = 28 total).** Parent notifications, progress updates, crisis follow-up, MTSS tier change, end-of-year summary, friendship concerns, etc. Mustache-style placeholders (`{{student_name}}`, `{{progress_notes}}`). Edit, copy to clipboard. **Do not document the "AI Generate" button.** The edge function behind it is not deployed. It currently shows an error. (Flag: we should hide the button until the backend ships — tracked separately.)
+7. **Communication Templates (14 scenarios, each in English and Spanish — 28 total).** Parent notifications, progress updates, crisis follow-up, MTSS tier change, end-of-year summary, friendship concerns, etc. Mustache-style placeholders (`{{student_name}}`, `{{progress_notes}}`). Edit, copy to clipboard. (The "AI Generate" button has been hidden behind a feature flag — see inventory. Vera does not need to mention it at all; it's not in the shipped UX anymore.)
 8. **Reports and PDF Export.** Key metrics card, tier distribution pie, sessions-over-time line, domain breakdown bar, referral pipeline, group utilization, compliance %. Date range presets (month/semester/year/custom). PDF export for sharing with principal / admin as SB 179 proof-of-compliance.
 9. **Settings.** Profile, school year dates, alert threshold (default 80%), schedule blocks (weekly recurring blocks tagged direct/indirect), license management, calendar import, **Backup/Restore** (JSON file download/upload — her data is portable), **School Year Transition** (batch promote grades K→1, 1→2, etc. and archive old groups at summer), **Share Beacon / Impact Summary PDF** (caseload stats she can share with principal).
 10. **License lifecycle.** Active / trial / expired states. Soft gate: if license expires, she can still view and edit existing records but can't create new ones. 5-min online check, 7-day offline grace. How to extend: send another Zelle, Kim updates `expires_at`, no new key needed.
@@ -90,18 +91,26 @@ All five statements below have been verified against vendor-published materials.
 
 ## Things to AVOID saying (features that don't exist yet)
 
-These will damage credibility if documented as real:
+These are marked **Aspirational** or **Hidden** in the feature inventory
+(`clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`). They will
+damage credibility if documented as real:
 
 | Don't say | Because |
 |---|---|
-| "AI-generated parent updates" | Edge function is not deployed; UI falls back to an error message |
-| "Google Forms integration for referrals" | CSV import only — no Apps Script, no OAuth, no Sheets sync |
-| "Cloud mode with multi-counselor sync" | Cloud signup flow is not implemented |
-| "Scheduled email delivery of templates" | Templates are copy-paste; no sending |
-| "32 bundled lessons" | It's 35, not 32 — old count |
-| "14 communication templates" | 28 total (14 EN + 14 ES) — say "14 scenarios, each in English and Spanish" |
+| "AI-generated parent updates" | Hidden behind `FEATURE_AI_GENERATE = false`. Button no longer renders. Not part of the shipped UX. |
+| "Google Forms integration for referrals" | Aspirational. CSV import only — no Apps Script, no OAuth, no Sheets sync. |
+| "Cloud mode with multi-counselor sync" | Aspirational. Local Mode is the only functional mode. Do not mention a Cloud mode at all in the guide. |
+| "Scheduled email delivery of templates" | Aspirational. Templates are copy-paste; no sending. |
+| "32 bundled lessons" | It's 35, not 32. |
+| "14 communication templates" | 28 total. Say "14 scenarios, each in English and Spanish." |
+| "Storage mode toggle" | Archer follow-up to hide this before the guide ships. Don't mention the toggle. |
 
-When in doubt, Vera should open the app at `https://clearpath-beacon.pages.dev` and verify. If it's not in the app, it's not in the guide.
+**Source of truth is the feature inventory, not the running app.** Vera does
+not need to open the app and verify. If Vera sees a feature in the app that
+isn't on the inventory, that's a question for Archer, not a documentation
+decision. The app has feature-flagged code paths that are invisible to users
+but visible to a developer poking around — that's exactly why this inventory
+exists.
 
 ---
 
@@ -131,8 +140,11 @@ When in doubt, Vera should open the app at `https://clearpath-beacon.pages.dev` 
 
 ## Source material
 
-- **Beacon feature catalog** (code-verified 2026-04-20) — available in this session's conversation transcript. Key finding: 14 feature areas shipped, 6 aspirational claims in the old user guide must be removed.
-- **Competitor research dossier** (2026-04-20) — SCUTA, CountSel, EZAnalyze, Google Forms DIY. Pricing, compliance posture, feature scope. Sources: SCUTA's 2025-26 Features & Pricing PDF, ESC Region 12 CountSel Subscription flyer, Confident Counselors SCUTA review. Full citations in the transcript.
+- **Feature inventory** (PRIMARY — this is the yes/no/hidden source of truth):
+  `clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`.
+  Vera writes the guide against this file. The app is not the source of truth;
+  this file is.
+- **Competitor research dossier** (2026-04-20) — SCUTA, CountSel, EZAnalyze, Google Forms DIY. Pricing, compliance posture, feature scope. Sources: SCUTA's 2025-26 Features & Pricing PDF, ESC Region 12 CountSel Subscription flyer, Confident Counselors SCUTA review. Full citations in the session transcript.
 - **Existing docs** Vera should read before starting:
   - `clearpath-beacon/docs/user-guide-beacon.md` (current stale version — what we're replacing)
   - `clearpath-beacon/docs/license-operations-guide.md` (Customer Getting Started section, lines 150–194, has correct getting-started language already)
