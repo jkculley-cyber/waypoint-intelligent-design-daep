@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-18 (Session CC5 — SB 179 report moves to Time Tracker with period selector)
+> Last updated: 2026-04-20 (Session CC6 — Nicole Hill Beacon license issued; store buy flow rebuilt as 2-step; DB trigger backstop added; Vera briefed on Beacon user guide)
 
 ---
 
@@ -17,7 +17,7 @@
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
 - **Waypoint admin:** `admin@waypoint.internal` / `Waypoint2025!` → `/waypoint-admin`
-- **Purchase-to-license loop:** Customer submits CLAIM form on store.html → Formspree email (`CLAIM: <Product> — <email>`) + ops `demo_leads` row with `CLAIM:` prefix → you verify Zelle deposit in bank → click "Generate License" button on the lead row → dialog opens with key + mailto-ready email template → lead auto-marked closed
+- **Purchase-to-license loop (rebuilt 2026-04-20 as 2-step):** On `store.html` the buyer clicks Buy Now → **Step 1** form captures name/email/plan/school BEFORE the QR code is revealed → on submit, both ops `demo_leads` (REGISTER: prefix) and Formspree fire in parallel → **Step 2** reveals the Zelle QR, memo, and personalized confirmation showing her name + email. If both notification channels fail, the UI blocks progression. **Server-side backstop:** ops Supabase trigger `trg_notify_purchase_registration` on `demo_leads` INSERT fires Formspree again via pg_net — browser failure alone can't lose a buyer now. Kim then verifies Zelle deposit → clicks "Generate License" in Waypoint Admin → Leads → dialog produces key + mailto email using template at `clearpath-beacon/docs/beacon-welcome-email.md` (monthly/annual variants, no auto-renewal language)
 - **Email notifications:** Live via Resend — sandbox sender `onboarding@resend.dev` still active. Sender domain is `clearpathedgroup.com` (not waypointdaep.com). DKIM record (`resend._domainkey.clearpathedgroup.com`) already set in Cloudflare. SPF needs `include:spf.resend.com` added. Edge Function default updated to `noreply@clearpathedgroup.com`. Still needed: set `FROM_EMAIL` + `RESEND_API_KEY` Supabase secrets → redeploy `send-notification` Edge Function.
 - **All demo accounts:** See `docs/demo-accounts.md`
 
@@ -105,15 +105,16 @@
 
 ## Next Session Priority
 
-1. **Watch for Beacon Zelle payment** — customer waiting; click "Generate License" on CLAIM row in Waypoint Admin → Leads when deposit confirmed
-2. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
-3. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
-4. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
-5. **Consider publishing Waypoint pricing** with seat counts + term length — biggest remaining conversion lever to hit site grade A
-6. **Social proof** — get one named testimonial to move credibility score 6 → 8
-7. **Send demo emails** to 10 Formspree leads (carryover)
-8. **Monitor pilot form + CLAIM submissions** — Formspree + ops `demo_leads` + Waypoint Admin Leads tab
-9. **Campus-scoped dashboard filter** — principals need campus dropdown
+1. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
+2. **Remove / hide Beacon "AI Generate" button** on communication templates — edge function not deployed; currently shows error. Separate from Vera's guide which just omits it
+3. **Confirm first 2-step store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired (double coverage now in place)
+4. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
+5. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
+6. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
+7. **Consider publishing Waypoint pricing** with seat counts + term length — biggest remaining conversion lever to hit site grade A
+8. **Social proof** — get one named testimonial to move credibility score 6 → 8
+9. **Send demo emails** to 10 Formspree leads (carryover)
+10. **Campus-scoped dashboard filter** — principals need campus dropdown
 
 ---
 
