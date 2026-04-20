@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-20 (Session CC6 — Nicole Hill Beacon license issued; store buy flow rebuilt as 2-step; DB trigger backstop added; Vera briefed on Beacon user guide)
+> Last updated: 2026-04-20 (Session CC6 — Nicole Hill Beacon license issued; store buy flow rebuilt as 2-step; DB trigger backstop; Vera briefed on Beacon user guide; broken `/downloads/` Beacon HTML replaced with redirect stub; pages.dev → custom-domain migration across Beacon + Apex; Apex Supabase auth site_url updated)
 
 ---
 
@@ -105,9 +105,9 @@
 
 ## Next Session Priority
 
-1. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
-2. **Remove / hide Beacon "AI Generate" button** on communication templates — edge function not deployed; currently shows error. Separate from Vera's guide which just omits it
-3. **Confirm first 2-step store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired (double coverage now in place)
+1. **Investigator Toolkit pages.dev audit** — `investigatortoolkit.clearpathedgroup.com` already resolves (200) but (a) verify it serves the real Toolkit app and (b) sweep any remaining `*.pages.dev` references across marketing site, Toolkit repo docs, and activate flow. Same pattern just completed for Beacon + Apex. Per DECISIONS 2026-04-20 rule, no customer-facing pages.dev URLs anywhere.
+2. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
+3. **Confirm first post-CC6 store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired, AND the Beacon/Apex welcome email link reaches them through a school firewall
 4. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
 5. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
 6. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
@@ -115,6 +115,8 @@
 8. **Social proof** — get one named testimonial to move credibility score 6 → 8
 9. **Send demo emails** to 10 Formspree leads (carryover)
 10. **Campus-scoped dashboard filter** — principals need campus dropdown
+11. **Apex storage-mode toggle** (Beacon) — curious user can flip to broken Cloud state in Settings. Hide or disable until Cloud mode actually ships. Flagged in `clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`.
+12. **Decide fate of AI Generate code in Beacon CommunicationsPage** — currently feature-flagged off (`FEATURE_AI_GENERATE = false`). Either delete the dead code or leave it for when the `generate-parent-update` edge function ships.
 
 ---
 
