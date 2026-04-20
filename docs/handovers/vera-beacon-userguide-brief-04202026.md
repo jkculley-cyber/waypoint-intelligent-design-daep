@@ -32,7 +32,7 @@ One document, two sections, written for a solo elementary school counselor in Te
 
 Assume the reader has her license key in hand and wants to be logging sessions today. Walk her through, in order:
 
-1. Open Beacon (URL: `https://clearpath-beacon.pages.dev`)
+1. Open Beacon (URL: `https://beacon.clearpathedgroup.com` — the custom-domain URL. Do not use the `clearpath-beacon.pages.dev` URL anywhere customer-facing; school district firewalls frequently block `*.pages.dev`, which was the actual blocker for our first paying customer.)
 2. Local Mode Setup — pick Local Mode (default), enter name, campus, district, school year start/end
 3. Paste license key (format `BCN-XXXXXX-XXXX`), click Start
 4. Add 1 student (Students → Add; name, grade, teacher, MTSS tier)
