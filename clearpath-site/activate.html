@@ -146,11 +146,15 @@
       <div class="success-title" id="success-greeting"></div>
       <div class="success-product" id="success-product"></div>
       <div class="success-expires" id="success-expires"></div>
+      <div id="success-key-display" style="display:none;margin:16px auto;padding:12px 16px;background:rgba(0,0,0,.25);border:1px solid rgba(232,134,42,.3);border-radius:8px;font-family:monospace;font-size:1rem;color:var(--amber-glow);letter-spacing:.08em;max-width:340px;text-align:center">
+        <div style="font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;font-family:inherit">Your license key</div>
+        <div id="success-key-value"></div>
+      </div>
       <a id="download-link" class="download-btn" download>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download Now
+        <span id="download-link-label">Download Now</span>
       </a>
-      <p class="download-note">Save the file anywhere on your computer. Double-click to open.<br>100% on-device — no student data leaves your machine.</p>
+      <p class="download-note" id="download-note">Save the file anywhere on your computer. Double-click to open.<br>100% on-device — no student data leaves your machine.</p>
     </div>
   </div>
 
@@ -185,7 +189,10 @@ const HEADERS = { 'apikey': OPS_KEY, 'Authorization': `Bearer ${OPS_KEY}` };
 
 const PRODUCTS = {
   INV: { name: 'Investigator Toolkit', file: '/downloads/Campus-Investigation-Toolkit.html', color: '#6366f1' },
-  BCN: { name: 'Beacon — Counselor Command Center', file: '/downloads/Beacon-Counselor-Command-Center.html', color: '#22c55e' },
+  // Beacon is a Vite SPA deployed on its own Cloudflare Pages project.
+  // The /downloads/ HTML was a broken multi-chunk build (assets not bundled).
+  // Point activated users straight at the deployed app with their key prefilled.
+  BCN: { name: 'Beacon — Counselor Command Center', file: 'https://clearpath-beacon.pages.dev/setup', color: '#22c55e', external: true },
 };
 
 // Auto-fill from URL param
@@ -250,7 +257,7 @@ async function activate() {
       return;
     }
 
-    // Success — show download
+    // Success — show download / open-app
     const productInfo = product || { name: license.product, file: '#', color: '#e8862a' };
     const greeting = license.customer_name ? `Welcome, ${license.customer_name}!` : 'License Activated!';
     const expiresText = license.expires_at
@@ -260,7 +267,38 @@ async function activate() {
     document.getElementById('success-greeting').textContent = greeting;
     document.getElementById('success-product').textContent = productInfo.name;
     document.getElementById('success-expires').textContent = expiresText;
-    document.getElementById('download-link').href = productInfo.file;
+
+    const link = document.getElementById('download-link');
+    const label = document.getElementById('download-link-label');
+    const note = document.getElementById('download-note');
+    const keyDisplay = document.getElementById('success-key-display');
+    const keyValue = document.getElementById('success-key-value');
+
+    if (productInfo.external) {
+      // Hosted web app — open in a new tab with the key pre-filled in the URL.
+      // Beacon reads ?key=... on its setup page; if the handler isn't live yet
+      // the counselor can copy the key shown just above the button.
+      const url = new URL(productInfo.file);
+      url.searchParams.set('key', key);
+      link.href = url.toString();
+      link.removeAttribute('download');
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+      label.textContent = `Open ${productInfo.name.split(' — ')[0]} →`;
+      note.innerHTML = `Opens in a new tab. Paste your license key on the setup screen if it isn't already filled in.<br>100% on-device — no student data leaves your machine.`;
+      keyValue.textContent = key;
+      keyDisplay.style.display = 'block';
+    } else {
+      // Downloadable single-file product (e.g. Investigator Toolkit)
+      link.href = productInfo.file;
+      link.setAttribute('download', '');
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+      label.textContent = 'Download Now';
+      note.innerHTML = `Save the file anywhere on your computer. Double-click to open.<br>100% on-device — no student data leaves your machine.`;
+      keyDisplay.style.display = 'none';
+    }
+
     document.getElementById('success-panel').classList.add('show');
 
     // Log download (fire-and-forget)
