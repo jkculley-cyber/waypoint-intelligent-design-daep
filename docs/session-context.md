@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-20 (Session CC6 — Nicole Hill Beacon license issued; store buy flow rebuilt as 2-step; DB trigger backstop; Vera briefed on Beacon user guide; broken `/downloads/` Beacon HTML replaced with redirect stub; pages.dev → custom-domain migration across Beacon + Apex; Apex Supabase auth site_url updated)
+> Last updated: 2026-04-21 (Session CC7 — Beacon permission slip tracker shipped (migration 003 applied, UI in detail page + list + summary stats + CSV round-trip); Investigator Toolkit pages.dev audit completed (clean — zero refs); unified Toolkit pricing CTA on hosted SPA; added IndexedDB trial-data bridge note in activate.html)
 
 ---
 
@@ -105,7 +105,7 @@
 
 ## Next Session Priority
 
-1. **Investigator Toolkit pages.dev audit** — `investigatortoolkit.clearpathedgroup.com` already resolves (200) but (a) verify it serves the real Toolkit app and (b) sweep any remaining `*.pages.dev` references across marketing site, Toolkit repo docs, and activate flow. Same pattern just completed for Beacon + Apex. Per DECISIONS 2026-04-20 rule, no customer-facing pages.dev URLs anywhere.
+1. ~~**Investigator Toolkit pages.dev audit**~~ — ✅ Done (CC7). Clean: zero refs in Toolkit repo or `clearpath-site/`. Custom domain healthy (serves real Vite SPA, not SPA-fallback trap). Bonus fixes: unified `index.html:1254` pricing CTA on hosted SPA + added IndexedDB trial-data bridge note in activate.html for INV- keys.
 2. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
 3. **Confirm first post-CC6 store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired, AND the Beacon/Apex welcome email link reaches them through a school firewall
 4. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
@@ -216,6 +216,7 @@
 - **License enforcement:** License keys checked against ops Supabase `product_licenses` table. 5-min cache, 7-day offline grace. Soft gate: view data but can't create new records.
 - **Pricing:** $8/mo or $79/yr via Zelle on clearpathedgroup.com
 - **Built:** Dual-mode data layer (IndexedDB/Supabase), local setup wizard, license check system, CSV referral import, Google Form integration, 35 bundled lessons, 14 communication templates
+- **Permission slip tracker (CC7 — 2026-04-21):** `students.permission_slip_on_file` + `permission_slip_signed_date` (migration 003 applied). One-click checkbox in StudentDetailPage header, full controls in EditStudentModal, Permission column + filter + 3-chip summary stat row on StudentsPage, CSV import/export round-trip.
 - **License ops guide:** `docs/license-operations-guide.md`
 - **Pending:** Cloudflare Pages deployment, store listing on clearpathedgroup.com, customer email templates (Vera/Nova)
 
