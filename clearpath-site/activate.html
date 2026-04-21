@@ -155,6 +155,14 @@
         <span id="download-link-label">Download Now</span>
       </a>
       <p class="download-note" id="download-note">Save the file anywhere on your computer. Double-click to open.<br>100% on-device — no student data leaves your machine.</p>
+      <div id="trial-bridge-note" style="display:none;margin-top:18px;padding:14px 16px;background:rgba(107,47,160,0.1);border:1px solid var(--border-purple);border-radius:10px;text-align:left;font-size:.82rem;color:var(--text-muted);line-height:1.7">
+        <div style="font-weight:700;color:var(--amber-light);margin-bottom:6px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase">Used the free trial?</div>
+        Your trial data lives on the trial web app and won't appear in the downloaded version automatically. To bring it over:
+        <ol style="margin:8px 0 0 20px;padding:0;font-size:.8rem">
+          <li>Open <a href="https://investigatortoolkit.clearpathedgroup.com" target="_blank" rel="noopener" style="color:var(--amber-light);text-decoration:none">investigatortoolkit.clearpathedgroup.com</a> → <strong>Backup & Restore</strong> → <strong>Export JSON</strong>.</li>
+          <li>After downloading below, open the file and go to <strong>Backup & Restore</strong> → <strong>Import JSON</strong>. Pick the file you just exported.</li>
+        </ol>
+      </div>
     </div>
   </div>
 
@@ -273,6 +281,7 @@ async function activate() {
     const note = document.getElementById('download-note');
     const keyDisplay = document.getElementById('success-key-display');
     const keyValue = document.getElementById('success-key-value');
+    const bridgeNote = document.getElementById('trial-bridge-note');
 
     if (productInfo.external) {
       // Hosted web app — open in a new tab with the key pre-filled in the URL.
@@ -288,6 +297,7 @@ async function activate() {
       note.innerHTML = `Opens in a new tab. Paste your license key on the setup screen if it isn't already filled in.<br>100% on-device — no student data leaves your machine.`;
       keyValue.textContent = key;
       keyDisplay.style.display = 'block';
+      bridgeNote.style.display = 'none';
     } else {
       // Downloadable single-file product (e.g. Investigator Toolkit)
       link.href = productInfo.file;
@@ -297,6 +307,9 @@ async function activate() {
       label.textContent = 'Download Now';
       note.innerHTML = `Save the file anywhere on your computer. Double-click to open.<br>100% on-device — no student data leaves your machine.`;
       keyDisplay.style.display = 'none';
+      // Toolkit users most likely tried the hosted SPA first — show the
+      // export/import bridge note so trial data doesn't get orphaned.
+      bridgeNote.style.display = prefix === 'INV' ? 'block' : 'none';
     }
 
     document.getElementById('success-panel').classList.add('show');
