@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-04-21 (Session CC7 — Beacon permission slip tracker shipped (migration 003 applied, UI in detail page + list + summary stats + CSV round-trip); Investigator Toolkit pages.dev audit completed (clean — zero refs); unified Toolkit pricing CTA on hosted SPA; added IndexedDB trial-data bridge note in activate.html)
+> Last updated: 2026-04-23 (Session CC8 — critical Beacon bug fix: `clearSampleData` was wiping every counselor's real data, not just seeded demo rows; tag-and-filter fix + legacy name fallback shipped (Beacon ff5161f). Nicole's data was unrecoverable (IndexedDB no backup). Modal form-reset sweep across suite: 5 more Beacon modals fixed, 3 Waypoint Meridian modals fixed (c49d177) — including `LinkWaypointModal` which carried a wrong-student-link risk. Apex and Toolkit clean. Two new DECISIONS entries: (1) clear-demo actions must filter by tag, never tenant-wide; (2) modals with `open` prop must reset state in `useEffect([open])`.)
 
 ---
 
@@ -105,18 +105,20 @@
 
 ## Next Session Priority
 
-1. ~~**Investigator Toolkit pages.dev audit**~~ — ✅ Done (CC7). Clean: zero refs in Toolkit repo or `clearpath-site/`. Custom domain healthy (serves real Vite SPA, not SPA-fallback trap). Bonus fixes: unified `index.html:1254` pricing CTA on hosted SPA + added IndexedDB trial-data bridge note in activate.html for INV- keys.
-2. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
-3. **Confirm first post-CC6 store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired, AND the Beacon/Apex welcome email link reaches them through a school firewall
-4. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
-5. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
-6. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
-7. **Consider publishing Waypoint pricing** with seat counts + term length — biggest remaining conversion lever to hit site grade A
-8. **Social proof** — get one named testimonial to move credibility score 6 → 8
-9. **Send demo emails** to 10 Formspree leads (carryover)
-10. **Campus-scoped dashboard filter** — principals need campus dropdown
-11. **Apex storage-mode toggle** (Beacon) — curious user can flip to broken Cloud state in Settings. Hide or disable until Cloud mode actually ships. Flagged in `clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`.
-12. **Decide fate of AI Generate code in Beacon CommunicationsPage** — currently feature-flagged off (`FEATURE_AI_GENERATE = false`). Either delete the dead code or leave it for when the `generate-parent-update` edge function ships.
+1. ~~**Beacon clearSampleData data-loss bug**~~ — ✅ Fixed (CC8, commit ff5161f). Nicole's data unrecoverable; prevention rule now in DECISIONS.md.
+2. ~~**Cross-product form-reset audit**~~ — ✅ Done (CC8). Waypoint Meridian: 3 modals fixed (c49d177). Apex & Toolkit clean by architecture.
+3. **Consider adding a "Backup first" prompt before Beacon destructive actions** — lesson from CC8. Counselor clicking "Clear Sample Data" expecting it to only touch the demo five should be nudged to download a JSON backup first. Defense-in-depth on top of the tag-and-filter fix.
+4. **Vera to rewrite Beacon user guide** — brief at `docs/handovers/vera-beacon-userguide-brief-04202026.md`. Quick Start + In-Depth + differentiation vs SCUTA/CountSel. Ship target 2026-04-25
+5. **Confirm first post-CC6 store purchase** — once the next real buyer comes through `store.html`, verify both browser-side notification + DB trigger fired, AND the Beacon/Apex welcome email link reaches them through a school firewall
+6. **Build Toolkit single-file** — `node build-single-file.mjs` with all new features baked in
+7. **Test PDF templates visually** — generate sample PDFs from each product, verify page breaks work correctly after audit fixes
+8. **Toolkit B- → B+** — completeness indicator, contextual help, email case PDF
+9. **Consider publishing Waypoint pricing** with seat counts + term length — biggest remaining conversion lever to hit site grade A
+10. **Social proof** — get one named testimonial to move credibility score 6 → 8
+11. **Send demo emails** to 10 Formspree leads (carryover)
+12. **Campus-scoped dashboard filter** — principals need campus dropdown
+13. **Apex storage-mode toggle** (Beacon) — curious user can flip to broken Cloud state in Settings. Hide or disable until Cloud mode actually ships. Flagged in `clearpath-beacon/docs/beacon-feature-inventory-2026-04-20.md`.
+14. **Decide fate of AI Generate code in Beacon CommunicationsPage** — currently feature-flagged off (`FEATURE_AI_GENERATE = false`). Either delete the dead code or leave it for when the `generate-parent-update` edge function ships.
 
 ---
 
