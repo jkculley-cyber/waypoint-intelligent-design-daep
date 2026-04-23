@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
@@ -213,6 +213,19 @@ function LogFindingModal({ open, onClose, districtId, onSaved }) {
   const [childDue, setChildDue] = useState('')
   const [tasks, setTasks] = useState([''])
   const [saving, setSaving] = useState(false)
+
+  // Reset every open so the previous finding's values don't bleed in.
+  useEffect(() => {
+    if (open) {
+      setFindingNumber('')
+      setDescription('')
+      setLegalCitation('')
+      setSystemicDue('')
+      setChildDue('')
+      setTasks([''])
+      setSaving(false)
+    }
+  }, [open])
 
   const addTask = () => setTasks(t => [...t, ''])
   const updateTask = (i, val) => setTasks(t => t.map((x, idx) => idx === i ? val : x))

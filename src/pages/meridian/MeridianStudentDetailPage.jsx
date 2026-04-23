@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { jsPDF } from 'jspdf'
@@ -410,6 +410,14 @@ function EscalateModal({ open, onClose, student }) {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  useEffect(() => {
+    if (open) {
+      setUrgency('urgent')
+      setNotes('')
+      setSaving(false)
+    }
+  }, [open])
+
   const handleSave = async () => {
     if (!notes.trim()) return toast.error('Notes are required')
     setSaving(true)
@@ -484,6 +492,13 @@ function EscalateModal({ open, onClose, student }) {
 function LinkWaypointModal({ open, onClose, student, onSaved }) {
   const [waypointId, setWaypointId] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setWaypointId('')
+      setSaving(false)
+    }
+  }, [open])
 
   const handleSave = async () => {
     if (!waypointId.trim()) return toast.error('Waypoint Student ID is required')
