@@ -6,7 +6,7 @@
 export const TEC_OFFENSES = [
   { key: 'fighting',      label: 'Physical Fighting',          ref: '§37.006(a)(2)' },
   { key: 'bullying',      label: 'Bullying & Cyberbullying',   ref: '§37.0832'      },
-  { key: 'insubordination', label: 'Insubordination / Disruptive', ref: '§37.005'   },
+  { key: 'insubordination', label: 'Insubordination / Disruptive', ref: '§37.001 (SCOC; consequences under §37.005)' },
   { key: 'substances',    label: 'Drug, Alcohol & Vaping',     ref: '§37.006(a)(4)' },
   { key: 'threatening',   label: 'Threatening Language',       ref: '§37.006(a)(1)' },
   { key: 'theft',         label: 'Theft & Vandalism',          ref: '§37.006'       },

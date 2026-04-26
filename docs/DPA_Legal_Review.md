@@ -1,6 +1,6 @@
 # DPA Legal Review Memo
 **Document Reviewed:** District_DPA_Template.md
-**Reviewed Against:** FERPA (34 C.F.R. Part 99), Texas Education Code § 32.151-32.158, Texas B&C Code § 521.053 (as amended by SB 768, eff. Sept. 1, 2023)
+**Reviewed Against:** FERPA (34 C.F.R. Part 99), Texas Education Code § 32.151-32.157, Texas B&C Code § 521.053 (as amended by SB 768, eff. Sept. 1, 2023)
 **Date:** February 2026
 
 > ⚠️ This is a compliance and gap analysis, not legal advice. All flagged items should be confirmed with qualified Texas education law counsel before execution.
@@ -12,7 +12,7 @@
 The DPA provides a solid foundation covering FERPA school-official designation, data use restrictions, security minimums, subprocessor disclosure, breach notification, and data deletion. However, **12 issues** require correction or addition before the document is ready to sign. Three are critical regulatory gaps; the rest are missing standard commercial contract provisions or unresolved placeholders.
 
 **Critical (must fix before any district signs):**
-1. TEC § 32.151-32.158 not referenced — statutory compliance gap
+1. TEC § 32.151-32.157 not referenced — statutory compliance gap
 2. Deletion timeline conflict — 90 days exceeds TEC § 32.154's 60-day maximum
 3. AG breach notification missing — required by Texas B&C Code § 521.053 when 250+ residents affected
 
@@ -37,19 +37,19 @@ The DPA provides a solid foundation covering FERPA school-official designation, 
 
 ---
 
-## Finding 1 — CRITICAL: Texas Education Code § 32.151-32.158 Not Referenced
+## Finding 1 — CRITICAL: Texas Education Code § 32.151-32.157 Not Referenced
 
 **Article(s) affected:** Article 1, Article 3
 
-**Issue:** Texas TEC § 32.151-32.158 (Student Privacy Protection Act) imposes specific obligations on "operators" of online educational platforms. Waypoint/Clear Path qualifies as an "Operator" under § 32.151. The statute:
+**Issue:** Texas TEC § 32.151-32.157 (Student Privacy Protection Act) imposes specific obligations on "operators" of online educational platforms. Waypoint/Clear Path qualifies as an "Operator" under § 32.151. The statute:
 - Defines "Covered Information" broadly (§ 32.151) — includes discipline records, special education data, behavioral records, identifiers, and more
 - Prohibits targeted advertising, non-school-purpose profile building, and sale of covered information (§ 32.152)
 - Requires "reasonable security procedures and practices" (§ 32.153)
 - **Requires deletion of Covered Information within 60 days of district request** (§ 32.154)
 
-The DPA's Article 3 already aligns substantively with § 32.152 prohibitions, but the statute is not cited and the term "Covered Information" (a defined Texas law term) is not used. A district's legal counsel reviewing this DPA will immediately ask why TEC § 32.151-32.158 is absent.
+The DPA's Article 3 already aligns substantively with § 32.152 prohibitions, but the statute is not cited and the term "Covered Information" (a defined Texas law term) is not used. A district's legal counsel reviewing this DPA will immediately ask why TEC § 32.151-32.157 is absent.
 
-**Resolution applied in DPA:** Added Article 1.6 defining "Covered Information" per TEC § 32.151; added Article 2.4 designating Vendor as an Operator; added TEC § 32.151-32.158 compliance obligation to Article 3.4.
+**Resolution applied in DPA:** Added Article 1.6 defining "Covered Information" per TEC § 32.151; added Article 2.4 designating Vendor as an Operator; added TEC § 32.151-32.157 compliance obligation to Article 3.4.
 
 ---
 

@@ -537,7 +537,7 @@ function buildReference() {
     ['§37.010','JJAEP','Juvenile Justice Alternative Education Program standards and referral process.'],
     ['§37.011','Juvenile Justice Programs','Coordination between school district and juvenile justice agencies.'],
     ['§37.013','Parental Notification','Required notifications to parents/guardians during the disciplinary process.'],
-    ['§37.0151','Registered Sex Offenders','Placement and notification rules for RSO students enrolled in district.'],
+    ['§§37.301–37.314','Registered Sex Offenders (Subchapter I)','Placement and notification rules for RSO students enrolled in district. §37.305 governs RSOs not under court supervision.'],
     ['§37.020','PEIMS Reporting','Data reporting requirements for disciplinary actions to the state.'],
   ]
   tecSections.forEach(s => rows.push(s))
@@ -580,7 +580,7 @@ function buildReference() {
     ['IEP Services Continuation','All active IEP students placed in DAEP','Services must continue during entire placement','34 CFR §300.530(d)(1)(i)'],
     ['Section 504 Meeting','Any 504-eligible student facing DAEP placement','Before or concurrent with placement','34 CFR §104.36'],
     ['Prior Written Notice (SPED)','Before changing placement of any SPED student','Before implementation of placement','34 CFR §300.503'],
-    ['Parental Notification','All DAEP placements','As soon as practicable; before or day of placement','TEC §37.009; §37.013'],
+    ['Parental Notification','All DAEP placements','As soon as practicable; before or day of placement','TEC §37.009(a) + local Board policy (typically TASB FO/FOC)'],
     ['Return-to-Campus ARD','SPED student returning from DAEP','Before student returns to home campus','TEC §37.004 + local ARD policy'],
     ['Annual IEP Review (if due during placement)','IEP anniversary falls within placement window','By IEP anniversary date','34 CFR §300.324'],
   ]

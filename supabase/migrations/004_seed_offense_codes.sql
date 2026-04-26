@@ -34,7 +34,7 @@ INSERT INTO offense_codes (district_id, code, category, title, description, tec_
 (NULL, 'BULLY-01', 'harassment_bullying', 'Bullying', 'Engaging in written, verbal, or physical conduct that constitutes bullying', 'TEC 37.0832', 'moderate', true, '51'),
 (NULL, 'BULLY-02', 'harassment_bullying', 'Cyberbullying', 'Bullying conducted through electronic communication', 'TEC 37.0832', 'moderate', true, '52'),
 (NULL, 'HARASS-01', 'harassment_bullying', 'Harassment - Verbal/Written', 'Threatening or intimidating conduct directed at another student', 'TEC 37.001(a)(4)', 'moderate', true, '53'),
-(NULL, 'HARASS-02', 'harassment_bullying', 'Sexual Harassment', 'Unwelcome sexual advances, requests, or conduct', 'TEC 37.006(b)', 'serious', true, '54'),
+(NULL, 'HARASS-02', 'harassment_bullying', 'Sexual Harassment', 'Unwelcome sexual advances, requests, or conduct (Title IX overlay applies; escalates to mandatory expulsion under §37.007(a)(2) if elements of sexual assault are met)', 'TEC 37.001 / 37.083; 34 CFR Part 106 (Title IX)', 'serious', true, '54'),
 (NULL, 'HARASS-03', 'harassment_bullying', 'Harassment Based on Protected Class', 'Harassment based on race, color, religion, sex, national origin, disability', 'TEC 37.001', 'serious', true, '55');
 
 -- Truancy / Attendance

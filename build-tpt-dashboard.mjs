@@ -322,7 +322,7 @@ function buildParentContactLog() {
 
   setStr(ws, 0, 0, 'PARENT CONTACT LOG  —  Every Call, Email, and In-Person Contact  |  Communication Scripts start below row 305')
   merge(ws, 'A1:N1')
-  setStr(ws, 1, 0, 'Log EVERY attempt — even unanswered calls and voicemails. This is your evidence in any appeal or TEA complaint. TEC §37.013 requires parent notification — your log proves you did it.')
+  setStr(ws, 1, 0, 'Log EVERY attempt — even unanswered calls and voicemails. This is your evidence in any appeal or TEA complaint. TEC §37.009(a) + local Board policy (typically TASB FO/FOC) require parent notification — your log proves you did it.')
   merge(ws, 'A2:N2')
 
   const headers = [

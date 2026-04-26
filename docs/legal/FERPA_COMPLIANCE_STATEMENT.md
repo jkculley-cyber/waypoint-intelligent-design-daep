@@ -109,7 +109,7 @@ For the school official exception to apply, the district must:
 
 In addition to FERPA, Waypoint is designed to comply with applicable Texas state law governing student data privacy:
 
-- **Texas Education Code § 32.151–32.158** (Student Data Privacy): Waypoint's DPA template addresses all required elements including security measures, prohibited uses, data return/destruction, and subprocessor requirements.
+- **Texas Education Code § 32.151–32.157** (Student Data Privacy): Waypoint's DPA template addresses all required elements including security measures, prohibited uses, data return/destruction, and subprocessor requirements.
 - **Texas Education Code Chapter 37** (Student Discipline): Waypoint's workflows enforce TEC Chapter 37 timelines, SPED manifestation determination triggers, and DAEP placement documentation requirements.
 - **Texas HB 3834 / SB 820** (Student Privacy): Clear Path Education Group, LLC agrees not to sell student data, use student data for targeted advertising, or build profiles of students for non-educational purposes.
 

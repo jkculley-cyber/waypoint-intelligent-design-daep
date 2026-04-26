@@ -185,7 +185,7 @@ Each offense section contains:
 ---
 
 # OFFENSE 3: Insubordination / Disruptive Behavior
-*TEC §37.005 — Removal by teacher; discretionary DAEP*
+*TEC §37.001 — Student Code of Conduct (consequences may include teacher removal under §37.002, suspension under §37.005, or discretionary DAEP under §37.006(a))*
 
 ---
 

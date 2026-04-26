@@ -1,6 +1,6 @@
 # DATA PROCESSING AGREEMENT
 
-**⚠️ DRAFT — For legal review before use. This template incorporates a compliance gap analysis against FERPA, TEC § 32.151-32.158, and Texas B&C Code § 521.053. Items marked [LEGAL DRAFTING REQUIRED] must be completed by qualified Texas education law counsel before execution.**
+**⚠️ DRAFT — For legal review before use. This template incorporates a compliance gap analysis against FERPA, TEC § 32.151-32.157, and Texas B&C Code § 521.053. Items marked [LEGAL DRAFTING REQUIRED] must be completed by qualified Texas education law counsel before execution.**
 
 ---
 
@@ -23,7 +23,7 @@ District and Vendor are each referred to herein as a "Party" and collectively as
 
 WHEREAS, the Parties have entered into or intend to enter into a separate Service Agreement (the "Service Agreement") pursuant to which Vendor will provide the District access to Waypoint, a discipline management and DAEP compliance platform;
 
-WHEREAS, in connection with providing those services, Vendor may receive, access, or process "Education Records" as defined under the Family Educational Rights and Privacy Act ("FERPA"), 20 U.S.C. § 1232g, and its implementing regulations at 34 C.F.R. Part 99, and "Covered Information" as defined under the Texas Student Privacy Protection Act, Texas Education Code §§ 32.151-32.158;
+WHEREAS, in connection with providing those services, Vendor may receive, access, or process "Education Records" as defined under the Family Educational Rights and Privacy Act ("FERPA"), 20 U.S.C. § 1232g, and its implementing regulations at 34 C.F.R. Part 99, and "Covered Information" as defined under the Texas Student Privacy Protection Act, Texas Education Code §§ 32.151-32.157;
 
 WHEREAS, the Parties wish to establish the terms under which Vendor will handle such Education Records and Covered Information;
 
@@ -57,7 +57,7 @@ NOW, THEREFORE, in consideration of the mutual promises contained herein and in 
 
 **2.3 Compliance with FERPA.** Vendor agrees to comply with FERPA requirements applicable to school officials, including the requirement that Vendor use Education Records only for the Authorized Purpose and not disclose Education Records without the District's written consent except as permitted by FERPA. The District is responsible for including Vendor in its annual FERPA notification to parents as a school official with legitimate educational interest, to the extent required by 34 C.F.R. § 99.7.
 
-**2.4 Operator Status Under Texas Law.** Vendor acknowledges that it constitutes an "operator" as defined under Texas Education Code § 32.151, and agrees to comply with all obligations imposed on operators under Texas Education Code §§ 32.151-32.158, as may be amended.
+**2.4 Operator Status Under Texas Law.** Vendor acknowledges that it constitutes an "operator" as defined under Texas Education Code § 32.151, and agrees to comply with all obligations imposed on operators under Texas Education Code §§ 32.151-32.157, as may be amended.
 
 ---
 
@@ -80,7 +80,7 @@ NOW, THEREFORE, in consideration of the mutual promises contained herein and in 
 
 **3.3 Aggregated/De-Identified Data.** Vendor may use de-identified, aggregated data that cannot reasonably be used to identify any individual student for product improvement, statistical analysis, or benchmarking purposes, provided that Vendor applies de-identification methods consistent with 34 C.F.R. § 99.3 and takes reasonable technical measures to prevent re-identification.
 
-**3.4 Compliance with Texas Student Privacy Protection Act.** In addition to the prohibitions in Section 3.2, Vendor shall comply with all obligations imposed on operators under Texas Education Code §§ 32.151-32.158, including without limitation the prohibitions on targeted advertising (§ 32.152(a)(1)), non-school-purpose profile building (§ 32.152(a)(2)), and sale of Covered Information (§ 32.152(a)(3)).
+**3.4 Compliance with Texas Student Privacy Protection Act.** In addition to the prohibitions in Section 3.2, Vendor shall comply with all obligations imposed on operators under Texas Education Code §§ 32.151-32.157, including without limitation the prohibitions on targeted advertising (§ 32.152(a)(1)), non-school-purpose profile building (§ 32.152(a)(2)), and sale of Covered Information (§ 32.152(a)(3)).
 
 **3.5 Response to Legal Process.** If Vendor receives a subpoena, court order, or other legal process requiring disclosure of Student Data, Vendor shall: (a) notify the District as soon as practicable and before disclosure, to the extent permitted by law; (b) cooperate with the District in seeking a protective order or other relief; and (c) disclose only the minimum Student Data required to comply with the legal process.
 

@@ -548,7 +548,7 @@ function buildParentContactLog() {
 
   setStr(ws, 0, 0, 'PARENT CONTACT LOG — Every Call, Email, and In-Person Contact  |  See COMMUNICATION SCRIPTS below row 205')
   merge(ws, 'A1:P1')
-  setStr(ws, 1, 0, '⚠ Documentation of every parent contact attempt is required under TEC §37.013 and is your primary defense in any appeal. Log EVERY attempt — even voicemails and unanswered calls. Note what was said and what follow-up was promised.')
+  setStr(ws, 1, 0, '⚠ Documentation of every parent contact attempt is required under TEC §37.009(a) and your district\'s local Board policy (typically TASB-model FO/FOC) — and is your primary defense in any appeal. Log EVERY attempt — even voicemails and unanswered calls. Note what was said and what follow-up was promised.')
   merge(ws, 'A2:P2')
 
   const headers = [
@@ -1130,7 +1130,7 @@ function buildSCOCReference() {
       'Discretionary',
       'OSS 1–3 days; DAEP 30–45 days (repeat or aggravating factors)',
       'MDR required if SPED. Conduct FBA if behavioral pattern. 504 meeting if 504 student.',
-      'Parent notification (TEC §37.013). Campus principal/AP.',
+      'Parent notification (TEC §37.009(a) + local Board policy). Campus principal/AP.',
       'No',
     ],
     [
@@ -1249,7 +1249,7 @@ function buildSCOCReference() {
   rows.push([''])
   rows.push(['─── DUE PROCESS REQUIREMENTS — EVERY REMOVAL ────────────────────────────────────────────────────────────────────────────────────', '', '', '', '', '', '', ''])
   const dueProcess = [
-    ['1. Parent Notification', 'Must be provided before or at the time of removal (TEC §37.013). Document method, date, and time.'],
+    ['1. Parent Notification', 'Must be provided before or at the time of removal (TEC §37.009(a) + local Board policy — typically TASB FO/FOC). Document method, date, and time.'],
     ['2. Conference Rights', 'Parent must be offered a conference with the principal before placement begins (TEC §37.009). Document offer even if declined.'],
     ['3. Student Age 10+', 'Student has the right to a conference before a DAEP placement (TEC §37.009). Document conference or waiver.'],
     ['4. SPED — MDR', 'If student has IEP: MDR must be held within 10 SCHOOL DAYS of removal. No exceptions. (IDEA 34 CFR §300.530)'],

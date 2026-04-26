@@ -219,7 +219,7 @@ Every database table includes a `district_id` column. PostgreSQL Row-Level Secur
 |--------------|--------|
 | SOC 2 Type II | ✅ Supabase (infrastructure provider) — reports available under NDA |
 | FERPA | ✅ Compliant by design — district executes a Data Processing Agreement (DPA) with Clear Path Education Group, LLC designating Waypoint as a school official under 34 C.F.R. § 99.31(a)(1)(i)(B) |
-| Texas Education Code § 32.151-32.158 (Student Privacy Protection Act) | ✅ Compliant — Waypoint is a designated "Operator" under TEC § 32.152; prohibited uses (targeted advertising, profile building, sale of data) are contractually barred |
+| Texas Education Code § 32.151-32.157 (Student Privacy Protection Act) | ✅ Compliant — Waypoint is a designated "Operator" under TEC § 32.152; prohibited uses (targeted advertising, profile building, sale of data) are contractually barred |
 | HIPAA | ✅ Supabase infrastructure is HIPAA-eligible; Waypoint handles education records (FERPA), not medical records (HIPAA) |
 | COPPA | ✅ No personal information collected directly from students; kiosk requires only a student ID number |
 
