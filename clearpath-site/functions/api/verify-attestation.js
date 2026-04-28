@@ -54,14 +54,12 @@ export async function onRequestGet({ request, env }) {
     return jsonResponse(500, { error: 'Verification service is not configured. Contact support@clearpathedgroup.com.' });
   }
 
-  // Edge cache check (Cloudflare Workers Cache API)
-  const cacheKey = new Request(`https://verify-attestation-cache.local/${rawHash}`, { method: 'GET' });
-  const cache = caches.default;
-  const cached = await cache.match(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
+  // Manual fetch with AbortController timeout. AbortSignal.timeout is
+  // supported on workerd but Cloudflare Pages' build pipeline has been
+  // observed to silently drop functions that reference newer-spec APIs;
+  // an explicit AbortController is universally safe.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
   let supabaseRes;
   try {
     supabaseRes = await fetch(
@@ -72,12 +70,14 @@ export async function onRequestGet({ request, env }) {
           Authorization: `Bearer ${serviceRoleKey}`,
           Accept: 'application/json',
         },
-        signal: AbortSignal.timeout(6000),
+        signal: controller.signal,
       }
     );
   } catch (err) {
+    clearTimeout(timeoutId);
     return jsonResponse(502, { error: 'Could not reach attestation registry. Try again in a moment.' });
   }
+  clearTimeout(timeoutId);
 
   if (!supabaseRes.ok) {
     const detail = await supabaseRes.text().catch(() => '');
@@ -95,13 +95,12 @@ export async function onRequestGet({ request, env }) {
 
   // Return the EARLIEST matching attestation. If a counselor regenerated the
   // PDF later, multiple rows may exist with the same hash — the first
-  // registration is the one with chain-of-custody value.
+  // registration is the one with chain-of-custody value. Cache 60s via
+  // Cache-Control headers — Cloudflare's edge will honor these without us
+  // needing to manually call the Cache API (which has been flaky in Pages
+  // Functions builds in recent weeks).
   const row = rows[0];
-  const response = jsonResponse(200, { found: true, row }, {
+  return jsonResponse(200, { found: true, row }, {
     'Cache-Control': `public, max-age=${SUCCESS_CACHE_SECONDS}, s-maxage=${SUCCESS_CACHE_SECONDS}`,
   });
-
-  // Edge-cache successful responses
-  await cache.put(cacheKey, response.clone());
-  return response;
 }

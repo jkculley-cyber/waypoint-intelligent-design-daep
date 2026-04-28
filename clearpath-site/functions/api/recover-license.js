@@ -67,7 +67,11 @@ export async function onRequestPost({ request, env }) {
 
   // Look up active licenses for this email. Using ilike for case-insensitive
   // match because some buyers register with mixed case in their email.
+  // Manual AbortController instead of AbortSignal.timeout — see notes in
+  // verify-attestation.js about Pages Functions build flakiness.
   let licenses = [];
+  const lookupController = new AbortController();
+  const lookupTimeout = setTimeout(() => lookupController.abort(), 6000);
   try {
     const lookupRes = await fetch(
       `${opsUrl}/rest/v1/product_licenses?customer_email=ilike.${encodeURIComponent(email)}&status=eq.active&select=license_key,product,customer_name,expires_at`,
@@ -77,7 +81,7 @@ export async function onRequestPost({ request, env }) {
           Authorization: `Bearer ${serviceRoleKey}`,
           Accept: 'application/json',
         },
-        signal: AbortSignal.timeout(6000),
+        signal: lookupController.signal,
       }
     );
     if (lookupRes.ok) {
@@ -86,6 +90,7 @@ export async function onRequestPost({ request, env }) {
   } catch (err) {
     console.error('recover-license: ops lookup failed', err);
   }
+  clearTimeout(lookupTimeout);
 
   if (!Array.isArray(licenses) || licenses.length === 0) {
     // No match — anti-enumeration: still return 200. The would-be attacker
@@ -141,6 +146,8 @@ ${licenses.map((l) => {
 <p>Thanks,<br>Clear Path Education Group<br><a href="mailto:support@clearpathedgroup.com">support@clearpathedgroup.com</a></p>
 </body></html>`;
 
+  const sendController = new AbortController();
+  const sendTimeout = setTimeout(() => sendController.abort(), 6000);
   try {
     const sendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -155,7 +162,7 @@ ${licenses.map((l) => {
         text: textBody,
         html: htmlBody,
       }),
-      signal: AbortSignal.timeout(6000),
+      signal: sendController.signal,
     });
     if (!sendRes.ok) {
       console.error('recover-license: Resend send failed', sendRes.status, await sendRes.text().catch(() => ''));
@@ -163,6 +170,7 @@ ${licenses.map((l) => {
   } catch (err) {
     console.error('recover-license: Resend send threw', err);
   }
+  clearTimeout(sendTimeout);
 
   // Always 200 — see anti-enumeration note above.
   return jsonResponse(200, { ok: true });
