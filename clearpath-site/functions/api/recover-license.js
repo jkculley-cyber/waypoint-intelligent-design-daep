@@ -167,7 +167,3 @@ ${licenses.map((l) => {
   // Always 200 — see anti-enumeration note above.
   return jsonResponse(200, { ok: true });
 }
-
-export async function onRequest() {
-  return new Response(null, { status: 405, headers: { Allow: 'POST' } });
-}

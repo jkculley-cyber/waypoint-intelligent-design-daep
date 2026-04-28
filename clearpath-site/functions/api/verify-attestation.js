@@ -105,11 +105,3 @@ export async function onRequestGet({ request, env }) {
   await cache.put(cacheKey, response.clone());
   return response;
 }
-
-// Reject other methods crisply
-export async function onRequest({ request }) {
-  return new Response(null, {
-    status: 405,
-    headers: { Allow: 'GET' },
-  });
-}
