@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Attestation Verification — Clear Path Education Group</title>
+<meta name="description" content="Verify the authenticity timestamp of a Beacon-generated PDF (Crisis, Due-Process, or SB 179 Compliance Report). Enter the SHA-256 hash from the document footer to confirm it was logged in our third-party attestation registry.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://clearpathedgroup.com/verify-attestation">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://clearpathedgroup.com/verify-attestation">
+<meta property="og:title" content="Document Attestation Verification — Clear Path Education Group">
+<meta property="og:description" content="Verify the timestamp of a Beacon-generated legal PDF.">
+<meta property="og:image" content="https://clearpathedgroup.com/clearpath-logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple:#1a0a2e; --dark-bg:#0e0618; --mid-purple:#2d1054;
+    --purple:#6b2fa0; --purple-light:#9b5fd4; --amber:#e8862a;
+    --amber-light:#f5b050; --amber-glow:#ffcc66; --orange:#d4541a;
+    --teal:#2A9D8F; --teal-light:#5eead4;
+    --text:#f0e6d3; --text-muted:rgba(240,230,211,0.6);
+    --border:rgba(232,134,42,0.2); --border-purple:rgba(107,47,160,0.35);
+    --card-bg:rgba(26,10,46,0.7);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Raleway',sans-serif;background:var(--dark-bg);color:var(--text);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 20%,rgba(107,47,160,.15) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(212,84,26,.1) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(26,10,46,1) 0%,#0e0618 100%);
+    pointer-events:none}
+
+  nav{position:fixed;top:0;width:100%;z-index:200;background:rgba(14,6,24,.92);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:70px}
+  .nav-logo{display:flex;align-items:center;gap:14px;text-decoration:none}
+  .nav-logo img{height:44px;width:44px;object-fit:contain;border-radius:8px}
+  .nav-logo-text .name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;
+    background:linear-gradient(90deg,var(--amber-light),var(--amber-glow));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    line-height:1.2;display:block}
+  .nav-logo-text .sub{font-size:.6rem;font-weight:600;color:var(--text-muted);
+    letter-spacing:.12em;text-transform:uppercase;display:block}
+  .nav-back{font-size:.8rem;font-weight:600;color:var(--text-muted);text-decoration:none;
+    letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+  .nav-back:hover{color:var(--amber-light)}
+
+  .page{position:relative;z-index:1;padding:120px 5% 80px;max-width:680px;margin:0 auto}
+
+  h1{font-family:'Cinzel',serif;font-size:clamp(1.8rem,4vw,2.5rem);font-weight:900;
+    line-height:1.15;margin-bottom:12px;text-align:center;
+    background:linear-gradient(160deg,var(--amber-glow) 0%,var(--amber-light) 50%,var(--text) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .subtitle{font-size:1rem;color:var(--text-muted);line-height:1.7;margin-bottom:36px;text-align:center}
+  .subtitle code{font-family:'Courier New',monospace;font-size:.85em;background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;color:var(--amber-light)}
+
+  .lookup-card{background:var(--card-bg);border:1px solid var(--border-purple);
+    border-radius:16px;padding:32px;margin-bottom:24px}
+  .field-label{font-size:.75rem;font-weight:600;color:var(--text-muted);
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:block}
+  .hash-input{width:100%;padding:14px 16px;border-radius:10px;
+    border:2px solid var(--border-purple);background:rgba(14,6,24,.6);
+    color:var(--text);font-family:'Courier New',monospace;font-size:.9rem;
+    letter-spacing:.04em;outline:none;transition:border-color .2s;
+    word-break:break-all;line-height:1.4}
+  .hash-input:focus{border-color:var(--amber)}
+  .hash-input::placeholder{color:rgba(240,230,211,.25);font-family:'Raleway',sans-serif;letter-spacing:0;font-size:.9rem}
+  textarea.hash-input{resize:vertical;min-height:60px}
+
+  .verify-btn{margin-top:18px;width:100%;padding:14px 28px;border-radius:10px;border:none;
+    background:linear-gradient(135deg,var(--amber),var(--orange));color:white;
+    font-weight:700;font-size:.95rem;cursor:pointer;letter-spacing:.05em;
+    transition:transform .2s,box-shadow .2s}
+  .verify-btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(232,134,42,.4)}
+  .verify-btn:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none}
+
+  .result{display:none;margin-top:24px}
+  .result.show{display:block}
+
+  .success-card{background:rgba(42,157,143,.08);border:2px solid rgba(42,157,143,.4);
+    border-radius:16px;padding:28px}
+  .success-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;
+    border-bottom:1px solid rgba(42,157,143,.2)}
+  .success-icon{width:48px;height:48px;border-radius:50%;background:rgba(42,157,143,.15);
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+  .success-title{font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;color:var(--teal-light);margin-bottom:2px}
+  .success-sub{font-size:.78rem;color:var(--text-muted)}
+
+  .meta-grid{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;font-size:.85rem}
+  .meta-key{color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;padding-top:2px}
+  .meta-val{color:var(--text);font-family:'Courier New',monospace;word-break:break-all;line-height:1.5}
+  .meta-val.kind{font-family:'Raleway',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--amber-light)}
+
+  .legal-note{margin-top:20px;padding:14px 16px;background:rgba(0,0,0,.25);
+    border-left:3px solid var(--teal);border-radius:6px;
+    font-size:.78rem;color:var(--text-muted);line-height:1.6}
+
+  .notfound-card{background:rgba(239,68,68,.06);border:2px solid rgba(239,68,68,.3);
+    border-radius:16px;padding:28px;text-align:center}
+  .notfound-icon{font-size:2rem;margin-bottom:12px}
+  .notfound-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:#fca5a5;margin-bottom:8px}
+  .notfound-msg{font-size:.88rem;color:var(--text-muted);line-height:1.7;margin-bottom:14px}
+  .notfound-hash{font-family:'Courier New',monospace;font-size:.78rem;color:var(--amber-light);
+    background:rgba(0,0,0,.35);padding:10px 14px;border-radius:6px;word-break:break-all;margin-top:12px}
+
+  .error-card{background:rgba(239,68,68,.06);border:2px solid rgba(239,68,68,.3);
+    border-radius:16px;padding:24px;text-align:center}
+  .error-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:#fca5a5;margin-bottom:6px}
+  .error-msg{font-size:.85rem;color:var(--text-muted);line-height:1.6}
+
+  .help-card{background:rgba(0,0,0,.2);border:1px solid var(--border-purple);
+    border-radius:12px;padding:20px;margin-top:32px;font-size:.82rem;line-height:1.7;color:var(--text-muted)}
+  .help-card strong{color:var(--text);font-weight:600}
+  .help-card code{font-family:'Courier New',monospace;font-size:.85em;
+    background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;color:var(--amber-light)}
+
+  footer{position:relative;z-index:1;text-align:center;padding:40px 5%;
+    font-size:.75rem;color:var(--text-muted);border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/clearpath-logo.svg" alt="Clear Path Education Group" onerror="this.src='/clearpath-logo.png'">
+    <div class="nav-logo-text">
+      <span class="name">CLEAR PATH</span>
+      <span class="sub">Education Group</span>
+    </div>
+  </a>
+  <a href="/" class="nav-back">← Back to Site</a>
+</nav>
+
+<div class="page">
+
+  <h1>Document Attestation Verification</h1>
+  <p class="subtitle">
+    Every Crisis, Due-Process, and SB&nbsp;179 PDF generated by Beacon stamps a content hash and an attestation receipt in its footer. This page verifies that the hash was logged in our independent third-party registry on the date shown — establishing chain-of-custody for legal and audit review.
+  </p>
+
+  <div class="lookup-card">
+    <label class="field-label" for="hash-field">Paste the SHA-256 hash from the PDF footer</label>
+    <textarea
+      id="hash-field"
+      class="hash-input"
+      placeholder="e.g. 3f5a2b8c... (64 hex characters)"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Document SHA-256 hash"
+    ></textarea>
+    <button id="verify-btn" class="verify-btn" type="button">Verify Hash</button>
+  </div>
+
+  <div id="result" class="result" aria-live="polite"></div>
+
+  <div class="help-card">
+    <strong>Where do I find the hash?</strong><br>
+    Open any Beacon-generated PDF (Crisis Event, Parent Contact / Due-Process, or SB&nbsp;179 Report). At the very bottom of every page you'll see a line like:<br><br>
+    <code>SHA-256: 3f5a2b8c1d4e7f9a...</code><br><br>
+    Copy the full 64-character hex value and paste it above.<br><br>
+    <strong>What this proves and doesn't prove.</strong> A successful match confirms that the document's content hash was registered with our attestation log on the date shown — independent of when the PDF itself was printed. It does not prove the document accurately represents the underlying record at any later date. For records-management questions about the underlying counselor record, contact the issuing district directly.
+  </div>
+
+</div>
+
+<footer>
+  &copy; <span id="year"></span> Clear Path Education Group, LLC &middot; <a href="/" style="color:inherit">clearpathedgroup.com</a>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const hashField = document.getElementById('hash-field');
+  const btn       = document.getElementById('verify-btn');
+  const result    = document.getElementById('result');
+
+  // Pre-fill from ?hash= query param if present
+  const urlHash = new URLSearchParams(window.location.search).get('hash');
+  if (urlHash) {
+    hashField.value = urlHash.trim();
+    // Auto-verify if a hash was passed in the URL
+    setTimeout(() => verify(), 50);
+  }
+
+  hashField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) verify();
+  });
+  btn.addEventListener('click', verify);
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  function showError(title, msg) {
+    result.innerHTML = `
+      <div class="error-card">
+        <div class="error-title">${escapeHtml(title)}</div>
+        <div class="error-msg">${escapeHtml(msg)}</div>
+      </div>`;
+    result.classList.add('show');
+  }
+
+  function showNotFound(hash) {
+    result.innerHTML = `
+      <div class="notfound-card">
+        <div class="notfound-icon">⚠</div>
+        <div class="notfound-title">No attestation found for this hash</div>
+        <div class="notfound-msg">
+          We have no record of this hash being registered with our attestation log. This may mean the document was edited after generation, was generated offline (when the attestation server was unreachable), or the hash was mistyped.
+        </div>
+        <div class="notfound-hash">${escapeHtml(hash)}</div>
+      </div>`;
+    result.classList.add('show');
+  }
+
+  function showSuccess(row, queriedHash) {
+    const dt = new Date(row.generated_at);
+    const niceDate = dt.toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', second: '2-digit',
+      timeZoneName: 'short',
+    });
+    const utcDate = dt.toISOString();
+    const counselorAnon = row.counselor_id
+      ? row.counselor_id.slice(0, 8) + '…' + row.counselor_id.slice(-4)
+      : '—';
+    const kindLabels = {
+      crisis:         'Crisis Event Documentation',
+      parent_contact: 'Parent Contact / Due-Process',
+      sb179:          'SB 179 Compliance Report',
+    };
+    const kindLabel = kindLabels[row.document_kind] || row.document_kind || '—';
+
+    result.innerHTML = `
+      <div class="success-card">
+        <div class="success-header">
+          <div class="success-icon">✓</div>
+          <div>
+            <div class="success-title">Attestation confirmed</div>
+            <div class="success-sub">This hash is registered in our third-party log</div>
+          </div>
+        </div>
+        <div class="meta-grid">
+          <div class="meta-key">Document type</div>
+          <div class="meta-val kind">${escapeHtml(kindLabel)}</div>
+
+          <div class="meta-key">Logged at</div>
+          <div class="meta-val">${escapeHtml(niceDate)}<br><span style="font-size:.75rem;color:var(--text-muted)">${escapeHtml(utcDate)}</span></div>
+
+          <div class="meta-key">Receipt ID</div>
+          <div class="meta-val">${escapeHtml(row.id || '—')}</div>
+
+          <div class="meta-key">Counselor (anon.)</div>
+          <div class="meta-val">${escapeHtml(counselorAnon)}</div>
+
+          <div class="meta-key">Content hash</div>
+          <div class="meta-val">${escapeHtml(queriedHash)}</div>
+        </div>
+        <div class="legal-note">
+          This record is held in our PostgreSQL attestation log with append-only access controls. The <strong>logged-at</strong> timestamp is set by the database server at the moment the document hash was first registered; it cannot be modified by the issuing counselor or by Clear Path support staff. Subpoena requests should be directed to <a href="mailto:support@clearpathedgroup.com" style="color:var(--amber-light)">support@clearpathedgroup.com</a>.
+        </div>
+      </div>`;
+    result.classList.add('show');
+  }
+
+  async function verify() {
+    const raw = (hashField.value || '').trim().toLowerCase().replace(/\s+/g, '');
+    if (!raw) { showError('No hash entered', 'Paste the SHA-256 hash from the PDF footer first.'); return; }
+    if (!/^[0-9a-f]{64}$/.test(raw)) {
+      showError('Invalid hash format', 'A SHA-256 hash is 64 hex characters (0–9, a–f). Check that you copied the full value from the PDF footer.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+    result.classList.remove('show');
+    try {
+      const res = await fetch(`/api/verify-attestation?hash=${encodeURIComponent(raw)}`);
+      if (res.status === 404) {
+        showNotFound(raw);
+      } else if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        showError(`Lookup failed (${res.status})`, text || 'Try again in a moment.');
+      } else {
+        const data = await res.json();
+        if (data && data.found && data.row) {
+          showSuccess(data.row, raw);
+        } else {
+          showNotFound(raw);
+        }
+      }
+    } catch (err) {
+      showError('Network error', err && err.message ? err.message : 'Could not reach the verification service. Check your connection and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Verify Hash';
+    }
+  }
+</script>
+</body>
+</html>
