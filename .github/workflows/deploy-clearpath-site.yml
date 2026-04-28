@@ -17,11 +17,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Switched from cloudflare/pages-action@v1 (deprecated, has known
+      # bug where new Pages Functions added to an existing project after
+      # initial deploy aren't uploaded). wrangler pages deploy is the
+      # supported successor and reliably picks up everything in the
+      # functions/ directory plus _routes.json.
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: cpeg-site
-          directory: clearpath-site
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy clearpath-site --project-name=cpeg-site --branch=main
