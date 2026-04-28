@@ -1,10 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useEscalationRisk } from '../../hooks/useNavigator'
+
+const SUPPORT_LABELS = {
+  cico: 'CICO',
+  behavior_contract: 'Behavior Contract',
+  counseling_referral: 'Counseling',
+  parent_contact: 'Parent Contact',
+  mentoring: 'Mentoring',
+  other: 'Other',
+}
 
 const LEVEL_STYLES = {
   high:   { badge: 'bg-red-100 text-red-700 border border-red-200',   bar: 'bg-red-500',   label: 'High' },
@@ -40,10 +49,59 @@ export default function NavigatorEscalationPage() {
     else setSelected(new Set(visible.map(s => s.student_id)))
   }
 
+  // ─── Existing supports lookup for selected students ─────────────────────
+  // When the bulk modal opens we fetch all supports (active + recently completed/discontinued)
+  // for the selected cohort so the AP can see what's already in place before assigning.
+  const [existingSupports, setExistingSupports] = useState({})  // studentId -> [supports]
+  const [skipDuplicates, setSkipDuplicates] = useState(true)
+
+  useEffect(() => {
+    if (!showBulkModal || selected.size === 0) return
+    let cancelled = false
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+    supabase
+      .from('navigator_supports')
+      .select('id, student_id, support_type, status, start_date, end_date')
+      .in('student_id', [...selected])
+      .or(`status.eq.active,start_date.gte.${ninetyDaysAgo}`)
+      .order('start_date', { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return
+        const map = {}
+        ;(data || []).forEach(s => {
+          if (!map[s.student_id]) map[s.student_id] = []
+          map[s.student_id].push(s)
+        })
+        setExistingSupports(map)
+      })
+    return () => { cancelled = true }
+  }, [showBulkModal, selected])
+
+  // For the chosen bulk type, find which selected students already have it active
+  // so we can either skip or warn before duplicate-assigning.
+  const duplicates = [...selected].filter(sid => {
+    const list = existingSupports[sid] || []
+    return list.some(s => s.support_type === bulkType && s.status === 'active')
+  })
+  const failedRecent = [...selected].filter(sid => {
+    const list = existingSupports[sid] || []
+    return list.some(s => s.support_type === bulkType && s.status === 'discontinued')
+  })
+
   const handleBulkCreate = async () => {
     if (selected.size === 0) return
     setBulkSaving(true)
-    const rows = [...selected].map(studentId => {
+    const targetIds = skipDuplicates
+      ? [...selected].filter(id => !duplicates.includes(id))
+      : [...selected]
+
+    if (targetIds.length === 0) {
+      toast.error('All selected students already have an active support of this type.')
+      setBulkSaving(false)
+      return
+    }
+
+    const rows = targetIds.map(studentId => {
       const s = students.find(x => x.student_id === studentId)
       return {
         district_id: districtId,
@@ -59,10 +117,12 @@ export default function NavigatorEscalationPage() {
     const { error: err } = await supabase.from('navigator_supports').insert(rows)
     setBulkSaving(false)
     if (err) { toast.error(err.message); return }
-    toast.success(`${rows.length} support${rows.length > 1 ? 's' : ''} created`)
+    const skipped = selected.size - rows.length
+    toast.success(`${rows.length} support${rows.length > 1 ? 's' : ''} created${skipped > 0 ? ` · ${skipped} skipped (already active)` : ''}`)
     setSelected(new Set())
     setShowBulkModal(false)
     setBulkNotes('')
+    setExistingSupports({})
     refetch()
   }
 
@@ -236,42 +296,128 @@ export default function NavigatorEscalationPage() {
 
       {/* Bulk support modal */}
       {!isDemoReadonly && showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
-            <h2 className="text-base font-semibold text-gray-900">Create Support for {selected.size} Student{selected.size !== 1 ? 's' : ''}</h2>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Support Type</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                value={bulkType}
-                onChange={e => setBulkType(e.target.value)}
-              >
-                {BULK_SUPPORT_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowBulkModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-gray-200 sticky top-0 bg-white">
+              <h2 className="text-base font-semibold text-gray-900">Create Support for {selected.size} Student{selected.size !== 1 ? 's' : ''}</h2>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Notes (applied to all)</label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                rows={3}
-                placeholder="Assigned via bulk action from Escalation Engine..."
-                value={bulkNotes}
-                onChange={e => setBulkNotes(e.target.value)}
-              />
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Support Type</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  value={bulkType}
+                  onChange={e => setBulkType(e.target.value)}
+                >
+                  {BULK_SUPPORT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Per-student existing-supports awareness */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                  <p className="text-xs font-semibold text-gray-700">Pre-flight check — what's already on these students</p>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
+                  {[...selected].map(sid => {
+                    const s = students.find(x => x.student_id === sid)
+                    const hist = existingSupports[sid] || []
+                    const active = hist.filter(h => h.status === 'active')
+                    const failed = hist.filter(h => h.status === 'discontinued')
+                    const completed = hist.filter(h => h.status === 'completed')
+                    const isDup = duplicates.includes(sid)
+                    const wasFailed = failedRecent.includes(sid)
+                    return (
+                      <div key={sid} className={`px-3 py-2 text-xs ${isDup ? 'bg-amber-50' : wasFailed ? 'bg-red-50' : ''}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-800">
+                            {s?.student ? `${s.student.first_name} ${s.student.last_name}` : sid.slice(0, 8)}
+                            <span className="ml-1.5 text-gray-400">Gr {s?.student?.grade_level || '—'}</span>
+                          </span>
+                          {isDup && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-800">DUPLICATE</span>}
+                          {wasFailed && !isDup && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-200 text-red-800">PRIOR FAILURE</span>}
+                        </div>
+                        {active.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {active.map(h => (
+                              <span key={h.id} className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-700">
+                                Active: {SUPPORT_LABELS[h.support_type] || h.support_type}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {(completed.length > 0 || failed.length > 0) && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {completed.map(h => (
+                              <span key={h.id} className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600" title={h.start_date}>
+                                Completed: {SUPPORT_LABELS[h.support_type] || h.support_type}
+                              </span>
+                            ))}
+                            {failed.map(h => (
+                              <span key={h.id} className="px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-700" title={h.start_date}>
+                                Failed: {SUPPORT_LABELS[h.support_type] || h.support_type}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {hist.length === 0 && <p className="text-gray-400 mt-0.5 italic">No active or recent supports on file</p>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {duplicates.length > 0 && (
+                <label className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 mt-0.5"
+                    checked={skipDuplicates}
+                    onChange={e => setSkipDuplicates(e.target.checked)}
+                  />
+                  <span className="text-xs text-amber-800">
+                    <strong>{duplicates.length} student{duplicates.length === 1 ? '' : 's'}</strong> already have an active {BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} —
+                    {skipDuplicates ? ' skip them and only create for the rest.' : ' create anyway (will produce duplicate active supports).'}
+                  </span>
+                </label>
+              )}
+
+              {failedRecent.length > 0 && (
+                <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-xs text-red-800">
+                  ⚠ <strong>{failedRecent.length} student{failedRecent.length === 1 ? '' : 's'}</strong> previously had this support discontinued in the last 90 days.
+                  Consider escalating tier or trying a different intervention rather than re-running the same one.
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Notes (applied to all)</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                  rows={3}
+                  placeholder="Assigned via bulk action from Escalation Engine..."
+                  value={bulkNotes}
+                  onChange={e => setBulkNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                {duplicates.length > 0 && skipDuplicates
+                  ? `Will create ${selected.size - duplicates.length} active ${BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support${(selected.size - duplicates.length) !== 1 ? 's' : ''} (skipping ${duplicates.length} duplicate${duplicates.length === 1 ? '' : 's'}).`
+                  : `Will create ${selected.size} active ${BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support${selected.size !== 1 ? 's' : ''} starting today.`}
+              </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-              This will create {selected.size} active {BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support{selected.size !== 1 ? 's' : ''} starting today.
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
               <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
               <button
                 onClick={handleBulkCreate}
-                disabled={bulkSaving}
+                disabled={bulkSaving || (skipDuplicates && duplicates.length === selected.size)}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg"
               >
-                {bulkSaving ? 'Creating...' : `Create ${selected.size} Support${selected.size !== 1 ? 's' : ''}`}
+                {bulkSaving ? 'Creating...'
+                  : (skipDuplicates && duplicates.length === selected.size) ? 'All duplicates'
+                  : `Create ${skipDuplicates ? selected.size - duplicates.length : selected.size} Support${(skipDuplicates ? selected.size - duplicates.length : selected.size) !== 1 ? 's' : ''}`}
               </button>
             </div>
           </div>

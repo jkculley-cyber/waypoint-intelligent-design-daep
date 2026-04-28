@@ -3,10 +3,26 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
-import { useNavigatorPlacements } from '../../hooks/useNavigator'
+import {
+  useNavigatorPlacements,
+  useStudentCumulativeDays,
+  useStudentMDRs,
+  createMDR,
+} from '../../hooks/useNavigator'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { exportToExcel } from '../../lib/exportUtils'
+
+const PARENT_NOTIFY_METHODS = [
+  { value: 'phone_call',       label: 'Phone call (parent answered)' },
+  { value: 'voicemail',        label: 'Voicemail left' },
+  { value: 'email',            label: 'Email sent' },
+  { value: 'certified_letter', label: 'Certified letter' },
+  { value: 'in_person',        label: 'In person' },
+  { value: 'text_message',     label: 'Text message' },
+  { value: 'other',            label: 'Other (note in field below)' },
+]
+const PARENT_NOTIFY_LABELS = Object.fromEntries(PARENT_NOTIFY_METHODS.map(m => [m.value, m.label]))
 
 const TABS = [
   { key: 'active_iss', label: 'Active ISS' },
@@ -266,7 +282,13 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
     reason: '',
     reentry_plan: '',
     parent_notified: false,
+    parent_notified_method: '',
+    parent_contact_notes: '',
   })
+  const [showMDRModal, setShowMDRModal] = useState(false)
+  const [mdrIdForPlacement, setMdrIdForPlacement] = useState(null)
+  const { data: cumDays, refetch: refetchCum } = useStudentCumulativeDays(selectedStudent?.id)
+  const { mdrs, refetch: refetchMDRs } = useStudentMDRs(selectedStudent?.id)
 
   useEffect(() => {
     if (!districtId) return
@@ -285,6 +307,13 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
     setStudents(data || [])
   }
 
+  // Live computation: would this placement cross the 10-day SPED threshold?
+  const proposedDays = parseInt(form.days) || 0
+  const cumNow = cumDays?.cumulative_days || 0
+  const wouldCross = selectedStudent?.is_sped && (cumNow + proposedDays) > 10
+  const hasUsableMDR = mdrs.some(m => !m.is_manifestation)  // non-manifestation MDR allows continued discipline
+  const mdrLinkRequired = wouldCross && !mdrIdForPlacement
+
   const handleSave = async () => {
     if (!selectedStudent || !form.campus_id || !form.placement_type || !form.start_date) {
       setError('Student, campus, type, and start date are required.')
@@ -292,6 +321,14 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
     }
     if (form.placement_type === 'oss' && !form.reentry_plan.trim()) {
       setError('Re-entry plan is required for OSS placements.')
+      return
+    }
+    if (form.parent_notified && !form.parent_notified_method) {
+      setError('Choose how the parent was notified — TEC §37.009 same-day notice requires a method.')
+      return
+    }
+    if (wouldCross && !mdrIdForPlacement) {
+      setError('SPED student would exceed 10 cumulative removal days — link a Manifestation Determination Review before saving.')
       return
     }
     setSaving(true); setError(null)
@@ -308,7 +345,10 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
       reason: form.reason || null,
       reentry_plan: form.reentry_plan || null,
       parent_notified: form.parent_notified,
-      parent_notified_at: form.parent_notified ? new Date().toISOString() : null,
+      // parent_notified_at intentionally omitted — server trigger sets it.
+      parent_notified_method: form.parent_notified ? form.parent_notified_method : null,
+      parent_contact_notes: form.parent_notified ? (form.parent_contact_notes || null) : null,
+      manifestation_determination_id: mdrIdForPlacement || null,
     })
     setSaving(false)
     if (err) { setError(err.message); return }
@@ -340,10 +380,72 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
                   </span>
                   <button onClick={() => { setSelectedStudent(null); setStudents([]) }} className="text-xs text-gray-400">Change</button>
                 </div>
-                {selectedStudent.is_sped && (
-                  <div className="mt-2 flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">
-                    <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                    <span><strong>SPED student</strong> — IDEA protections apply. Track cumulative suspension days. 10+ days requires IEP review. MDR required before DAEP.</span>
+                {selectedStudent.is_sped && cumDays && (
+                  <div className={`mt-2 rounded-lg border p-3 text-xs ${
+                    wouldCross ? 'bg-red-50 border-red-300 text-red-800'
+                    : (cumNow + proposedDays) >= 8 ? 'bg-amber-50 border-amber-300 text-amber-800'
+                    : 'bg-purple-50 border-purple-200 text-purple-800'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                      <div className="flex-1 space-y-1">
+                        <div className="font-semibold">
+                          SPED student — IDEA 34 CFR §300.530 cumulative day tracker
+                        </div>
+                        <div>
+                          {selectedStudent.first_name} has <strong>{cumNow} cumulative ISS+OSS day{cumNow === 1 ? '' : 's'}</strong> this school year
+                          {proposedDays > 0 && ` + ${proposedDays} proposed = ${cumNow + proposedDays} total`}.
+                        </div>
+                        {wouldCross ? (
+                          <div className="font-semibold mt-1">
+                            ⚠ This placement would cross the federal 10-day threshold.
+                            Manifestation Determination Review (MDR) is REQUIRED before continuing.
+                          </div>
+                        ) : (cumNow + proposedDays) >= 8 ? (
+                          <div className="mt-1">
+                            Approaching threshold — schedule MDR before placement {cumNow + proposedDays}/{10}.
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    {wouldCross && (
+                      <div className="mt-3 pt-3 border-t border-red-200">
+                        {mdrs.length > 0 && (
+                          <div className="mb-2">
+                            <label className="block text-[10px] font-semibold text-red-700 uppercase mb-1">Link existing MDR (most recent first)</label>
+                            <select
+                              className="w-full px-2 py-1.5 border border-red-300 rounded text-xs bg-white text-gray-800"
+                              value={mdrIdForPlacement || ''}
+                              onChange={e => setMdrIdForPlacement(e.target.value || null)}
+                            >
+                              <option value="">— None linked —</option>
+                              {mdrs.map(m => (
+                                <option key={m.id} value={m.id}>
+                                  {format(parseISO(m.meeting_date), 'MMM d, yyyy')} — {m.is_manifestation ? 'IS manifestation (cannot discipline)' : 'NOT a manifestation (discipline OK)'}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowMDRModal(true)}
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded"
+                        >
+                          + Log new MDR meeting
+                        </button>
+                        {hasUsableMDR && !mdrIdForPlacement && (
+                          <p className="mt-2 text-[11px] text-red-700">
+                            A non-manifestation MDR exists — link it above to proceed, or log a new one if this is a separate behavior.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {selectedStudent.is_sped && !cumDays && (
+                  <div className="mt-2 p-2.5 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                    <strong>SPED student</strong> — IDEA protections apply. Loading cumulative day count…
                   </div>
                 )}
               </div>
@@ -460,18 +562,225 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.parent_notified} onChange={e => setForm(f => ({ ...f, parent_notified: e.target.checked }))} className="w-4 h-4 accent-blue-600" />
-            <span className="text-sm text-gray-700">Parent/Guardian Notified</span>
-          </label>
+          <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.parent_notified}
+                onChange={e => setForm(f => ({
+                  ...f,
+                  parent_notified: e.target.checked,
+                  parent_notified_method: e.target.checked ? f.parent_notified_method : '',
+                  parent_contact_notes: e.target.checked ? f.parent_contact_notes : '',
+                }))}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-800">Parent/Guardian Notified</span>
+              <span className="text-xs text-gray-400">— TEC §37.009 same-day notice</span>
+            </label>
+            {form.parent_notified && (
+              <div className="mt-3 space-y-2 pl-6">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">How was contact made? *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-400"
+                    value={form.parent_notified_method}
+                    onChange={e => setForm(f => ({ ...f, parent_notified_method: e.target.value }))}
+                  >
+                    <option value="">Select method...</option>
+                    {PARENT_NOTIFY_METHODS.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Contact notes</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 resize-none"
+                    rows={2}
+                    placeholder="e.g., Spoke to mother, confirmed receipt, re-entry conference scheduled for 3/18..."
+                    value={form.parent_contact_notes}
+                    onChange={e => setForm(f => ({ ...f, parent_contact_notes: e.target.value }))}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400">
+                  Timestamp is set server-side at the moment you save — not adjustable.
+                </p>
+              </div>
+            )}
+          </div>
 
           {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
         </div>
 
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg">
-            {saving ? 'Saving…' : 'Save Placement'}
+          <button
+            onClick={handleSave}
+            disabled={saving || mdrLinkRequired}
+            title={mdrLinkRequired ? 'Link or log an MDR before saving' : ''}
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg"
+          >
+            {saving ? 'Saving…' : mdrLinkRequired ? 'MDR required' : 'Save Placement'}
+          </button>
+        </div>
+      </div>
+      {showMDRModal && selectedStudent && (
+        <MDRModal
+          student={selectedStudent}
+          districtId={districtId}
+          campusId={form.campus_id}
+          createdBy={profile.id}
+          onClose={() => setShowMDRModal(false)}
+          onSaved={(id) => {
+            setShowMDRModal(false)
+            setMdrIdForPlacement(id)
+            refetchMDRs()
+            refetchCum()
+            toast.success('MDR logged')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Manifestation Determination Modal ────────────────────────────────────────
+
+function MDRModal({ student, districtId, campusId, createdBy, onClose, onSaved }) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [form, setForm] = useState({
+    meeting_date: format(new Date(), 'yyyy-MM-dd'),
+    attendees: '',
+    behavior_description: '',
+    is_manifestation: 'not_manifestation',
+    decision_rationale: '',
+    iep_modified: false,
+    fba_required: false,
+    bip_required: false,
+  })
+
+  const handleSave = async () => {
+    if (!form.behavior_description.trim() || !form.decision_rationale.trim()) {
+      setError('Behavior description and decision rationale are required.')
+      return
+    }
+    if (!campusId) {
+      setError('Select a campus on the placement form before logging the MDR.')
+      return
+    }
+    setSaving(true); setError(null)
+    const { data, error: err } = await createMDR({
+      district_id: districtId,
+      campus_id: campusId,
+      student_id: student.id,
+      meeting_date: form.meeting_date,
+      attendees: form.attendees || null,
+      behavior_description: form.behavior_description,
+      is_manifestation: form.is_manifestation === 'is_manifestation',
+      decision_rationale: form.decision_rationale,
+      iep_modified: form.iep_modified,
+      fba_required: form.fba_required,
+      bip_required: form.bip_required,
+      created_by: createdBy,
+    })
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    onSaved(data?.id)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b border-gray-200 sticky top-0 bg-white">
+          <h2 className="text-base font-semibold text-gray-900">Log Manifestation Determination Review</h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {student.first_name} {student.last_name} — IDEA 34 CFR §300.530(e)
+          </p>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Meeting date *</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                value={form.meeting_date}
+                onChange={e => setForm(f => ({ ...f, meeting_date: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Attendees</label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              placeholder="e.g., LEA rep, Dx Coord, Gen Ed teacher, SPED teacher, parent..."
+              value={form.attendees}
+              onChange={e => setForm(f => ({ ...f, attendees: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Behavior description *</label>
+            <textarea
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+              placeholder="Describe the conduct that triggered the proposed disciplinary change..."
+              value={form.behavior_description}
+              onChange={e => setForm(f => ({ ...f, behavior_description: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Determination *</label>
+            <div className="space-y-1.5">
+              <label className="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="mdr_det" className="mt-0.5"
+                  checked={form.is_manifestation === 'not_manifestation'}
+                  onChange={() => setForm(f => ({ ...f, is_manifestation: 'not_manifestation' }))} />
+                <span className="text-sm">
+                  <strong>NOT a manifestation</strong> of disability — discipline may proceed.
+                </span>
+              </label>
+              <label className="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="mdr_det" className="mt-0.5"
+                  checked={form.is_manifestation === 'is_manifestation'}
+                  onChange={() => setForm(f => ({ ...f, is_manifestation: 'is_manifestation' }))} />
+                <span className="text-sm">
+                  <strong>IS a manifestation</strong> of disability — return to placement; review IEP/BIP.
+                </span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Decision rationale *</label>
+            <textarea
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+              placeholder="Why the IEP team reached this conclusion. Reference IEP/BIP, FBA, and the two-prong test..."
+              value={form.decision_rationale}
+              onChange={e => setForm(f => ({ ...f, decision_rationale: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-1.5">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="w-4 h-4" checked={form.fba_required} onChange={e => setForm(f => ({ ...f, fba_required: e.target.checked }))} />
+              FBA ordered
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="w-4 h-4" checked={form.bip_required} onChange={e => setForm(f => ({ ...f, bip_required: e.target.checked }))} />
+              BIP required / updated
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="w-4 h-4" checked={form.iep_modified} onChange={e => setForm(f => ({ ...f, iep_modified: e.target.checked }))} />
+              IEP modified at this meeting
+            </label>
+          </div>
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg">
+            {saving ? 'Saving…' : 'Save MDR'}
           </button>
         </div>
       </div>
@@ -484,6 +793,7 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
 function EditPlacementDrawer({ placement, onClose, onSaved }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
   const [form, setForm] = useState({
     end_date: placement.end_date || '',
     days: placement.days ?? '',
@@ -491,7 +801,10 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
     reason: placement.reason || '',
     reentry_plan: placement.reentry_plan || '',
     parent_notified: placement.parent_notified || false,
+    parent_notified_method: placement.parent_notified_method || '',
+    parent_contact_notes: placement.parent_contact_notes || '',
   })
+  const reasonHistoryCount = Array.isArray(placement.reason_history) ? placement.reason_history.length : 0
 
   const studentName = placement.students
     ? `${placement.students.first_name} ${placement.students.last_name}`
@@ -507,6 +820,10 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
       setError('Re-entry plan is required for OSS placements.')
       return
     }
+    if (form.parent_notified && !form.parent_notified_method) {
+      setError('Choose how the parent was notified — TEC §37.009 same-day notice requires a method.')
+      return
+    }
     setSaving(true); setError(null)
     const updates = {
       end_date: form.end_date || null,
@@ -515,9 +832,9 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
       reason: form.reason || null,
       reentry_plan: form.reentry_plan || null,
       parent_notified: form.parent_notified,
-    }
-    if (form.parent_notified && !placement.parent_notified) {
-      updates.parent_notified_at = new Date().toISOString()
+      parent_notified_method: form.parent_notified ? form.parent_notified_method : null,
+      parent_contact_notes: form.parent_notified ? (form.parent_contact_notes || null) : null,
+      // parent_notified_at intentionally omitted — server trigger sets/clears it.
     }
     const { error: err } = await supabase
       .from('navigator_placements')
@@ -595,7 +912,18 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Reason</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-gray-500">Reason</label>
+              {reasonHistoryCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowHistory(true)}
+                  className="text-[10px] text-amber-600 hover:text-amber-800 font-medium underline"
+                >
+                  Edited {reasonHistoryCount}× — view history
+                </button>
+              )}
+            </div>
             <textarea
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 resize-none"
               rows={2}
@@ -614,20 +942,54 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.parent_notified}
-              onChange={e => setForm(f => ({ ...f, parent_notified: e.target.checked }))}
-              className="w-4 h-4 accent-blue-600"
-            />
-            <span className="text-sm text-gray-700">Parent/Guardian Notified</span>
-            {placement.parent_notified_at && (
-              <span className="text-xs text-gray-400 ml-1">
-                (logged {format(parseISO(placement.parent_notified_at), 'MMM d')})
-              </span>
+          <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.parent_notified}
+                onChange={e => setForm(f => ({
+                  ...f,
+                  parent_notified: e.target.checked,
+                  parent_notified_method: e.target.checked ? f.parent_notified_method : '',
+                  parent_contact_notes: e.target.checked ? f.parent_contact_notes : '',
+                }))}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-800">Parent/Guardian Notified</span>
+              {placement.parent_notified_at && (
+                <span className="text-[11px] text-gray-400 ml-1">
+                  (server-logged {format(parseISO(placement.parent_notified_at), 'MMM d, h:mm a')})
+                </span>
+              )}
+            </label>
+            {form.parent_notified && (
+              <div className="mt-3 space-y-2 pl-6">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">How was contact made? *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-400"
+                    value={form.parent_notified_method}
+                    onChange={e => setForm(f => ({ ...f, parent_notified_method: e.target.value }))}
+                  >
+                    <option value="">Select method...</option>
+                    {PARENT_NOTIFY_METHODS.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Contact notes</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 resize-none"
+                    rows={2}
+                    placeholder="e.g., Spoke to mother, confirmed receipt..."
+                    value={form.parent_contact_notes}
+                    onChange={e => setForm(f => ({ ...f, parent_contact_notes: e.target.value }))}
+                  />
+                </div>
+              </div>
             )}
-          </label>
+          </div>
 
           {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
         </div>
@@ -641,6 +1003,62 @@ function EditPlacementDrawer({ placement, onClose, onSaved }) {
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
+        </div>
+      </div>
+      {showHistory && (
+        <ReasonHistoryModal
+          history={placement.reason_history || []}
+          currentReason={form.reason}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function ReasonHistoryModal({ history, currentReason, onClose }) {
+  const [actorMap, setActorMap] = useState({})
+
+  useEffect(() => {
+    const ids = [...new Set(history.map(h => h.changed_by).filter(Boolean))]
+    if (ids.length === 0) return
+    supabase.from('profiles').select('id, full_name').in('id', ids)
+      .then(({ data }) => setActorMap(Object.fromEntries((data || []).map(p => [p.id, p.full_name]))))
+  }, [history])
+
+  // History is appended chronologically (oldest first). Show newest-first for review.
+  const ordered = [...history].reverse()
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b border-gray-200 sticky top-0 bg-white">
+          <h2 className="text-base font-semibold text-gray-900">Reason — Edit History</h2>
+          <p className="text-xs text-gray-500 mt-0.5">All prior values are preserved server-side and immutable.</p>
+        </div>
+        <div className="p-5 space-y-3">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider mb-1">Current value</p>
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">{currentReason || <em className="text-gray-400">(empty)</em>}</p>
+          </div>
+          {ordered.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">No prior versions on file.</p>
+          ) : ordered.map((h, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                  Replaced {h.changed_at ? format(new Date(h.changed_at), 'MMM d, yyyy h:mm a') : '—'}
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  by {actorMap[h.changed_by] || (h.changed_by ? h.changed_by.slice(0, 8) : '—')}
+                </p>
+              </div>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.reason || <em className="text-gray-400">(empty)</em>}</p>
+            </div>
+          ))}
+        </div>
+        <div className="px-5 py-4 border-t border-gray-200 flex justify-end sticky bottom-0 bg-white">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600">Close</button>
         </div>
       </div>
     </div>

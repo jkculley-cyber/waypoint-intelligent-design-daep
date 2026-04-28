@@ -24,19 +24,34 @@ export async function audit({
 }) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      console.warn('[audit] skipped: no auth user', { action, entityType, entityId })
+      return
+    }
 
-    await supabase.from('audit_log').insert({
+    // Production audit_log shape: { district_id, user_id (NOT NULL), action,
+    // entity_type, entity_id, changes (JSONB combining old + new + actor_role) }
+    const changes = {}
+    if (oldValues) changes.old = oldValues
+    if (newValues) changes.new = newValues
+    if (actorRole) changes.actor_role = actorRole
+
+    const { error } = await supabase.from('audit_log').insert({
       district_id: districtId || null,
-      actor_id: user.id,
-      actor_role: actorRole || null,
+      user_id: user.id,
       action,
       entity_type: entityType,
       entity_id: entityId || null,
-      old_values: oldValues,
-      new_values: newValues,
+      changes: Object.keys(changes).length ? changes : null,
     })
-  } catch {
-    // Audit failures must never block the user's primary action
+    if (error) {
+      console.error('[audit] insert failed — primary action proceeded but audit log is incomplete', {
+        action, entityType, entityId, error: error.message,
+      })
+    }
+  } catch (err) {
+    console.error('[audit] unexpected exception — primary action proceeded but audit log is incomplete', {
+      action, entityType, entityId, error: err?.message,
+    })
   }
 }

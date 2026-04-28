@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { useDisproportionality } from '../../hooks/useNavigator'
+import { useDisproportionality, useDisproportionalityByRace } from '../../hooks/useNavigator'
 
 // Color scale for referral rate bars — white → amber → red
 function rateColor(rate, max) {
@@ -19,9 +19,17 @@ function rateColor(rate, max) {
   return '#60a5fa'
 }
 
+const SEVERITY_STYLES = {
+  severe:        { label: 'Severe',         badge: 'bg-red-100 text-red-700 border-red-200' },
+  high:          { label: 'High',           badge: 'bg-orange-100 text-orange-700 border-orange-200' },
+  elevated:      { label: 'Elevated',       badge: 'bg-amber-100 text-amber-700 border-amber-200' },
+  within_range:  { label: 'Within range',   badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+}
+
 export default function NavigatorDisproportionalityPage() {
   const { districtId, isDemoReadonly } = useAuth()
   const { campusData, gradeData, loading, error, refetch } = useDisproportionality()
+  const { byRace, bySpedStatus, loading: raceLoading, refetch: refetchRace, smallCellThreshold } = useDisproportionalityByRace()
   const [expandedCampus, setExpandedCampus] = useState(null)
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false)
   const [campuses, setCampuses] = useState([])
@@ -86,7 +94,7 @@ export default function NavigatorDisproportionalityPage() {
               </button>
             )}
             <button
-              onClick={refetch}
+              onClick={() => { refetch(); refetchRace() }}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               Refresh
@@ -284,6 +292,111 @@ export default function NavigatorDisproportionalityPage() {
                 </table>
               </div>
             )}
+
+            {/* Race / Ethnicity Section — Title VI risk-index */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">By Race / Ethnicity — OCR Risk Index</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Risk index = group's share of OSS ÷ group's share of enrollment.
+                    1.0 = proportional · 1.2+ elevated · 1.5+ high · 2.0+ severe.
+                    Cohorts with enrollment under {smallCellThreshold} are suppressed (FERPA + OCR small-cell rule).
+                  </p>
+                </div>
+                <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">90-day window</span>
+              </div>
+              {raceLoading ? (
+                <div className="p-6 text-center text-gray-400 text-sm">Loading...</div>
+              ) : byRace.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">No race-tagged students yet. Set <code>students.race_ethnicity</code> via import or Student Detail.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-left">
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Group</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Enrollment</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of pop</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Referrals</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of OSS</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS Risk Index</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Severity</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {byRace.map(r => (
+                        <tr key={r.race} className={r.suppressed ? 'opacity-60' : ''}>
+                          <td className="py-2 font-medium text-gray-800">{r.label}</td>
+                          <td className="py-2 text-right text-gray-600">{r.enrollment}</td>
+                          <td className="py-2 text-right text-gray-500">{r.enrollment_share}%</td>
+                          <td className="py-2 text-right text-gray-600">{r.suppressed ? '—' : r.referrals}</td>
+                          <td className="py-2 text-right text-gray-600">{r.suppressed ? '—' : r.oss}</td>
+                          <td className="py-2 text-right text-gray-500">{r.suppressed ? '—' : `${r.oss_share}%`}</td>
+                          <td className="py-2 text-right font-semibold text-gray-800">
+                            {r.suppressed ? <span className="text-xs text-gray-400 italic">suppressed (n&lt;{smallCellThreshold})</span>
+                              : r.oss_risk_index != null ? r.oss_risk_index : '—'}
+                          </td>
+                          <td className="py-2 text-right">
+                            {r.suppressed ? null
+                              : r.severity ? (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${SEVERITY_STYLES[r.severity].badge}`}>
+                                  {SEVERITY_STYLES[r.severity].label}
+                                </span>
+                              ) : <span className="text-xs text-gray-400">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* SPED / 504 Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">By Disability Status — IDEA / Section 504</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    OCR + IDEA Indicator-4 attention triggers when SPED OSS rate diverges from non-SPED rate.
+                  </p>
+                </div>
+                <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">90-day window</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left">
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Enrollment</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of pop</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Referrals</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of OSS</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Risk Index</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {bySpedStatus.map(r => (
+                      <tr key={r.group} className={r.suppressed ? 'opacity-60' : ''}>
+                        <td className="py-2 font-medium text-gray-800">{r.label}</td>
+                        <td className="py-2 text-right text-gray-600">{r.enrollment}</td>
+                        <td className="py-2 text-right text-gray-500">{r.suppressed ? '—' : `${r.enrollment_share}%`}</td>
+                        <td className="py-2 text-right text-gray-600">{r.suppressed ? '—' : r.referrals}</td>
+                        <td className="py-2 text-right text-gray-600">{r.suppressed ? '—' : r.oss}</td>
+                        <td className="py-2 text-right text-gray-500">{r.suppressed ? '—' : `${r.oss_share}%`}</td>
+                        <td className="py-2 text-right font-semibold text-gray-800">
+                          {r.suppressed ? <span className="text-xs text-gray-400 italic">suppressed (n&lt;{smallCellThreshold})</span>
+                            : r.oss_risk_index != null ? r.oss_risk_index : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Legend */}
             <div className="flex items-center gap-4 text-xs text-gray-500">

@@ -4,7 +4,8 @@ import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
+import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, useStudentMDRs, useStudentCumulativeDays, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
+import { generateHearingPacket } from '../../lib/navigatorPdf'
 import toast from 'react-hot-toast'
 
 const SUPPORT_TYPE_LABELS = {
@@ -33,6 +34,27 @@ export default function NavigatorStudentPage() {
   const { createMonitor } = useStudentMonitors()
   const { student, referrals, placements, supports, riskScore, riskTriggers, riskLevel, loading } = useNavigatorStudentHistory(id)
   const daepStatus = useStudentDaepStatus(id)
+  const { mdrs } = useStudentMDRs(id)
+  const { data: cumDays } = useStudentCumulativeDays(id)
+  const [exportingPacket, setExportingPacket] = useState(false)
+
+  const handleHearingPacket = async () => {
+    if (!student) return
+    setExportingPacket(true)
+    try {
+      await generateHearingPacket({
+        student, referrals, placements, supports, mdrs, cumDays,
+        riskScore, riskTriggers,
+        generatedBy: profile?.full_name || profile?.email || null,
+      })
+      toast.success('Hearing packet PDF saved')
+    } catch (e) {
+      console.error(e)
+      toast.error('Could not generate packet — see console.')
+    } finally {
+      setExportingPacket(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -120,6 +142,14 @@ export default function NavigatorStudentPage() {
               className={`px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isDemoReadonly ? 'bg-amber-300 cursor-not-allowed opacity-60' : 'bg-amber-500 hover:bg-amber-600'}`}
             >
               Monitor
+            </button>
+            <button
+              onClick={handleHearingPacket}
+              disabled={exportingPacket}
+              title="Generate a single FERPA-watermarked PDF with timeline, parent-notice records, MDRs, supports, and edit-history — for board hearings or due-process complaints."
+              className="px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors bg-slate-700 hover:bg-slate-800 disabled:bg-slate-400"
+            >
+              {exportingPacket ? 'Generating…' : 'Hearing Packet PDF'}
             </button>
             {showDaep && (
               <button

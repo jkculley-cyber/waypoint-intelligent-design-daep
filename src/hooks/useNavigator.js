@@ -1308,6 +1308,300 @@ export function useStudentDaepStatus(studentId) {
   return status
 }
 
+// ─── SPED Cumulative Days + Manifestation Determinations ────────────────────
+
+const RACE_LABELS = {
+  asian: 'Asian',
+  black: 'Black or African American',
+  hispanic: 'Hispanic or Latino',
+  native_am: 'American Indian or Alaska Native',
+  pacific_islander: 'Native Hawaiian or Pacific Islander',
+  white: 'White',
+  two_or_more: 'Two or More Races',
+  not_specified: 'Not Specified',
+}
+export { RACE_LABELS }
+
+/**
+ * Cumulative ISS+OSS days for a student in the current school year.
+ * Reads navigator_placements_cumulative view (added in migration 066).
+ * Returns null while loading; empty object {} if the student has no placements yet.
+ */
+export function useStudentCumulativeDays(studentId) {
+  const { districtId } = useAuth()
+  const [data, setData] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId || !studentId) { setData({}); return }
+    const { data: row, error } = await supabase
+      .from('navigator_placements_cumulative')
+      .select('cumulative_days, placement_count, days_until_mdr_threshold, school_year_start, is_sped, is_504')
+      .eq('student_id', studentId)
+      .eq('district_id', districtId)
+      .maybeSingle()
+    if (error) {
+      console.error('[useStudentCumulativeDays]', error.message)
+      setData({})
+      return
+    }
+    setData(row || { cumulative_days: 0, placement_count: 0, days_until_mdr_threshold: 10 })
+  }, [districtId, studentId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, refetch: fetch }
+}
+
+/**
+ * Manifestation Determination Review records for a student (most-recent first).
+ */
+export function useStudentMDRs(studentId) {
+  const { districtId } = useAuth()
+  const [mdrs, setMdrs] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    if (!districtId || !studentId) return
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('manifestation_determinations')
+      .select('*, creator:profiles!manifestation_determinations_created_by_fkey(full_name)')
+      .eq('student_id', studentId)
+      .eq('district_id', districtId)
+      .order('meeting_date', { ascending: false })
+    if (error) console.error('[useStudentMDRs]', error.message)
+    setMdrs(data || [])
+    setLoading(false)
+  }, [districtId, studentId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { mdrs, loading, refetch: fetch }
+}
+
+export async function createMDR(payload) {
+  const { data, error } = await supabase
+    .from('manifestation_determinations')
+    .insert(payload)
+    .select('id')
+    .single()
+  return { data, error }
+}
+
+// ─── Audit-log lookup (for hearing packet + history viewer) ──────────────────
+
+export function useEntityAuditTrail(entityType, entityId) {
+  const { districtId } = useAuth()
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!districtId || !entityType || !entityId) { setLoading(false); return }
+    setLoading(true)
+    supabase
+      .from('audit_log')
+      .select('id, action, user_id, changes, created_at')
+      .eq('entity_type', entityType)
+      .eq('entity_id', entityId)
+      .order('created_at', { ascending: false })
+      .then(async ({ data }) => {
+        // Normalize to a stable shape regardless of audit_log column variant
+        const rows = (data || []).map(r => ({
+          ...r,
+          actor_id: r.user_id,
+          old_values: r.changes?.old || null,
+          new_values: r.changes?.new || null,
+          actor_role: r.changes?.actor_role || null,
+        }))
+        const ids = [...new Set(rows.map(r => r.actor_id).filter(Boolean))]
+        if (ids.length > 0) {
+          const { data: profs } = await supabase
+            .from('profiles').select('id, full_name').in('id', ids)
+          const byId = Object.fromEntries((profs || []).map(p => [p.id, p.full_name]))
+          rows.forEach(r => { r.actor_name = byId[r.actor_id] || null })
+        }
+        setEntries(rows)
+        setLoading(false)
+      })
+  }, [districtId, entityType, entityId])
+
+  return { entries, loading }
+}
+
+// ─── Disproportionality by Race (with small-cell suppression) ────────────────
+
+const SMALL_CELL_THRESHOLD = 10  // OCR small-cell minimum: hide n<10 cohorts
+
+/**
+ * Race × campus referral rates for the rolling 90-day window.
+ * Cohorts with enrollment <10 are suppressed (returned with `suppressed:true`)
+ * to comply with OCR small-cell guidance and FERPA aggregate-data rules.
+ */
+export function useDisproportionalityByRace() {
+  const { districtId, campusIds, isAdmin } = useAuth()
+  const [byRace, setByRace] = useState([])
+  const [bySpedStatus, setBySpedStatus] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetch = useCallback(async () => {
+    if (!districtId) return
+    setLoading(true); setError(null)
+    try {
+      const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+
+      let refQ = supabase
+        .from('navigator_referrals')
+        .select('student_id, students(id, race_ethnicity, is_sped, is_504, grade_level)')
+        .eq('district_id', districtId)
+        .gte('referral_date', d90)
+
+      let placQ = supabase
+        .from('navigator_placements')
+        .select('student_id, placement_type, students(id, race_ethnicity, is_sped, is_504)')
+        .eq('district_id', districtId)
+        .gte('start_date', d90)
+
+      let studQ = supabase
+        .from('students')
+        .select('id, race_ethnicity, is_sped, is_504')
+        .eq('district_id', districtId)
+        .eq('is_active', true)
+
+      if (!isAdmin && campusIds?.length) {
+        refQ = refQ.in('campus_id', campusIds)
+        placQ = placQ.in('campus_id', campusIds)
+        studQ = studQ.in('campus_id', campusIds)
+      }
+
+      const [refRes, placRes, studRes] = await Promise.all([refQ, placQ, studQ])
+      if (refRes.error) throw refRes.error
+      if (placRes.error) throw placRes.error
+      if (studRes.error) throw studRes.error
+
+      const referrals = refRes.data || []
+      const placements = placRes.data || []
+      const enrollment = studRes.data || []
+
+      // ─── Aggregate by race ───
+      const raceEnroll = {}
+      enrollment.forEach(s => {
+        const r = s.race_ethnicity || 'not_specified'
+        raceEnroll[r] = (raceEnroll[r] || 0) + 1
+      })
+      const raceRefs = {}
+      const raceISS = {}
+      const raceOSS = {}
+      referrals.forEach(r => {
+        const race = r.students?.race_ethnicity || 'not_specified'
+        raceRefs[race] = (raceRefs[race] || 0) + 1
+      })
+      placements.forEach(p => {
+        const race = p.students?.race_ethnicity || 'not_specified'
+        if (p.placement_type === 'iss') raceISS[race] = (raceISS[race] || 0) + 1
+        if (p.placement_type === 'oss') raceOSS[race] = (raceOSS[race] || 0) + 1
+      })
+
+      const totalEnroll = enrollment.length
+      const totalRefs = referrals.length
+      const totalOSS = placements.filter(p => p.placement_type === 'oss').length
+
+      const raceBuckets = Object.keys({ ...raceEnroll, ...raceRefs }).map(race => {
+        const enroll = raceEnroll[race] || 0
+        const refs = raceRefs[race] || 0
+        const iss = raceISS[race] || 0
+        const oss = raceOSS[race] || 0
+        const suppressed = enroll < SMALL_CELL_THRESHOLD
+        // Risk index: (race's share of OSS) / (race's share of enrollment)
+        // 1.0 = proportional; >1.2 = elevated; >2.0 = severe per OCR convention
+        const enrollShare = totalEnroll > 0 ? enroll / totalEnroll : 0
+        const refShare = totalRefs > 0 ? refs / totalRefs : 0
+        const ossShare = totalOSS > 0 ? oss / totalOSS : 0
+        const refIndex = enrollShare > 0 ? refShare / enrollShare : null
+        const ossIndex = enrollShare > 0 ? ossShare / enrollShare : null
+        return {
+          race,
+          label: RACE_LABELS[race] || race,
+          enrollment: enroll,
+          enrollment_share: +(enrollShare * 100).toFixed(1),
+          referrals: refs,
+          referral_share: +(refShare * 100).toFixed(1),
+          referral_rate: enroll > 0 ? +(refs / enroll * 100).toFixed(1) : null,
+          referral_risk_index: refIndex != null ? +refIndex.toFixed(2) : null,
+          oss: oss,
+          oss_share: +(ossShare * 100).toFixed(1),
+          oss_rate: enroll > 0 ? +(oss / enroll * 100).toFixed(1) : null,
+          oss_risk_index: ossIndex != null ? +ossIndex.toFixed(2) : null,
+          iss,
+          suppressed,
+          // OCR severity buckets on OSS risk index
+          severity: suppressed ? null
+            : ossIndex == null ? null
+            : ossIndex >= 2.0 ? 'severe'
+            : ossIndex >= 1.5 ? 'high'
+            : ossIndex >= 1.2 ? 'elevated'
+            : 'within_range',
+        }
+      }).sort((a, b) => (b.oss_risk_index || 0) - (a.oss_risk_index || 0))
+
+      setByRace(raceBuckets)
+
+      // ─── Aggregate by SPED status ───
+      const spedEnroll = enrollment.filter(s => s.is_sped).length
+      const spedRefs = referrals.filter(r => r.students?.is_sped).length
+      const spedOSS = placements.filter(p => p.placement_type === 'oss' && p.students?.is_sped).length
+      const fivePctEnroll = enrollment.filter(s => s.is_504).length
+      const fivePctRefs = referrals.filter(r => r.students?.is_504).length
+      const fivePctOSS = placements.filter(p => p.placement_type === 'oss' && p.students?.is_504).length
+
+      const spedRows = []
+      if (spedEnroll >= SMALL_CELL_THRESHOLD || spedEnroll === 0) {
+        const enrollShare = totalEnroll > 0 ? spedEnroll / totalEnroll : 0
+        const ossShare = totalOSS > 0 ? spedOSS / totalOSS : 0
+        spedRows.push({
+          group: 'sped',
+          label: 'SPED (IDEA)',
+          enrollment: spedEnroll,
+          enrollment_share: +(enrollShare * 100).toFixed(1),
+          referrals: spedRefs,
+          oss: spedOSS,
+          oss_share: +(ossShare * 100).toFixed(1),
+          oss_risk_index: enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null,
+          suppressed: spedEnroll < SMALL_CELL_THRESHOLD,
+        })
+      } else {
+        spedRows.push({ group: 'sped', label: 'SPED (IDEA)', suppressed: true, enrollment: spedEnroll })
+      }
+      if (fivePctEnroll >= SMALL_CELL_THRESHOLD || fivePctEnroll === 0) {
+        const enrollShare = totalEnroll > 0 ? fivePctEnroll / totalEnroll : 0
+        const ossShare = totalOSS > 0 ? fivePctOSS / totalOSS : 0
+        spedRows.push({
+          group: '504',
+          label: 'Section 504',
+          enrollment: fivePctEnroll,
+          enrollment_share: +(enrollShare * 100).toFixed(1),
+          referrals: fivePctRefs,
+          oss: fivePctOSS,
+          oss_share: +(ossShare * 100).toFixed(1),
+          oss_risk_index: enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null,
+          suppressed: fivePctEnroll < SMALL_CELL_THRESHOLD,
+        })
+      } else {
+        spedRows.push({ group: '504', label: 'Section 504', suppressed: true, enrollment: fivePctEnroll })
+      }
+      setBySpedStatus(spedRows)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [districtId, isAdmin, campusIds])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { byRace, bySpedStatus, loading, error, refetch: fetch, smallCellThreshold: SMALL_CELL_THRESHOLD }
+}
+
 // ─── Student Monitors (Dashboard Alerts) ─────────────────────────────────────
 
 const MONITOR_TYPE_LABELS = {
