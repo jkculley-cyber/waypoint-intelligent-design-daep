@@ -117,6 +117,13 @@
 
   footer{position:relative;z-index:1;text-align:center;padding:40px 5%;
     font-size:.75rem;color:var(--text-muted);border-top:1px solid var(--border)}
+
+  /* Standalone-mode (verify.clearpathedgroup.com) — strip marketing chrome
+     so the page reads as a dedicated verification endpoint, not a sales
+     funnel. Triggered by JS reading window.location.hostname (below). */
+  body.standalone nav { display: none; }
+  body.standalone footer .site-link { display: none; }
+  body.standalone .page { padding-top: 60px; }
 </style>
 </head>
 <body>
@@ -165,10 +172,18 @@
 </div>
 
 <footer>
-  &copy; <span id="year"></span> Clear Path Education Group, LLC &middot; <a href="/" style="color:inherit">clearpathedgroup.com</a>
+  &copy; <span id="year"></span> Clear Path Education Group, LLC <span class="site-link">&middot; <a href="/" style="color:inherit">clearpathedgroup.com</a></span>
 </footer>
 
 <script>
+  // Standalone mode: when accessed via verify.clearpathedgroup.com, strip
+  // marketing-site chrome (nav/footer site link). The page becomes a
+  // dedicated verification endpoint that reads as a security/legal tool
+  // rather than a marketing funnel — addresses CC12 round-4 SCUTA pitch
+  // about same-domain hosting and the lawyer's Q28 framing.
+  if (window.location.hostname === 'verify.clearpathedgroup.com') {
+    document.body.classList.add('standalone');
+  }
   document.getElementById('year').textContent = new Date().getFullYear();
 
   const hashField = document.getElementById('hash-field');
