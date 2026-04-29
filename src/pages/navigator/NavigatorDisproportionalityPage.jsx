@@ -26,6 +26,46 @@ const SEVERITY_STYLES = {
   within_range:  { label: 'Within range',   badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
 }
 
+function TrendCell({ row }) {
+  if (row.suppressed) return null
+  if (row.trend == null) {
+    return (
+      <span
+        className="text-xs text-gray-300 italic"
+        title="Not enough OSS placements in either window (need ≥5) to assess trend."
+      >
+        insufficient
+      </span>
+    )
+  }
+  const prior = row.prior_oss_risk_index
+  const cur = row.oss_risk_index
+  const delta = row.trend_delta
+  const tooltip = `Prior 90d: ${prior ?? '—'}  →  Current 90d: ${cur ?? '—'}  (Δ ${delta > 0 ? '+' : ''}${delta})`
+  if (row.trend === 'up') {
+    return (
+      <span title={tooltip} className="inline-flex items-center gap-1 text-red-600 font-semibold text-xs">
+        <span aria-hidden>▲</span>
+        <span>+{delta}</span>
+      </span>
+    )
+  }
+  if (row.trend === 'down') {
+    return (
+      <span title={tooltip} className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs">
+        <span aria-hidden>▼</span>
+        <span>{delta}</span>
+      </span>
+    )
+  }
+  return (
+    <span title={tooltip} className="inline-flex items-center gap-1 text-gray-400 text-xs">
+      <span aria-hidden>—</span>
+      <span>flat</span>
+    </span>
+  )
+}
+
 export default function NavigatorDisproportionalityPage() {
   const { districtId, isDemoReadonly } = useAuth()
   const { campusData, gradeData, loading, error, refetch } = useDisproportionality()
@@ -302,9 +342,10 @@ export default function NavigatorDisproportionalityPage() {
                     Risk index = group's share of OSS ÷ group's share of enrollment.
                     1.0 = proportional · 1.2+ elevated · 1.5+ high · 2.0+ severe.
                     Cohorts with enrollment under {smallCellThreshold} are suppressed (FERPA + OCR small-cell rule).
+                    Trend column compares the last 90 days against the prior 90 days (days 91–180); a meaningful trend requires ≥5 OSS placements in either window.
                   </p>
                 </div>
-                <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">90-day window</span>
+                <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">90-day window · vs prior 90</span>
               </div>
               {raceLoading ? (
                 <div className="p-6 text-center text-gray-400 text-sm">Loading...</div>
@@ -322,6 +363,7 @@ export default function NavigatorDisproportionalityPage() {
                         <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS</th>
                         <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of OSS</th>
                         <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS Risk Index</th>
+                        <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Trend (vs prior 90d)</th>
                         <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Severity</th>
                       </tr>
                     </thead>
@@ -337,6 +379,9 @@ export default function NavigatorDisproportionalityPage() {
                           <td className="py-2 text-right font-semibold text-gray-800">
                             {r.suppressed ? <span className="text-xs text-gray-400 italic">suppressed (n&lt;{smallCellThreshold})</span>
                               : r.oss_risk_index != null ? r.oss_risk_index : '—'}
+                          </td>
+                          <td className="py-2 text-right">
+                            <TrendCell row={r} />
                           </td>
                           <td className="py-2 text-right">
                             {r.suppressed ? null
@@ -376,6 +421,7 @@ export default function NavigatorDisproportionalityPage() {
                       <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">OSS</th>
                       <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">% of OSS</th>
                       <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Risk Index</th>
+                      <th className="py-2 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Trend (vs prior 90d)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -390,6 +436,9 @@ export default function NavigatorDisproportionalityPage() {
                         <td className="py-2 text-right font-semibold text-gray-800">
                           {r.suppressed ? <span className="text-xs text-gray-400 italic">suppressed (n&lt;{smallCellThreshold})</span>
                             : r.oss_risk_index != null ? r.oss_risk_index : '—'}
+                        </td>
+                        <td className="py-2 text-right">
+                          <TrendCell row={r} />
                         </td>
                       </tr>
                     ))}

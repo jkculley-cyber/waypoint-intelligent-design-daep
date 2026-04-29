@@ -29,6 +29,17 @@ const BULK_SUPPORT_TYPES = [
   { value: 'parent_contact', label: 'Parent Contact' },
 ]
 
+// When a support type was tried and discontinued, suggest the next-tier
+// intervention rather than re-running what failed. Pattern is one-step
+// escalation along the standard MTSS continuum (low-touch → high-touch).
+const SUGGESTED_ALTERNATIVE = {
+  cico: 'behavior_contract',
+  behavior_contract: 'counseling_referral',
+  counseling_referral: 'mentoring',
+  mentoring: 'counseling_referral',
+  parent_contact: 'behavior_contract',
+}
+
 export default function NavigatorEscalationPage() {
   const { districtId, profile, isDemoReadonly } = useAuth()
   const { students, loading, error, refetch } = useEscalationRisk()
@@ -54,6 +65,12 @@ export default function NavigatorEscalationPage() {
   // for the selected cohort so the AP can see what's already in place before assigning.
   const [existingSupports, setExistingSupports] = useState({})  // studentId -> [supports]
   const [skipDuplicates, setSkipDuplicates] = useState(true)
+  // Default ON: a discontinued same-type support in the last 90 days means the
+  // intervention failed; re-running it without justification is the round-1
+  // "ranks but doesn't route" complaint Marsha flagged. Override requires an
+  // affirmative click + reason so the audit trail captures the AP's rationale.
+  const [skipPriorFailures, setSkipPriorFailures] = useState(true)
+  const [overrideReason, setOverrideReason] = useState('')
 
   useEffect(() => {
     if (!showBulkModal || selected.size === 0) return
@@ -90,16 +107,26 @@ export default function NavigatorEscalationPage() {
 
   const handleBulkCreate = async () => {
     if (selected.size === 0) return
+    // Prior-failure override requires a documented reason — captured into
+    // notes so the audit trail surfaces the AP's rationale.
+    if (!skipPriorFailures && failedRecent.length > 0 && !overrideReason.trim()) {
+      toast.error('Override requires a reason — explain why re-running a failed support is appropriate.')
+      return
+    }
     setBulkSaving(true)
-    const targetIds = skipDuplicates
-      ? [...selected].filter(id => !duplicates.includes(id))
-      : [...selected]
+    let targetIds = [...selected]
+    if (skipDuplicates) targetIds = targetIds.filter(id => !duplicates.includes(id))
+    if (skipPriorFailures) targetIds = targetIds.filter(id => !failedRecent.includes(id))
 
     if (targetIds.length === 0) {
-      toast.error('All selected students already have an active support of this type.')
+      toast.error('All selected students already have an active or recently-failed support of this type.')
       setBulkSaving(false)
       return
     }
+
+    const noteText = !skipPriorFailures && failedRecent.length > 0 && overrideReason.trim()
+      ? `${bulkNotes ? bulkNotes + '\n\n' : ''}OVERRIDE PRIOR-FAILURE: ${overrideReason.trim()}`
+      : (bulkNotes || null)
 
     const rows = targetIds.map(studentId => {
       const s = students.find(x => x.student_id === studentId)
@@ -111,17 +138,23 @@ export default function NavigatorEscalationPage() {
         support_type: bulkType,
         start_date: new Date().toISOString().split('T')[0],
         status: 'active',
-        notes: bulkNotes || null,
+        notes: noteText,
       }
     })
     const { error: err } = await supabase.from('navigator_supports').insert(rows)
     setBulkSaving(false)
     if (err) { toast.error(err.message); return }
     const skipped = selected.size - rows.length
-    toast.success(`${rows.length} support${rows.length > 1 ? 's' : ''} created${skipped > 0 ? ` · ${skipped} skipped (already active)` : ''}`)
+    const skipParts = []
+    if (skipDuplicates && duplicates.length) skipParts.push(`${duplicates.filter(id => selected.has(id)).length} duplicate${duplicates.length === 1 ? '' : 's'}`)
+    if (skipPriorFailures && failedRecent.length) skipParts.push(`${failedRecent.filter(id => selected.has(id)).length} prior-failure${failedRecent.length === 1 ? '' : 's'}`)
+    toast.success(
+      `${rows.length} support${rows.length > 1 ? 's' : ''} created${skipped > 0 ? ` · skipped ${skipParts.join(' + ')}` : ''}`
+    )
     setSelected(new Set())
     setShowBulkModal(false)
     setBulkNotes('')
+    setOverrideReason('')
     setExistingSupports({})
     refetch()
   }
@@ -335,10 +368,22 @@ export default function NavigatorEscalationPage() {
                           <span className="font-medium text-gray-800">
                             {s?.student ? `${s.student.first_name} ${s.student.last_name}` : sid.slice(0, 8)}
                             <span className="ml-1.5 text-gray-400">Gr {s?.student?.grade_level || '—'}</span>
+                            {s?.risk_score != null && (
+                              <span className="ml-1.5 text-gray-400">· risk {s.risk_score}</span>
+                            )}
                           </span>
                           {isDup && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-800">DUPLICATE</span>}
                           {wasFailed && !isDup && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-200 text-red-800">PRIOR FAILURE</span>}
                         </div>
+                        {Array.isArray(s?.triggers) && s.triggers.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1" title="Why this student is on the escalation list">
+                            {s.triggers.map(t => (
+                              <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 border border-blue-100">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {active.length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1">
                             {active.map(h => (
@@ -384,12 +429,57 @@ export default function NavigatorEscalationPage() {
                 </label>
               )}
 
-              {failedRecent.length > 0 && (
-                <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-xs text-red-800">
-                  ⚠ <strong>{failedRecent.length} student{failedRecent.length === 1 ? '' : 's'}</strong> previously had this support discontinued in the last 90 days.
-                  Consider escalating tier or trying a different intervention rather than re-running the same one.
-                </div>
-              )}
+              {failedRecent.length > 0 && (() => {
+                const altType = SUGGESTED_ALTERNATIVE[bulkType]
+                const altLabel = altType ? (BULK_SUPPORT_TYPES.find(t => t.value === altType)?.label || altType) : null
+                return (
+                  <div className="p-3 bg-red-50 border border-red-300 rounded-lg space-y-2">
+                    <p className="text-xs text-red-800">
+                      ⚠ <strong>{failedRecent.length} student{failedRecent.length === 1 ? '' : 's'}</strong> had this support discontinued in the last 90 days.
+                      Re-running a failed intervention without changing approach is the pattern districts get cited on at OCR review.
+                    </p>
+                    {altLabel && (
+                      <p className="text-xs text-red-800">
+                        <strong>Suggested alternative:</strong> assign <em>{altLabel}</em> for those students instead.
+                        {' '}
+                        <button
+                          type="button"
+                          onClick={() => { setBulkType(altType); setSkipPriorFailures(true) }}
+                          className="underline font-semibold hover:text-red-900"
+                        >
+                          Switch to {altLabel} →
+                        </button>
+                      </p>
+                    )}
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 mt-0.5"
+                        checked={skipPriorFailures}
+                        onChange={e => setSkipPriorFailures(e.target.checked)}
+                      />
+                      <span className="text-xs text-red-900">
+                        <strong>Skip prior-failure students</strong> — only create for the rest. Recommended.
+                      </span>
+                    </label>
+                    {!skipPriorFailures && (
+                      <div>
+                        <label className="block text-xs font-medium text-red-900 mb-1">
+                          Override reason (required) — explain why re-running this is appropriate
+                        </label>
+                        <textarea
+                          className="w-full px-3 py-2 border border-red-300 rounded-lg text-xs resize-none bg-white"
+                          rows={2}
+                          placeholder="e.g. Original CICO failed due to mentor scheduling conflict, not strategy fit; reassigning with different mentor."
+                          value={overrideReason}
+                          onChange={e => setOverrideReason(e.target.value)}
+                        />
+                        <p className="text-[10px] text-red-800 mt-1">This text is appended to the support's notes for the audit trail.</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Notes (applied to all)</label>
@@ -402,23 +492,43 @@ export default function NavigatorEscalationPage() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-                {duplicates.length > 0 && skipDuplicates
-                  ? `Will create ${selected.size - duplicates.length} active ${BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support${(selected.size - duplicates.length) !== 1 ? 's' : ''} (skipping ${duplicates.length} duplicate${duplicates.length === 1 ? '' : 's'}).`
-                  : `Will create ${selected.size} active ${BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label} support${selected.size !== 1 ? 's' : ''} starting today.`}
-              </div>
+              {(() => {
+                const skipDup = skipDuplicates ? duplicates.filter(id => selected.has(id)).length : 0
+                const skipFail = skipPriorFailures ? failedRecent.filter(id => selected.has(id) && !duplicates.includes(id)).length : 0
+                const willCreate = selected.size - skipDup - skipFail
+                const skipBits = []
+                if (skipDup) skipBits.push(`${skipDup} duplicate${skipDup === 1 ? '' : 's'}`)
+                if (skipFail) skipBits.push(`${skipFail} prior-failure${skipFail === 1 ? '' : 's'}`)
+                const label = BULK_SUPPORT_TYPES.find(t => t.value === bulkType)?.label
+                return (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                    {willCreate <= 0
+                      ? <>All {selected.size} selected students would be skipped — pick a different support type or uncheck the skip toggles.</>
+                      : <>Will create <strong>{willCreate}</strong> active {label} support{willCreate !== 1 ? 's' : ''} starting today
+                          {skipBits.length > 0 ? <> · skipping {skipBits.join(' + ')}</> : null}.</>}
+                  </div>
+                )
+              })()}
             </div>
             <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
               <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
-              <button
-                onClick={handleBulkCreate}
-                disabled={bulkSaving || (skipDuplicates && duplicates.length === selected.size)}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg"
-              >
-                {bulkSaving ? 'Creating...'
-                  : (skipDuplicates && duplicates.length === selected.size) ? 'All duplicates'
-                  : `Create ${skipDuplicates ? selected.size - duplicates.length : selected.size} Support${(skipDuplicates ? selected.size - duplicates.length : selected.size) !== 1 ? 's' : ''}`}
-              </button>
+              {(() => {
+                const skipDup = skipDuplicates ? duplicates.filter(id => selected.has(id)).length : 0
+                const skipFail = skipPriorFailures ? failedRecent.filter(id => selected.has(id) && !duplicates.includes(id)).length : 0
+                const willCreate = selected.size - skipDup - skipFail
+                const blocked = bulkSaving || willCreate <= 0
+                return (
+                  <button
+                    onClick={handleBulkCreate}
+                    disabled={blocked}
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg"
+                  >
+                    {bulkSaving ? 'Creating...'
+                      : willCreate <= 0 ? 'Nothing to create'
+                      : `Create ${willCreate} Support${willCreate !== 1 ? 's' : ''}`}
+                  </button>
+                )
+              })()}
             </div>
           </div>
         </div>

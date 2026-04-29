@@ -184,20 +184,33 @@ export default function NavigatorPlacementsPage() {
                       <td className="px-4 py-3 text-gray-600">{p.days ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-600">{p.assigner?.full_name || '—'}</td>
                       <td className="px-4 py-3">
-                        {p.parent_notified
-                          ? <span className="text-green-600 font-medium text-xs">Yes</span>
-                          : <span className="text-red-500 text-xs">No</span>}
+                        {p.parent_notified ? (
+                          <ParentNotifyCell placement={p} />
+                        ) : (
+                          <span className="text-red-500 text-xs">No</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs max-w-xs truncate" title={p.reentry_plan || ''}>
                         {p.reentry_plan || '—'}
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => setEditingPlacement(p)}
-                          className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex items-center gap-2 justify-end">
+                          {Array.isArray(p.reason_history) && p.reason_history.length > 0 && (
+                            <button
+                              onClick={() => setEditingPlacement(p)}
+                              title={`Reason field edited ${p.reason_history.length} time${p.reason_history.length === 1 ? '' : 's'} after placement. Open to view history.`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
+                            >
+                              edited {p.reason_history.length}×
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setEditingPlacement(p)}
+                            className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -243,6 +256,40 @@ export default function NavigatorPlacementsPage() {
           }}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Parent-Notify cell — surfaces the lag between placement date and the
+//     server-recorded notification time. TEC §37.009 requires same-day notice;
+//     a 4-day lag is a defensibility wound a hearing officer will spot. Showing
+//     it in the list view means the AP sees it without opening the drawer.
+function ParentNotifyCell({ placement: p }) {
+  if (!p.parent_notified_at) {
+    return <span className="text-green-600 font-medium text-xs">Yes</span>
+  }
+  const startDay = p.start_date ? new Date(p.start_date + 'T00:00:00Z').getTime() : null
+  const notifiedAt = new Date(p.parent_notified_at).getTime()
+  const lagDays = startDay != null ? Math.floor((notifiedAt - startDay) / 86400000) : null
+
+  // Tooltip shows full server timestamp + placement date for cross-reference.
+  const tooltip = `Server-recorded notification: ${format(new Date(p.parent_notified_at), 'MMM d, yyyy h:mm a')}${
+    p.start_date ? `\nPlacement date: ${format(parseISO(p.start_date), 'MMM d, yyyy')}` : ''
+  }${lagDays != null ? `\nLogged ${lagDays === 0 ? 'same day' : `${lagDays} day${lagDays === 1 ? '' : 's'} ${lagDays < 0 ? 'before' : 'after'}`} placement.` : ''}`
+
+  let lagText = null
+  let lagColor = 'text-gray-400'
+  if (lagDays != null) {
+    if (lagDays <= 0) { lagText = 'same day'; lagColor = 'text-emerald-500' }
+    else if (lagDays === 1) { lagText = '1d after'; lagColor = 'text-gray-400' }
+    else if (lagDays <= 3) { lagText = `${lagDays}d after`; lagColor = 'text-amber-500' }
+    else { lagText = `${lagDays}d after`; lagColor = 'text-red-500' }
+  }
+
+  return (
+    <div className="flex flex-col" title={tooltip}>
+      <span className="text-green-600 font-medium text-xs">Yes</span>
+      {lagText && <span className={`text-[10px] ${lagColor}`}>{lagText}</span>}
     </div>
   )
 }

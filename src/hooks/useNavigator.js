@@ -1448,7 +1448,8 @@ export function useDisproportionalityByRace() {
     if (!districtId) return
     setLoading(true); setError(null)
     try {
-      const d90 = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+      const d90  = new Date(Date.now() -  90 * 86400000).toISOString().split('T')[0]
+      const d180 = new Date(Date.now() - 180 * 86400000).toISOString().split('T')[0]
 
       let refQ = supabase
         .from('navigator_referrals')
@@ -1462,6 +1463,19 @@ export function useDisproportionalityByRace() {
         .eq('district_id', districtId)
         .gte('start_date', d90)
 
+      // Prior 90-day window (days 91–180 ago) for trend comparison.
+      // Enrollment is snapshotted from current state — we don't have historical
+      // enrollment, so the same denominator is used for both windows. This
+      // overstates trend stability when a cohort's enrollment changed, which
+      // is acceptable for an internal early-warning lens; OCR-grade longitudinal
+      // analysis still requires the SIS export.
+      let priorPlacQ = supabase
+        .from('navigator_placements')
+        .select('student_id, placement_type, students(id, race_ethnicity, is_sped, is_504)')
+        .eq('district_id', districtId)
+        .gte('start_date', d180)
+        .lt('start_date', d90)
+
       let studQ = supabase
         .from('students')
         .select('id, race_ethnicity, is_sped, is_504')
@@ -1471,16 +1485,19 @@ export function useDisproportionalityByRace() {
       if (!isAdmin && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)
         placQ = placQ.in('campus_id', campusIds)
+        priorPlacQ = priorPlacQ.in('campus_id', campusIds)
         studQ = studQ.in('campus_id', campusIds)
       }
 
-      const [refRes, placRes, studRes] = await Promise.all([refQ, placQ, studQ])
+      const [refRes, placRes, priorPlacRes, studRes] = await Promise.all([refQ, placQ, priorPlacQ, studQ])
       if (refRes.error) throw refRes.error
       if (placRes.error) throw placRes.error
+      if (priorPlacRes.error) throw priorPlacRes.error
       if (studRes.error) throw studRes.error
 
       const referrals = refRes.data || []
       const placements = placRes.data || []
+      const priorPlacements = priorPlacRes.data || []
       const enrollment = studRes.data || []
 
       // ─── Aggregate by race ───
@@ -1506,6 +1523,15 @@ export function useDisproportionalityByRace() {
       const totalRefs = referrals.length
       const totalOSS = placements.filter(p => p.placement_type === 'oss').length
 
+      // Prior-window OSS by race for trend computation
+      const priorRaceOSS = {}
+      priorPlacements.forEach(p => {
+        if (p.placement_type !== 'oss') return
+        const race = p.students?.race_ethnicity || 'not_specified'
+        priorRaceOSS[race] = (priorRaceOSS[race] || 0) + 1
+      })
+      const totalPriorOSS = priorPlacements.filter(p => p.placement_type === 'oss').length
+
       const raceBuckets = Object.keys({ ...raceEnroll, ...raceRefs }).map(race => {
         const enroll = raceEnroll[race] || 0
         const refs = raceRefs[race] || 0
@@ -1519,6 +1545,25 @@ export function useDisproportionalityByRace() {
         const ossShare = totalOSS > 0 ? oss / totalOSS : 0
         const refIndex = enrollShare > 0 ? refShare / enrollShare : null
         const ossIndex = enrollShare > 0 ? ossShare / enrollShare : null
+
+        // Prior-window OSS risk index (uses current enrollment as proxy denominator)
+        const priorOss = priorRaceOSS[race] || 0
+        const priorOssShare = totalPriorOSS > 0 ? priorOss / totalPriorOSS : 0
+        const priorOssIndex = enrollShare > 0 ? priorOssShare / enrollShare : null
+
+        // Trend: 'up' if current is materially higher than prior, 'down' if
+        // materially lower, 'flat' otherwise. Suppress trend when either window
+        // has too few data points to be meaningful (n<5 OSS placements in that
+        // window for that race).
+        let trend = null
+        let trendDelta = null
+        if (!suppressed && ossIndex != null && priorOssIndex != null && (oss >= 5 || priorOss >= 5)) {
+          trendDelta = +(ossIndex - priorOssIndex).toFixed(2)
+          if (Math.abs(trendDelta) < 0.15) trend = 'flat'
+          else if (trendDelta > 0) trend = 'up'
+          else trend = 'down'
+        }
+
         return {
           race,
           label: RACE_LABELS[race] || race,
@@ -1532,6 +1577,11 @@ export function useDisproportionalityByRace() {
           oss_share: +(ossShare * 100).toFixed(1),
           oss_rate: enroll > 0 ? +(oss / enroll * 100).toFixed(1) : null,
           oss_risk_index: ossIndex != null ? +ossIndex.toFixed(2) : null,
+          // Prior 90-day window (days 91-180) for trend
+          prior_oss: priorOss,
+          prior_oss_risk_index: priorOssIndex != null ? +priorOssIndex.toFixed(2) : null,
+          trend,
+          trend_delta: trendDelta,
           iss,
           suppressed,
           // OCR severity buckets on OSS risk index
@@ -1553,11 +1603,25 @@ export function useDisproportionalityByRace() {
       const fivePctEnroll = enrollment.filter(s => s.is_504).length
       const fivePctRefs = referrals.filter(r => r.students?.is_504).length
       const fivePctOSS = placements.filter(p => p.placement_type === 'oss' && p.students?.is_504).length
+      const priorSpedOSS = priorPlacements.filter(p => p.placement_type === 'oss' && p.students?.is_sped).length
+      const priorFivePctOSS = priorPlacements.filter(p => p.placement_type === 'oss' && p.students?.is_504).length
+
+      const trendOf = (curIndex, priorIndex, curN, priorN) => {
+        if (curIndex == null || priorIndex == null) return { trend: null, delta: null }
+        if (curN < 5 && priorN < 5) return { trend: null, delta: null }
+        const delta = +(curIndex - priorIndex).toFixed(2)
+        const t = Math.abs(delta) < 0.15 ? 'flat' : delta > 0 ? 'up' : 'down'
+        return { trend: t, delta }
+      }
 
       const spedRows = []
       if (spedEnroll >= SMALL_CELL_THRESHOLD || spedEnroll === 0) {
         const enrollShare = totalEnroll > 0 ? spedEnroll / totalEnroll : 0
         const ossShare = totalOSS > 0 ? spedOSS / totalOSS : 0
+        const priorOssShare = totalPriorOSS > 0 ? priorSpedOSS / totalPriorOSS : 0
+        const ossIndex = enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null
+        const priorOssIndex = enrollShare > 0 ? +(priorOssShare / enrollShare).toFixed(2) : null
+        const { trend, delta } = trendOf(ossIndex, priorOssIndex, spedOSS, priorSpedOSS)
         spedRows.push({
           group: 'sped',
           label: 'SPED (IDEA)',
@@ -1566,7 +1630,10 @@ export function useDisproportionalityByRace() {
           referrals: spedRefs,
           oss: spedOSS,
           oss_share: +(ossShare * 100).toFixed(1),
-          oss_risk_index: enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null,
+          oss_risk_index: ossIndex,
+          prior_oss: priorSpedOSS,
+          prior_oss_risk_index: priorOssIndex,
+          trend, trend_delta: delta,
           suppressed: spedEnroll < SMALL_CELL_THRESHOLD,
         })
       } else {
@@ -1575,6 +1642,10 @@ export function useDisproportionalityByRace() {
       if (fivePctEnroll >= SMALL_CELL_THRESHOLD || fivePctEnroll === 0) {
         const enrollShare = totalEnroll > 0 ? fivePctEnroll / totalEnroll : 0
         const ossShare = totalOSS > 0 ? fivePctOSS / totalOSS : 0
+        const priorOssShare = totalPriorOSS > 0 ? priorFivePctOSS / totalPriorOSS : 0
+        const ossIndex = enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null
+        const priorOssIndex = enrollShare > 0 ? +(priorOssShare / enrollShare).toFixed(2) : null
+        const { trend, delta } = trendOf(ossIndex, priorOssIndex, fivePctOSS, priorFivePctOSS)
         spedRows.push({
           group: '504',
           label: 'Section 504',
@@ -1583,7 +1654,10 @@ export function useDisproportionalityByRace() {
           referrals: fivePctRefs,
           oss: fivePctOSS,
           oss_share: +(ossShare * 100).toFixed(1),
-          oss_risk_index: enrollShare > 0 ? +(ossShare / enrollShare).toFixed(2) : null,
+          oss_risk_index: ossIndex,
+          prior_oss: priorFivePctOSS,
+          prior_oss_risk_index: priorOssIndex,
+          trend, trend_delta: delta,
           suppressed: fivePctEnroll < SMALL_CELL_THRESHOLD,
         })
       } else {

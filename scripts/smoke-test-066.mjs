@@ -126,15 +126,15 @@ async function main() {
     else fail(`expected method-required error, got: ${missingMethodErr.message}`)
   } else fail('expected rejection but insert succeeded')
 
-  // ─── Test 3: parent_notified_at server-set; client clock ignored ───
-  console.log('\n\x1b[1m3. parent_notified_at is server-set\x1b[0m')
+  // ─── Test 3a: client-set parent_notified_at is REJECTED (post-migration 069) ───
+  console.log('\n\x1b[1m3a. client-set parent_notified_at is rejected (loud, not silent)\x1b[0m')
   // Find a non-SPED student so we don't trip the 10-day rule mid-test
   const { data: nonSpedStudents } = await sb
     .from('students').select('id, campus_id, is_sped')
     .eq('district_id', ctx.districtId).eq('is_sped', false).limit(1)
   const targetStudent = nonSpedStudents?.[0] || ctx.spedStudent
   const fakePast = '2020-01-01T00:00:00.000Z'
-  const { data: p3, error: p3Err } = await sb.from('navigator_placements').insert({
+  const { error: p3aErr } = await sb.from('navigator_placements').insert({
     district_id: ctx.districtId,
     campus_id: targetStudent.campus_id,
     student_id: targetStudent.id,
@@ -144,18 +144,40 @@ async function main() {
     days: 1,
     parent_notified: true,
     parent_notified_method: 'phone_call',
-    parent_notified_at: fakePast,  // server should ignore this
-    parent_contact_notes: 'smoke test #3',
+    parent_notified_at: fakePast,  // post-069: server raises instead of overwriting
+    parent_contact_notes: 'smoke test #3a',
+  }).select('id').single()
+  if (p3aErr && /server-controlled|parent_notified_at/i.test(p3aErr.message)) {
+    ok(`rejected loudly: "${p3aErr.message.slice(0, 90)}…"`)
+  } else if (p3aErr) {
+    fail(`expected server-controlled rejection, got: ${p3aErr.message}`)
+  } else {
+    fail('expected rejection but insert succeeded — migration 069 may not be applied')
+  }
+
+  // ─── Test 3b: server sets parent_notified_at when client omits it ───
+  console.log('\n\x1b[1m3b. server sets parent_notified_at when client omits it\x1b[0m')
+  const { data: p3b, error: p3bErr } = await sb.from('navigator_placements').insert({
+    district_id: ctx.districtId,
+    campus_id: targetStudent.campus_id,
+    student_id: targetStudent.id,
+    assigned_by: ctx.profile.id,
+    placement_type: 'iss',
+    start_date: new Date().toISOString().split('T')[0],
+    days: 1,
+    parent_notified: true,
+    parent_notified_method: 'phone_call',
+    parent_contact_notes: 'smoke test #3b',
   }).select('id, parent_notified_at, parent_notified_method').single()
-  if (p3Err) fail('insert with method failed', p3Err)
+  if (p3bErr) fail('insert without timestamp failed', p3bErr)
   else {
-    testIds.placementIds.push(p3.id)
-    const ts = new Date(p3.parent_notified_at)
+    testIds.placementIds.push(p3b.id)
+    const ts = new Date(p3b.parent_notified_at)
     const drift = Math.abs(Date.now() - ts.getTime())
-    if (drift < 60_000) ok(`server set parent_notified_at ≈ now() (drift ${drift}ms; client sent ${fakePast})`)
-    else fail(`expected near-now timestamp, got ${p3.parent_notified_at}`)
-    if (p3.parent_notified_method === 'phone_call') ok('method preserved')
-    else fail(`method drift: got ${p3.parent_notified_method}`)
+    if (drift < 60_000) ok(`server set parent_notified_at ≈ now() (drift ${drift}ms)`)
+    else fail(`expected near-now timestamp, got ${p3b.parent_notified_at}`)
+    if (p3b.parent_notified_method === 'phone_call') ok('method preserved')
+    else fail(`method drift: got ${p3b.parent_notified_method}`)
   }
 
   // ─── Test 4: Reason update appends to reason_history ───

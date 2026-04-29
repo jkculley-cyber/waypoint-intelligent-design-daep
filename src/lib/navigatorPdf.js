@@ -216,26 +216,125 @@ export async function generateHearingPacket({ student, referrals, placements, su
   }
 
   // ─── Chronological timeline ───
+  // Each row reflects the AS-OF-PLACEMENT-DATE value of the free-text field, not
+  // the current (possibly edited) value. The trigger in migration 066 / 068
+  // appends the OLD value to *_history when the field changes, so history[0] is
+  // the original entry. If history is empty, the current value is original.
+  const placementOriginalReason = (p) => {
+    const h = Array.isArray(p.reason_history) ? p.reason_history : []
+    return h.length > 0 ? (h[0].reason ?? '') : (p.reason ?? '')
+  }
+  const referralOriginalDescription = (r) => {
+    const h = Array.isArray(r.description_history) ? r.description_history : []
+    return h.length > 0 ? (h[0].description ?? '') : (r.description ?? '')
+  }
+  const editedTag = (n) => n > 0 ? ` (edited ${n}× — see history)` : ''
+
   const timeline = [
-    ...referrals.map(r => ({ kind: 'Referral', date: r.referral_date, summary: r.offense_codes?.code ? `${r.offense_codes.code} — ${r.description || ''}` : (r.description || '—'), actor: r.reporter?.full_name || '—' })),
-    ...placements.map(p => ({ kind: `${(p.placement_type || '').toUpperCase()} Placement`, date: p.start_date, summary: `${p.days || '?'} day${(p.days || 0) === 1 ? '' : 's'}${p.end_date ? ` · ended ${format(parseISO(p.end_date), 'MMM d')}` : ' · active'} — ${p.reason || ''}`, actor: p.assigner?.full_name || '—' })),
+    ...referrals.map(r => {
+      const editN = Array.isArray(r.description_history) ? r.description_history.length : 0
+      const original = referralOriginalDescription(r)
+      const summary = r.offense_codes?.code
+        ? `${r.offense_codes.code} — ${original}${editedTag(editN)}`
+        : `${original || '—'}${editedTag(editN)}`
+      return { kind: 'Referral', date: r.referral_date, summary, actor: r.reporter?.full_name || '—' }
+    }),
+    ...placements.map(p => {
+      const editN = Array.isArray(p.reason_history) ? p.reason_history.length : 0
+      const original = placementOriginalReason(p)
+      const dur = `${p.days || '?'} day${(p.days || 0) === 1 ? '' : 's'}${p.end_date ? ` · ended ${format(parseISO(p.end_date), 'MMM d')}` : ' · active'}`
+      return {
+        kind: `${(p.placement_type || '').toUpperCase()} Placement`,
+        date: p.start_date,
+        summary: `${dur} — ${original}${editedTag(editN)}`,
+        actor: p.assigner?.full_name || '—',
+      }
+    }),
     ...supports.map(s => ({ kind: `Support — ${SUPPORT_LABELS[s.support_type] || s.support_type}`, date: s.start_date, summary: `${s.status}${s.notes ? ' — ' + s.notes : ''}`, actor: s.assigner?.full_name || '—' })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date))
 
   if (timeline.length > 0) {
     y = ensureSpace(doc, y, 10)
-    y = sectionHeading(doc, 'Chronological Behavior Timeline', y)
+    y = sectionHeading(doc, 'Chronological Behavior Timeline (free-text fields shown as recorded at placement; later edits captured in the next section)', y)
     autoTable(doc, {
       startY: y,
       styles: { fontSize: 8, cellPadding: 1.5 },
       headStyles: { fillColor: [100, 116, 139], textColor: 255, fontStyle: 'bold' },
-      head: [['Date', 'Type', 'Detail', 'By']],
+      head: [['Date', 'Type', 'Detail (as recorded)', 'By']],
       body: timeline.map(t => [
         t.date ? format(parseISO(t.date), 'MMM d, yyyy') : '—',
         t.kind,
         t.summary,
         t.actor,
       ]),
+      margin: { top: 14, bottom: 14, left: 10, right: 10 },
+      didDrawPage: () => drawHeader(doc, ''),
+    })
+    y = doc.lastAutoTable.finalY + 6
+  }
+
+  // ─── Edit-history disclosure (placed immediately after timeline so a hearing
+  //     officer reading the as-recorded reasons sees the full edit chain in
+  //     context, not buried as the last section before the footer) ───
+  const placementEdits = placements.filter(p => Array.isArray(p.reason_history) && p.reason_history.length > 0)
+  const referralEdits = referrals.filter(r => Array.isArray(r.description_history) && r.description_history.length > 0)
+  if (placementEdits.length > 0 || referralEdits.length > 0) {
+    y = ensureSpace(doc, y, 10)
+    y = sectionHeading(doc, 'Post-Hoc Edits to Free-Text Fields', y)
+    doc.setFontSize(8)
+    doc.setTextColor(80)
+    doc.text('The timeline above shows each free-text field as it was recorded on the placement / referral date.', 12, y)
+    y += 4
+    doc.text('Every subsequent edit was preserved automatically. The full chain — original entry, every edit, and the current value — appears below.', 12, y)
+    doc.setTextColor(0)
+    y += 5
+
+    // Resolve actor IDs to names in one batch
+    const actorIds = [
+      ...placementEdits.flatMap(p => p.reason_history.map(h => h.changed_by)),
+      ...referralEdits.flatMap(r => r.description_history.map(h => h.changed_by)),
+    ].filter(Boolean)
+    const uniqueActorIds = [...new Set(actorIds)]
+    const actorMap = {}
+    if (uniqueActorIds.length > 0) {
+      const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', uniqueActorIds)
+      ;(profs || []).forEach(p => { actorMap[p.id] = p.full_name })
+    }
+
+    const rows = []
+    placementEdits.forEach(p => {
+      const label = `${p.start_date ? format(parseISO(p.start_date), 'MMM d, yyyy') : '—'} ${(p.placement_type || '').toUpperCase()} placement`
+      p.reason_history.forEach((h, idx) => {
+        rows.push([
+          label,
+          idx === 0 ? 'original' : `edit ${idx}`,
+          h.changed_at ? format(new Date(h.changed_at), 'MMM d, yyyy h:mm a') : '—',
+          actorMap[h.changed_by] || (h.changed_by ? h.changed_by.slice(0, 8) : '—'),
+          h.reason || '(empty)',
+        ])
+      })
+      rows.push([label, 'current', '— now —', '', p.reason || '(empty)'])
+    })
+    referralEdits.forEach(r => {
+      const label = `${r.referral_date ? format(parseISO(r.referral_date), 'MMM d, yyyy') : '—'} referral${r.offense_codes?.code ? ` (${r.offense_codes.code})` : ''}`
+      r.description_history.forEach((h, idx) => {
+        rows.push([
+          label,
+          idx === 0 ? 'original' : `edit ${idx}`,
+          h.changed_at ? format(new Date(h.changed_at), 'MMM d, yyyy h:mm a') : '—',
+          actorMap[h.changed_by] || (h.changed_by ? h.changed_by.slice(0, 8) : '—'),
+          h.description || '(empty)',
+        ])
+      })
+      rows.push([label, 'current', '— now —', '', r.description || '(empty)'])
+    })
+
+    autoTable(doc, {
+      startY: y,
+      styles: { fontSize: 8, cellPadding: 1.5 },
+      headStyles: { fillColor: [234, 179, 8], textColor: 255, fontStyle: 'bold' },
+      head: [['Record', 'Version', 'Recorded', 'Edited By', 'Field value at that time']],
+      body: rows,
       margin: { top: 14, bottom: 14, left: 10, right: 10 },
       didDrawPage: () => drawHeader(doc, ''),
     })
@@ -258,52 +357,6 @@ export async function generateHearingPacket({ student, referrals, placements, su
         s.assignee?.full_name || s.assigned_to || '—',
         s.notes || '',
       ]),
-      margin: { top: 14, bottom: 14, left: 10, right: 10 },
-      didDrawPage: () => drawHeader(doc, ''),
-    })
-    y = doc.lastAutoTable.finalY + 6
-  }
-
-  // ─── Edit-history disclosure ───
-  const placementEdits = placements.filter(p => Array.isArray(p.reason_history) && p.reason_history.length > 0)
-  if (placementEdits.length > 0) {
-    y = ensureSpace(doc, y, 10)
-    y = sectionHeading(doc, 'Post-Hoc Edits to Placement Reason Fields', y)
-    doc.setFontSize(8)
-    doc.setTextColor(80)
-    doc.text('Each prior version below was preserved automatically when a staff member edited the placement record.', 12, y)
-    doc.setTextColor(0)
-    y += 5
-
-    // Resolve actor IDs to names in one batch
-    const actorIds = [...new Set(placementEdits.flatMap(p => p.reason_history.map(h => h.changed_by)).filter(Boolean))]
-    const actorMap = {}
-    if (actorIds.length > 0) {
-      const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', actorIds)
-      ;(profs || []).forEach(p => { actorMap[p.id] = p.full_name })
-    }
-
-    const rows = []
-    placementEdits.forEach(p => {
-      const placementLabel = `${p.start_date ? format(parseISO(p.start_date), 'MMM d, yyyy') : '—'} ${(p.placement_type || '').toUpperCase()}`
-      p.reason_history.forEach(h => {
-        rows.push([
-          placementLabel,
-          h.changed_at ? format(new Date(h.changed_at), 'MMM d, yyyy h:mm a') : '—',
-          actorMap[h.changed_by] || (h.changed_by ? h.changed_by.slice(0, 8) : '—'),
-          h.reason || '(empty)',
-        ])
-      })
-      // Append the current value as the most-recent row
-      rows.push([placementLabel, '— current —', '', p.reason || '(empty)'])
-    })
-
-    autoTable(doc, {
-      startY: y,
-      styles: { fontSize: 8, cellPadding: 1.5 },
-      headStyles: { fillColor: [234, 179, 8], textColor: 255, fontStyle: 'bold' },
-      head: [['Placement', 'Recorded', 'Edited By', 'Reason value at that time']],
-      body: rows,
       margin: { top: 14, bottom: 14, left: 10, right: 10 },
       didDrawPage: () => drawHeader(doc, ''),
     })
