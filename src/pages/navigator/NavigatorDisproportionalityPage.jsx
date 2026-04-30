@@ -29,12 +29,19 @@ const SEVERITY_STYLES = {
 function TrendCell({ row }) {
   if (row.suppressed) return null
   if (row.trend == null) {
+    // Round-3 audit, Sam #4 + Marsha N4 + Reyes #5 (3-voice convergent):
+    // an italic gray word at the end of a row blends visually with the
+    // adjacent gray "—  flat" cell, so an AP scanning the table reads
+    // them as the same outcome. Wrap in a subtle amber pill with an info
+    // glyph so "this is a definitional gap, not a measurement" is read
+    // at scan distance.
     return (
       <span
-        className="text-xs text-gray-300 italic"
-        title="Not enough OSS placements in either window (need ≥5) to assess trend."
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-medium"
+        title="Insufficient data: fewer than 5 OSS placements in either the current or prior 90-day window. Cannot assess trend reliably."
       >
-        insufficient
+        <span aria-hidden>ⓘ</span>
+        <span>insufficient</span>
       </span>
     )
   }

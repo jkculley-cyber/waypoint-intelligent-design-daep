@@ -55,12 +55,32 @@ export default function NavigatorPlacementsPage() {
       .then(({ data }) => setCampuses(data || []))
   }, [districtId])
 
+  const [showOnlyImplausible, setShowOnlyImplausible] = useState(false)
+
   const filters = {
     placement_type: activeTab === 'history' ? '' : activeTab === 'active_iss' ? 'iss' : 'oss',
     active_only: activeTab !== 'history',
     campus_id: campusFilter,
   }
-  const { placements, loading, refetch } = useNavigatorPlacements(filters)
+  const { placements: rawPlacements, loading, refetch } = useNavigatorPlacements(filters)
+
+  // Round-3 audit, Sam #3: migration 069 raises on FUTURE client-set
+  // parent_notified_at, but grandfathered bad data (lag < 0 days = before
+  // placement, or > 30d = stale notification claim) silently persists. The
+  // ParentNotifyCell already shows red on lag >= 4d; this banner counts the
+  // outliers so an AP doing data hygiene can spot them en masse.
+  const implausibleIds = rawPlacements.reduce((acc, p) => {
+    if (!p.parent_notified_at || !p.start_date) return acc
+    const startMs = new Date(p.start_date + 'T12:00:00').getTime()
+    const notifiedMs = new Date(p.parent_notified_at).getTime()
+    const lagDays = Math.round((notifiedMs - startMs) / 86400000)
+    if (lagDays < 0 || lagDays > 30) acc.add(p.id)
+    return acc
+  }, new Set())
+
+  const placements = showOnlyImplausible
+    ? rawPlacements.filter(p => implausibleIds.has(p.id))
+    : rawPlacements
 
   const handleExport = () => {
     const headers = ['Student', 'Campus', 'Type', 'Start', 'End', 'Days', 'Assigned By', 'Parent Notified']
@@ -129,6 +149,25 @@ export default function NavigatorPlacementsPage() {
             ))}
           </select>
         </div>
+
+        {/* Implausible parent-notify audit banner — shows when grandfathered
+            bad data exists. Migration 069 prevents new bad data; this surfaces
+            old data needing review. */}
+        {implausibleIds.size > 0 && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="text-sm text-amber-900">
+              <span className="font-semibold">{implausibleIds.size}</span>{' '}
+              {implausibleIds.size === 1 ? 'placement has' : 'placements have'} implausible parent-notify timestamps
+              <span className="text-amber-700 ml-1">(notified before placement, or {'>'} 30 days after — likely data-entry errors).</span>
+            </div>
+            <button
+              onClick={() => setShowOnlyImplausible(v => !v)}
+              className="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors flex-shrink-0"
+            >
+              {showOnlyImplausible ? 'Show all' : 'Review these'}
+            </button>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -268,14 +307,32 @@ function ParentNotifyCell({ placement: p }) {
   if (!p.parent_notified_at) {
     return <span className="text-green-600 font-medium text-xs">Yes</span>
   }
-  const startDay = p.start_date ? new Date(p.start_date + 'T00:00:00Z').getTime() : null
-  const notifiedAt = new Date(p.parent_notified_at).getTime()
-  const lagDays = startDay != null ? Math.floor((notifiedAt - startDay) / 86400000) : null
+  // Round-3 audit, Marsha N3: prior implementation parsed start_date as UTC
+  // midnight, so a Tuesday-evening Central-time call (= Wed 00:30 UTC) was
+  // computed as "1 day later" instead of "same day." Switch to the local
+  // calendar-day delta so a Texas AP and the JS Date object agree on what
+  // counts as "same day." The server-recorded `parent_notified_at` is still
+  // the authoritative timestamp; we only re-frame the *display* delta.
+  const localDayMs = (iso) => {
+    const d = new Date(iso)
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  }
+  const startDay = p.start_date ? localDayMs(p.start_date + 'T12:00:00') : null
+  const notifiedAtMs = new Date(p.parent_notified_at).getTime()
+  const notifiedDayLocalMs = localDayMs(p.parent_notified_at)
+  const lagDays = startDay != null ? Math.round((notifiedDayLocalMs - startDay) / 86400000) : null
 
-  // Tooltip shows full server timestamp + placement date for cross-reference.
-  const tooltip = `Server-recorded notification: ${format(new Date(p.parent_notified_at), 'MMM d, yyyy h:mm a')}${
+  const tzLabel = (() => {
+    try { return new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(new Date()).find(part => part.type === 'timeZoneName')?.value || '' }
+    catch { return '' }
+  })()
+
+  // Tooltip shows full server timestamp + placement date + local TZ label so
+  // an AP can cross-reference with her wall clock (Reyes-style impeachment
+  // can no longer say "your system disagrees with the AP about which day").
+  const tooltip = `Server-recorded notification: ${format(new Date(p.parent_notified_at), 'MMM d, yyyy h:mm a')}${tzLabel ? ` (${tzLabel} local)` : ''}${
     p.start_date ? `\nPlacement date: ${format(parseISO(p.start_date), 'MMM d, yyyy')}` : ''
-  }${lagDays != null ? `\nLogged ${lagDays === 0 ? 'same day' : `${lagDays} day${lagDays === 1 ? '' : 's'} ${lagDays < 0 ? 'before' : 'after'}`} placement.` : ''}`
+  }${lagDays != null ? `\nLogged ${lagDays === 0 ? 'same calendar day' : `${Math.abs(lagDays)} day${Math.abs(lagDays) === 1 ? '' : 's'} ${lagDays < 0 ? 'before' : 'after'}`} placement (local time).` : ''}`
 
   let lagText = null
   let lagColor = 'text-gray-400'
