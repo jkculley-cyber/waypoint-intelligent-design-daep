@@ -173,4 +173,45 @@ if (CLEAN) {
   }
 }
 
-console.log(`\nDone. ${CLEAN ? 'Walkthrough cleanup complete.' : 'B1 amber chip + B4 red lag chip + T2.7 prior-failure path all primed. Hard-refresh after Cloudflare deploy.'}`)
+// ─── T2.7 surface scenario — recent referral on Ethan so Escalation lists him ─
+// useEscalationRisk() only includes students with a referral or placement
+// in the last 90 days AND a non-zero risk score. Ethan's prior-failure CICO
+// (above) is meaningless until he actually appears in the queue. A referral
+// dated 7 days ago triggers `Referral <=14d` (+30 score) → Medium risk.
+console.log('\n=== T2.7 surface — recent Ethan referral ===')
+const ethanRefMarker = '[cc15-walkthrough-ethan-recent-referral]'
+if (CLEAN) {
+  const { error: e, count } = await sb.from('navigator_referrals')
+    .delete({ count: 'exact' }).eq('district_id', LONE_STAR).ilike('description', `%${ethanRefMarker}%`)
+  if (e) console.error(`  ✗ cleanup: ${e.message}`)
+  else   console.log(`  ✓ removed ${count ?? '?'} Ethan walkthrough referral(s)`)
+} else {
+  const { data: alreadyRef } = await sb.from('navigator_referrals')
+    .select('id').eq('district_id', LONE_STAR).ilike('description', `%${ethanRefMarker}%`).limit(1).maybeSingle()
+  if (alreadyRef) {
+    console.log('  · already seeded (skipping); use --clean to remove')
+  } else {
+    const { data: ethan } = await sb.from('students')
+      .select('id, first_name, last_name, campus_id')
+      .eq('district_id', LONE_STAR).ilike('first_name', 'Ethan').ilike('last_name', 'Davis').limit(1).maybeSingle()
+    if (!ethan) {
+      console.error('  ✗ Ethan Davis not found')
+    } else {
+      const refDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+      const { error: e } = await sb.from('navigator_referrals').insert({
+        district_id: LONE_STAR,
+        campus_id: ethan.campus_id,
+        student_id: ethan.id,
+        reported_by: admin.id,
+        referral_date: refDate,
+        location: 'Classroom',
+        description: `Walkthrough demo referral — repeated disruption pattern noted by classroom teacher. ${ethanRefMarker}`,
+        status: 'pending',
+      })
+      if (e) console.error(`  ✗ insert failed: ${e.message}`)
+      else   console.log(`  ✓ ${ethan.first_name} ${ethan.last_name}: referral ${refDate} → triggers \`Referral <=14d\` in Escalation queue`)
+    }
+  }
+}
+
+console.log(`\nDone. ${CLEAN ? 'Walkthrough cleanup complete.' : 'B1 amber chip + B4 red lag chip + T2.7 prior-failure path + Ethan-in-queue all primed. Hard-refresh after Cloudflare deploy.'}`)

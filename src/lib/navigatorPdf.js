@@ -5,6 +5,16 @@ import { supabase } from './supabase'
 
 const FERPA_NOTICE = 'CONFIDENTIAL — FERPA Protected Student Records — Authorized Personnel Only — Do Not Distribute'
 
+// jsPDF's default Helvetica uses WinAnsi/CP1252 — em-dash, middle dot, ×, §, ⚠
+// are all in range, but ≤ ≥ → ← arrows are not and render as gibberish that
+// also corrupts surrounding glyph spacing. Sanitize free-text + computed labels
+// at render time so the UI keeps the nicer characters.
+const pdfSafe = (s) => s == null ? '' : String(s)
+  .replace(/≤/g, '<=')
+  .replace(/≥/g, '>=')
+  .replace(/[→]/g, '->')
+  .replace(/[←]/g, '<-')
+
 const SUPPORT_LABELS = {
   cico: 'CICO',
   behavior_contract: 'Behavior Contract',
@@ -145,7 +155,7 @@ export async function generateHearingPacket({ student, referrals, placements, su
   doc.setFontSize(9)
   doc.text(`Composite risk score: ${riskScore ?? '—'} / 100`, 12, y); y += 4.5
   if (riskTriggers && riskTriggers.length > 0) {
-    doc.text(`Triggers: ${riskTriggers.join(' · ')}`, 12, y); y += 4.5
+    doc.text(pdfSafe(`Triggers: ${riskTriggers.join(' · ')}`), 12, y); y += 4.5
   }
   doc.text(`Total referrals on file: ${referrals.length}`, 12, y); y += 4.5
   doc.text(`Total ISS/OSS placements on file: ${placements.length}`, 12, y); y += 4.5
