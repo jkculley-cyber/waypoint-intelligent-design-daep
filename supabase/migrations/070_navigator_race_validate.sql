@@ -74,6 +74,67 @@ BEGIN
   RAISE NOTICE 'race_ethnicity backfill: % rows moved from NULL to ''not_specified''.', v_backfilled;
 END $$;
 
+-- Normalize legacy / variant race values into the canonical 8-value set.
+-- Production data may include PEIMS codes ('H', 'B'), full natural-language
+-- forms ('Hispanic/Latino', 'African American'), title-cased forms, or
+-- legacy free-text. Any value not matched after normalization falls to
+-- 'not_specified' so the VALIDATE step downstream succeeds.
+DO $$
+DECLARE
+  v_normalized INT;
+  v_coerced INT;
+BEGIN
+  UPDATE students SET race_ethnicity = CASE
+    WHEN race_ethnicity IN (
+      'american_indian', 'asian', 'black', 'hispanic',
+      'pacific_islander', 'white', 'two_or_more', 'not_specified'
+    ) THEN race_ethnicity
+    -- PEIMS single-letter codes
+    WHEN UPPER(race_ethnicity) = 'H' THEN 'hispanic'
+    WHEN UPPER(race_ethnicity) = 'B' THEN 'black'
+    WHEN UPPER(race_ethnicity) = 'W' THEN 'white'
+    WHEN UPPER(race_ethnicity) = 'A' THEN 'asian'
+    WHEN UPPER(race_ethnicity) = 'I' THEN 'american_indian'
+    WHEN UPPER(race_ethnicity) = 'P' THEN 'pacific_islander'
+    WHEN UPPER(race_ethnicity) = 'M' THEN 'two_or_more'
+    -- PEIMS numeric codes (per TEA Data Standards)
+    WHEN race_ethnicity = '1' THEN 'american_indian'
+    WHEN race_ethnicity = '2' THEN 'asian'
+    WHEN race_ethnicity = '3' THEN 'black'
+    WHEN race_ethnicity = '4' THEN 'pacific_islander'
+    WHEN race_ethnicity = '5' THEN 'white'
+    -- Natural-language variants — case-insensitive substring matches
+    WHEN LOWER(race_ethnicity) LIKE '%hispanic%' OR LOWER(race_ethnicity) LIKE '%latino%' OR LOWER(race_ethnicity) LIKE '%latina%' OR LOWER(race_ethnicity) LIKE '%latinx%' THEN 'hispanic'
+    WHEN LOWER(race_ethnicity) LIKE '%black%' OR LOWER(race_ethnicity) LIKE '%african%' THEN 'black'
+    WHEN LOWER(race_ethnicity) LIKE '%white%' OR LOWER(race_ethnicity) LIKE '%caucasian%' OR LOWER(race_ethnicity) LIKE '%anglo%' THEN 'white'
+    WHEN LOWER(race_ethnicity) LIKE '%asian%' THEN 'asian'
+    WHEN LOWER(race_ethnicity) LIKE '%american indian%' OR LOWER(race_ethnicity) LIKE '%native american%' OR LOWER(race_ethnicity) LIKE '%alaska native%' OR LOWER(race_ethnicity) LIKE '%amerind%' THEN 'american_indian'
+    WHEN LOWER(race_ethnicity) LIKE '%pacific islander%' OR LOWER(race_ethnicity) LIKE '%hawaiian%' OR LOWER(race_ethnicity) LIKE '%native hawaii%' THEN 'pacific_islander'
+    WHEN LOWER(race_ethnicity) LIKE '%two%' OR LOWER(race_ethnicity) LIKE '%multi%' OR LOWER(race_ethnicity) LIKE '%mixed%' OR LOWER(race_ethnicity) LIKE '%more than one%' THEN 'two_or_more'
+    WHEN LOWER(race_ethnicity) LIKE '%decline%' OR LOWER(race_ethnicity) LIKE '%not specified%' OR LOWER(race_ethnicity) LIKE '%unknown%' OR LOWER(race_ethnicity) LIKE '%n/a%' OR LOWER(TRIM(race_ethnicity)) = '' THEN 'not_specified'
+    ELSE 'COERCE_TO_NOT_SPECIFIED'  -- two-step so we can count coerced separately
+  END
+  WHERE race_ethnicity IS NOT NULL
+    AND race_ethnicity NOT IN (
+      'american_indian', 'asian', 'black', 'hispanic',
+      'pacific_islander', 'white', 'two_or_more', 'not_specified'
+    );
+
+  GET DIAGNOSTICS v_normalized = ROW_COUNT;
+
+  -- Anything still in the unmappable bucket → 'not_specified'.
+  -- Logged separately so a follow-up audit can investigate what the
+  -- original values were (peek at audit_log if any UPDATE triggers
+  -- captured the prior values).
+  UPDATE students
+  SET race_ethnicity = 'not_specified'
+  WHERE race_ethnicity = 'COERCE_TO_NOT_SPECIFIED';
+
+  GET DIAGNOSTICS v_coerced = ROW_COUNT;
+
+  RAISE NOTICE 'race_ethnicity normalize: % rows mapped to canonical, % rows coerced to not_specified (unmappable values).', v_normalized - v_coerced, v_coerced;
+END $$;
+
 -- Drop the existing CHECK + re-add it WITHOUT the "IS NULL" allowance,
 -- then promote the column to NOT NULL.
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_race_ethnicity_check;
