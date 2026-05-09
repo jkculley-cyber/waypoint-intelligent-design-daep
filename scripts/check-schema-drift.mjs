@@ -59,7 +59,40 @@ const EXPECTED = {
   manifestation_determinations: ['id', 'district_id', 'student_id', 'meeting_date', 'is_manifestation', 'fba_required', 'bip_required', 'iep_modified'],
   students: ['id', 'district_id', 'campus_id', 'first_name', 'last_name', 'student_id_number', 'grade_level', 'is_active', 'is_sped', 'is_504', 'race_ethnicity'],
   profiles: ['id', 'district_id', 'role', 'full_name', 'is_active'],
-  incidents: ['id', 'district_id', 'campus_id', 'student_id', 'reported_by', 'status', 'laserfiche_instance_id'],
+
+  // Waypoint discipline tables — extended in T2-5 to cover migrations 073-079.
+  incidents: [
+    'id', 'district_id', 'campus_id', 'student_id', 'reported_by', 'status',
+    'laserfiche_instance_id',
+    // 073: free-text history
+    'description_history', 'notes_history',
+  ],
+  compliance_checklists: [
+    'id', 'district_id', 'incident_id', 'student_id', 'status',
+    'manifestation_determination', 'manifestation_result',
+    'parent_notified', 'fape_plan_documented', 'placement_justification',
+    'placement_blocked', 'block_overridden',
+    // 075: parent-notice strict + method enum
+    'parent_notification_method',
+    // 073: history capture for placement_justification
+    'placement_justification_history',
+    // 078: dual-signature override link
+    'override_request_id',
+  ],
+  // 078: net-new dual-signature override workflow table
+  compliance_override_requests: [
+    'id', 'district_id', 'compliance_checklist_id', 'incident_id',
+    'reason_category', 'reason_detail', 'supporting_document_url',
+    'requested_by', 'requested_at',
+    'approval_status', 'approved_by', 'approved_at', 'approval_notes',
+    'created_at', 'updated_at',
+  ],
+  // T2-2: parent edit history reads from this table via RLS 079
+  transition_plans: [
+    'id', 'district_id', 'student_id', 'incident_id', 'plan_type',
+    'start_date', 'end_date', 'review_30_date', 'review_60_date', 'review_90_date',
+    'status',
+  ],
 }
 
 let failed = 0

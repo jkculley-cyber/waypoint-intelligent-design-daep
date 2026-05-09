@@ -4,8 +4,8 @@ import Card, { CardTitle } from '../ui/Card'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import { SelectField } from '../ui/FormField'
-import { ConfirmDialog } from '../ui/Modal'
 import { useComplianceActions } from '../../hooks/useCompliance'
+import OverridePanel from './OverridePanel'
 import { useAuth } from '../../contexts/AuthContext'
 import { formatDateTime } from '../../lib/utils'
 import {
@@ -124,11 +124,8 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
   const isSped = student?.is_sped
   const is504 = student?.is_504 && !isSped
   const CHECKLIST_ITEMS = is504 ? SECTION_504_CHECKLIST_ITEMS : SPED_CHECKLIST_ITEMS
-  const { updateChecklistItem, updateChecklist, overrideBlock } = useComplianceActions()
+  const { updateChecklistItem, updateChecklist } = useComplianceActions()
   const { profile } = useAuth()
-  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
-  const [overrideReason, setOverrideReason] = useState('')
-  const [overriding, setOverriding] = useState(false)
   const [expandedGuidance, setExpandedGuidance] = useState({})
   const [placementJustification, setPlacementJustification] = useState(checklist?.placement_justification || '')
   const [savingJustification, setSavingJustification] = useState(false)
@@ -223,25 +220,6 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
     setSavingFbaBip(false)
   }
 
-  const handleOverride = async () => {
-    if (!overrideReason.trim()) {
-      toast.error('Override reason is required')
-      return
-    }
-
-    setOverriding(true)
-    const { error } = await overrideBlock(checklist.id, overrideReason)
-
-    if (error) {
-      toast.error('Failed to override block')
-    } else {
-      toast.success('Compliance block overridden')
-      setOverrideDialogOpen(false)
-      onUpdate?.()
-    }
-    setOverriding(false)
-  }
-
   const statusColor = {
     incomplete: 'red',
     in_progress: 'yellow',
@@ -261,15 +239,6 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
                checklist.status === 'completed' ? 'Completed' : 'Waived'}
             </Badge>
           </div>
-          {isBlocked && !isCompleted && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setOverrideDialogOpen(true)}
-            >
-              Override Block
-            </Button>
-          )}
         </div>
 
         {/* Manifestation Determination Result */}
@@ -518,46 +487,11 @@ export default function ComplianceChecklist({ checklist, student, onUpdate }) {
           </div>
         )}
 
-        {/* Override completed info */}
-        {checklist.block_overridden && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm font-medium text-yellow-800">Block Override Applied</p>
-            <p className="text-xs text-yellow-600 mt-1">
-              Reason: {checklist.override_reason}
-            </p>
-          </div>
-        )}
-
-        {/* Override dialog */}
-        <ConfirmDialog
-          isOpen={overrideDialogOpen}
-          onClose={() => setOverrideDialogOpen(false)}
-          onConfirm={handleOverride}
-          title="Override Compliance Block"
-          variant="warning"
-          confirmLabel="Override Block"
-          loading={overriding}
-          message={
-            <div className="space-y-3">
-              <p>
-                Overriding the compliance block allows the DAEP placement to proceed
-                without completing the full SPED compliance checklist. This action is
-                logged in the audit trail.
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Reason for Override <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={overrideReason}
-                  onChange={(e) => setOverrideReason(e.target.value)}
-                  placeholder="Document the reason for overriding the compliance block..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-h-[80px]"
-                />
-              </div>
-            </div>
-          }
-        />
+        {/* T2-1: Dual-signature override workflow (replaces legacy single-signature
+         * ConfirmDialog). Migration 078 + useCompliance.js requestOverride/approveOverride
+         * RPCs. The panel renders the request button, pending review (for second
+         * approver), or approved confirmation depending on state. */}
+        <OverridePanel checklist={checklist} onUpdate={onUpdate} />
       </Card>
 
       {/* Placement Justification & LRE Section */}

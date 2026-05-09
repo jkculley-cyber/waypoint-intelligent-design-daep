@@ -61,6 +61,7 @@ const staffNavigation = [
   { name: 'Discipline Matrix',path: '/matrix',                          icon: MatrixIcon,      roles: null,                                              product: 'waypoint', group: 'tools' },
   { name: 'Calendar',         path: '/calendar',                        icon: CalendarIcon,    roles: null,                                              product: 'waypoint', group: 'tools' },
   { name: 'Reports',          path: '/reports',                         icon: ReportsIcon,     roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'reports', product: 'waypoint', group: 'tools' },
+  { name: 'Disproportionality',path: '/reports/disproportionality',     icon: ReportsIcon,     roles: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.AP, ROLES.SPED_COORDINATOR], product: 'waypoint', group: 'tools' },
   { name: 'Data Import',      path: '/settings/import-data',            icon: ImportIcon,      roles: [ROLES.ADMIN, ROLES.PRINCIPAL], feature: 'data_import', product: 'waypoint', group: 'tools' },
   { name: 'Student Kiosk',    path: '/kiosk',                           icon: KioskIcon,       roles: [ROLES.ADMIN], external: true, feature: 'kiosk', product: 'waypoint', group: 'tools' },
   { name: 'Orientation Kiosk',path: '/orientation-kiosk',               icon: KioskIcon,       roles: [ROLES.ADMIN], external: true, feature: 'orientation_kiosk', product: 'waypoint', group: 'tools' },

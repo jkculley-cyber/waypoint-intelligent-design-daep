@@ -35,6 +35,7 @@ const PhoneReturnPage           = lazy(() => import('./pages/PhoneReturnPage'))
 const OrientationSchedulePage   = lazy(() => import('./pages/OrientationSchedulePage'))
 const OrientationKioskPage      = lazy(() => import('./pages/OrientationKioskPage'))
 const ReportsPage               = lazy(() => import('./pages/ReportsPage'))
+const DisproportionalityPage    = lazy(() => import('./pages/WaypointDisproportionalityPage'))
 const DisciplineMatrixPage      = lazy(() => import('./pages/DisciplineMatrixPage'))
 const MatrixEditorPage          = lazy(() => import('./pages/MatrixEditorPage'))
 const OffenseCodeManagerPage    = lazy(() => import('./pages/OffenseCodeManagerPage'))
@@ -151,6 +152,7 @@ function App() {
                 <Route path="/calendar" element={<RequireRole roles={STAFF_ROLES}><CalendarPage /></RequireRole>} />
 
                 <Route path="/reports" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}><RequireTier feature="reports"><ReportsPage /></RequireTier></RequireRole>} />
+                <Route path="/reports/disproportionality" element={<RequireRole roles={[ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.AP, ROLES.SPED_COORDINATOR]}><DisproportionalityPage /></RequireRole>} />
 
                 <Route path="/settings/offense-codes" element={<RequireRole roles={[ROLES.ADMIN]}><OffenseCodeManagerPage /></RequireRole>} />
                 <Route path="/settings/orientation" element={<RequireRole roles={[ROLES.ADMIN]}><OrientationSettingsPage /></RequireRole>} />

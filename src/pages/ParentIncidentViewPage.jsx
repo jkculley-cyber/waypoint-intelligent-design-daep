@@ -19,6 +19,7 @@ import {
   formatStudentNameShort,
   formatDate,
 } from '../lib/utils'
+import ParentEditHistorySection from '../components/parent/ParentEditHistorySection'
 
 export default function ParentIncidentViewPage() {
   const { id } = useParams()
@@ -177,13 +178,18 @@ export default function ParentIncidentViewPage() {
           )}
         </Card>
 
+        {/* T2-2: Edit history surface — closes Patricia's path to TRULY PROTECTIVE.
+         * Reads audit_log via migration 079 RLS policy parent_read_own_children. */}
+        <ParentEditHistorySection incident={incident} />
+
         {/* Important Notice */}
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-orange-800">Your Rights</h3>
           <p className="text-sm text-orange-700 mt-1">
             You have the right to review your child's discipline records and appeal any decisions.
             Contact the school administration or your child's counselor if you have questions or
-            wish to schedule a meeting.
+            wish to schedule a meeting. The Edit History above shows every change made to this
+            record — FERPA §99.10 inspection right.
           </p>
         </div>
       </div>
