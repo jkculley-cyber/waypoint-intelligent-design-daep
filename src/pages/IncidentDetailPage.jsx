@@ -13,6 +13,7 @@ import StudentFlags from '../components/students/StudentFlags'
 import ComplianceBlockBanner from '../components/compliance/ComplianceBlockBanner'
 import ComplianceChecklist from '../components/compliance/ComplianceChecklist'
 import PolicyMismatchBanner from '../components/incidents/PolicyMismatchBanner'
+import EditHistorySection from '../components/incidents/EditHistorySection'
 import ApprovalChainTracker from '../components/approvals/ApprovalChainTracker'
 import PlacementScheduler from '../components/daep/PlacementScheduler'
 import { useIncident, useIncidentActions, useIncidentAuditLog } from '../hooks/useIncidents'
@@ -639,7 +640,14 @@ export default function IncidentDetailPage() {
         </div>
       )}
 
-      {/* ── Activity Log ────────────────────────────────────────────────── */}
+      {/* ── Edit History (field-level audit, mig 073 triggers) ──────────── */}
+      {profile?.role !== 'parent' && profile?.role !== 'student' && (
+        <div className="px-6 pb-6">
+          <EditHistorySection incident={incident} />
+        </div>
+      )}
+
+      {/* ── Activity Log (legacy action history) ────────────────────────── */}
       {auditLog.length > 0 && (
         <div className="px-6 pb-6">
           <ActivityLog entries={auditLog} />

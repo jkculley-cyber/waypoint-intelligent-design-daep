@@ -150,15 +150,41 @@ serve(async (req) => {
       }, 422)
     }
 
+    // ─── CONTENT HASH (TOCTOU close) ──────────────────────────────────────
+    // Migration 080: every approval must carry a SHA-256 of the file bytes
+    // computed at verify time. Captured into compliance_override_requests so
+    // a hearing officer years later can re-hash the file at the URL and
+    // confirm it is the same bytes the approver verified — file swap after
+    // approval is then detectable.
+    const { data: blob, error: dlErr } = await admin.storage
+      .from('daep-documents')
+      .download(docPath)
+    if (dlErr || !blob) {
+      return jsonResponse({
+        error: `Storage download failed during attestation: ${dlErr?.message || 'no data'}`,
+      }, 502)
+    }
+    const bytes = await blob.arrayBuffer()
+    const hashBuf = await crypto.subtle.digest('SHA-256', bytes)
+    const sha256 = Array.from(new Uint8Array(hashBuf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+    const verifiedAt = new Date().toISOString()
+    // bytes.byteLength is the authoritative size we actually read; prefer it
+    // over the Storage metadata size (which can drift if metadata is stale).
+    const verifiedSize = bytes.byteLength
+
     // ─── APPROVAL ─────────────────────────────────────────────────────────
-    // Document validated. Invoke the approve RPC under the CALLER's auth so
-    // (a) dual-signature CHECK fires (approver != requester at DB level),
-    // (b) audit trigger captures the caller's auth.uid() correctly,
-    // (c) RPC's role check (admin/principal/sped_coordinator) runs against
-    //     the caller, not the service role.
+    // Document validated + hashed. Invoke the approve RPC under the CALLER's
+    // auth so (a) dual-signature CHECK fires, (b) audit trigger captures the
+    // caller's auth.uid(), (c) RPC role check runs against the caller.
     const { error: approveErr } = await callerClient.rpc('fn_approve_compliance_override', {
       p_request_id: request_id,
       p_approval_notes: approval_notes || null,
+      p_document_sha256: sha256,
+      p_document_size_bytes: verifiedSize,
+      p_document_mime: mime || null,
+      p_document_verified_at: verifiedAt,
     })
 
     if (approveErr) {
@@ -170,7 +196,9 @@ serve(async (req) => {
       document_verified: {
         filename: file.name,
         mime: mime || null,
-        size_bytes: size,
+        size_bytes: verifiedSize,
+        sha256,
+        verified_at: verifiedAt,
       },
     })
   } catch (err) {

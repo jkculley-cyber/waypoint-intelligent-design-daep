@@ -574,9 +574,16 @@ async function main() {
         fail(`second-user signin failed: ${authErr.message}`)
       } else {
         log(`  signed in as second approver: ${secondAuth.user.email}`)
+        // Migration 080: RPC requires attestation. Supply synthesized values
+        // so the DB-layer cross-user test still works; real attestation comes
+        // from the Edge Function (covered in smoke-test-edge-function-approve.mjs).
         const approve = await sb2.rpc('fn_approve_compliance_override', {
           p_request_id: requestId,
           p_approval_notes: 'Cross-user approval per smoke test.',
+          p_document_sha256: '0'.repeat(64),
+          p_document_size_bytes: 1,
+          p_document_mime: 'application/pdf',
+          p_document_verified_at: new Date().toISOString(),
         })
         if (approve.error) fail('cross-user approval', approve.error)
         else {

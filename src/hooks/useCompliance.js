@@ -188,18 +188,6 @@ export function useComplianceActions() {
     return { data, error: null }
   }
 
-  /**
-   * Direct DB-level approve (bypasses Edge Function document validation).
-   * Use only for emergency / admin recovery paths. UI calls approveOverride.
-   */
-  const approveOverrideDirect = async (requestId, approvalNotes) => {
-    const { error } = await supabase.rpc('fn_approve_compliance_override', {
-      p_request_id: requestId,
-      p_approval_notes: approvalNotes,
-    })
-    return { error }
-  }
-
   /** Reject a pending override request. */
   const rejectOverride = async (requestId, approvalNotes) => {
     const { error } = await supabase.rpc('fn_reject_compliance_override', {
@@ -228,7 +216,6 @@ export function useComplianceActions() {
     updateChecklist,
     requestOverride,
     approveOverride,         // T2-4: validates document via Edge Function
-    approveOverrideDirect,   // emergency / admin path, no document check
     rejectOverride,
     overrideBlock,  // deprecated; left for old caller surface
   }

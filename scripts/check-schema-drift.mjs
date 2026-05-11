@@ -80,11 +80,13 @@ const EXPECTED = {
     'override_request_id',
   ],
   // 078: net-new dual-signature override workflow table
+  // 080: SHA-256 attestation columns added (TOCTOU close, Reyes residual)
   compliance_override_requests: [
     'id', 'district_id', 'compliance_checklist_id', 'incident_id',
     'reason_category', 'reason_detail', 'supporting_document_url',
     'requested_by', 'requested_at',
     'approval_status', 'approved_by', 'approved_at', 'approval_notes',
+    'document_sha256', 'document_size_bytes', 'document_mime', 'document_verified_at',
     'created_at', 'updated_at',
   ],
   // T2-2: parent edit history reads from this table via RLS 079
