@@ -95,6 +95,17 @@ const EXPECTED = {
     'start_date', 'end_date', 'review_30_date', 'review_60_date', 'review_90_date',
     'status',
   ],
+  // T3 Phase 1: WORM mirror of audit_log with SHA-256 hash chain (mig 081)
+  audit_edit_log: [
+    'seq', 'audit_log_id', 'district_id', 'user_id', 'action', 'entity_type',
+    'entity_id', 'changes', 'ip_address', 'user_agent', 'audit_created_at',
+    'row_canonical', 'prev_row_hash', 'row_hash', 'mirrored_at',
+  ],
+  // T3 Phase 2: singleton cursor for the hourly chain-backup Edge Function (mig 082)
+  audit_chain_backup_state: [
+    'id', 'last_backed_up_seq', 'last_head_hash', 'last_head_seq',
+    'last_run_at', 'last_status', 'last_error', 'updated_at',
+  ],
 }
 
 let failed = 0

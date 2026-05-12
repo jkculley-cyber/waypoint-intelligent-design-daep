@@ -44,7 +44,7 @@
 - **whitepaper.html:** 20-point DAEP compliance self-audit checklist, 5 sections with TEC citation callout boxes, scorecard with scoring bands (18–20 compliant / 14–17 at risk / <14 urgent), print-optimized CSS, "Save as PDF" button. Lead magnet for district sales.
 - **Hosting:** Cloudflare Pages — `waypoint` project (app, deployed via GitHub Actions on push to `main`), `cpeg-site` project (marketing site, deployed via GitHub Actions `deploy-clearpath-site.yml` on push to `main` — **do NOT use `node deploy-clearpath.mjs` Direct Upload**, it creates broken deployments)
 - **Supabase project:** `kvxecksvkimcgwhxxyhw` (single project, all tenants)
-- **Migrations applied:** 001–072 (production). Migration 061: home campus DAEP handoff schema + trigger. Migration 062: `students.is_mtss`. Migration 063: students INSERT RLS for principal/ap/counselor. Migration 064: `navigator_student_monitors` (per-student configurable alerts). Migrations 066/067/068 (CC14): Navigator T1+T2 — `manifestation_determinations` + 10-day SPED trigger + parent-notice trigger + reason/description history + audit-log fail-loud triggers, with shape-fix corrections in 067 + nested-IF fix in 068. Migration 069 (CC15, applied 2026-04-29): parent-notice trigger upgraded to RAISE `P0001` on client-set timestamps instead of silent-overwrite — verified via smoke 3a/3b PASS. Migrations 070/071/072 (CC16, applied 2026-04-30): **070** — `students.race_ethnicity` 4-case column drift reconciliation (race vs race_ethnicity), NULL backfill, PEIMS + natural-language variant normalization, ALTER NOT NULL + DEFAULT 'not_specified'; **071** — sentinel UUID seed in `auth.users` + `profiles` for service-role audit fallback; **072** — `reason_history` + `description_history` JSONB integrity CHECK constraints (required keys + monotonic time-order).
+- **Migrations applied:** 001–082 (production). Migration 061: home campus DAEP handoff schema + trigger. Migration 062: `students.is_mtss`. Migration 063: students INSERT RLS for principal/ap/counselor. Migration 064: `navigator_student_monitors` (per-student configurable alerts). Migrations 066/067/068 (CC14): Navigator T1+T2 — `manifestation_determinations` + 10-day SPED trigger + parent-notice trigger + reason/description history + audit-log fail-loud triggers, with shape-fix corrections in 067 + nested-IF fix in 068. Migration 069 (CC15, applied 2026-04-29): parent-notice trigger upgraded to RAISE `P0001` on client-set timestamps instead of silent-overwrite — verified via smoke 3a/3b PASS. Migrations 070/071/072 (CC16, applied 2026-04-30): **070** — `students.race_ethnicity` 4-case column drift reconciliation, NULL backfill, PEIMS + natural-language variant normalization, ALTER NOT NULL + DEFAULT 'not_specified'; **071** — sentinel UUID seed in `auth.users` + `profiles` for service-role audit fallback; **072** — `reason_history` + `description_history` JSONB integrity CHECK constraints. Migrations 073-080 (CC22-CC23): Waypoint adversarial-audit T1 patches (audit triggers + 10-day SPED + parent-notice strict + compliance lock + history integrity + override dual-signature + parent audit RLS + override SHA-256 attestation). **Migrations 081/081a/082 (CC24, applied 2026-05-12): T3 audit_edit_log WORM mirror with SHA-256 hash chain + hourly external backup pipeline.** 081 = mirror table + lockdown (REVOKE INSERT/UPDATE/DELETE/TRUNCATE from all client roles) + `fn_append_audit_edit_log` (SECURITY DEFINER) + `fn_verify_audit_edit_log_chain` + `fn_verify_audit_log_matches_edit_log` + AFTER INSERT trigger on audit_log + backfill of all existing rows. 081a hotpatch fixed `SET search_path = public` → `public, extensions` (pgcrypto digest lives in extensions schema). 082 = `audit_chain_backup_state` singleton cursor + `fn_try_acquire_audit_backup_lock` / `fn_complete_audit_backup_run` atomic-lock RPCs + Storage bucket `audit-edit-log-backups` (waypoint_admin read-only RLS) + hourly pg_cron schedule.
 - **Demo seed data:** `supabase/seed_demo_video.mjs` — 12 active incidents, 6 transition plans, 57 days behavior tracking (Marcus/David/DeShawn), parent auth user `parent.marcus@gmail.com` / `Password123!` (Sandra Johnson, guardian of Marcus). `supabase/seed_navigator.mjs` — 13 referrals, 28 placements (6 completed + 2 active + 20 prior year), 6 supports, 3 campus goals seeded for Lone Star ISD (8 student risk scenarios: 3 HIGH, 3 MEDIUM, 2 LOW). 2 active placements (Marcus OSS, DeShawn ISS — no end_date) power the Active ISS/Active OSS tabs. `supabase/seed_meridian.mjs` — 9 SPED students, 4 IEPs, 2 504 plans, 3 ARD referrals, 1 CAP finding seeded for Lone Star ISD. Both Navigator and Meridian **enabled** for Lone Star ISD. Both seeders use Supabase REST API (no DB password needed).
 - **Demo video script:** `docs/brand/demo-video-script.md` — full production package rewritten Session T. 10 HeyGen blocks (≤840 chars each), student-first framing, T.E.A./I.E.P./P.E.I.M.S. abbreviations with periods. B-roll shot guide (7 clips) at bottom of script.
 - **Demo district:** Lone Star ISD (seeded), `admin@lonestar-isd.org` / `Password123!`
@@ -137,23 +137,51 @@
 
 ## Next Session Priority
 
-1. **5-minute visual walkthrough of CC16 patches** — Cloudflare deploy of `26a3ac0`+`93d5149`+`13c104f` should be live. Hard-refresh `app.clearpathedgroup.com` (PWA SW cache). Five checks: (a) Disproportionality page → confirm `insufficient` rows render as amber pill with ⓘ glyph (visually distinct from gray `— flat`); (b) Placements page → confirm same-day emerald renders correctly for Texas-evening parent calls (timezone fix); (c) Placements page → if any production placements have lag<0 or >30d, confirm amber audit banner + "Review these" filter works; (d) Hearing Packet PDF → regenerate Jayden's, confirm `Triggers: OSS <=30d · Prior DAEP escalation` reads cleanly (no `"d` artifact); (e) Disproportionality by-race table now actually shows real race buckets (not all `not_specified`) — first time the feature is functional since it shipped.
-2. **Manually trigger the schema-drift workflow** to confirm CI configuration works: `gh workflow run schema-drift.yml`. All 8 tables should PASS now that 070-072 are applied. Workflow secrets are `VITE_SUPABASE_URL` + `VITE_SUPABASE_SERVICE_ROLE_KEY` (already set per CC15 GitHub Actions audit).
-3. **Update CLAUDE.md closing-checklist** to bake CC15's "Commit AND push to origin/main" + CC16's "Verify deploy landed via `gh run list` at end of closing" — the rules are decided, the doc hasn't been updated yet.
+### Tier 1 — Phase 2 Edge Function gateway carryover (CC24, blocking the hourly pipeline)
 
-### Tier 2 (if Navigator pilot signs)
+1. **Confirm Edge Function gateway released.** Run from worktree:
+   ```bash
+   export $(grep -v '^#' .env.local | xargs)
+   curl -s -o /dev/null -w "HTTP %{http_code}\n" -X POST "$VITE_SUPABASE_URL/functions/v1/verify-and-backup-audit-chain" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Content-Type: application/json" -d '{}'
+   ```
+   - If 200 or 500 — gateway released, function code is being reached. Proceed to step 2.
+   - If 401 INVALID_CREDENTIALS — gateway still rejecting. Try one CLI redeploy: `npx supabase functions deploy verify-and-backup-audit-chain --project-ref kvxecksvkimcgwhxxyhw --no-verify-jwt`. If still blocked, dashboard toggle was reverted — re-flip it OFF.
 
-4. **Item #8 — Escalation pagination + server-side risk-score caching** (Sam #1, #2). Half-day work. Materialized `navigator_risk_scores` table refreshed via triggers on referrals/placements/supports mutations. Page-load fetches the pre-computed table. Only round-3 wedge that survives into pilot scale; not blocking for ship.
-5. **Race coercion audit** — `SELECT entity_id, changes FROM audit_log WHERE entity_type='students' AND created_at > [migration 070 apply time]` to recover the original race values that were coerced to `not_specified`. Useful if a district complains about specific student records being "wrong."
+2. **Add `supabase/config.toml` to make verify_jwt=false durable across deploys** (so CC24's manual dashboard toggle isn't undone):
+   ```toml
+   [functions.verify-and-backup-audit-chain]
+   verify_jwt = false
+   ```
+   Redeploy to confirm the config picks up.
 
-### Carryover from CC15 (still pending)
+3. **Re-run smoke + drift:** `node scripts/smoke-test-082-audit-backup.mjs` (expect 9/9 PASS) + `node scripts/check-schema-drift.mjs --verbose` (expect 13/13 PASS).
 
-6. **Pre-seed sentinel UUID `00000000-...`** — ✅ DONE in CC16 via migration 071.
-7. **Round-3 adversarial audit on Navigator** — ✅ DONE in CC16 (Marsha 84%, Reyes IDEA DEFENDABLE, Chen conditional pass with 4 conditions, Sam 60/40).
+4. **Verify hourly cron is producing Storage objects:** After the gateway clears + the top-of-the-next-hour mark, query `SELECT name, created_at FROM storage.objects WHERE bucket_id='audit-edit-log-backups' ORDER BY created_at DESC LIMIT 10;` — expect chain_head.json + rows.jsonl pairs landing hourly.
 
-### Old CC15 items still outstanding
+### Tier 2 — Phase 3 UI surface (now unblocked)
 
-3. **Cloudflare Pages routing recheck (CC13 carryover)** — first thing in the morning, before doing any other Cloudflare work. Test `curl -s 'https://clearpathedgroup.com/api/ping'` — if it returns `{"ok":true,"source":"ping"}`, the stuck manifest cleared overnight. If still returns marketing HTML, **execute Option A** from the CC13 handover.
+5. **Waypoint Admin "Chain Integrity" page.** Reads `audit_chain_backup_state` singleton. Surfaces: last verified at, head hash (truncated + copy button), chain length, broken_count + mismatched_count + orphaned_count (each green if 0, red otherwise), staleness alarm (red if last_run_at > 4h ago at hourly cadence), Storage object listing for the last 7 days. Wire into existing WaypointAdminPage tab structure. Closes the §99.10 footer copy upgrade: "tampering detectable by periodic audit" → "verified hourly via SHA-256 hash chain externally attested to Supabase Storage; head hash signature: `<truncated>`".
+
+### Tier 3 — Commercial track (unchanged from CC23)
+
+6. Source-code escrow filing (Iron Mountain / NCC Group). Marlene's #1.
+7. Written §37 / §300.530 legal opinion (Walsh Gallegos / Thompson & Horton / Eichelbaum Wardell). Marlene's #2.
+8. SOC 2 Type 1 readiness assessment. Chen condition 3.
+9. Secondary engineer in MSA + E&O insurance certificate. Chen condition 4.
+10. First reference district in production for one full SY.
+11. Skyward / ed-Fi / OneRoster connector for PEIMS-validated export.
+
+### Tier 4 — CC21 Apex carryover (unchanged)
+
+12. Anthropic credits depleted — coaching-draft pipeline blocked.
+13. R4-2 magic-link smoke testable without credits.
+14. R4-3 deploy verification — `apex-audio-cleanup` 500.
+15. Apex token-budget-per-tier (~½ day).
+16. Beacon district plumbing — demand-pull parked until Nicole's Magnolia ISD conversation.
+
+### CC24 Phase 4 backlog (deferred)
+
+17. **Truly external chain head backup** to AWS S3 / GCP Cloud Storage with separate IAM. The Phase 2 Storage bucket is still deletable by Supabase project-owner dashboard access; Phase 4 escapes that trust root. Cost: AWS/GCP credential management, ~$1/month storage, ~1 day engineering. Defer until a procurement conversation demands it (Chen SOC 2 Type 2 or a hostile-CIO probe).
 
 ---
 
