@@ -131,7 +131,6 @@
   <p>Most student behavior is handled at the campus level — referrals, ISS, OSS, parent conferences. Navigator gives you risk scoring, escalation detection, intervention tracking, and disproportionality analytics for the discipline that lives in your building every day.</p>
   <div class="hero-actions">
     <a href="#pilot" class="btn-primary">Request Free Demo →</a>
-    <a href="https://waypoint.clearpathedgroup.com" class="btn-ghost" target="_blank">View Live Demo →</a>
   </div>
 </div>
 
@@ -370,8 +369,10 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
 
   var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
   var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+  var WAYPOINT_FN = 'https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/send-notification';
+  var WAYPOINT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY';
 
-  // Send to Formspree (email) + ops Supabase (Waypoint Admin merges from here)
+  // Send to Formspree (notifies us), ops Supabase (logs lead), and auto-email the requester with creds
   Promise.all([
     fetch('https://formspree.io/f/xpqjngpp', {
       method: 'POST', body: formData, headers: { 'Accept': 'application/json' }
@@ -380,6 +381,16 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
       method: 'POST',
       headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify(lead)
+    }).catch(function() {}),
+    fetch(WAYPOINT_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY },
+      body: JSON.stringify({
+        to: lead.email,
+        subject: 'Your Navigator demo access',
+        template: 'welcome_navigator_demo',
+        data: { name: lead.name }
+      })
     }).catch(function() {})
   ]).then(function() {
     // Show success inline
@@ -389,8 +400,8 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
       + '<div style="background:rgba(0,0,0,.3);border:1px solid rgba(232,134,42,.3);border-radius:12px;padding:20px;max-width:340px;margin:0 auto;text-align:left">'
       + '<p style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px">Demo Login</p>'
       + '<div style="margin-bottom:8px"><span style="font-size:.75rem;color:var(--text-muted)">URL:</span> <a href="https://waypoint.clearpathedgroup.com" target="_blank" style="font-size:.85rem;color:var(--amber-light);font-weight:600;text-decoration:none">waypoint.clearpathedgroup.com</a></div>'
-      + '<div style="margin-bottom:8px"><span style="font-size:.75rem;color:var(--text-muted)">Email:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">ap@lincoln-hs.demo</span></div>'
-      + '<div style="margin-bottom:16px"><span style="font-size:.75rem;color:var(--text-muted)">Password:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">Password123!</span></div>'
+      + '<div style="margin-bottom:8px"><span style="font-size:.75rem;color:var(--text-muted)">Email:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">explore@clearpathedgroup.com</span></div>'
+      + '<div style="margin-bottom:16px"><span style="font-size:.75rem;color:var(--text-muted)">Password:</span> <span style="font-size:.85rem;color:var(--text);font-weight:600;font-family:monospace">Explore2026!</span></div>'
       + '<a href="https://waypoint.clearpathedgroup.com" target="_blank" style="display:block;text-align:center;padding:12px;background:linear-gradient(135deg,var(--amber),var(--orange));color:white;font-weight:700;font-size:.88rem;border-radius:8px;text-decoration:none;font-family:Raleway,sans-serif">Open Navigator →</a>'
       + '</div>'
       + '<p style="font-size:.72rem;color:var(--text-muted);margin-top:16px">This is sample data from a demo school. Your own account with real student data comes after a signed data agreement.</p>'

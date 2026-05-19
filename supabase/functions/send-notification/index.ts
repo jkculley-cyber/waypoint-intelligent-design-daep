@@ -220,6 +220,50 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
   `,
 
+  welcome_navigator_demo: (d) => `
+    <h2 style="color:#1f2937;margin-top:0;">Your Navigator demo is ready</h2>
+    <p>Hi${d.name ? ` ${d.name}` : ''},</p>
+    <p>Thanks for requesting a Navigator demo. You can sign in right now with the sandbox credentials below — Navigator appears in the sidebar once you're logged in. All data is manufactured and does not represent any real students or districts.</p>
+
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:20px 24px;margin:24px 0;">
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1e40af;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;width:100px;">URL</td>
+          <td style="padding:6px 0;font-size:0.85rem;"><a href="https://waypoint.clearpathedgroup.com" style="color:#2563eb;">waypoint.clearpathedgroup.com</a></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;">Email</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore@clearpathedgroup.com</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;">Password</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
+        </tr>
+      </table>
+      <p style="font-size:0.75rem;color:#1e40af;margin:12px 0 0;">The sandbox resets periodically so you can always start fresh.</p>
+    </div>
+
+    <p><strong>What to try first in Navigator:</strong></p>
+    <ol style="color:#374151;line-height:1.8;">
+      <li>Open the Navigator Dashboard from the sidebar</li>
+      <li>Click <em>New Referral</em> and submit one for any student</li>
+      <li>Approve it, then create a placement (ISS or OSS)</li>
+      <li>Check the risk score and disproportionality views</li>
+    </ol>
+
+    <table style="border-collapse:collapse;width:100%;margin:20px 0;">
+      <tr>
+        <td style="padding:10px 0;">
+          <a href="https://waypoint.clearpathedgroup.com" style="display:inline-block;background:#2563eb;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Open Navigator &rarr;</a>
+        </td>
+      </tr>
+    </table>
+
+    <p>When you're ready to use real student data on your campus, we'll set up your own private district and walk you through onboarding. A signed data processing agreement is required first — just reply and we'll send it over.</p>
+    <p style="margin:0;"><strong>The Navigator Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
+  `,
+
   nurture_day3: (d) => `
     <h2 style="color:#1f2937;margin-top:0;">Still thinking about Waypoint?</h2>
     <p>Hi${d.name ? ` ${d.name}` : ''} — we wanted to check in. A few days have passed since you reached out, and we want to make sure you have everything you need to make a decision.</p>
