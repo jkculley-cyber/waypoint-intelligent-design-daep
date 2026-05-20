@@ -1598,7 +1598,7 @@
           }).catch(function() {});
           fetch(WAYPOINT_FN, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY },
+            headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY, 'Authorization': 'Bearer ' + WAYPOINT_KEY },
             body: JSON.stringify({
               to: data.get('email'),
               subject: 'Your Waypoint demo access',
@@ -2077,7 +2077,7 @@ function submitExploreForm(){
   btn.disabled=true; btn.textContent='Sending\u2026';
   fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
+    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
     body:JSON.stringify({name:name,email:email,source:'sandbox_explore',role:_exploreRole})
   }).catch(function(){}).finally(function(){
     document.getElementById('explore-step-district').style.display='none';
@@ -2096,13 +2096,13 @@ function submitCommunityForm(){
   // Capture the visit
   fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/capture-lead',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
+    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
     body:JSON.stringify({name:name,email:email,source:'community_explore',role:_exploreRole})
   }).catch(function(){});
   // Send thank-you email
   fetch('https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/send-notification',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
+    headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY'},
     body:JSON.stringify({to:email,subject:'Thank you for exploring Waypoint',template:'welcome_community_explore',data:{name:name}})
   }).catch(function(){}).finally(function(){
     document.getElementById('explore-step-community').style.display='none';

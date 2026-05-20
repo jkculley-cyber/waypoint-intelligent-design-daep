@@ -384,7 +384,7 @@ document.getElementById('pilotForm').addEventListener('submit', function(e) {
     }).catch(function() {}),
     fetch(WAYPOINT_FN, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY },
+      headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY, 'Authorization': 'Bearer ' + WAYPOINT_KEY },
       body: JSON.stringify({
         to: lead.email,
         subject: 'Your Navigator demo access',
