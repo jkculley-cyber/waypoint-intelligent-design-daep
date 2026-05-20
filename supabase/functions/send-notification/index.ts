@@ -140,9 +140,9 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
   `,
 
   welcome_demo_request: (_d) => `
-    <h2 style="color:#1f2937;margin-top:0;">You're on our list — here's what's next</h2>
-    <p>Thank you for reaching out. We've received your request and will be in touch shortly to schedule a focused, 30-minute walkthrough tailored to your district's biggest compliance challenges.</p>
-    <p>While you wait, feel free to explore Waypoint yourself using the sandbox credentials below. Note: all data in the sandbox is manufactured and does not represent any real students or districts.</p>
+    <h2 style="color:#1f2937;margin-top:0;">Thank you for exploring Waypoint.</h2>
+    <p>Thanks for requesting a Waypoint demo. We've received your request, and we'll follow up shortly with more information.</p>
+    <p>In the meantime, feel free to explore the sandbox below — all data is manufactured and does not represent any real students or districts.</p>
 
     <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
       <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
@@ -162,27 +162,17 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
       </table>
     </div>
 
-    <p>We look forward to connecting with you.</p>
-
-    <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-      <tr>
-        <td style="padding:10px 0;">
-          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule a 30-minute demo &rarr;</a>
-          <p style="margin:6px 0 0;font-size:0.82rem;color:#6b7280;">Pick a time that works for you. No prep needed.</p>
-        </td>
-      </tr>
-    </table>
-
+    <p>Questions? Just reply to this email.</p>
     <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
   `,
 
   welcome_pilot_application: (_d) => `
     <h2 style="color:#1f2937;margin-top:0;">We received your Waypoint Founding District application</h2>
-    <p>Thank you for applying to be a Waypoint Founding District. This means a lot to us — we're building Waypoint alongside districts like yours, and your feedback will directly shape the product.</p>
-    <p>Our team reviews every application personally. We'll be in touch within a few business days to discuss next steps.</p>
+    <p>Thank you for applying to be a Waypoint Founding District. We've received your application and will follow up shortly with next steps.</p>
+    <p>In the meantime, feel free to explore the sandbox below — all data is manufactured and does not represent any real students or districts.</p>
 
     <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px 24px;margin:24px 0;">
-      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Explore Now — Sandbox Credentials</p>
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400e;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
       <table style="border-collapse:collapse;width:100%;">
         <tr>
           <td style="padding:6px 0;font-size:0.85rem;color:#78350f;font-weight:600;width:100px;">URL</td>
@@ -197,33 +187,17 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
           <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
         </tr>
       </table>
-      <p style="font-size:0.75rem;color:#92400e;margin:12px 0 0;">Explorer ISD is a pre-loaded sandbox district. Feel free to explore all features — incidents, compliance workflows, SPED timelines, and more.</p>
     </div>
 
-    <p><strong>What happens next:</strong></p>
-    <ol style="color:#374151;line-height:1.8;">
-      <li>We review your application (2–3 business days)</li>
-      <li>We schedule a 30-minute discovery call</li>
-      <li>We align on a pilot timeline and scope</li>
-    </ol>
-    <p>Founding Districts receive preferred pricing and direct access to our product team throughout the pilot.</p>
-
-    <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-      <tr>
-        <td style="padding:10px 0;">
-          <a href="https://calendar.app.google/YN6Wki3eAkM6V8c49" style="display:inline-block;background:#f97316;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Schedule your discovery call &rarr;</a>
-          <p style="margin:6px 0 0;font-size:0.82rem;color:#6b7280;">Or reply to this email — we'll work around your schedule.</p>
-        </td>
-      </tr>
-    </table>
-
+    <p>Questions? Just reply to this email.</p>
     <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
   `,
 
   welcome_navigator_demo: (d) => `
-    <h2 style="color:#1f2937;margin-top:0;">Your Navigator demo is ready</h2>
+    <h2 style="color:#1f2937;margin-top:0;">Thank you for exploring Navigator.</h2>
     <p>Hi${d.name ? ` ${d.name}` : ''},</p>
-    <p>Thanks for requesting a Navigator demo. You can sign in right now with the sandbox credentials below — Navigator appears in the sidebar once you're logged in. All data is manufactured and does not represent any real students or districts.</p>
+    <p>Thanks for requesting a Navigator demo. We've received your request, and we'll follow up shortly with more information.</p>
+    <p>In the meantime, you can sign in with the sandbox credentials below — Navigator appears in the sidebar once you're logged in. All data is manufactured and does not represent any real students or districts.</p>
 
     <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:20px 24px;margin:24px 0;">
       <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1e40af;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
@@ -241,26 +215,9 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
           <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">Explore2026!</td>
         </tr>
       </table>
-      <p style="font-size:0.75rem;color:#1e40af;margin:12px 0 0;">The sandbox resets periodically so you can always start fresh.</p>
     </div>
 
-    <p><strong>What to try first in Navigator:</strong></p>
-    <ol style="color:#374151;line-height:1.8;">
-      <li>Open the Navigator Dashboard from the sidebar</li>
-      <li>Click <em>New Referral</em> and submit one for any student</li>
-      <li>Approve it, then create a placement (ISS or OSS)</li>
-      <li>Check the risk score and disproportionality views</li>
-    </ol>
-
-    <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-      <tr>
-        <td style="padding:10px 0;">
-          <a href="https://waypoint.clearpathedgroup.com" style="display:inline-block;background:#2563eb;color:white;font-size:0.95rem;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;">Open Navigator &rarr;</a>
-        </td>
-      </tr>
-    </table>
-
-    <p>When you're ready to use real student data on your campus, we'll set up your own private district and walk you through onboarding. A signed data processing agreement is required first — just reply and we'll send it over.</p>
+    <p>Questions? Just reply to this email.</p>
     <p style="margin:0;"><strong>The Navigator Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
   `,
 
