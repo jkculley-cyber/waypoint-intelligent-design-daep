@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { useEffect } from 'react'
 import Sidebar from './Sidebar'
+import SandboxCrossSellBanner from './SandboxCrossSellBanner'
 import { NotificationProvider } from '../../contexts/NotificationContext'
 import { SidebarProvider, useSidebar } from '../../contexts/SidebarContext'
 import { Toaster } from 'react-hot-toast'
@@ -27,6 +28,7 @@ function AppShellInner() {
       )}
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
+        <SandboxCrossSellBanner />
         <Outlet />
       </main>
       <Toaster

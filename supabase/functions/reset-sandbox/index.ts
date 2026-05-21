@@ -63,9 +63,7 @@ async function wipe(sb: Supabase) {
   await sb.from('offense_codes').delete().eq('district_id', D)
   await sb.from('students').delete().eq('district_id', D)
 
-  for (const t of ['navigator_supports', 'navigator_placements', 'navigator_referrals'] as const) {
-    await sb.from(t).delete().eq('district_id', D)
-  }
+  // Navigator data lives in the separate Lincoln HS sandbox district — not wiped here.
   for (const t of ['meridian_cap_findings', 'meridian_students'] as const) {
     await sb.from(t).delete().eq('district_id', D)
   }

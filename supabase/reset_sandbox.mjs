@@ -82,9 +82,9 @@ async function wipe() {
   await del('offense_codes')   // wipe sandbox offense codes too (reseed each time)
   await del('students')
 
-  for (const t of ['navigator_supports', 'navigator_placements', 'navigator_referrals']) {
-    await del(t)
-  }
+  // Navigator data lives in Lincoln HS sandbox (district 33333333-...), not
+  // Explorer ISD — reset_navigator_sandbox.mjs (or re-running
+  // seed_navigator_campus_demo.mjs) handles that side.
   for (const t of ['meridian_cap_findings', 'meridian_students']) {
     const { error } = await supabase.from(t).delete().eq('district_id', D)
     if (error) console.warn(`  Warn ${t}: ${error.message}`)
