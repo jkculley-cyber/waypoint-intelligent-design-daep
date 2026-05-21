@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 
-const DISMISS_KEY = 'sandbox_cross_sell_dismissed'
+const DISMISS_KEY_PREFIX = 'sandbox_cross_sell_dismissed_'
 
 export default function SandboxCrossSellBanner() {
   const { district } = useAuth()
   const [dismissed, setDismissed] = useState(false)
 
+  const products = district?.settings?.products || []
+  const hasWaypoint = products.includes('waypoint')
+  const hasNavigator = products.includes('navigator')
+
+  // Per-district dismiss key — dismissing on one sandbox must not suppress
+  // the banner on the other sandbox (same browser, same localStorage origin).
+  const dismissKey = district?.id ? `${DISMISS_KEY_PREFIX}${district.id}` : null
+
   useEffect(() => {
-    setDismissed(localStorage.getItem(DISMISS_KEY) === '1')
-  }, [])
+    if (dismissKey) {
+      setDismissed(localStorage.getItem(dismissKey) === '1')
+    }
+  }, [dismissKey])
 
   if (!district?.settings?.is_sandbox) return null
   if (dismissed) return null
-
-  const products = district.settings.products || []
-  const hasWaypoint = products.includes('waypoint')
-  const hasNavigator = products.includes('navigator')
 
   let copy = null
   if (hasWaypoint && !hasNavigator) {
@@ -44,7 +50,7 @@ export default function SandboxCrossSellBanner() {
     : { bg: 'bg-orange-50', border: 'border-orange-200', label: 'text-orange-900', body: 'text-orange-800', cta: 'text-orange-700 hover:text-orange-900' }
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, '1')
+    if (dismissKey) localStorage.setItem(dismissKey, '1')
     setDismissed(true)
   }
 
