@@ -36,7 +36,20 @@ export default function LoginPage() {
         if (hasProduct('waypoint'))        defaultPath = '/dashboard'
         else if (hasProduct('navigator')) defaultPath = '/navigator'
         else if (hasProduct('meridian'))  defaultPath = '/meridian'
-        const safe = from && !from.startsWith('/waypoint-admin') ? from : defaultPath
+
+        // Validate `from` path against the user's licensed products. Browser
+        // history can carry a path for a product the user no longer has access
+        // to (e.g. district's products array changed) — in that case redirect
+        // to defaultPath rather than dumping them on a RequireProduct wall.
+        const fromUnavailable = !!from && (
+          (from.startsWith('/navigator') && !hasProduct('navigator')) ||
+          (from.startsWith('/meridian') && !hasProduct('meridian')) ||
+          (from.startsWith('/origins') && !hasProduct('origins'))
+        )
+
+        const safe = from && !from.startsWith('/waypoint-admin') && !fromUnavailable
+          ? from
+          : defaultPath
         navigate(safe, { replace: true })
       }
     }
