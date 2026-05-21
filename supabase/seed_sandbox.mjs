@@ -80,7 +80,7 @@ async function run() {
       tea_district_id: '999999',
       settings: {
         is_sandbox: true,
-        products: ['waypoint', 'navigator', 'meridian'],
+        products: ['waypoint', 'meridian'],
         subscription_tier: 'enterprise',
       },
     }, { onConflict: 'id' })

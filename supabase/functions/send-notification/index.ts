@@ -197,10 +197,10 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <h2 style="color:#1f2937;margin-top:0;">Thank you for exploring Navigator.</h2>
     <p>Hi${d.name ? ` ${d.name}` : ''},</p>
     <p>Thanks for requesting a Navigator demo. We've received your request, and we'll follow up shortly with more information.</p>
-    <p>In the meantime, you can sign in with the sandbox credentials below — Navigator appears in the sidebar once you're logged in. All data is manufactured and does not represent any real students or districts.</p>
+    <p>In the meantime, you can sign in with the sandbox credentials below — you'll land directly in Navigator. The sandbox is a single-campus district (Lincoln High School) with manufactured data that does not represent any real students.</p>
 
     <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:20px 24px;margin:24px 0;">
-      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1e40af;margin:0 0 12px;">Sandbox Access — Explorer ISD</p>
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1e40af;margin:0 0 12px;">Sandbox Access — Lincoln High School</p>
       <table style="border-collapse:collapse;width:100%;">
         <tr>
           <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;width:100px;">URL</td>
@@ -208,7 +208,7 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
         </tr>
         <tr>
           <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;">Email</td>
-          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore@clearpathedgroup.com</td>
+          <td style="padding:6px 0;font-size:0.85rem;font-family:monospace;">explore-navigator@clearpathedgroup.com</td>
         </tr>
         <tr>
           <td style="padding:6px 0;font-size:0.85rem;color:#1e3a8a;font-weight:600;">Password</td>

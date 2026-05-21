@@ -1,13 +1,16 @@
 // Seed a Navigator-only campus demo district ("Lincoln High School")
 // This creates a campus-as-district — a single campus provisioned as its own
 // district with only ["navigator"] enabled. Demonstrates the campus-level
-// purchase model for standalone Navigator sales.
+// purchase model for standalone Navigator sales AND serves as the public
+// marketing-site sandbox for the Navigator demo funnel.
+//
+// Re-runnable: cleans + reseeds Lincoln HS on every invocation. Safe to use as
+// the periodic reset path (no separate reset_navigator_sandbox.mjs needed).
 //
 // Creates:
-//   - District: "Lincoln High School" (single-campus district)
+//   - District: "Lincoln High School" (single-campus district, is_sandbox=true)
 //   - Campus: Lincoln High School
-//   - Auth user: ap@lincoln-hs.demo / Password123! (role: ap)
-//   - Auth user: counselor@lincoln-hs.demo / Password123! (role: counselor)
+//   - Auth user: explore-navigator@clearpathedgroup.com / Explore2026! (role: admin)
 //   - 10 students (diverse demographics, SPED/504/EB flags)
 //   - Navigator referrals, placements, supports, goals
 //
@@ -30,9 +33,14 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-// Fixed UUIDs for reproducibility
-const DISTRICT_ID = '22222222-2222-2222-2222-222222222222'
-const CAMPUS_ID   = 'bbbb0001-0001-0001-0001-000000000001'
+// Fixed UUIDs for reproducibility.
+// District UUID 33333333-... — distinct from Explorer ISD (22222222-...) which
+// hosts the Waypoint sandbox. One product per sandbox district.
+const DISTRICT_ID = '33333333-3333-3333-3333-333333333333'
+const CAMPUS_ID   = 'cccc0001-0001-0001-0001-000000000001'
+
+const ADMIN_EMAIL = 'explore-navigator@clearpathedgroup.com'
+const ADMIN_PASS  = 'Explore2026!'
 
 function daysAgo(n) {
   const d = new Date()
@@ -99,10 +107,13 @@ async function run() {
   const { error: delDistErr } = await supabase.from('districts').delete().eq('id', DISTRICT_ID)
   if (delDistErr) console.warn(`  ⚠ districts: ${delDistErr.message}`)
 
-  // Clean auth users
-  const demoEmails = ['ap@lincoln-hs.demo', 'counselor@lincoln-hs.demo']
+  // Clean legacy auth users (ap@lincoln-hs.demo + counselor@lincoln-hs.demo were
+  // the original creds; consolidated to a single explore-navigator admin so the
+  // sandbox cred-set matches the marketing-page display). Also clean the new
+  // admin so re-runs are idempotent.
+  const legacyEmails = ['ap@lincoln-hs.demo', 'counselor@lincoln-hs.demo']
   const { data: allUsers } = await supabase.auth.admin.listUsers()
-  for (const email of demoEmails) {
+  for (const email of [...legacyEmails, ADMIN_EMAIL]) {
     const u = allUsers?.users?.find(x => x.email === email)
     if (u) {
       // Delete profile first (FK), then auth user
@@ -121,6 +132,7 @@ async function run() {
     tea_district_id: 'LHS-DEMO',
     state: 'TX',
     settings: {
+      is_sandbox: true,
       subscription_tier: 'professional',
       products: ['navigator'],
     },
@@ -140,40 +152,39 @@ async function run() {
   if (cErr) throw new Error(`Campus insert failed: ${cErr.message}`)
   console.log('  ✓ Lincoln High School campus\n')
 
-  // ─── 3. Create auth users + profiles ────────────────────────────────────────
-  console.log('Creating auth users...')
-  const apUserId = await createAuthUser('ap@lincoln-hs.demo', 'Password123!', 'Jordan Rivera', 'ap')
-  const counselorUserId = await createAuthUser('counselor@lincoln-hs.demo', 'Password123!', 'Maria Santos', 'counselor')
+  // ─── 3. Create auth user + profile ─────────────────────────────────────────
+  // Single admin user. Role = admin so the sandbox visitor sees full Navigator
+  // surface area (referral creation, placement, reports). Same cred displayed
+  // on clearpath-site/navigator.html and in the welcome_navigator_demo email.
+  console.log('Creating auth user...')
+  const adminUserId = await createAuthUser(ADMIN_EMAIL, ADMIN_PASS, 'Lincoln HS Admin', 'admin')
   console.log()
 
-  console.log('Creating profiles...')
-  const upsertProfile = async (id, fullName, role, email) => {
-    const { error } = await supabase.from('profiles').upsert({
-      id,
-      district_id: DISTRICT_ID,
-      full_name: fullName,
-      role,
-      email,
-    }, { onConflict: 'id' })
-    if (error) throw new Error(`Profile upsert failed for ${fullName}: ${error.message}`)
-  }
-  await upsertProfile(apUserId, 'Jordan Rivera', 'ap', 'ap@lincoln-hs.demo')
-  await upsertProfile(counselorUserId, 'Maria Santos', 'counselor', 'counselor@lincoln-hs.demo')
-  console.log('  ✓ Jordan Rivera (AP) + Maria Santos (Counselor)\n')
+  console.log('Creating profile...')
+  const { error: profErr } = await supabase.from('profiles').upsert({
+    id: adminUserId,
+    district_id: DISTRICT_ID,
+    full_name: 'Lincoln HS Admin',
+    role: 'admin',
+    email: ADMIN_EMAIL,
+  }, { onConflict: 'id' })
+  if (profErr) throw new Error(`Profile upsert failed: ${profErr.message}`)
+  console.log('  ✓ Lincoln HS Admin profile\n')
 
-  // Campus assignments
-  console.log('Assigning staff to campus...')
-  for (const profileId of [apUserId, counselorUserId]) {
-    const { error } = await supabase.from('profile_campus_assignments').upsert({
-      profile_id: profileId,
-      campus_id: CAMPUS_ID,
-    }, { onConflict: 'profile_id,campus_id' })
-    if (error) console.warn(`  ⚠ Campus assignment: ${error.message}`)
-  }
-  console.log('  ✓ Both staff assigned to Lincoln HS\n')
+  // Campus assignment
+  console.log('Assigning admin to campus...')
+  const { error: caErr } = await supabase.from('profile_campus_assignments').upsert({
+    profile_id: adminUserId,
+    campus_id: CAMPUS_ID,
+  }, { onConflict: 'profile_id,campus_id' })
+  if (caErr) console.warn(`  ⚠ Campus assignment: ${caErr.message}`)
+  console.log('  ✓ Admin assigned to Lincoln HS\n')
 
-  const AP = apUserId
-  const COUNSELOR = counselorUserId
+  // Existing rows below use AP and COUNSELOR as reported_by / reviewed_by /
+  // assigned_by — point both at the single admin so transactional data still
+  // populates without splitting historical roles.
+  const AP = adminUserId
+  const COUNSELOR = adminUserId
 
   // ─── 4. Create students ─────────────────────────────────────────────────────
   console.log('Creating students...')
@@ -605,8 +616,7 @@ async function run() {
   console.log('')
   console.log('  LOGIN CREDENTIALS:')
   console.log('  ─────────────────')
-  console.log('  AP:         ap@lincoln-hs.demo / Password123!')
-  console.log('  Counselor:  counselor@lincoln-hs.demo / Password123!')
+  console.log(`  Admin:      ${ADMIN_EMAIL} / ${ADMIN_PASS}`)
   console.log('')
   console.log('  RISK LEVELS:')
   console.log('  ────────────')
