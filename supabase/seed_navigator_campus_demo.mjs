@@ -52,24 +52,36 @@ function daysAgoISO(n) {
   return new Date(Date.now() - n * 86400000).toISOString()
 }
 
-async function createAuthUser(email, password, fullName, role) {
-  // Check if user already exists
-  const { data: existing } = await supabase.auth.admin.listUsers()
-  const found = existing?.users?.find(u => u.email === email)
-  if (found) {
-    console.log(`  ↻ Auth user ${email} already exists (${found.id})`)
-    return found.id
-  }
+// Anon client only used as fallback to recover an existing user's UUID via
+// signInWithPassword when supabase.auth.admin.listUsers() is unavailable
+// (Supabase returns a 500 "Database error finding users" once the user pool
+// crosses a threshold). Service-role client cannot signInWithPassword.
+const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY
+const anonClient = ANON_KEY
+  ? createClient(SUPABASE_URL, ANON_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
+  : null
 
+async function createAuthUser(email, password, fullName, role) {
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { full_name: fullName, role, district_id: DISTRICT_ID },
   })
-  if (error) throw new Error(`Auth create failed for ${email}: ${error.message}`)
-  console.log(`  ✓ Auth user ${email} created (${data.user.id})`)
-  return data.user.id
+  if (!error) {
+    console.log(`  ✓ Auth user ${email} created (${data.user.id})`)
+    return data.user.id
+  }
+
+  // Already exists — recover UUID by signing in with the known password.
+  if (error.message?.toLowerCase().includes('already') && anonClient) {
+    const { data: signIn, error: siErr } = await anonClient.auth.signInWithPassword({ email, password })
+    if (siErr) throw new Error(`Auth user ${email} exists but sign-in failed: ${siErr.message}`)
+    console.log(`  ↻ Auth user ${email} already exists (${signIn.user.id})`)
+    return signIn.user.id
+  }
+
+  throw new Error(`Auth create failed for ${email}: ${error.message}`)
 }
 
 async function run() {
@@ -188,17 +200,20 @@ async function run() {
 
   // ─── 4. Create students ─────────────────────────────────────────────────────
   console.log('Creating students...')
+  // race values are canonical codes per migration 070 CHECK constraint
+  // (`black`, `hispanic`, `white`, `asian`, etc.) — natural-language labels
+  // get coerced to not_specified, which silently breaks Disproportionality.
   const studentDefs = [
-    { num: 'LHS-001', first: 'Marcus', last: 'Thompson', grade: 11, gender: 'M', race: 'Black or African American' },
-    { num: 'LHS-002', first: 'Sofia', last: 'Ramirez', grade: 10, gender: 'F', race: 'Hispanic/Latino', is_504: true },
-    { num: 'LHS-003', first: 'Jaylen', last: 'Carter', grade: 12, gender: 'M', race: 'Black or African American', is_sped: true, sped_status: 'active' },
-    { num: 'LHS-004', first: 'Emma', last: 'Mitchell', grade: 9, gender: 'F', race: 'White' },
-    { num: 'LHS-005', first: 'Diego', last: 'Flores', grade: 10, gender: 'M', race: 'Hispanic/Latino' },
-    { num: 'LHS-006', first: 'Aisha', last: 'Williams', grade: 11, gender: 'F', race: 'Black or African American', is_sped: true, sped_status: 'active' },
-    { num: 'LHS-007', first: 'Ethan', last: 'Nguyen', grade: 9, gender: 'M', race: 'Asian' },
-    { num: 'LHS-008', first: 'Destiny', last: 'Jackson', grade: 12, gender: 'F', race: 'Black or African American', is_ell: true },
-    { num: 'LHS-009', first: 'Tyler', last: 'Brooks', grade: 10, gender: 'M', race: 'White' },
-    { num: 'LHS-010', first: 'Valentina', last: 'Cruz', grade: 11, gender: 'F', race: 'Hispanic/Latino' },
+    { num: 'LHS-001', first: 'Marcus', last: 'Thompson', grade: 11, gender: 'M', race: 'black' },
+    { num: 'LHS-002', first: 'Sofia', last: 'Ramirez', grade: 10, gender: 'F', race: 'hispanic', is_504: true },
+    { num: 'LHS-003', first: 'Jaylen', last: 'Carter', grade: 12, gender: 'M', race: 'black', is_sped: true, sped_status: 'active' },
+    { num: 'LHS-004', first: 'Emma', last: 'Mitchell', grade: 9, gender: 'F', race: 'white' },
+    { num: 'LHS-005', first: 'Diego', last: 'Flores', grade: 10, gender: 'M', race: 'hispanic' },
+    { num: 'LHS-006', first: 'Aisha', last: 'Williams', grade: 11, gender: 'F', race: 'black', is_sped: true, sped_status: 'active' },
+    { num: 'LHS-007', first: 'Ethan', last: 'Nguyen', grade: 9, gender: 'M', race: 'asian' },
+    { num: 'LHS-008', first: 'Destiny', last: 'Jackson', grade: 12, gender: 'F', race: 'black', is_ell: true },
+    { num: 'LHS-009', first: 'Tyler', last: 'Brooks', grade: 10, gender: 'M', race: 'white' },
+    { num: 'LHS-010', first: 'Valentina', last: 'Cruz', grade: 11, gender: 'F', race: 'hispanic' },
   ]
 
   const S = {} // student_id_number → { id, ... }
@@ -211,7 +226,7 @@ async function run() {
       last_name: s.last,
       grade_level: s.grade,
       gender: s.gender,
-      race: s.race,
+      race_ethnicity: s.race,
     }
     if (s.is_sped) { row.is_sped = true; row.sped_eligibility = s.sped_status }
     if (s.is_504) row.is_504 = true
@@ -401,7 +416,7 @@ async function run() {
     placement_type: 'oss', start_date: daysAgo(12), end_date: daysAgo(10), days: 3,
     assigned_by: AP, reason: 'Verbal altercation / refusal to comply',
     reentry_plan: 'Parent conference + behavior contract.',
-    parent_notified: true, parent_notified_at: daysAgoISO(12), parent_notified_by: AP,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
   })
   console.log('  ✓ Marcus — OSS 3 days (completed)')
 
@@ -412,7 +427,7 @@ async function run() {
     placement_type: 'oss', start_date: daysAgo(1), end_date: null, days: 3,
     assigned_by: AP, reason: 'Third physical altercation this month',
     reentry_plan: 'Re-entry conference required. Behavior contract review.',
-    parent_notified: true, parent_notified_at: daysAgoISO(1), parent_notified_by: AP,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
   })
   console.log('  ✓ Marcus — OSS 3 days (ACTIVE)')
 
@@ -423,7 +438,7 @@ async function run() {
     placement_type: 'oss', start_date: daysAgo(19), end_date: daysAgo(17), days: 3,
     assigned_by: AP, reason: 'Emotional outburst — desk overturned',
     reentry_plan: 'SPED coordinator meeting. BIP review with case manager.',
-    parent_notified: true, parent_notified_at: daysAgoISO(19), parent_notified_by: AP,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
   })
   console.log('  ✓ Jaylen — OSS 3 days (completed, SPED)')
 
@@ -433,7 +448,7 @@ async function run() {
     student_id: S['LHS-005'].id, referral_id: refIds.diego1,
     placement_type: 'iss', start_date: daysAgo(16), end_date: daysAgo(15), days: 2,
     assigned_by: AP, reason: 'Phone policy violation after repeated redirections',
-    parent_notified: true, parent_notified_at: daysAgoISO(16), parent_notified_by: AP,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
   })
   console.log('  ✓ Diego — ISS 2 days (completed)')
 
@@ -444,7 +459,7 @@ async function run() {
     placement_type: 'iss', start_date: daysAgo(14), end_date: daysAgo(14), days: 1,
     assigned_by: AP, reason: 'Peer confrontation — cool-down ISS',
     reentry_plan: 'Peer mediation session required.',
-    parent_notified: true, parent_notified_at: daysAgoISO(14), parent_notified_by: COUNSELOR,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: COUNSELOR,
   })
   console.log('  ✓ Aisha — ISS 1 day (completed, SPED)')
 
@@ -454,7 +469,7 @@ async function run() {
     student_id: S['LHS-005'].id, referral_id: refIds.diego2,
     placement_type: 'iss', start_date: daysAgo(0), end_date: null, days: 2,
     assigned_by: AP, reason: 'Left class without permission — second referral this month',
-    parent_notified: true, parent_notified_at: new Date().toISOString(), parent_notified_by: AP,
+    parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
   })
   console.log('  ✓ Diego — ISS 2 days (ACTIVE)')
 
@@ -487,7 +502,7 @@ async function run() {
       placement_type: p.type,
       start_date: p.start, end_date: p.end, days: p.days,
       assigned_by: AP, reason: 'Prior year — historical record',
-      parent_notified: true, parent_notified_at: new Date(p.start).toISOString(), parent_notified_by: AP,
+      parent_notified: true, parent_notified_method: 'phone_call', parent_notified_by: AP,
     })
   }
   console.log(`  ✓ ${priorYear.length} prior year placements (Sep 2024–May 2025)\n`)

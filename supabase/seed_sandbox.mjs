@@ -35,38 +35,27 @@ const SANDBOX_ADMIN_PASS  = 'Explore2026!'
 
 // ─── Create or retrieve an auth user via Supabase Admin API ──────────────────
 async function createAuthUser(email, password, fullName, role, districtId) {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-    method: 'POST',
-    headers: {
-      'apikey': SERVICE_KEY,
-      'Authorization': `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName, role, district_id: districtId },
-    }),
-  })
-  const data = await res.json()
-  if (data.id) return data.id
-
-  // Already exists — find by listing users
-  if (data.msg?.includes('already') || data.message?.includes('already') || res.status === 422) {
-    const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=200`, {
-      headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
-    })
-    const listData = await listRes.json()
-    const users = listData.users || listData
-    const existing = users.find(u => u.email === email)
-    if (existing) {
-      console.log(`  User ${email} already exists, using existing.`)
-      return existing.id
-    }
+  // First check if a profile row already exists for this email — fast lookup
+  // that avoids the auth.admin.listUsers() pool scan which fails server-side
+  // when the user pool is large enough to trip the listUsers query.
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+  if (existingProfile?.id) {
+    console.log(`  User ${email} already exists, using existing.`)
+    return existingProfile.id
   }
 
-  throw new Error(`Failed to create/find user ${email}: ${JSON.stringify(data)}`)
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName, role, district_id: districtId },
+  })
+  if (error) throw new Error(`Failed to create user ${email}: ${error.message}`)
+  return data.user.id
 }
 
 async function run() {
