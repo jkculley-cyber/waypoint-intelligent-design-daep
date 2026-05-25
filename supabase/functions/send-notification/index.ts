@@ -139,8 +139,9 @@ const TEMPLATES: Record<string, (data: Record<string, unknown>) => string> = {
     <p style="margin:0;"><strong>The Waypoint Team</strong><br/><span style="color:#9ca3af;font-size:0.85rem;">Clear Path Education Group, LLC</span></p>
   `,
 
-  welcome_demo_request: (_d) => `
+  welcome_demo_request: (d) => `
     <h2 style="color:#1f2937;margin-top:0;">Thank you for exploring Waypoint.</h2>
+    <p>Hi${d.name ? ` ${d.name}` : ''},</p>
     <p>Thanks for requesting a Waypoint demo. We've received your request, and we'll follow up shortly with more information.</p>
     <p>In the meantime, feel free to explore the sandbox below — all data is manufactured and does not represent any real students or districts.</p>
 

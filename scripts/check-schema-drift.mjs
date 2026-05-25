@@ -7,14 +7,24 @@
 // only because Navigator's CC14 fail-loud audit triggers tried to write to
 // columns that no longer matched the source.
 //
-// This script probes production for the columns that the application code
-// EXPECTS to exist on each audited / load-bearing table. The probe uses
-// `supabase-js` with `.select('col1,col2,...').limit(0)` — PostgREST
-// returns 4xx (with an unambiguous error body) when any column is missing,
-// renamed, or absent from the row-level RLS view. The check is column-
-// existence + read-shape, not type-precision; it catches the class of drift
-// that hurts (renames, drops) without false-positives on harmless changes
-// (default values, constraint tweaks).
+// CC26 extension: column drift isn't the only thing that escapes migration
+// history. Required SEED ROWS can also vanish — the audit sentinel UUID
+// (`00000000-...` in profiles + auth.users) was missing from production for
+// an unknown duration before CC26 caught it via every navigator_* DELETE
+// failing on the audit trigger's FK. Migration 071 supposedly seeded both
+// rows, but production didn't have them. The row-invariant section below
+// catches this class of drift: presence of load-bearing seed rows.
+//
+// This script probes production for:
+//   1. EXPECTED columns: application-read columns on each load-bearing table.
+//      Uses `.select('col1,col2,...').limit(0)` — PostgREST returns 4xx when
+//      any column is missing, renamed, or absent from RLS view.
+//   2. REQUIRED_ROWS: specific seed rows that must exist for the app to work.
+//      Uses `.select('id').match({...}).maybeSingle()` — fails on missing row.
+//
+// Both checks are tripwires for the CLASSES of drift that hurt (renames,
+// drops, missing seed rows), not full schema/data diffs. Update lists below
+// when adding deliberate new schema/seed requirements.
 //
 // Usage:
 //   node scripts/check-schema-drift.mjs           # exits 1 on drift
@@ -108,6 +118,32 @@ const EXPECTED = {
   ],
 }
 
+// ─── Required rows (CC26 addition) ─────────────────────────────────────
+// Specific seed rows that MUST exist in production for load-bearing flows
+// to work. A row going missing here is not a "schema" change in the
+// traditional sense (no column added/removed), but the symptom is identical:
+// every operation that depends on the row silently breaks.
+//
+// Each entry is { table, match: {col: value, ...}, name, why }. The check
+// runs `from(table).select('*').match(match).maybeSingle()` and fails if
+// the row is absent OR if the query errors.
+//
+// Update when:
+//   - Adding a new system-invariant row (e.g., a new sentinel UUID): add it.
+//   - A row becomes optional / is migrated away: remove and document.
+//   - Reseeding logic changes location: keep this list as the canary.
+//
+// Demo / sample data does NOT belong here — those are intentionally
+// add/remove and would create noisy CI failures.
+const REQUIRED_ROWS = [
+  {
+    table: 'profiles',
+    match: { id: '00000000-0000-0000-0000-000000000000' },
+    name: 'audit sentinel',
+    why: 'audit_log.user_id FK target when auth.uid() returns NULL on service-role calls (mig 071). Missing row blocks every navigator_* / waypoint audit trigger.',
+  },
+]
+
 let failed = 0
 let passed = 0
 
@@ -115,20 +151,39 @@ for (const [table, cols] of Object.entries(EXPECTED)) {
   const { error } = await sb.from(table).select(cols.join(',')).limit(0)
   if (error) {
     failed++
-    console.error(`✗ ${table}: ${error.message}`)
+    console.error(`✗ column-drift ${table}: ${error.message}`)
     if (error.details) console.error(`  details: ${error.details}`)
     if (error.hint) console.error(`  hint: ${error.hint}`)
   } else {
     passed++
-    if (VERBOSE) console.log(`✓ ${table}: all ${cols.length} columns reachable`)
+    if (VERBOSE) console.log(`✓ column-drift ${table}: all ${cols.length} columns reachable`)
   }
 }
 
-console.log(`\nSchema drift check: ${passed} PASS, ${failed} FAIL (${Object.keys(EXPECTED).length} tables)`)
+for (const req of REQUIRED_ROWS) {
+  const { data, error } = await sb.from(req.table).select('*').match(req.match).maybeSingle()
+  if (error) {
+    failed++
+    console.error(`✗ row-invariant ${req.table} [${req.name}]: query error — ${error.message}`)
+  } else if (!data) {
+    failed++
+    console.error(`✗ row-invariant ${req.table} [${req.name}]: REQUIRED ROW MISSING`)
+    console.error(`  match: ${JSON.stringify(req.match)}`)
+    console.error(`  why this matters: ${req.why}`)
+    console.error(`  fix: re-apply the seeding migration or paste the upsert into SQL Editor`)
+  } else {
+    passed++
+    if (VERBOSE) console.log(`✓ row-invariant ${req.table} [${req.name}]: present`)
+  }
+}
+
+const totalChecks = Object.keys(EXPECTED).length + REQUIRED_ROWS.length
+console.log(`\nSchema drift check: ${passed} PASS, ${failed} FAIL (${Object.keys(EXPECTED).length} column-shapes + ${REQUIRED_ROWS.length} row-invariants)`)
 if (failed > 0) {
   console.error('\nDrift detected. Compare migration sources to production schema.')
-  console.error('To regenerate the expected list from current production after a deliberate change,')
-  console.error('update EXPECTED above; do NOT regenerate blindly — that defeats the tripwire.')
+  console.error('Column drift: update EXPECTED above to match deliberate schema changes;')
+  console.error('row-invariant drift: re-apply the seeding migration (do NOT just delete the')
+  console.error('row from this list to silence it — the row is load-bearing).')
   process.exit(1)
 }
 process.exit(0)

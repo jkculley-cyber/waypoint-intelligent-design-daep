@@ -133,26 +133,134 @@
     <a href="#founding" class="btn-ghost">Become a Founding District →</a>
   </div>
   <p style="font-size:.72rem;color:var(--text-muted);margin-top:12px;text-align:center;">
-    Sample data only. No sign-up — credentials are below.
+    Sample data only. Quick form unlocks the sandbox credentials.
   </p>
 </div>
 
-<!-- DEMO SECTION (anchor target) -->
+<!-- DEMO SECTION (anchor target) — lead-gated, mirrors Navigator's pilot form -->
 <section id="demo" style="padding:48px 5% 24px;scroll-margin-top:80px">
-  <div style="max-width:560px;margin:0 auto;background:rgba(26,10,46,0.7);border:1px solid rgba(244,168,74,0.4);border-radius:14px;padding:28px;text-align:center">
-    <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:10px">Free Demo Access</div>
-    <h2 style="font-size:1.6rem;margin-bottom:8px">Explore Waypoint with Sample Data</h2>
-    <p style="font-size:.88rem;color:var(--text-muted);line-height:1.6;margin-bottom:20px">Full Waypoint access — incidents, compliance checklists, transition plans, parent portal — populated with Lone Star ISD sample data. No sign-up required.</p>
-    <div style="background:rgba(0,0,0,.35);border:1px solid rgba(244,168,74,.25);border-radius:12px;padding:18px;text-align:left;max-width:360px;margin:0 auto 18px">
-      <div style="font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px">Demo Login</div>
-      <div style="margin-bottom:8px"><span style="font-size:.72rem;color:var(--text-muted)">URL:</span> <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="font-size:.82rem;color:var(--amber-light);font-weight:600;text-decoration:none;word-break:break-all">waypoint.clearpathedgroup.com</a></div>
-      <div style="margin-bottom:8px"><span style="font-size:.72rem;color:var(--text-muted)">Email:</span> <span style="font-size:.82rem;color:var(--text);font-weight:600;font-family:monospace">explore@clearpathedgroup.com</span></div>
-      <div><span style="font-size:.72rem;color:var(--text-muted)">Password:</span> <span style="font-size:.82rem;color:var(--text);font-weight:600;font-family:monospace">Explore2026!</span></div>
+  <div style="max-width:560px;margin:0 auto;background:rgba(26,10,46,0.7);border:1px solid rgba(244,168,74,0.4);border-radius:14px;padding:28px">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:10px">Free Demo Access</div>
+      <h2 style="font-size:1.6rem;margin-bottom:8px">Explore Waypoint with Sample Data</h2>
+      <p style="font-size:.88rem;color:var(--text-muted);line-height:1.6;margin:0">Full Waypoint access — incidents, compliance checklists, transition plans, parent portal — populated with Explorer ISD sample data. Tell us about your district and we'll unlock the sandbox.</p>
     </div>
-    <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:.92rem;padding:14px 28px;background:linear-gradient(135deg,#6b2fa0,#9b5fd4)">Open Waypoint Demo →</a>
-    <p style="font-size:.7rem;color:var(--text-muted);margin-top:14px;line-height:1.5">Want a guided walkthrough or your own private demo district? <a href="mailto:support@clearpathedgroup.com?subject=Waypoint%20Demo%20Walkthrough%20Request" style="color:var(--amber-light);text-decoration:none;font-weight:600">Email us</a> — no commitment.</p>
+    <form id="waypointDemoForm" action="https://formspree.io/f/xpqjngpp" method="POST" style="display:grid;gap:12px">
+      <input type="hidden" name="_subject" value="Waypoint Demo Request">
+      <input type="hidden" name="referrer" value="waypoint_demo">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">Name *</label>
+          <input name="name" required style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">Work email *</label>
+          <input type="email" name="email" required style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">Phone (optional)</label>
+          <input name="phone" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">District or school *</label>
+          <input name="school" required style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">Your role *</label>
+          <select name="role" required style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+            <option value="">Select...</option>
+            <option value="superintendent">Superintendent / Asst Superintendent</option>
+            <option value="director">Director of Student Services / Discipline</option>
+            <option value="principal">Principal / Assistant Principal</option>
+            <option value="daep_admin">DAEP Administrator / Coordinator</option>
+            <option value="counselor">Counselor / 504 Coordinator</option>
+            <option value="sped">SPED Coordinator</option>
+            <option value="it">Technology / IT</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px">District size *</label>
+          <select name="district_size" required style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-purple);background:rgba(0,0,0,.3);color:var(--text);font-family:'Raleway',sans-serif;font-size:.88rem">
+            <option value="">Select...</option>
+            <option value="under_1000">Under 1,000 students</option>
+            <option value="1000_5000">1,000–5,000 students</option>
+            <option value="5000_15000">5,000–15,000 students</option>
+            <option value="15000_40000">15,000–40,000 students</option>
+            <option value="over_40000">Over 40,000 students</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:.92rem;margin-top:8px;background:linear-gradient(135deg,#6b2fa0,#9b5fd4)">Unlock Waypoint Demo →</button>
+      <p style="font-size:.68rem;color:var(--text-muted);text-align:center;margin:6px 0 0;line-height:1.5">No commitment. Demo includes full Waypoint access with sample data. Using real student data requires a signed data processing agreement.</p>
+    </form>
   </div>
 </section>
+<script>
+// Form submit — Formspree (notify us) + ops demo_leads (CRM) + send-notification (auto-email creds)
+document.getElementById('waypointDemoForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var f = this;
+  var btn = f.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  var formData = new FormData(f);
+  var lead = {
+    name: f.name.value,
+    email: f.email.value,
+    phone: f.phone.value,
+    district_name: f.school.value,
+    role: f.role.value,
+    referrer: 'waypoint_demo|' + f.district_size.value,
+    utm_source: 'waypoint',
+    status: 'new'
+  };
+
+  var OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
+  var OPS_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicHVxYXFwY2JpeHhvZGJsYWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjk4MDQsImV4cCI6MjA4Nzk0NTgwNH0.9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA';
+  var WAYPOINT_FN = 'https://kvxecksvkimcgwhxxyhw.supabase.co/functions/v1/send-notification';
+  var WAYPOINT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGVja3N2a2ltY2d3aHh4eWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3MTcsImV4cCI6MjA4NjAxMjcxN30.15kHL-zgpH5koCc5ea4K5ppbsg5dRzAeVnITOe3plYY';
+
+  Promise.all([
+    fetch('https://formspree.io/f/xpqjngpp', {
+      method: 'POST', body: formData, headers: { 'Accept': 'application/json' }
+    }).catch(function() {}),
+    fetch(OPS + '/rest/v1/demo_leads', {
+      method: 'POST',
+      headers: { 'apikey': OPS_KEY, 'Authorization': 'Bearer ' + OPS_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(lead)
+    }).catch(function() {}),
+    fetch(WAYPOINT_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': WAYPOINT_KEY, 'Authorization': 'Bearer ' + WAYPOINT_KEY },
+      body: JSON.stringify({
+        to: lead.email,
+        subject: 'Your Waypoint demo access',
+        template: 'welcome_demo_request',
+        data: { name: lead.name }
+      })
+    }).catch(function() {})
+  ]).then(function() {
+    f.outerHTML = '<div style="text-align:center;padding:8px 0">'
+      + '<p style="font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:6px">You\'re in! Explore Waypoint now.</p>'
+      + '<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:20px">We\'ve also emailed you these credentials and will reach out within one business day.</p>'
+      + '<div style="background:rgba(0,0,0,.35);border:1px solid rgba(244,168,74,.4);border-radius:12px;padding:20px;max-width:360px;margin:0 auto;text-align:left">'
+      + '<p style="font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px">Demo Login — Explorer ISD</p>'
+      + '<div style="margin-bottom:8px"><span style="font-size:.72rem;color:var(--text-muted)">URL:</span> <a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="font-size:.82rem;color:var(--amber-light);font-weight:600;text-decoration:none;word-break:break-all">waypoint.clearpathedgroup.com</a></div>'
+      + '<div style="margin-bottom:8px"><span style="font-size:.72rem;color:var(--text-muted)">Email:</span> <span style="font-size:.82rem;color:var(--text);font-weight:600;font-family:monospace">explore@clearpathedgroup.com</span></div>'
+      + '<div style="margin-bottom:16px"><span style="font-size:.72rem;color:var(--text-muted)">Password:</span> <span style="font-size:.82rem;color:var(--text);font-weight:600;font-family:monospace">Explore2026!</span></div>'
+      + '<a href="https://waypoint.clearpathedgroup.com" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:12px;background:linear-gradient(135deg,#6b2fa0,#9b5fd4);color:white;font-weight:700;font-size:.88rem;border-radius:8px;text-decoration:none;font-family:Raleway,sans-serif">Open Waypoint Demo →</a>'
+      + '</div>'
+      + '<p style="font-size:.7rem;color:var(--text-muted);margin-top:16px;line-height:1.5">Sandbox data only. Your own district account with real student data comes after a signed data processing agreement.</p>'
+      + '</div>';
+  });
+});
+</script>
 
 <!-- VIDEO + SLIDES -->
 <section>
