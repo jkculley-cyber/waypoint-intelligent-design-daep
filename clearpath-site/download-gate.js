@@ -22,6 +22,7 @@
       + '#dl-gate-card p.sub{font-size:.86rem;color:rgba(240,230,211,0.6);margin:0 0 22px;line-height:1.6}'
       + '#dl-gate-card label{display:block;font-size:.68rem;font-weight:700;color:rgba(240,230,211,0.55);letter-spacing:0.1em;text-transform:uppercase;margin:0 0 6px}'
       + '#dl-gate-card input,#dl-gate-card select{width:100%;padding:11px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f0e6d3;font-size:.9rem;outline:none;box-sizing:border-box;font-family:inherit}'
+      + '#dl-gate-card select option{color:#1a0a2e;background:#fff}'
       + '#dl-gate-card input:focus,#dl-gate-card select:focus{border-color:rgba(244,168,74,0.55)}'
       + '#dl-gate-card .row{margin-bottom:14px}'
       + '#dl-gate-card button.submit{width:100%;padding:13px;border:none;border-radius:10px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:10px;letter-spacing:.02em}'
