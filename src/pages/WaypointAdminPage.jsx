@@ -51,7 +51,6 @@ export default function WaypointAdminPage() {
   const [managingDistrict, setManagingDistrict] = useState(null)
   const [activeTab, setActiveTab] = useState('districts')
   const [urlCopied, setUrlCopied] = useState(false)
-  const serviceRoleKeyMissing = !import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
   function copyCommandCenterUrl() {
     navigator.clipboard.writeText(COMMAND_CENTER_URL).then(() => {
@@ -121,19 +120,6 @@ export default function WaypointAdminPage() {
       </header>
 
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        {/* Warning if service role key is missing */}
-        {serviceRoleKeyMissing && (
-          <div className="mb-6 p-4 bg-yellow-900/40 border border-yellow-700 rounded-lg flex items-start gap-3">
-            <svg className="w-5 h-5 text-yellow-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            <div>
-              <p className="text-sm font-medium text-yellow-300">VITE_SUPABASE_SERVICE_ROLE_KEY is not set</p>
-              <p className="text-xs text-yellow-400 mt-1">Auth user creation will fail. Add the key to your .env.local file and restart the dev server.</p>
-            </div>
-          </div>
-        )}
-
         {/* Tab switcher */}
         <div className="flex gap-1 mb-6 bg-gray-900 border border-gray-800 rounded-lg p-1 w-fit">
           <button
@@ -208,8 +194,7 @@ export default function WaypointAdminPage() {
               </div>
               <button
                 onClick={() => setShowProvisionModal(true)}
-                disabled={serviceRoleKeyMissing}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 + Provision New District
               </button>
@@ -323,14 +308,34 @@ const LEAD_STATUS_STYLES = {
 }
 
 // ─── Apex Panel ───────────────────────────────────────────────────────────────
+//
+// All Apex access goes through the auth-gated server proxy at /api/apex/* (Cloudflare
+// Pages Function: functions/api/apex/[[path]].js). The Apex service_role / sb_secret_
+// key lives ONLY in that Function's env (APEX_SECRET) — never in this bundle. Each call
+// forwards the current Waypoint admin's session token; the proxy verifies the caller is a
+// waypoint_admin (is_waypoint_admin RPC) before using the Apex secret server-side.
 
-const APEX_URL = 'https://jvjsotlyvrzhsbgcsdfw.supabase.co'
-const APEX_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2anNvdGx5dnJ6aHNiZ2NzZGZ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjU3NjgwOSwiZXhwIjoyMDg4MTUyODA5fQ._3kv_O4D45-L2DNEfXXna6uIDVHq1jsZnZH6cSrsbgY'
-const APEX_HEADERS = { apikey: APEX_KEY, Authorization: `Bearer ${APEX_KEY}`, 'Content-Type': 'application/json' }
+// Authorization header carrying the current user's Waypoint session token.
+async function apexAuthHeaders(extra = {}) {
+  const { data } = await supabase.auth.getSession()
+  const token = data?.session?.access_token
+  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extra }
+}
 
+// GET via proxy: `path` is a PostgREST resource + query string, e.g.
+// "principals?select=id,name&order=created_at.desc". The proxy preserves the query string.
 async function apexFetch(path) {
-  const r = await fetch(`${APEX_URL}/rest/v1/${path}`, { headers: APEX_HEADERS })
+  const r = await fetch(`/api/apex/${path}`, { headers: await apexAuthHeaders() })
   return r.ok ? r.json() : []
+}
+
+// PATCH via proxy. `path` is e.g. "principals?id=eq.123".
+async function apexPatch(path, body) {
+  return fetch(`/api/apex/${path}`, {
+    method: 'PATCH',
+    headers: await apexAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body),
+  })
 }
 
 function ApexPanel() {
@@ -358,16 +363,12 @@ function ApexPanel() {
   async function saveEdit() {
     if (!editModal) return
     setEditSaving(true)
-    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${editModal.id}`, {
-      method: 'PATCH',
-      headers: APEX_HEADERS,
-      body: JSON.stringify({
-        name: editForm.name,
-        school_name: editForm.school_name,
-        district_name: editForm.district_name,
-        subscription_status: editForm.subscription_status,
-        paid_through: editForm.paid_through || null,
-      }),
+    await apexPatch(`principals?id=eq.${editModal.id}`, {
+      name: editForm.name,
+      school_name: editForm.school_name,
+      district_name: editForm.district_name,
+      subscription_status: editForm.subscription_status,
+      paid_through: editForm.paid_through || null,
     })
     setEditSaving(false)
     setEditModal(null)
@@ -418,11 +419,7 @@ function ApexPanel() {
     setActivatingId(principalId)
     const paidThrough = new Date()
     paidThrough.setMonth(paidThrough.getMonth() + 1)
-    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
-      method: 'PATCH',
-      headers: APEX_HEADERS,
-      body: JSON.stringify({ subscription_status: 'active', paid_through: paidThrough.toISOString().slice(0, 10) }),
-    })
+    await apexPatch(`principals?id=eq.${principalId}`, { subscription_status: 'active', paid_through: paidThrough.toISOString().slice(0, 10) })
     showToast('Activated — 1 month')
     setActivatingId(null)
     load()
@@ -433,11 +430,7 @@ function ApexPanel() {
     // School year: paid through June 30 of current or next year
     const now = new Date()
     const june30 = new Date(now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear(), 5, 30)
-    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
-      method: 'PATCH',
-      headers: APEX_HEADERS,
-      body: JSON.stringify({ subscription_status: 'active', paid_through: june30.toISOString().slice(0, 10) }),
-    })
+    await apexPatch(`principals?id=eq.${principalId}`, { subscription_status: 'active', paid_through: june30.toISOString().slice(0, 10) })
     showToast('Activated — through ' + june30.toLocaleDateString())
     setActivatingId(null)
     load()
@@ -445,11 +438,7 @@ function ApexPanel() {
 
   async function deactivate(principalId) {
     setActivatingId(principalId)
-    await fetch(`${APEX_URL}/rest/v1/principals?id=eq.${principalId}`, {
-      method: 'PATCH',
-      headers: APEX_HEADERS,
-      body: JSON.stringify({ subscription_status: 'trial', paid_through: null }),
-    })
+    await apexPatch(`principals?id=eq.${principalId}`, { subscription_status: 'trial', paid_through: null })
     showToast('Deactivated — reverted to trial')
     setActivatingId(null)
     load()
@@ -458,17 +447,13 @@ function ApexPanel() {
   useEffect(() => { load() }, [])
 
   async function updateRequest(id, status, req) {
-    await fetch(`${APEX_URL}/rest/v1/access_requests?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: APEX_HEADERS,
-      body: JSON.stringify({ status }),
-    })
+    await apexPatch(`access_requests?id=eq.${id}`, { status })
 
     if (status === 'approved' && req?.email) {
-      // Send welcome guide email
-      const welcomeRes = await fetch(`${APEX_URL}/functions/v1/send-welcome-email`, {
+      // Send welcome guide email (Apex Edge Function, via proxy)
+      const welcomeRes = await fetch('/api/apex/send-welcome-email', {
         method: 'POST',
-        headers: { ...APEX_HEADERS, Authorization: `Bearer ${APEX_KEY}` },
+        headers: await apexAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           email: req.email,
           name: req.name || '',
@@ -1782,7 +1767,15 @@ function ContractModal({ contract, onClose, onSuccess }) {
 // ─── Manage district drawer ───────────────────────────────────────────────────
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://kvxecksvkimcgwhxxyhw.supabase.co'
-const SUPABASE_SERVICE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+
+// Authorization header carrying the current user's Waypoint session token, for the
+// auth-gated /api/admin/* proxy (functions/api/admin/[[path]].js) that holds the
+// Waypoint service_role / sb_secret_ key server-side.
+async function adminAuthHeaders(extra = {}) {
+  const { data } = await supabase.auth.getSession()
+  const token = data?.session?.access_token
+  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extra }
+}
 
 const SANDBOX_URL   = 'https://waypoint.clearpathedgroup.com'
 const SANDBOX_EMAIL = 'explore@clearpathedgroup.com'
@@ -1900,13 +1893,9 @@ function ManageDistrictDrawer({ district, onClose, onRefresh }) {
     setResetting(true)
     setResetResult(null)
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/reset-sandbox`, {
+      const res = await fetch('/api/admin/reset-sandbox', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'apikey': SUPABASE_SERVICE_KEY,
-        },
+        headers: await adminAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ confirm: true }),
       })
       const data = await res.json()
@@ -2207,14 +2196,10 @@ function ProvisionModal({ onClose, onSuccess }) {
       })
       if (ce) throw new Error(`Campus: ${ce.message}`)
 
-      // 3. Create auth user via Supabase Admin API
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/admin/users`, {
+      // 3. Create auth user via the auth-gated admin proxy (service_role stays server-side)
+      const res = await fetch('/api/admin/users', {
         method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: await adminAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ email: email.trim(), password, email_confirm: true }),
       })
       const userData = await res.json()
