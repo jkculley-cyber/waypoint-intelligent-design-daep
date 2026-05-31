@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "scan": "gitleaks detect --redact --config .gitleaks.toml --verbose"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",

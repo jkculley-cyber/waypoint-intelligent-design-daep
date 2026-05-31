@@ -1,0 +1,29 @@
+# gitleaks config — secret scanning for the Waypoint repo.
+# Used by the local pre-commit hook (.githooks/pre-commit) and the
+# "Secret Scan" CI workflow (.github/workflows/gitleaks.yml).
+#
+# Goal: block any NEW secret (Supabase sb_secret_, service_role JWT, GCP key,
+# PAT, password) from being committed. Historical leaks were rotated/disabled
+# during the key-rotation runbook; CI scans only newly-added commits, so it does
+# not perpetually fail on those old commits.
+
+title = "Waypoint secret-scan config"
+
+[extend]
+useDefault = true  # inherit gitleaks' built-in rule set
+
+[allowlist]
+description = "Values that are PUBLIC by design or are redaction placeholders"
+regexTarget = "match"
+regexes = [
+  # Supabase publishable / anon keys are CLIENT keys — public by design, RLS-protected.
+  '''sb_publishable_[A-Za-z0-9]+''',
+
+  # The ops command-center ANON key (project xbpuqaqpcbixxodblaes). Anon, RLS-protected,
+  # intentionally shipped in the client + referenced in CLAUDE.md. Matched by its unique
+  # signature segment so ONLY this exact public key is allowlisted — nothing else.
+  '''9Rhmz-FLUXnEQXpRCkg3G2ppzPxs2DinaYDmdD_wvPA''',
+
+  # Redaction placeholders left by the history-scrub pattern file.
+  '''\*\*\*REMOVED-[A-Z-]+\*\*\*''',
+]

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit secret scan. Blocks a commit if gitleaks finds a secret in staged changes.
+#
+# Wired via `git config core.hooksPath .githooks` (set automatically by the npm
+# "prepare" script on `npm install`). To enable manually:
+#     git config core.hooksPath .githooks
+#
+# Requires the gitleaks binary on PATH:
+#     scoop install gitleaks      # Windows
+#     brew install gitleaks       # macOS
+#     https://github.com/gitleaks/gitleaks/releases   # or download a binary
+#
+# If gitleaks is not installed, the hook warns but does NOT block (so contributors
+# without it aren't stuck) — the "Secret Scan" CI workflow is the enforced gate.
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks not found - skipping local secret scan."
+  echo "  Install it to catch secrets before they are committed:"
+  echo "    scoop install gitleaks   (Windows)   |   brew install gitleaks   (macOS)"
+  echo "  CI will still scan on push."
+  exit 0
+fi
+
+echo "gitleaks: scanning staged changes..."
+if ! gitleaks protect --staged --redact --config .gitleaks.toml; then
+  echo ""
+  echo "COMMIT BLOCKED: a secret was detected in your staged changes."
+  echo "  - Remove the secret and use an env var / Pages Functions secret instead."
+  echo "  - If this is a false positive (public key), add it to .gitleaks.toml allowlist."
+  exit 1
+fi

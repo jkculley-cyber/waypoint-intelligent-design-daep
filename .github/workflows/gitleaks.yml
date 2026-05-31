@@ -1,0 +1,51 @@
+name: Secret Scan
+
+# Hard gate against committing secrets. Scans only the commits introduced by a
+# push / PR (not full history), so the pre-rotation leaked keys — already disabled —
+# don't fail every run, while any NEW secret is caught and blocks the merge.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need history so the commit range resolves
+
+      - name: Install gitleaks
+        run: |
+          VER=8.18.4
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${VER}/gitleaks_${VER}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Determine commit range to scan
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "range=${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            echo "range=${{ github.event.before }}..${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "range=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Scan new commits for secrets
+        run: |
+          RANGE="${{ steps.range.outputs.range }}"
+          if [ -n "$RANGE" ]; then
+            echo "Scanning range: $RANGE"
+            gitleaks detect --redact --config .gitleaks.toml --verbose --log-opts="$RANGE --no-merges"
+          else
+            echo "No prior ref available; scanning latest commit only"
+            gitleaks detect --redact --config .gitleaks.toml --verbose --log-opts="-1"
+          fi
