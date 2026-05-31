@@ -27,4 +27,6 @@ jobs:
         run: node scripts/check-schema-drift.mjs --verbose
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.VITE_SUPABASE_SERVICE_ROLE_KEY }}
+          # Server-only secret (sb_secret_…). Deliberately NOT VITE_-prefixed so it can
+          # never be inlined into a client bundle. Set in repo Actions secrets.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
