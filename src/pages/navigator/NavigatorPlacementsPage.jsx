@@ -435,6 +435,13 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
       setError('SPED student would exceed 10 cumulative removal days — link a Manifestation Determination Review before saving.')
       return
     }
+    if (wouldCross && mdrIdForPlacement) {
+      const linkedMdr = mdrs.find(m => m.id === mdrIdForPlacement)
+      if (linkedMdr?.is_manifestation) {
+        setError('The linked MDR found this behavior WAS a manifestation of the student’s disability (IDEA 34 CFR §300.530(e)). The student generally must return to placement; removal past 10 cumulative days is only permitted under the §300.530(g) special-circumstances exception (weapons, drugs, or serious bodily injury). Link a non-manifestation MDR, or document this as a special-circumstances removal.')
+        return
+      }
+    }
     setSaving(true); setError(null)
     const { error: err } = await supabase.from('navigator_placements').insert({
       district_id: districtId,

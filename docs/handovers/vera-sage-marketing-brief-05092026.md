@@ -79,6 +79,10 @@ Pre-pilot. Feature-complete. Production app at the URL above. Demo seed at `admi
 
 ## PRODUCT 2: NAVIGATOR
 
+> **⚠️ CC30 CORRECTION (2026-06-02) — read before using any Navigator copy below.** Two claims in this section were found overstated during the CC30 naysayer audit and must NOT be repeated in customer-facing copy:
+> 1. **"AP can sign up before lunch" / per-campus self-serve.** Onboarding is **not** self-serve — real tenant provisioning requires Clear Path staff (`provision_new_district` is `waypoint_admin`-only), and a campus gets real-student access only **after a signed data agreement** (the live `navigator.html` already says this correctly). Frame as "request a pilot, we provision you," not "sign up before lunch."
+> 2. **"Admissible under FRE 803(6) trustworthiness."** Navigator's Hearing Packet discloses a post-hoc edit history, but that history is **not** backed by a tamper-evident hash chain (Waypoint has one via migration 081; Navigator does not yet — a port is scheduled). Reframe as **"a disclosed, attributed edit history — defensibility subject to district counsel review,"** not "admissible." Do not assert FRE 803(6) admissibility until the immutable chain ships.
+
 ### One-liner
 **The single ISS/OSS placement system every Texas Title-I AP needs — and the only one that's been adversarially stress-tested.**
 
