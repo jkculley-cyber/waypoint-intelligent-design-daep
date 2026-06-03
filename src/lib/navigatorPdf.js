@@ -117,6 +117,71 @@ export async function generateHearingPacket({ student, referrals, placements, su
   doc.setTextColor(0)
   y += 8
 
+  // ─── Record integrity / authentication (FRE 803(6) trustworthiness foundation) ───
+  // Cross-checks each placement/referral's live free-text + edit-history JSONB
+  // against the most-recent snapshot in Navigator's tamper-evident audit chain
+  // (migration 081 hash chain; verification surface migration 085). Renders an
+  // honest, checkable statement — verifiable count, no-anchor count, and a loud
+  // flag if any record diverges from the chain. Degrades silently (renders
+  // nothing) if the 085 RPCs aren't deployed yet, so we never assert a check we
+  // cannot cash.
+  let integrity = null
+  try {
+    const [{ data: vh, error: vhErr }, { data: vc, error: vcErr }] = await Promise.all([
+      supabase.rpc('fn_navigator_verify_student_history', { p_student_id: student.id }),
+      supabase.rpc('fn_navigator_verify_chain'),
+    ])
+    if (!vhErr && !vcErr && Array.isArray(vh) && Array.isArray(vc) && vc.length) {
+      const head = vc[0]
+      const ok = (r) => r.audited && r.history_matches_chain && r.live_value_matches
+      integrity = {
+        total: vh.length,
+        verifiable: vh.filter(ok).length,
+        noAnchor: vh.filter((r) => !r.audited).length,
+        tampered: vh.filter((r) => r.audited && (!r.history_matches_chain || !r.live_value_matches)).length,
+        chainIntact: Number(head.broken_count) === 0,
+        headHash: head.head_hash || '',
+      }
+    }
+  } catch {
+    integrity = null // verification unavailable — say nothing rather than overclaim
+  }
+
+  if (integrity && integrity.total > 0) {
+    const v = integrity
+    const hash12 = v.headHash ? v.headHash.slice(0, 12) : '—'
+    const lines = []
+    lines.push(
+      `${v.verifiable} of ${v.total} placement/referral free-text record(s) in this packet are independently `
+      + `verifiable against Navigator's tamper-evident audit log.`
+    )
+    if (v.noAnchor > 0) {
+      lines.push(
+        `${v.noAnchor} record(s) predate the audit log and carry no verification anchor.`
+      )
+    }
+    if (v.tampered > 0) {
+      lines.push(
+        `WARNING: ${v.tampered} record(s) contain free-text edits that do NOT match the audit log and may have `
+        + `been altered outside the system. Have an administrator investigate before relying on this packet.`
+      )
+    }
+    lines.push(
+      `Audit-chain integrity: ${v.chainIntact ? 'verified intact' : 'BROKEN — contact administrator'} `
+      + `(chain head ${hash12}…).`
+    )
+    y = sectionHeading(doc, 'Record Integrity', y)
+    doc.setFontSize(8)
+    doc.setTextColor(v.tampered > 0 || !v.chainIntact ? 180 : 70, v.tampered > 0 ? 0 : 70, v.tampered > 0 ? 0 : 70)
+    lines.forEach((ln) => {
+      const wrapped = doc.splitTextToSize(ln, pageWidth - 24)
+      doc.text(wrapped, 12, y)
+      y += wrapped.length * 3.8 + 1
+    })
+    doc.setTextColor(0)
+    y += 4
+  }
+
   // ─── Student header block ───
   y = sectionHeading(doc, 'Student', y)
   doc.setFontSize(11)
@@ -295,7 +360,9 @@ export async function generateHearingPacket({ student, referrals, placements, su
     doc.setTextColor(80)
     doc.text('The timeline above shows each free-text field as it was recorded on the placement / referral date.', 12, y)
     y += 4
-    doc.text('Every subsequent edit was preserved automatically. The full chain — original entry, every edit, and the current value — appears below.', 12, y)
+    doc.text('Every subsequent edit was captured by Navigator’s audit log when it was made. For records covered by the', 12, y)
+    y += 4
+    doc.text('audit log (see Record Integrity, above), this edit history is independently verifiable against a tamper-evident hash chain.', 12, y)
     doc.setTextColor(0)
     y += 5
 
