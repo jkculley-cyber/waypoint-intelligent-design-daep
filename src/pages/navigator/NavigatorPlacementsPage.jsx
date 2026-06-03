@@ -391,6 +391,7 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
   })
   const [showMDRModal, setShowMDRModal] = useState(false)
   const [mdrIdForPlacement, setMdrIdForPlacement] = useState(null)
+  const [specialCircBasis, setSpecialCircBasis] = useState('')
   const { data: cumDays, refetch: refetchCum } = useStudentCumulativeDays(selectedStudent?.id)
   const { mdrs, refetch: refetchMDRs } = useStudentMDRs(selectedStudent?.id)
 
@@ -417,6 +418,8 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
   const wouldCross = selectedStudent?.is_sped && (cumNow + proposedDays) > 10
   const hasUsableMDR = mdrs.some(m => !m.is_manifestation)  // non-manifestation MDR allows continued discipline
   const mdrLinkRequired = wouldCross && !mdrIdForPlacement
+  const linkedMdr = mdrs.find(m => m.id === mdrIdForPlacement) || null
+  const manifestationLinked = !!linkedMdr?.is_manifestation  // §300.530(e): behavior WAS a manifestation
 
   const handleSave = async () => {
     if (!selectedStudent || !form.campus_id || !form.placement_type || !form.start_date) {
@@ -433,6 +436,10 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
     }
     if (wouldCross && !mdrIdForPlacement) {
       setError('SPED student would exceed 10 cumulative removal days — link a Manifestation Determination Review before saving.')
+      return
+    }
+    if (wouldCross && manifestationLinked && !specialCircBasis) {
+      setError('The linked MDR found this behavior WAS a manifestation of the student’s disability (IDEA 34 CFR §300.530(e)). The student generally must return to placement; removal past 10 cumulative days is only permitted under the §300.530(g) special-circumstances exception (weapons, drugs, or serious bodily injury). Link a non-manifestation MDR, or select a special-circumstances basis below.')
       return
     }
     setSaving(true); setError(null)
@@ -453,6 +460,7 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
       parent_notified_method: form.parent_notified ? form.parent_notified_method : null,
       parent_contact_notes: form.parent_notified ? (form.parent_contact_notes || null) : null,
       manifestation_determination_id: mdrIdForPlacement || null,
+      special_circumstances_basis: manifestationLinked ? (specialCircBasis || null) : null,
     })
     setSaving(false)
     if (err) { setError(err.message); return }
@@ -542,6 +550,25 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
                           <p className="mt-2 text-[11px] text-red-700">
                             A non-manifestation MDR exists — link it above to proceed, or log a new one if this is a separate behavior.
                           </p>
+                        )}
+                        {manifestationLinked && (
+                          <div className="mt-3 pt-3 border-t border-red-200">
+                            <p className="text-[11px] text-red-800 font-semibold mb-1">
+                              This MDR found the behavior WAS a manifestation. A removal past 10 cumulative days is only
+                              permitted under the IDEA 34 CFR §300.530(g) special-circumstances exception.
+                            </p>
+                            <label className="block text-[10px] font-semibold text-red-700 uppercase mb-1">Special-circumstances basis *</label>
+                            <select
+                              className="w-full px-2 py-1.5 border border-red-300 rounded text-xs bg-white text-gray-800"
+                              value={specialCircBasis}
+                              onChange={e => setSpecialCircBasis(e.target.value)}
+                            >
+                              <option value="">— Select basis (required to proceed) —</option>
+                              <option value="weapons">Weapon — §300.530(g)(1)</option>
+                              <option value="illegal_drugs">Illegal drugs — §300.530(g)(2)</option>
+                              <option value="serious_bodily_injury">Serious bodily injury — §300.530(g)(3)</option>
+                            </select>
+                          </div>
                         )}
                       </div>
                     )}

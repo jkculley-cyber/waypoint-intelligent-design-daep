@@ -32,7 +32,7 @@ const RACE_LABELS = {
   asian: 'Asian',
   black: 'Black or African American',
   hispanic: 'Hispanic or Latino',
-  native_am: 'American Indian or Alaska Native',
+  american_indian: 'American Indian or Alaska Native',
   pacific_islander: 'Native Hawaiian or Pacific Islander',
   white: 'White',
   two_or_more: 'Two or More Races',
