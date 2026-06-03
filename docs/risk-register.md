@@ -1,0 +1,52 @@
+# Risk Register — Beacon & Navigator
+
+> Source: CC31 premortem (2026-06-03), derived from the CC30 naysayer audit + the CC31 cpeg-site incident.
+> **Review cadence:** scan at every opening process; update Status + check each leading-indicator threshold. A risk "trips" when its threshold is crossed — escalate it from *Watch* to *Active* and act on the mitigation.
+> **Owners:** Kim (founder/strategy) · Archer (CTO/eng+infra) · Nova (CRO/sales+procurement) · Sage (CMO/messaging) · Vera (COO/ops+process).
+> **Sev** = impact if it happens (H/M/L). **Like** = likelihood as-of today (H/M/L).
+
+---
+
+## Beacon
+
+| ID | Risk (failure framing) | Horizon | Sev | Like | Leading indicator → **trip threshold** | Owner | Mitigation | Status |
+|----|----|----|----|----|----|----|----|----|
+| **B-1** | Local data loss (new laptop / reimage / clear-site-data) destroys a counselor's records; trust dies in the TSCA network | 6 mo | H | M | % active users with a folder backup configured **< 70%**, OR **≥1** "missing data" report | Archer (backup-health UI) + Vera (onboarding) | Force backup setup in onboarding; persistent "last backup N days ago" banner; first loss report = P0 | Watch |
+| **B-2** | The printed "third-party witness" URL 404s → headline feature looks like vaporware | 6 mo | H | H | B1 still parked **and** PDFs still print the verify URL while `/api/ping` returns HTML | Archer | Finish B1 via preview deploy, **or** stop printing the URL until it resolves | **Active** (B1 parked) |
+| **B-3** | District build chased speculatively; 3 months burned, no signed contract, local product neglected | 6 mo | M | M | **Any** commit toward cloud/district plumbing without a signed LOI/DPA | Kim + Vera | Hold demand-pull (DECISIONS 2026-05-07); no Path-A/B build pre-contract | Watch |
+| **B-4** | Solo-founder bandwidth collapse → slow support → quiet churn | 6 mo | M | M | Support first-response **> 48h** | Kim | Async support; push one motion at a time | Watch |
+| **B-5** | No compounding customer base; $79 ACV + word-of-mouth-only CAC; district never closes → deprioritized | 1 yr | H | M | **< 10** paying users by Q1 2027 **and** no district contract in legal | Nova | Pick the wedge (individual virality vs district) and resource it; instrument signup→paid | Watch |
+| **B-6** | A missed crisis follow-up (reminders only fire if tab open) becomes a liability story | 1 yr | H | L | Any user relying on in-app reminders without calendar export; **any** reported missed follow-up | Archer + Sage | Force ICS/calendar handoff; never market "we remind you" | Watch |
+| **B-7** | Cloud rushed on under district pressure; RLS gap → cross-tenant PII leak (FERPA breach) | 1 yr | H | L | `CLOUD_MODE_ENABLED` flipped to true without a written RLS-audit + pen-test sign-off | Archer | Gate re-enable on formal RLS review (B4 decision already encodes this) | Watch |
+
+## Navigator
+
+| ID | Risk (failure framing) | Horizon | Sev | Like | Leading indicator → **trip threshold** | Owner | Mitigation | Status |
+|----|----|----|----|----|----|----|----|----|
+| **N-1** | FRE 803(6) claim meets a real hearing and loses (edit history impeached via migration 072's own "forgeable" comment) | 6 mo | H | M | Hash-chain port unshipped **and** any live surface (site/PDF) still asserts "admissible" | Sage + Archer | Ship the chain port, **or** verify zero live surfaces claim admissibility (brief already corrected) | **Active** (chain unshipped) |
+| **N-2** | Campus mis-provision leaks students across campuses (FERPA); district-only RLS, no campus isolation | 6 mo | H | L | **Any** 2nd campus provisioned under one `districts` row | Archer | Enforce one-campus-per-district operationally; build campus RLS before any multi-campus deal | Watch |
+| **N-3** | Manual onboarding chokes a spike of interest; hot leads cool | 6 mo | M | M | Lead → provisioned time **> 5 business days** | Nova + Archer | Self-serve provisioning + standard campus DPA; or set honest funnel expectations | Watch |
+| **N-4** | A Waypoint-side change on the shared Supabase project takes Navigator down | 6 mo | M | M | **Any** shared-DB incident (migration/key/search_path) affecting Navigator prod | Archer | Change discipline + schema-drift CI; plan project separation as customers land | Watch |
+| **N-5** | $499 campus-velocity thesis collapses — every campus deal escalates to district legal/DPA | 1 yr | H | M | **> 50%** of campus deals escalating to district-level review | Nova | Pre-clear a DPA; target real-campus-autonomy districts; or reposition to district sale | Watch |
+| **N-6** | District counsel kills it as a discovery risk ("why create a disproportionality record we'd have to act on?") | 1 yr | M | M | Legal/discovery objection raised in **≥1** sales conversation | Nova + Kim | Frame as remediation tooling; engage district counsel; configurable retention; show the "acted-on-it" workflow | Watch |
+| **N-7** | Navigator starves amid portfolio sprawl (8 products, solo founder); competitors out-execute | 1 yr | H | M | Scheduled Navigator work (e.g. hash-chain port) deferred **≥ 2** sessions | Kim | Sequence/kill products; give the product with traction focus | **Active** (port deferred 1×) |
+
+## Cross-cutting (kills both)
+
+| ID | Risk | Sev | Like | Leading indicator → **trip threshold** | Owner | Mitigation | Status |
+|----|----|----|----|----|----|----|----|
+| **X-1** | Trust event propagates through the small TX K-12 community (any single B-1/B-2/N-1/N-2-class failure) and is disproportionately fatal | H | M | Any one trust-event risk above trips | Kim | Treat every trust-event risk as P0; over-invest in the trust spine (durability, real verification, real audit trail, isolation) | Watch |
+| **X-2** | Infra fragility + single operator → unattended failure (key expiry, CF config, Supabase incident) becomes an outage during a customer's hearing/crisis | H | M | No uptime monitoring in place; **any** unattended prod outage; recurrence of the no-migration-tracking gap | Archer + Vera | Uptime checks + alerts; incident runbooks (handovers help); reduce single points of failure; add migration tracking | **Active** (no monitoring; CC31 near-miss) |
+| **X-3** | Owner-borne infra cost + no billing/auto-renewal infra bleeds money + manual ops as usage grows | M | M | Monthly infra/API spend trending up with no offsetting billing | Kim + Vera | Size cost-per-customer; add metered/tiered billing before scale | Watch |
+
+---
+
+## Top-5 highest-leverage preventions (dodge most of the above)
+1. **Beacon trust spine first** — real data durability (B-1) + working verify endpoint (B-2) before pushing.
+2. **Navigator: ship the audit-chain port OR strip the admissibility claim everywhere** (N-1). Don't sell a check you can't cash.
+3. **Hold demand-pull** — signed DPA/LOI before any district build (B-3) and before any multi-campus Navigator provisioning (N-2).
+4. **Pick one product + one motion to push this quarter**; park the rest honestly (B-5, N-7).
+5. **Minimal monitoring + a second pair of hands for incidents** (X-2) so an unattended failure isn't an outage at a customer's worst moment.
+
+## Currently-Active risks (act now)
+- **B-2** verify URL 404 (B1 parked) · **N-1** 803(6) claim vs unshipped chain · **N-7** Navigator port deferred · **X-2** no infra monitoring (CC31 near-miss).
