@@ -37,6 +37,40 @@ export default function NavigatorStudentPage() {
   const { mdrs } = useStudentMDRs(id)
   const { data: cumDays } = useStudentCumulativeDays(id)
   const [exportingPacket, setExportingPacket] = useState(false)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
+  const [verifyResult, setVerifyResult] = useState(null) // null | 'loading' | 'error' | result object
+
+  // Live audit-chain verification — same 085 RPCs the hearing packet uses, surfaced
+  // on screen so a records custodian can confirm integrity without exporting a PDF.
+  const handleVerifyChain = async () => {
+    setShowVerifyModal(true)
+    setVerifyResult('loading')
+    try {
+      const [{ data: vh, error: vhErr }, { data: vc, error: vcErr }] = await Promise.all([
+        supabase.rpc('fn_navigator_verify_student_history', { p_student_id: id }),
+        supabase.rpc('fn_navigator_verify_chain'),
+      ])
+      if (vhErr || vcErr || !Array.isArray(vh) || !Array.isArray(vc) || !vc.length) {
+        setVerifyResult('error')
+        return
+      }
+      const head = vc[0]
+      const isOk = (r) => r.audited && r.history_matches_chain && r.live_value_matches
+      setVerifyResult({
+        rows: vh,
+        total: vh.length,
+        verifiable: vh.filter(isOk).length,
+        noAnchor: vh.filter((r) => !r.audited).length,
+        tampered: vh.filter((r) => r.audited && (!r.history_matches_chain || !r.live_value_matches)).length,
+        chainIntact: Number(head.broken_count) === 0,
+        totalChainRows: Number(head.total_count),
+        headHash: head.head_hash || '',
+      })
+    } catch (e) {
+      console.error(e)
+      setVerifyResult('error')
+    }
+  }
 
   const handleHearingPacket = async () => {
     if (!student) return
@@ -150,6 +184,13 @@ export default function NavigatorStudentPage() {
               className="px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors bg-slate-700 hover:bg-slate-800 disabled:bg-slate-400"
             >
               {exportingPacket ? 'Generating…' : 'Hearing Packet PDF'}
+            </button>
+            <button
+              onClick={handleVerifyChain}
+              title="Verify this student's records against Navigator's tamper-evident audit log — confirms the edit history has not been altered outside the system."
+              className="px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors bg-indigo-600 hover:bg-indigo-700"
+            >
+              Verify Chain
             </button>
             {showDaep && (
               <button
@@ -474,6 +515,97 @@ export default function NavigatorStudentPage() {
               >
                 Set Alert
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit-chain verification modal */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowVerifyModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-semibold text-gray-900">Audit-Chain Verification</h2>
+              <button onClick={() => setShowVerifyModal(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">{student.first_name} {student.last_name} — records checked against Navigator's tamper-evident audit log.</p>
+
+            {verifyResult === 'loading' && (
+              <div className="py-8 text-center text-sm text-gray-400">Verifying against the tamper-evident audit log…</div>
+            )}
+
+            {verifyResult === 'error' && (
+              <div className="py-6 px-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                Verification is unavailable right now — the audit-chain functions could not be reached. Try again, or contact an administrator.
+              </div>
+            )}
+
+            {verifyResult && typeof verifyResult === 'object' && (
+              <div className="space-y-4">
+                {/* Chain integrity banner */}
+                <div className={`rounded-lg p-3 border-2 ${verifyResult.chainIntact ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
+                  <p className={`text-sm font-bold ${verifyResult.chainIntact ? 'text-green-800' : 'text-red-800'}`}>
+                    {verifyResult.chainIntact ? '✓ Audit chain verified intact' : '✗ Audit chain BROKEN — contact administrator'}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    {verifyResult.totalChainRows} chained events · head <span className="font-mono">{verifyResult.headHash ? verifyResult.headHash.slice(0, 16) + '…' : '—'}</span>
+                  </p>
+                </div>
+
+                {/* Per-record summary tiles */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-green-50 rounded-lg p-2 border border-green-100">
+                    <p className="text-lg font-bold text-green-700">{verifyResult.verifiable}</p>
+                    <p className="text-[10px] text-gray-500 uppercase">Verifiable</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
+                    <p className="text-lg font-bold text-gray-600">{verifyResult.noAnchor}</p>
+                    <p className="text-[10px] text-gray-500 uppercase">No Anchor</p>
+                  </div>
+                  <div className={`rounded-lg p-2 border ${verifyResult.tampered > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
+                    <p className={`text-lg font-bold ${verifyResult.tampered > 0 ? 'text-red-700' : 'text-gray-600'}`}>{verifyResult.tampered}</p>
+                    <p className="text-[10px] text-gray-500 uppercase">Altered</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-600">
+                  <strong>{verifyResult.verifiable} of {verifyResult.total}</strong> placement/referral free-text record(s) are independently verifiable against the tamper-evident audit log.
+                  {verifyResult.noAnchor > 0 && ` ${verifyResult.noAnchor} predate the audit log and carry no verification anchor.`}
+                </p>
+
+                {verifyResult.tampered > 0 && (
+                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-300 rounded-lg text-xs text-red-800">
+                    <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <span><strong>{verifyResult.tampered} record(s)</strong> contain free-text edits that do not match the audit log and may have been altered outside the system. Have an administrator investigate before relying on these records.</span>
+                  </div>
+                )}
+
+                {/* Per-record list */}
+                {verifyResult.rows.length > 0 && (
+                  <div className="border border-gray-100 rounded-lg divide-y divide-gray-50 max-h-56 overflow-y-auto">
+                    {verifyResult.rows.map((r, i) => {
+                      const status = !r.audited ? 'noanchor' : (!r.history_matches_chain || !r.live_value_matches) ? 'altered' : 'verified'
+                      const badge = status === 'verified' ? 'bg-green-100 text-green-700' : status === 'altered' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                      const label = status === 'verified' ? 'Verified' : status === 'altered' ? 'Altered' : 'No anchor'
+                      return (
+                        <div key={i} className="flex items-center justify-between px-3 py-2 text-xs">
+                          <span className="text-gray-700 truncate mr-2">{r.record_label || r.entity_type}</span>
+                          <span className={`shrink-0 px-1.5 py-0.5 rounded font-medium ${badge}`}>{label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-gray-400">
+                  Tamper-evident: edits are independently verifiable against a cryptographic hash chain — alterations made outside the system are detectable. This is detection, not prevention.
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button onClick={() => setShowVerifyModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Close</button>
             </div>
           </div>
         </div>
