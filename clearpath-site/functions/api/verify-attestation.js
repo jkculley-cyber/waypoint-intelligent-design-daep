@@ -50,8 +50,18 @@ export async function onRequestGet({ request, env }) {
 
   const opsUrl = env.OPS_SUPABASE_URL || OPS_DEFAULT_URL;
   const serviceRoleKey = env.OPS_SUPABASE_SERVICE_ROLE_KEY;
+  // TEMP DIAGNOSTIC (remove after B-2): ?debug=1 surfaces the real upstream
+  // failure as a 200 so Cloudflare's generic 502 page doesn't mask it.
+  const debug = url.searchParams.get('debug') === '1';
   if (!serviceRoleKey) {
+    if (debug) return jsonResponse(200, { _debug: 'no_key', opsUrl });
     return jsonResponse(500, { error: 'Verification service is not configured. Contact support@clearpathedgroup.com.' });
+  }
+  if (debug) {
+    // never echo the key itself — only shape signals
+    const kl = serviceRoleKey.length;
+    const hasWs = /\s/.test(serviceRoleKey);
+    var __dbgKey = { keyLen: kl, hasWhitespace: hasWs, startsEyJ: serviceRoleKey.slice(0, 3) === 'eyJ', opsUrl };
   }
 
   // Manual fetch with AbortController timeout. AbortSignal.timeout is
@@ -75,12 +85,14 @@ export async function onRequestGet({ request, env }) {
     );
   } catch (err) {
     clearTimeout(timeoutId);
+    if (debug) return jsonResponse(200, { _debug: 'fetch_threw', name: err && err.name, message: err && err.message, ...__dbgKey });
     return jsonResponse(502, { error: 'Could not reach attestation registry. Try again in a moment.' });
   }
   clearTimeout(timeoutId);
 
   if (!supabaseRes.ok) {
     const detail = await supabaseRes.text().catch(() => '');
+    if (debug) return jsonResponse(200, { _debug: 'upstream_not_ok', upstreamStatus: supabaseRes.status, detail: detail.slice(0, 200), ...__dbgKey });
     return jsonResponse(502, {
       error: 'Attestation registry returned an error.',
       status: supabaseRes.status,
