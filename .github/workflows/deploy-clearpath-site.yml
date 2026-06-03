@@ -21,14 +21,19 @@ jobs:
         with:
           node-version: '22'
 
-      # Switched from cloudflare/pages-action@v1 (deprecated, has known
-      # bug where new Pages Functions added to an existing project after
-      # initial deploy aren't uploaded). wrangler pages deploy is the
-      # supported successor and reliably picks up everything in the
-      # functions/ directory plus _routes.json.
+      # Deploy from INSIDE clearpath-site so wrangler finds clearpath-site/functions/.
+      # wrangler compiles Pages Functions from a `functions/` dir relative to the
+      # working directory — running `pages deploy clearpath-site` from the repo root
+      # made it look for `./functions` (repo root, nonexistent), so the static site
+      # uploaded WITHOUT the /api/* Functions and `/api/verify-attestation` 404'd
+      # (B-2). Running `pages deploy .` with workingDirectory=clearpath-site resolves
+      # `./functions` to clearpath-site/functions/ and bundles them. This also makes
+      # the Action's output match the dashboard git-integration build (root_dir=
+      # clearpath-site), so the two deploy paths no longer flap.
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy clearpath-site --project-name=cpeg-site --branch=main
+          workingDirectory: clearpath-site
+          command: pages deploy . --project-name=cpeg-site --branch=main
