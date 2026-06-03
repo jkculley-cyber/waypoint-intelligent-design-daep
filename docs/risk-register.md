@@ -23,13 +23,13 @@
 
 | ID | Risk (failure framing) | Horizon | Sev | Like | Leading indicator → **trip threshold** | Owner | Mitigation | Status |
 |----|----|----|----|----|----|----|----|----|
-| **N-1** | FRE 803(6) claim meets a real hearing and loses (edit history impeached via migration 072's own "forgeable" comment) | 6 mo | H | M | Hash-chain port unshipped **and** any live surface (site/PDF) still asserts "admissible" | Sage + Archer | Ship the chain port, **or** verify zero live surfaces claim admissibility (brief already corrected) | **Active** (chain unshipped) |
+| **N-1** | FRE 803(6) claim meets a real hearing and loses (edit history impeached via migration 072's own "forgeable" comment) | 6 mo | H | M | Hash-chain port unshipped **and** any live surface (site/PDF) still asserts "admissible" | Sage + Archer | Ship the chain port, **or** verify zero live surfaces claim admissibility (brief already corrected) | **Resolving (CC32)** — chain was already shipped (Navigator shares Waypoint's 081 via `audit_log`; verified 376 rows, 0 breaks). Mig 085 (applied+verified) adds staff-wide verify + per-record cross-check; hearing PDF now prints an honest, checkable "N of M verifiable" statement + chain head. **Last step:** deploy the PDF change (PR `fix/navigator-cc32-audit-chain-verify`) → trip condition clears. No live surface claims "admissible" (marketing checked clean). |
 | **N-2** | Campus mis-provision leaks students across campuses (FERPA); district-only RLS, no campus isolation | 6 mo | H | L | **Any** 2nd campus provisioned under one `districts` row | Archer | Enforce one-campus-per-district operationally; build campus RLS before any multi-campus deal | Watch |
 | **N-3** | Manual onboarding chokes a spike of interest; hot leads cool | 6 mo | M | M | Lead → provisioned time **> 5 business days** | Nova + Archer | Self-serve provisioning + standard campus DPA; or set honest funnel expectations | Watch |
 | **N-4** | A Waypoint-side change on the shared Supabase project takes Navigator down | 6 mo | M | M | **Any** shared-DB incident (migration/key/search_path) affecting Navigator prod | Archer | Change discipline + schema-drift CI; plan project separation as customers land | Watch |
 | **N-5** | $499 campus-velocity thesis collapses — every campus deal escalates to district legal/DPA | 1 yr | H | M | **> 50%** of campus deals escalating to district-level review | Nova | Pre-clear a DPA; target real-campus-autonomy districts; or reposition to district sale | Watch |
 | **N-6** | District counsel kills it as a discovery risk ("why create a disproportionality record we'd have to act on?") | 1 yr | M | M | Legal/discovery objection raised in **≥1** sales conversation | Nova + Kim | Frame as remediation tooling; engage district counsel; configurable retention; show the "acted-on-it" workflow | Watch |
-| **N-7** | Navigator starves amid portfolio sprawl (8 products, solo founder); competitors out-execute | 1 yr | H | M | Scheduled Navigator work (e.g. hash-chain port) deferred **≥ 2** sessions | Kim | Sequence/kill products; give the product with traction focus | **Active** (port deferred 1×) |
+| **N-7** | Navigator starves amid portfolio sprawl (8 products, solo founder); competitors out-execute | 1 yr | H | M | Scheduled Navigator work (e.g. hash-chain port) deferred **≥ 2** sessions | Kim | Sequence/kill products; give the product with traction focus | **Cleared (CC32)** — the scheduled Navigator audit-chain work was done this session (deferral reset to 0×); did not reach the 2-session trip threshold. → Watch |
 
 ## Cross-cutting (kills both)
 
@@ -49,4 +49,5 @@
 5. **Minimal monitoring + a second pair of hands for incidents** (X-2) so an unattended failure isn't an outage at a customer's worst moment.
 
 ## Currently-Active risks (act now)
-- **B-2** verify URL 404 (B1 parked) · **N-1** 803(6) claim vs unshipped chain · **N-7** Navigator port deferred · **X-2** no infra monitoring (CC31 near-miss).
+- **B-2** verify URL 404 (B1 parked) · **X-2** no infra monitoring (CC31 near-miss).
+- _Resolved CC32:_ **N-1** (chain was already shipped via shared `audit_log`; mig 085 + honest PDF — final clear on PDF deploy) · **N-7** (scheduled Navigator work done, deferral reset to 0×).
