@@ -342,7 +342,17 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse(401, { error: 'unauthorized' });
   }
   if (!env.OPS_SUPABASE_SERVICE_ROLE_KEY || !env.RESEND_API_KEY) {
-    return jsonResponse(503, { error: 'missing OPS_SUPABASE_SERVICE_ROLE_KEY or RESEND_API_KEY' });
+    // Names only, never values — and only behind the cron-secret auth above.
+    // Tells the operator exactly which binding is absent instead of making
+    // them guess between two candidates (and surfaces near-miss typos).
+    return jsonResponse(503, {
+      error: 'missing required env binding(s)',
+      missing: [
+        !env.OPS_SUPABASE_SERVICE_ROLE_KEY && 'OPS_SUPABASE_SERVICE_ROLE_KEY',
+        !env.RESEND_API_KEY && 'RESEND_API_KEY',
+      ].filter(Boolean),
+      visible_env_names: Object.keys(env).filter((k) => typeof env[k] === 'string').sort(),
+    });
   }
 
   const dry = new URL(request.url).searchParams.get('dry') === '1';
