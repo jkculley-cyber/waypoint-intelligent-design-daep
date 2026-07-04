@@ -1,0 +1,39 @@
+name: Beacon Email Drip
+
+# Daily trigger for the /api/beacon-drip Pages Function (trial nurture +
+# renewal reminders). The function is idempotent — sent-markers live in the
+# ops command_center table — so an extra manual run never double-sends.
+#
+# Secrets:
+#   DRIP_CRON_SECRET — must equal the CRON_SECRET env var on the cpeg-site
+#                      Cloudflare Pages project.
+
+on:
+  schedule:
+    - cron: '0 14 * * *'   # 14:00 UTC ≈ 9am ET / 8am CT, daily
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (report the plan, send nothing)'
+        type: boolean
+        default: true
+
+jobs:
+  drip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call beacon-drip endpoint
+        run: |
+          DRY=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY="?dry=1"
+          fi
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" -X POST \
+            -H "x-cron-secret: ${{ secrets.DRIP_CRON_SECRET }}" \
+            "https://clearpathedgroup.com/api/beacon-drip${DRY}")
+          echo "HTTP ${HTTP_CODE}"
+          cat response.json
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "::error::beacon-drip returned ${HTTP_CODE}"
+            exit 1
+          fi
