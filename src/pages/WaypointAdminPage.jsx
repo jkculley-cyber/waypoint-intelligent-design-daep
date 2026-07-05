@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { opsSupabase } from '../lib/opsSupabase'
+import { opsSupabase, opsLeads } from '../lib/opsSupabase'
 import { useAuth } from '../contexts/AuthContext'
 import { format, addDays, differenceInDays, parseISO } from 'date-fns'
 import { SCENARIOS as ORIGINS_SCENARIOS } from '../lib/originsScenarios'
@@ -802,10 +802,10 @@ function LeadsPanel() {
     // Fetch from both sources in parallel
     const [mainRes, opsRes] = await Promise.allSettled([
       supabase.from('leads').select('*').order('created_at', { ascending: false }),
-      opsSupabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
+      opsLeads('list'),
     ])
     const mainLeads = mainRes.status === 'fulfilled' ? mainRes.value.data : []
-    const opsData = opsRes.status === 'fulfilled' ? opsRes.value.data : []
+    const opsData = opsRes.status === 'fulfilled' ? opsRes.value.leads : []
     const opsLeads = (opsData || []).map(d => ({
       id: 'ops-' + d.id,
       name: d.name,
@@ -846,7 +846,7 @@ function LeadsPanel() {
     setUpdatingId(id)
     if (typeof id === 'string' && id.startsWith('ops-')) {
       const opsId = id.replace('ops-', '')
-      await opsSupabase.from('demo_leads').update({ status }).eq('id', opsId)
+      await opsLeads('update', { id: opsId, status })
     } else {
       await supabase.from('leads').update({ status }).eq('id', id)
     }
@@ -860,7 +860,7 @@ function LeadsPanel() {
     if (typeof id === 'string' && id.startsWith('ops-')) {
       // ops demo_leads has no notes column — only status persists
       const opsId = id.replace('ops-', '')
-      await opsSupabase.from('demo_leads').update({ status: 'not_interested' }).eq('id', opsId)
+      await opsLeads('update', { id: opsId, status: 'not_interested' })
     } else {
       await supabase.from('leads').update({ status: 'not_interested', notes: niReason }).eq('id', id)
     }
@@ -876,7 +876,7 @@ function LeadsPanel() {
     if (typeof id === 'string' && id.startsWith('ops-')) {
       // Ops Supabase lead — strip prefix and delete from demo_leads
       const opsId = id.replace('ops-', '')
-      await opsSupabase.from('demo_leads').delete().eq('id', opsId)
+      await opsLeads('delete', { id: opsId })
     } else {
       await supabase.from('leads').delete().eq('id', id)
     }
@@ -916,7 +916,7 @@ function LeadsPanel() {
     const lead = leads.find(l => l.id === ctx.leadId)
     if (typeof ctx.leadId === 'string' && ctx.leadId.startsWith('ops-')) {
       const opsId = ctx.leadId.replace('ops-', '')
-      await opsSupabase.from('demo_leads').update({ status: 'closed' }).eq('id', opsId)
+      await opsLeads('update', { id: opsId, status: 'closed' })
     } else {
       await supabase.from('leads').update({ status: 'closed' }).eq('id', ctx.leadId)
     }
@@ -1184,11 +1184,12 @@ function DemoLeadsSection() {
 
   const fetchDemoLeads = useCallback(async () => {
     setLoading(true)
-    const { data } = await opsSupabase
-      .from('demo_leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setDemoLeads(data || [])
+    try {
+      const data = await opsLeads('list')
+      setDemoLeads(data.leads || [])
+    } catch {
+      setDemoLeads([])
+    }
     setLoading(false)
   }, [])
 
@@ -1196,7 +1197,7 @@ function DemoLeadsSection() {
 
   const updateStatus = async (leadId, newStatus) => {
     setDemoLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l))
-    await opsSupabase.from('demo_leads').update({ status: newStatus }).eq('id', leadId)
+    await opsLeads('update', { id: leadId, status: newStatus })
   }
 
   return (
