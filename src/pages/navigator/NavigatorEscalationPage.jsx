@@ -141,15 +141,24 @@ export default function NavigatorEscalationPage() {
         notes: noteText,
       }
     })
-    const { error: err } = await supabase.from('navigator_supports').insert(rows)
+    // campus_id is NOT NULL — drop any row we couldn't resolve a campus for so a
+    // single unresolved student can't atomically fail the whole batch insert.
+    const noCampus = rows.filter(r => !r.campus_id).length
+    const insertRows = rows.filter(r => r.campus_id)
+    if (!insertRows.length) {
+      setBulkSaving(false)
+      toast.error('Could not create supports: no campus on the selected student(s).')
+      return
+    }
+    const { error: err } = await supabase.from('navigator_supports').insert(insertRows)
     setBulkSaving(false)
     if (err) { toast.error(err.message); return }
-    const skipped = selected.size - rows.length
     const skipParts = []
     if (skipDuplicates && duplicates.length) skipParts.push(`${duplicates.filter(id => selected.has(id)).length} duplicate${duplicates.length === 1 ? '' : 's'}`)
     if (skipPriorFailures && failedRecent.length) skipParts.push(`${failedRecent.filter(id => selected.has(id)).length} prior-failure${failedRecent.length === 1 ? '' : 's'}`)
+    if (noCampus) skipParts.push(`${noCampus} no-campus`)
     toast.success(
-      `${rows.length} support${rows.length > 1 ? 's' : ''} created${skipped > 0 ? ` · skipped ${skipParts.join(' + ')}` : ''}`
+      `${insertRows.length} support${insertRows.length > 1 ? 's' : ''} created${skipParts.length ? ` · skipped ${skipParts.join(' + ')}` : ''}`
     )
     setSelected(new Set())
     setShowBulkModal(false)

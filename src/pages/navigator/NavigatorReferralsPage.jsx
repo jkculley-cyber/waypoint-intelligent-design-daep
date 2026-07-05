@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 import Topbar from '../../components/layout/Topbar'
 import { useNavigatorReferrals, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
@@ -159,7 +159,7 @@ export default function NavigatorReferralsPage() {
                         }
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {r.referral_date ? format(new Date(r.referral_date), 'MMM d, yyyy') : '—'}
+                        {r.referral_date ? format(parseISO(r.referral_date), 'MMM d, yyyy') : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -518,7 +518,7 @@ function ReferralDrawer({ referral, onClose, onSaved, prefilledStudentId }) {
             <>
               {/* Review existing referral */}
               <div className="p-3 bg-gray-50 rounded-lg text-sm space-y-1">
-                <p><span className="font-medium">Date:</span> {referral.referral_date ? format(new Date(referral.referral_date), 'MMMM d, yyyy') : '—'}</p>
+                <p><span className="font-medium">Date:</span> {referral.referral_date ? format(parseISO(referral.referral_date), 'MMMM d, yyyy') : '—'}</p>
                 <p><span className="font-medium">Campus:</span> {referral.campuses?.name || '—'}</p>
                 {referral.offense_codes && <p><span className="font-medium">Offense:</span> {referral.offense_codes.code} — {referral.offense_codes.description}</p>}
                 {referral.description && <p><span className="font-medium">Description:</span> {referral.description}</p>}

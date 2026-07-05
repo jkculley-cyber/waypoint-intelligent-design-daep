@@ -23,8 +23,8 @@ function getKioskCampusId() {
 }
 
 export default function ISSKioskPage() {
-  const { districtId, profile } = useAuth()
-  const campusId = getKioskCampusId() || profile?.campus_ids?.[0] || null
+  const { districtId, campusIds } = useAuth()
+  const campusId = getKioskCampusId() || campusIds?.[0] || null
   const today = format(new Date(), 'yyyy-MM-dd')
 
   const [students, setStudents] = useState([])

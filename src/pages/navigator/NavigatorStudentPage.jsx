@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, useStudentMDRs, useStudentCumulativeDays, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
+import { useNavigatorStudentHistory, useStudentDaepStatus, useStudentMonitors, useStudentMDRs, useStudentCumulativeDays, MONITOR_TYPE_LABELS, currentSchoolYear, getSchoolYearBounds } from '../../hooks/useNavigator'
 import { generateHearingPacket } from '../../lib/navigatorPdf'
 import toast from 'react-hot-toast'
 
@@ -640,8 +640,9 @@ function StudentProgressPanel({ referrals, placements, supports, student }) {
   const refRecency = daysSinceLastRef != null ? (daysSinceLastRef >= 30 ? 'quiet' : daysSinceLastRef >= 14 ? 'cooling' : 'recent') : null
 
   // ── Placement trend: compare current year to prior year ──
-  const currentYearPlacements = (placements || []).filter(p => p.start_date >= '2025-08-01')
-  const priorYearPlacements = (placements || []).filter(p => p.start_date < '2025-08-01')
+  const syStart = getSchoolYearBounds(currentSchoolYear()).start
+  const currentYearPlacements = (placements || []).filter(p => p.start_date >= syStart)
+  const priorYearPlacements = (placements || []).filter(p => p.start_date < syStart)
   const placementTrend = priorYearPlacements.length > 0 && currentYearPlacements.length < priorYearPlacements.length ? 'fewer' : priorYearPlacements.length > 0 && currentYearPlacements.length > priorYearPlacements.length ? 'more' : priorYearPlacements.length > 0 ? 'same' : null
 
   // ── Total incident reduction from completed supports ──

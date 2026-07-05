@@ -4,13 +4,19 @@ import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigatorPilotSummary, currentSchoolYear, SKILL_GAP_LABELS } from '../../hooks/useNavigator'
 
-const SCHOOL_YEARS = ['2025-26', '2024-25', '2023-24']
+// Current school year + the two prior years, derived so the list never goes
+// stale at the Aug 1 boundary (defaultYear must always be present as an option).
+function recentSchoolYears() {
+  const startY = parseInt(currentSchoolYear().split('-')[0])
+  return [0, 1, 2].map(n => `${startY - n}-${String(startY - n + 1).slice(-2)}`)
+}
 
 export default function NavigatorPilotPage() {
   const navigate = useNavigate()
   const { hasProduct } = useAuth()
   const showDaep = hasProduct('waypoint')
   const defaultYear = currentSchoolYear()
+  const SCHOOL_YEARS = recentSchoolYears()
   const [schoolYear, setSchoolYear] = useState(defaultYear)
   const { summary, loading, error, refetch } = useNavigatorPilotSummary(schoolYear)
 

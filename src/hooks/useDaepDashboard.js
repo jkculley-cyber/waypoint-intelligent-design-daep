@@ -253,7 +253,7 @@ export function useDaepSubPopulations() {
           .from('incidents')
           .select(`
             id,
-            student:students(id, race, gender, is_sped, is_504, is_ell, grade_level, is_homeless, is_foster_care)
+            student:students(id, race_ethnicity, gender, is_sped, is_504, is_ell, grade_level, is_homeless, is_foster_care)
           `)
           .eq('district_id', districtId)
           .eq('consequence_type', 'daep')
@@ -278,7 +278,7 @@ export function useDaepSubPopulations() {
         // Group by Race/Ethnicity
         const raceGroups = {}
         filteredIncidents.forEach(i => {
-          const key = i.student?.race || 'Unknown'
+          const key = i.student?.race_ethnicity || 'Unknown'
           raceGroups[key] = (raceGroups[key] || 0) + 1
         })
         const byRace = Object.entries(raceGroups)
@@ -988,7 +988,7 @@ export function useNearingCompletion(threshold = 5) {
           id, consequence_start, consequence_days, status,
           student:students!inner(id, first_name, last_name, grade_level, campus_id,
             campus:campuses!campus_id(id, name)),
-          transition_plans(id, handoff_status)
+          transition_plans!transition_plans_incident_id_fkey(id, handoff_status)
         `)
         .eq('district_id', districtId)
         .eq('consequence_type', 'daep')

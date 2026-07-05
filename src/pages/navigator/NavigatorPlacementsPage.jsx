@@ -413,7 +413,17 @@ function NewPlacementDrawer({ onClose, onSaved, prefilledStudentId }) {
   }
 
   // Live computation: would this placement cross the 10-day SPED threshold?
-  const proposedDays = parseInt(form.days) || 0
+  // Mirror the DB gate (migration 086): prefer the explicit day count, else
+  // derive the inclusive span from the dates, so a blank Days field can't hide
+  // a dated removal from the threshold warning.
+  const proposedDays = (() => {
+    if (form.days) return parseInt(form.days) || 0
+    if (form.start_date && form.end_date) {
+      const span = Math.round((new Date(form.end_date + 'T12:00:00') - new Date(form.start_date + 'T12:00:00')) / 86400000) + 1
+      return span > 0 ? span : 0
+    }
+    return 0
+  })()
   const cumNow = cumDays?.cumulative_days || 0
   const wouldCross = selectedStudent?.is_sped && (cumNow + proposedDays) > 10
   const hasUsableMDR = mdrs.some(m => !m.is_manifestation)  // non-manifestation MDR allows continued discipline
@@ -1165,7 +1175,7 @@ function ReasonHistoryModal({ history, currentReason, onClose }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-gray-200 sticky top-0 bg-white">
           <h2 className="text-base font-semibold text-gray-900">Reason — Edit History</h2>
-          <p className="text-xs text-gray-500 mt-0.5">All prior values are preserved server-side and immutable.</p>
+          <p className="text-xs text-gray-500 mt-0.5">All prior values are preserved server-side in a tamper-evident audit log.</p>
         </div>
         <div className="p-5 space-y-3">
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
