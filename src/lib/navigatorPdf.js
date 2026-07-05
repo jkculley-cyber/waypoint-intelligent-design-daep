@@ -5,15 +5,22 @@ import { supabase } from './supabase'
 
 const FERPA_NOTICE = 'CONFIDENTIAL — FERPA Protected Student Records — Authorized Personnel Only — Do Not Distribute'
 
-// jsPDF's default Helvetica uses WinAnsi/CP1252 — em-dash, middle dot, ×, §, ⚠
-// are all in range, but ≤ ≥ → ← arrows are not and render as gibberish that
-// also corrupts surrounding glyph spacing. Sanitize free-text + computed labels
-// at render time so the UI keeps the nicer characters.
+// jsPDF's default Helvetica uses WinAnsi/CP1252 — em-dash, middle dot, ×, § are
+// in range, but ≤ ≥ → ← arrows and the ⚠ warning sign are NOT and render as
+// gibberish that also corrupts surrounding glyph spacing. Sanitize free-text +
+// computed labels at render time so the UI keeps the nicer characters.
 const pdfSafe = (s) => s == null ? '' : String(s)
   .replace(/≤/g, '<=')
   .replace(/≥/g, '>=')
   .replace(/[→]/g, '->')
   .replace(/[←]/g, '<-')
+  .replace(/⚠️?/g, '')
+
+const SPECIAL_CIRC_LABELS = {
+  weapons: 'Weapons',
+  illegal_drugs: 'Illegal drugs',
+  serious_bodily_injury: 'Serious bodily injury',
+}
 
 const SUPPORT_LABELS = {
   cico: 'CICO',
@@ -237,7 +244,7 @@ export async function generateHearingPacket({ student, referrals, placements, su
     if ((cumDays.cumulative_days ?? 0) >= 10) {
       doc.setFont(undefined, 'bold')
       doc.setTextColor(180, 30, 30)
-      doc.text('⚠ 10-day federal threshold reached — MDR required for any further removal.', 12, y)
+      doc.text('WARNING: 10-day federal threshold reached — MDR required for any further removal.', 12, y)
       doc.setTextColor(0)
       doc.setFont(undefined, 'normal')
       y += 4.5
@@ -318,10 +325,16 @@ export async function generateHearingPacket({ student, referrals, placements, su
       const editN = Array.isArray(p.reason_history) ? p.reason_history.length : 0
       const original = placementOriginalReason(p)
       const dur = `${p.days || '?'} day${(p.days || 0) === 1 ? '' : 's'}${p.end_date ? ` · ended ${format(parseISO(p.end_date), 'MMM d')}` : ' · active'}`
+      // Surface the §300.530(g) special-circumstances basis when present, so a
+      // lawful manifestation-positive removal isn't rendered as an apparent
+      // violation (it otherwise sits next to a manifestation-positive MDR with
+      // no visible justification).
+      const basis = SPECIAL_CIRC_LABELS[p.special_circumstances_basis]
+      const basisNote = basis ? ` · §300.530(g) basis: ${basis}` : ''
       return {
         kind: `${(p.placement_type || '').toUpperCase()} Placement`,
         date: p.start_date,
-        summary: `${dur} — ${original}${editedTag(editN)}`,
+        summary: `${dur} — ${original}${basisNote}${editedTag(editN)}`,
         actor: p.assigner?.full_name || '—',
       }
     }),

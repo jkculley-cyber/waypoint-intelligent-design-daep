@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useInterventionEffectiveness } from '../../hooks/useNavigator'
 
@@ -117,7 +117,7 @@ export default function NavigatorEffectivenessPage() {
                               {SUPPORT_TYPE_LABELS[s.support_type] || s.support_type}
                             </td>
                             <td className="px-4 py-3 text-gray-500">
-                              {s.end_date ? format(new Date(s.end_date), 'MMM d, yyyy') : '—'}
+                              {s.end_date ? format(parseISO(s.end_date), 'MMM d, yyyy') : '—'}
                             </td>
                             <td className="px-4 py-3 text-gray-700 font-medium">{before}</td>
                             <td className="px-4 py-3 text-gray-700 font-medium">{after}</td>

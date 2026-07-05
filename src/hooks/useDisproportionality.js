@@ -85,7 +85,7 @@ export function useWaypointDisproportionality(campusFilterId = null) {
       //   - admin users may opt to drill into a single campus via campusFilterId
       // Title VI complaints come campus-by-campus. District-aggregate hides
       // exactly the disparity OCR investigates first.
-      if (!isAdmin && campusIds?.length) {
+      if (!isAdmin() && campusIds?.length) {
         curIncQ = curIncQ.in('campus_id', campusIds)
         priorIncQ = priorIncQ.in('campus_id', campusIds)
         studQ = studQ.in('campus_id', campusIds)

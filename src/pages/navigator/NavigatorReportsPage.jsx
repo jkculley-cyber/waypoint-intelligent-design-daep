@@ -4,7 +4,7 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { format, subMonths, subDays, startOfMonth } from 'date-fns'
+import { format, parseISO, subMonths, subDays, startOfMonth } from 'date-fns'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -91,7 +91,7 @@ export default function NavigatorReportsPage() {
 
     // Campus scoping helper — non-admins only see assigned campuses
     const scope = (q, campusCol = 'campus_id') => {
-      if (!isAdmin && campusIds?.length) q = q.in(campusCol, campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in(campusCol, campusIds)
       return q
     }
 
@@ -356,7 +356,7 @@ export default function NavigatorReportsPage() {
                           </Link>
                           <span className="ml-1 text-xs text-gray-400">Gr {r.students?.grade_level}</span>
                         </td>
-                        <td className="px-4 py-2 text-gray-600">{r.referral_date ? format(new Date(r.referral_date), 'MMM d, yyyy') : '—'}</td>
+                        <td className="px-4 py-2 text-gray-600">{r.referral_date ? format(parseISO(r.referral_date), 'MMM d, yyyy') : '—'}</td>
                         <td className="px-4 py-2 text-gray-600">{r.campuses?.name || '—'}</td>
                         <td className="px-4 py-2 text-gray-500 text-xs">{r.offense_codes ? `${r.offense_codes.code} — ${r.offense_codes.description}` : r.description?.slice(0, 40) || '—'}</td>
                         <td className="px-4 py-2">

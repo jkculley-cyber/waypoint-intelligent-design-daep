@@ -33,6 +33,33 @@ function parseBool(val) {
   return false
 }
 
+// Canonicalize a free-text race/ethnicity value to one of the 8 values
+// allowed by students.race_ethnicity (migration 070). Must stay in sync with
+// the CASE logic in 070_navigator_race_validate.sql — the column is NOT NULL
+// with a strict CHECK, so an unmapped/blank value must resolve to
+// 'not_specified' rather than reach PostgREST as a raw string or null.
+const CANONICAL_RACES = ['american_indian', 'asian', 'black', 'hispanic', 'pacific_islander', 'white', 'two_or_more', 'not_specified']
+function normalizeRace(val) {
+  const raw = (val || '').trim()
+  if (!raw) return 'not_specified'
+  if (CANONICAL_RACES.includes(raw)) return raw
+  const upper = raw.toUpperCase()
+  const peimsAlpha = { H: 'hispanic', B: 'black', W: 'white', A: 'asian', I: 'american_indian', P: 'pacific_islander', M: 'two_or_more' }
+  if (peimsAlpha[upper]) return peimsAlpha[upper]
+  const peimsNum = { 1: 'american_indian', 2: 'asian', 3: 'black', 4: 'pacific_islander', 5: 'white' }
+  if (peimsNum[raw]) return peimsNum[raw]
+  const l = raw.toLowerCase()
+  if (l.includes('hispanic') || l.includes('latino') || l.includes('latina') || l.includes('latinx')) return 'hispanic'
+  if (l.includes('black') || l.includes('african')) return 'black'
+  if (l.includes('white') || l.includes('caucasian') || l.includes('anglo')) return 'white'
+  if (l.includes('asian')) return 'asian'
+  if (l.includes('american indian') || l.includes('native american') || l.includes('alaska native') || l.includes('amerind')) return 'american_indian'
+  if (l.includes('pacific islander') || l.includes('hawaiian') || l.includes('native hawaii')) return 'pacific_islander'
+  if (l.includes('two') || l.includes('multi') || l.includes('mixed') || l.includes('more than one')) return 'two_or_more'
+  if (l.includes('decline') || l.includes('not specified') || l.includes('unknown') || l.includes('n/a')) return 'not_specified'
+  return 'not_specified'
+}
+
 /**
  * Validate a single row of data for a given import type
  * @returns {{ valid: boolean, errors: string[], warnings: string[], parsed: object }}
@@ -152,7 +179,7 @@ function validateStudentRow(row, context) {
     grade_level: grade,
     campus_id: campusId,
     gender: gender || null,
-    race: (row.race || '').trim() || null,
+    race_ethnicity: normalizeRace(row.race),
     is_sped: isSped,
     sped_eligibility: isSped ? spedElig : null,
     is_504: parseBool(row.is_504),

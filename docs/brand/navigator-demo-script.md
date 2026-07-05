@@ -2,7 +2,7 @@
 
 **Audience:** Campus AP or Principal considering Navigator for their school
 **Duration:** 12-15 minutes
-**Demo login:** ap@lincoln-hs.demo / Password123!
+**Demo login:** explore-navigator@clearpathedgroup.com / Explore2026!
 **URL:** https://waypoint.clearpathedgroup.com
 
 ---
@@ -122,13 +122,13 @@
 
 ## Close (1 minute)
 
-> "That's Navigator. No DAEP workflow, no compliance checklists — just the ISS/OSS tracking that 95% of discipline actually needs. It's $499 for the first year, per campus. Your counselor gets their own login too — they see the same students, same supports, same data."
+> "That's Navigator. No DAEP workflow, no compliance checklists — just the ISS/OSS tracking that 95% of discipline actually needs. It's $499 for the first year, per campus, and renews at $999/yr after that. Your whole campus team works from the same students, same supports, same data."
 
 > "If you want to try it with your own students, I can set up a pilot for your campus this week. All I need is a one-page data agreement signed by your superintendent — takes about 10 minutes."
 
 **Hand them:**
-- Login credentials for the demo (ap@lincoln-hs.demo / Password123!)
-- DPA template (one page, pre-filled with their school name)
+- Login credentials for the demo (explore-navigator@clearpathedgroup.com / Explore2026!)
+- DPA template (short, add their school name on the signature line)
 - Kim's contact: support@clearpathedgroup.com
 
 ---

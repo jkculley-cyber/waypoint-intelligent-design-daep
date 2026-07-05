@@ -29,7 +29,7 @@ export function useNavigatorReferrals(filters = {}) {
         .order('referral_date', { ascending: false })
         .order('created_at', { ascending: false })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
       if (filters.status) q = q.eq('status', filters.status)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
       if (filters.date_from) q = q.gte('referral_date', filters.date_from)
@@ -76,7 +76,7 @@ export function useNavigatorPlacements(filters = {}) {
         .eq('district_id', districtId)
         .order('start_date', { ascending: false })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
       if (filters.placement_type) q = q.eq('placement_type', filters.placement_type)
       if (filters.campus_id) q = q.eq('campus_id', filters.campus_id)
       if (filters.active_only) q = q.is('end_date', null).lte('start_date', new Date().toISOString())
@@ -123,7 +123,7 @@ export function useNavigatorSupports(studentId = null) {
         .eq('district_id', districtId)
         .order('start_date', { ascending: false })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
       if (studentId) q = q.eq('student_id', studentId)
 
       const { data, error: err } = await q
@@ -160,7 +160,7 @@ export function useNavigatorDashboardStats() {
 
     // Helper to apply campus scoping to a query builder
     const scopeCampus = (q) => {
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
       return q
     }
 
@@ -221,7 +221,7 @@ export function useNavigatorDashboardStats() {
         .eq('consequence_type', 'daep')
         .eq('status', 'active')
         .then(r => {
-          if (!isAdmin && campusIds?.length) {
+          if (!isAdmin() && campusIds?.length) {
             const filtered = (r.data || []).filter(inc => campusIds.includes(inc.student?.campus_id))
             return { count: filtered.length }
           }
@@ -368,7 +368,7 @@ export function useNavigatorGoals(schoolYear) {
         .eq('school_year', schoolYear)
         .order('created_at', { ascending: true })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
 
       const { data, error: err } = await q
       if (err) throw err
@@ -411,7 +411,7 @@ export function useNavigatorYOYData(schoolYear) {
 
     // Helper to apply campus scoping
     const scopeCampus = (q) => {
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
       return q
     }
 
@@ -509,7 +509,7 @@ export function useEscalationRisk() {
 
       let placQ = supabase
         .from('navigator_placements')
-        .select('id, student_id, placement_type, start_date')
+        .select('id, student_id, placement_type, start_date, students(id, first_name, last_name, grade_level), campuses(id, name)')
         .eq('district_id', districtId)
         .gte('start_date', d90)
 
@@ -519,7 +519,7 @@ export function useEscalationRisk() {
         .eq('district_id', districtId)
         .eq('status', 'active')
 
-      if (!isAdmin && campusIds?.length) {
+      if (!isAdmin() && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)
         placQ = placQ.in('campus_id', campusIds)
         supQ = supQ.in('campus_id', campusIds)
@@ -544,7 +544,11 @@ export function useEscalationRisk() {
       ;(placRes.data || []).forEach(p => {
         const sid = p.student_id
         if (!studentMap[sid]) {
-          studentMap[sid] = { student_id: sid, student: null, campus: null, referrals: [], placements: [], activeSupports: 0 }
+          studentMap[sid] = { student_id: sid, student: p.students || null, campus: p.campuses || null, referrals: [], placements: [], activeSupports: 0 }
+        } else {
+          // Backfill identity/campus for students first seen via referrals with nulls
+          if (!studentMap[sid].student && p.students) studentMap[sid].student = p.students
+          if (!studentMap[sid].campus && p.campuses) studentMap[sid].campus = p.campuses
         }
         studentMap[sid].placements.push(p)
       })
@@ -615,7 +619,7 @@ export function useSkillGapData() {
         .eq('district_id', districtId)
         .not('skill_gap', 'is', null)
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
 
       const { data: rows, error: err } = await q
       if (err) throw err
@@ -693,7 +697,7 @@ export function useInterventionEffectiveness() {
         .not('incidents_after', 'is', null)
         .order('end_date', { ascending: false })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
 
       const { data: rows, error: err } = await q
       if (err) throw err
@@ -770,7 +774,7 @@ export function useDisproportionality() {
         .select('id, name, settings')
         .eq('district_id', districtId)
 
-      if (!isAdmin && campusIds?.length) {
+      if (!isAdmin() && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)
         studQ = studQ.in('campus_id', campusIds)
         campusQ = campusQ.in('id', campusIds)
@@ -895,7 +899,7 @@ export function useNavigatorPilotSummary(schoolYear) {
 
       // Helper to apply campus scoping
       const scopeCampus = (q) => {
-        if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+        if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
         return q
       }
 
@@ -986,7 +990,11 @@ export function useNavigatorPilotSummary(schoolYear) {
 const MONTH_LABELS = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
 
 function aggregateByMonth(placements, startDate) {
-  const yearStart = new Date(startDate)
+  // Parse year/month straight from the 'YYYY-MM-DD' strings — never through a
+  // Date object. `new Date('2025-08-01')` is UTC midnight, which is the prior
+  // day/month in US timezones, shifting every non-1st placement a month late
+  // and dropping the school year's final month entirely.
+  const [startY, startM] = startDate.split('-').map(Number)
   const months = Array.from({ length: 12 }, (_, i) => ({
     month: i,
     label: MONTH_LABELS[i],
@@ -996,11 +1004,9 @@ function aggregateByMonth(placements, startDate) {
   }))
 
   for (const p of placements) {
-    const d = new Date(p.start_date)
-    // Month offset from Aug 1 of start year
-    const monthOffset =
-      (d.getFullYear() - yearStart.getFullYear()) * 12 +
-      (d.getMonth() - yearStart.getMonth())
+    const [y, m] = String(p.start_date).split('-').map(Number)
+    // Month offset from the school-year start month
+    const monthOffset = (y - startY) * 12 + (m - startM)
     if (monthOffset >= 0 && monthOffset < 12) {
       if (p.placement_type === 'iss') months[monthOffset].iss++
       else if (p.placement_type === 'oss') months[monthOffset].oss++
@@ -1037,7 +1043,7 @@ export function useDaepReturns() {
           id, status, consequence_days, consequence_start, incident_date,
           student:students!inner(id, first_name, last_name, grade_level, campus_id,
             campus:campuses!campus_id(id, name)),
-          transition_plans(id, handoff_status, handoff_initiated_at, home_campus_accepted_at,
+          transition_plans!transition_plans_incident_id_fkey(id, handoff_status, handoff_initiated_at, home_campus_accepted_at,
             post_return_adjustments, behavioral_supports, academic_supports, parent_engagement_plan,
             review_30_date, review_60_date, review_90_date)
         `)
@@ -1046,7 +1052,7 @@ export function useDaepReturns() {
         .eq('status', 'completed')
         .gte('updated_at', ninetyDaysAgo)
 
-      if (!isAdmin && campusIds?.length) {
+      if (!isAdmin() && campusIds?.length) {
         q = q.in('student.campus_id', campusIds)
       }
 
@@ -1185,7 +1191,7 @@ export function useDaepRiskStudents() {
         .select('student_id, placement_type, start_date, students(id, first_name, last_name, grade_level, campus_id, is_sped, is_504)')
         .eq('district_id', districtId)
         .gte('start_date', sixMonthsAgo)
-      if (!isAdmin && campusIds?.length) placementQ = placementQ.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) placementQ = placementQ.in('campus_id', campusIds)
       const { data: placements } = await placementQ
 
       // 2. Failed/discontinued supports in same window
@@ -1195,7 +1201,7 @@ export function useDaepRiskStudents() {
         .eq('district_id', districtId)
         .eq('status', 'discontinued')
         .gte('start_date', sixMonthsAgo)
-      if (!isAdmin && campusIds?.length) supportQ = supportQ.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) supportQ = supportQ.in('campus_id', campusIds)
       const { data: failedSupports } = await supportQ
 
       // 3. Aggregate per student
@@ -1482,7 +1488,7 @@ export function useDisproportionalityByRace() {
         .eq('district_id', districtId)
         .eq('is_active', true)
 
-      if (!isAdmin && campusIds?.length) {
+      if (!isAdmin() && campusIds?.length) {
         refQ = refQ.in('campus_id', campusIds)
         placQ = placQ.in('campus_id', campusIds)
         priorPlacQ = priorPlacQ.in('campus_id', campusIds)
@@ -1705,7 +1711,7 @@ export function useStudentMonitors() {
         .is('dismissed_at', null)
         .order('alert_date', { ascending: true, nullsFirst: false })
 
-      if (!isAdmin && campusIds?.length) q = q.in('campus_id', campusIds)
+      if (!isAdmin() && campusIds?.length) q = q.in('campus_id', campusIds)
 
       const { data, error } = await q
       if (error) throw error

@@ -42,7 +42,7 @@ export default function NavigatorStudentsListPage() {
       .in('id', [...studentIds])
       .eq('is_active', true)
       .order('last_name')
-    if (!isAdmin && campusIds?.length) studentQ = studentQ.in('campus_id', campusIds)
+    if (!isAdmin() && campusIds?.length) studentQ = studentQ.in('campus_id', campusIds)
     const { data: studentData } = await studentQ
 
     // Fetch DAEP incidents for these students

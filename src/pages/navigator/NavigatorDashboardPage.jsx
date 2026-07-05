@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import Topbar from '../../components/layout/Topbar'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigatorDashboardStats, useDaepReturns, useDaepRiskStudents, useCreateReturnSupports, useStudentMonitors, MONITOR_TYPE_LABELS } from '../../hooks/useNavigator'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 
 const STATUS_COLORS = {
@@ -247,7 +247,7 @@ export default function NavigatorDashboardPage() {
                         <span className={`font-medium ${isOverdue ? 'text-red-600' : 'text-amber-700'}`}>
                           {MONITOR_TYPE_LABELS[m.monitor_type] || m.monitor_type}
                         </span>
-                        {m.alert_date && <span className="ml-1">· {isOverdue ? 'Overdue' : format(new Date(m.alert_date), 'MMM d')}</span>}
+                        {m.alert_date && <span className="ml-1">· {isOverdue ? 'Overdue' : format(parseISO(m.alert_date), 'MMM d')}</span>}
                         {m.notes && <span className="ml-1">· {m.notes}</span>}
                       </p>
                     </Link>
@@ -298,7 +298,7 @@ export default function NavigatorDashboardPage() {
                         {r.offense_codes ? `${r.offense_codes.code} — ${r.offense_codes.description}` : r.description?.slice(0, 40) || '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {r.referral_date ? format(new Date(r.referral_date), 'MMM d, yyyy') : '—'}
+                        {r.referral_date ? format(parseISO(r.referral_date), 'MMM d, yyyy') : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-600'}`}>
