@@ -1,0 +1,96 @@
+CAMPUS LEADERSHIP COMPLETE SYSTEM
+Clear Path Education Group, LLC
+clearpathedgroup.com | clearpathedgroup.com/waypoint
+════════════════════════════════════════════════════
+
+WELCOME. Here is everything in this bundle and how to use it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXCEL TRACKERS (open in Excel or Google Sheets)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Admin-Command-Toolkit-Texas-Edition.xlsx  ← START HERE
+   Your command center. Enter incidents here, everything else
+   auto-populates. 14 tabs including Command Dashboard,
+   Incident Intake, Investigation Tracker, 10-Day Compliance,
+   Evidence Tracker, Parent Contact Log (15 phone scripts),
+   Discipline Trends, and Monday Briefing.
+
+2. DAEP-Student-Tracker-Texas-Edition.xlsx
+   Track DAEP placements, compliance deadlines, and MDR flags —
+   mandatory placements under TEC §37.006 and discretionary
+   placements under your district's Student Code of Conduct.
+
+3. ISS-Intervention-Tracker-Texas-Edition.xlsx
+   Track ISS placements with daily intervention logs, 8
+   intervention tracks, student activity plans by offense,
+   re-entry checklists, and outcome measurement.
+
+4. TEC-Consequence-Decision-Matrix-Texas-Edition.xlsx
+   Reference tool. Every TEC §37 offense with consequence
+   options, restorative alternatives, parent scripts, CBC
+   workflow, and SPED safeguards.
+
+5. Navigator-Student-Behavior-Tracker-Texas-Edition.xlsx
+   RTI/MTSS behavior tracking. Referral log, ISS/OSS
+   placements, student supports, risk score calculator.
+
+6. Meridian-SPED-Compliance-Tracker-Texas-Edition.xlsx
+   SPED compliance. IEP tracker, 504 tracker, Dyslexia/HB 3928,
+   CAP findings, SPPI-13 transition.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INVESTIGATION TEMPLATES (Word — 5 files)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Investigation-Template-Fighting-Assault.docx
+Investigation-Template-Drugs-Alcohol.docx
+Investigation-Template-Harassment-Bullying.docx
+Investigation-Template-Threats.docx
+Investigation-Template-General-Misconduct.docx
+
+Open in Word or Google Docs to fill in.
+Use File → Print → Save as PDF for the student's
+disciplinary file.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIGITAL FORM (open in any browser)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Investigation-Intake-Form.html
+  Double-click to open in Chrome/Edge/Safari.
+  Fill out the investigation digitally.
+  Click "Export to Toolkit" → paste the CSV row into
+  Admin-Command-Toolkit Incident Intake tab.
+  All 14 tabs update automatically. No double entry.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RECOMMENDED SETUP ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Week 1:
+  Open Admin-Command-Toolkit.xlsx
+  Fill in the Cover tab (district name, campus, school year)
+  Start logging incidents in the Incident Intake tab
+
+Week 2:
+  Open each specialist tracker (DAEP, ISS, Navigator, Meridian)
+  Fill in their Cover tabs
+  Link student IDs consistently across all files
+
+Ongoing:
+  Use the Digital Form for every new incident
+  Export to Toolkit with one click
+  Check the Command Dashboard Monday mornings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+READY TO AUTOMATE?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When you're ready to move from spreadsheets to a live
+district-wide platform — real-time dashboards, automated
+parent notices, SPED alerts pushed to your phone — 
+visit clearpathedgroup.com/waypoint
+
+© 2026 Clear Path Education Group, LLC
+clearpathedgroup.com | For organizational use only — not legal advice.

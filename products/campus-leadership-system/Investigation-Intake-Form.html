@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investigation Intake — Clear Path Education Group</title>
+<!-- fonts: system fallbacks only — this file must work fully offline -->
+<style>
+:root {
+  --purple:       #4B2D7F;
+  --purple-mid:   #6B4BA1;
+  --purple-light: #EDE7F6;
+  --purple-pale:  #F8F5FF;
+  --orange:       #E8650A;
+  --orange-light: #FDE8D8;
+  --gold:         #F4A620;
+  --red:          #C0392B;
+  --red-light:    #FDECEA;
+  --green:        #1E8449;
+  --green-light:  #E9F7EF;
+  --teal:         #0E7490;
+  --teal-light:   #E0F2FE;
+  --dark:         #1A1A2E;
+  --gray:         #6B7280;
+  --light-gray:   #F4F4F6;
+  --border:       #D4C8F0;
+  --white:        #FFFFFF;
+
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+
+  --shadow-sm: 0 1px 3px rgba(75,45,127,.08), 0 1px 2px rgba(75,45,127,.06);
+  --shadow-md: 0 4px 16px rgba(75,45,127,.12), 0 2px 6px rgba(75,45,127,.08);
+  --shadow-lg: 0 8px 32px rgba(75,45,127,.16);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: #F0EDF8;
+  color: var(--dark);
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ─────────────────────────────────────────────────── */
+.topbar {
+  background: var(--purple);
+  padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(75,45,127,.3);
+}
+.topbar-brand { display: flex; align-items: center; gap: .75rem; }
+.topbar-logo {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.1rem; color: white; font-weight: bold;
+}
+.topbar-title { color: white; font-size: .95rem; font-weight: 600; letter-spacing: .01em; }
+.topbar-sub   { color: rgba(255,255,255,.6); font-size: .78rem; margin-left: .5rem; }
+.topbar-actions { display: flex; gap: .75rem; align-items: center; }
+
+/* ── LAYOUT ──────────────────────────────────────────────────── */
+.app-layout { display: flex; min-height: calc(100vh - 56px); }
+
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--purple);
+  padding: 1.5rem 0;
+  position: sticky; top: 56px; height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+.sidebar-section { padding: .4rem 1.2rem .2rem; color: rgba(255,255,255,.4); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .55rem 1.2rem; cursor: pointer;
+  color: rgba(255,255,255,.7); font-size: .82rem;
+  transition: all .15s; border-left: 3px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); color: white; }
+.nav-item.active { background: rgba(255,255,255,.12); color: white; border-left-color: var(--orange); }
+.nav-item .nav-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; flex-shrink: 0;
+}
+.nav-item.complete .nav-num { background: var(--green); }
+.nav-item.active   .nav-num { background: var(--orange); }
+
+.main-content { flex: 1; padding: 2rem; max-width: 900px; }
+
+/* ── OFFENSE SELECTOR (top hero) ─────────────────────────────── */
+.offense-hero {
+  background: linear-gradient(135deg, var(--purple) 0%, #2D1B5E 100%);
+  border-radius: var(--radius); padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+  position: relative; overflow: hidden;
+}
+.offense-hero::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: rgba(232,101,10,.15);
+}
+.offense-hero h1 {
+  font-family: var(--font-display); font-size: 1.6rem; color: white;
+  margin-bottom: .25rem;
+}
+.offense-hero p { color: rgba(255,255,255,.65); font-size: .875rem; margin-bottom: 1.5rem; }
+
+.offense-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem;
+}
+.offense-card {
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: var(--radius-sm); padding: .875rem 1rem;
+  cursor: pointer; transition: all .2s; color: white;
+}
+.offense-card:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.3); transform: translateY(-1px); }
+.offense-card.selected { background: var(--orange); border-color: var(--orange); box-shadow: 0 4px 12px rgba(232,101,10,.4); }
+.offense-card .oc-icon { font-size: 1.4rem; margin-bottom: .3rem; }
+.offense-card .oc-name { font-size: .8rem; font-weight: 600; }
+.offense-card .oc-tec  { font-size: .68rem; color: rgba(255,255,255,.6); margin-top: .15rem; }
+.offense-card.selected .oc-tec { color: rgba(255,255,255,.8); }
+
+/* ── SECTIONS ────────────────────────────────────────────────── */
+.form-section {
+  background: white; border-radius: var(--radius);
+  margin-bottom: 1.25rem; box-shadow: var(--shadow-sm);
+  overflow: hidden; display: none;
+}
+.form-section.visible { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.section-header {
+  background: var(--purple); color: white;
+  padding: .85rem 1.25rem;
+  display: flex; align-items: center; gap: .75rem;
+  cursor: pointer; user-select: none;
+}
+.section-header.orange { background: var(--orange); }
+.section-header.red    { background: var(--red); }
+.section-header.teal   { background: var(--teal); }
+.section-header.green  { background: var(--green); }
+.section-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,.2); font-size: .78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-title { font-weight: 700; font-size: .9rem; flex: 1; }
+.section-toggle { font-size: .75rem; opacity: .7; }
+.section-body { padding: 1.25rem; }
+.section-body.collapsed { display: none; }
+
+/* ── FORM ELEMENTS ───────────────────────────────────────────── */
+.field-grid { display: grid; gap: .875rem; }
+.field-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.field-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; gap: .35rem; }
+.field label {
+  font-size: .78rem; font-weight: 600; color: var(--purple);
+  display: flex; align-items: center; gap: .3rem;
+}
+.field label .req { color: var(--red); font-size: .7rem; }
+.field input, .field select, .field textarea {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: .55rem .75rem; font-family: var(--font-body); font-size: .875rem;
+  color: var(--dark); background: white; transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--purple); box-shadow: 0 0 0 3px rgba(75,45,127,.1);
+}
+.field textarea { resize: vertical; min-height: 80px; }
+.field .hint { font-size: .72rem; color: var(--gray); }
+
+/* ── YES/NO TOGGLE ───────────────────────────────────────────── */
+.yesno-group { display: flex; gap: .5rem; }
+.yesno-btn {
+  flex: 1; padding: .45rem; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); background: white; cursor: pointer;
+  font-size: .8rem; font-weight: 600; color: var(--gray);
+  transition: all .15s; text-align: center;
+}
+.yesno-btn:hover { border-color: var(--purple-mid); color: var(--purple); }
+.yesno-btn.yes.active { background: var(--green-light); border-color: var(--green); color: var(--green); }
+.yesno-btn.no.active  { background: var(--red-light);   border-color: var(--red);   color: var(--red); }
+
+/* ── CHECKBOX LIST ───────────────────────────────────────────── */
+.checkbox-list { display: flex; flex-direction: column; gap: .5rem; }
+.check-item {
+  display: flex; align-items: flex-start; gap: .6rem;
+  padding: .6rem .75rem; border-radius: var(--radius-sm);
+  border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
+  background: var(--light-gray);
+}
+.check-item:hover { border-color: var(--border); background: var(--purple-pale); }
+.check-item.checked { background: var(--purple-light); border-color: var(--purple-mid); }
+.check-item input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--purple); flex-shrink: 0; }
+.check-item .check-label { font-size: .85rem; color: var(--dark); flex: 1; }
+.check-item .check-sub   { font-size: .75rem; color: var(--gray); margin-top: .2rem; }
+
+/* ── DYNAMIC ROWS (timeline, witnesses, evidence) ────────────── */
+.dynamic-table { width: 100%; border-collapse: collapse; margin-bottom: .75rem; }
+.dynamic-table th {
+  background: var(--purple); color: white; text-align: left;
+  padding: .55rem .75rem; font-size: .78rem; font-weight: 600;
+}
+.dynamic-table td { padding: .35rem .4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.dynamic-table tr:last-child td { border-bottom: none; }
+.dynamic-table td input, .dynamic-table td textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 4px;
+  padding: .35rem .5rem; font-size: .8rem; font-family: var(--font-body);
+  outline: none; background: white;
+}
+.dynamic-table td input:focus, .dynamic-table td textarea:focus {
+  border-color: var(--purple); box-shadow: 0 0 0 2px rgba(75,45,127,.1);
+}
+.dynamic-table .del-btn {
+  background: none; border: none; color: var(--red); cursor: pointer;
+  font-size: 1rem; padding: .2rem .4rem; border-radius: 4px;
+  transition: background .15s;
+}
+.dynamic-table .del-btn:hover { background: var(--red-light); }
+.add-row-btn {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .9rem; border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm); background: none; cursor: pointer;
+  font-size: .8rem; font-weight: 600; color: var(--purple-mid);
+  transition: all .15s;
+}
+.add-row-btn:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-pale); }
+
+/* ── ALERT BLOCKS ────────────────────────────────────────────── */
+.alert {
+  border-radius: var(--radius-sm); padding: .75rem 1rem;
+  display: flex; align-items: flex-start; gap: .6rem;
+  margin-bottom: .75rem; font-size: .82rem; font-weight: 500;
+}
+.alert.warn  { background: var(--orange-light); border-left: 3px solid var(--orange); color: #7D3400; }
+.alert.error { background: var(--red-light);    border-left: 3px solid var(--red);    color: var(--red); }
+.alert.info  { background: var(--teal-light);   border-left: 3px solid var(--teal);   color: #0C4A6E; }
+.alert.success { background: var(--green-light);border-left: 3px solid var(--green);  color: var(--green); }
+.alert-icon  { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.sped-alert  { display: none; }
+.sped-alert.visible { display: flex; }
+
+/* ── WITNESS / EVIDENCE BLOCKS ───────────────────────────────── */
+.witness-block {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  overflow: hidden; margin-bottom: .875rem;
+}
+.witness-header {
+  background: var(--purple-mid); color: white;
+  padding: .55rem .875rem; display: flex; justify-content: space-between; align-items: center;
+  font-size: .82rem; font-weight: 700;
+}
+.witness-header button {
+  background: none; border: none; color: rgba(255,255,255,.7); cursor: pointer;
+  font-size: .8rem; padding: .15rem .4rem; border-radius: 3px;
+  transition: background .15s;
+}
+.witness-header button:hover { background: rgba(255,255,255,.15); color: white; }
+.witness-body { padding: .875rem; }
+
+/* ── OFFENSE-SPECIFIC SECTIONS ───────────────────────────────── */
+.offense-specific { display: none; }
+.offense-specific.visible { display: block; }
+
+/* ── FINDING / DISPOSITION ───────────────────────────────────── */
+.disposition-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .6rem;
+}
+.disposition-card {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: .75rem; cursor: pointer; transition: all .15s;
+  background: var(--light-gray);
+}
+.disposition-card:hover { border-color: var(--purple-mid); background: var(--purple-pale); }
+.disposition-card.selected { border-color: var(--purple); background: var(--purple-light); }
+.disposition-card .dc-title { font-size: .85rem; font-weight: 600; color: var(--dark); }
+.disposition-card .dc-note  { font-size: .72rem; color: var(--gray); margin-top: .2rem; }
+
+/* ── ACTION BAR (bottom) ─────────────────────────────────────── */
+.action-bar {
+  position: sticky; bottom: 0;
+  background: white; border-top: 1.5px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 -4px 16px rgba(75,45,127,.08);
+  z-index: 50; margin-top: 2rem;
+}
+.action-bar-left  { display: flex; gap: .75rem; align-items: center; }
+.action-bar-right { display: flex; gap: .75rem; align-items: center; }
+.progress-text { font-size: .78rem; color: var(--gray); }
+.progress-bar { width: 120px; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--orange); border-radius: 99px; transition: width .3s; }
+
+/* ── BUTTONS ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .6rem 1.2rem; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: .85rem; font-weight: 600;
+  cursor: pointer; border: none; transition: all .15s; text-decoration: none;
+}
+.btn-primary   { background: var(--purple); color: white; }
+.btn-primary:hover { background: var(--purple-mid); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-orange    { background: var(--orange); color: white; }
+.btn-orange:hover { background: #D45A09; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,101,10,.3); }
+.btn-outline   { background: white; color: var(--purple); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--purple); background: var(--purple-pale); }
+.btn-ghost     { background: none; color: var(--gray); border: none; }
+.btn-ghost:hover { color: var(--dark); background: var(--light-gray); }
+.btn-green     { background: var(--green); color: white; }
+.btn-green:hover { background: #176638; }
+.btn-teal      { background: var(--teal); color: white; }
+.btn-teal:hover { opacity: .9; }
+
+/* ── EXPORT MODAL ────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(26,26,46,.6); backdrop-filter: blur(4px);
+  z-index: 200; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white; border-radius: var(--radius); width: 560px; max-width: 95vw;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.modal-header {
+  background: var(--purple); color: white; padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-family: var(--font-display); font-size: 1.2rem; }
+.modal-close { background: none; border: none; color: rgba(255,255,255,.7); cursor: pointer; font-size: 1.2rem; }
+.modal-body { padding: 1.5rem; }
+.modal-footer { padding: 1rem 1.5rem; background: var(--light-gray); display: flex; gap: .75rem; justify-content: flex-end; }
+
+.export-option {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem; margin-bottom: .75rem; cursor: pointer;
+  transition: all .15s; display: flex; align-items: flex-start; gap: .875rem;
+}
+.export-option:hover { border-color: var(--purple); background: var(--purple-pale); }
+.export-icon { font-size: 1.8rem; flex-shrink: 0; }
+.export-title { font-weight: 700; font-size: .9rem; color: var(--dark); }
+.export-desc  { font-size: .78rem; color: var(--gray); margin-top: .2rem; }
+
+/* ── WAYPOINT CTA BANNER ──────────────────────────────────────── */
+.waypoint-banner {
+  background: linear-gradient(135deg, var(--orange) 0%, #C45508 100%);
+  border-radius: var(--radius); padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 1.25rem; box-shadow: var(--shadow-md);
+}
+.waypoint-banner-text h4 { color: white; font-size: 1rem; font-weight: 700; margin-bottom: .2rem; }
+.waypoint-banner-text p  { color: rgba(255,255,255,.8); font-size: .78rem; }
+
+/* ── PRINT STYLES ────────────────────────────────────────────── */
+@media print {
+  .topbar, .sidebar, .action-bar, .offense-hero,
+  .waypoint-banner, .add-row-btn, .del-btn, .section-toggle,
+  .modal-overlay { display: none !important; }
+  body { background: white; }
+  .app-layout { display: block; }
+  .main-content { padding: 0; max-width: 100%; }
+  .form-section { display: block !important; box-shadow: none; margin-bottom: .5rem; page-break-inside: avoid; }
+  .section-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section-body.collapsed { display: block !important; }
+  .print-header { display: block !important; }
+}
+.print-header {
+  display: none;
+  text-align: center; padding-bottom: .5rem;
+  border-bottom: 3px solid var(--purple); margin-bottom: 1rem;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .field-grid.cols-2, .field-grid.cols-3, .field-grid.cols-4 { grid-template-columns: 1fr; }
+  .offense-grid { grid-template-columns: 1fr 1fr; }
+  .disposition-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">CP</div>
+    <span class="topbar-title">Investigation Intake Form</span>
+    <span class="topbar-sub">Clear Path Education Group, LLC</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline" onclick="clearForm()" style="padding:.4rem .9rem;font-size:.78rem;">↺ Clear</button>
+    <button class="btn btn-orange" onclick="openExportModal()" style="padding:.4rem .9rem;font-size:.78rem;">⬇ Export</button>
+  </div>
+</div>
+
+<div class="app-layout">
+
+<!-- SIDEBAR NAV -->
+<nav class="sidebar">
+  <div class="sidebar-section">Sections</div>
+  <div class="nav-item active" data-section="offense"  onclick="document.getElementById('offense-hero').scrollIntoView({behavior:'smooth'})"><span class="nav-num">●</span> Offense Type</div>
+  <div class="nav-item" data-section="s1" onclick="scrollToSection('s1')"><span class="nav-num">1</span> Incident Overview</div>
+  <div class="nav-item" data-section="s2" onclick="scrollToSection('s2')"><span class="nav-num">2</span> Student Info</div>
+  <div class="nav-item" data-section="s3" onclick="scrollToSection('s3')"><span class="nav-num">3</span> Immediate Actions</div>
+  <div class="nav-item" data-section="s4" onclick="scrollToSection('s4')"><span class="nav-num">4</span> Due Process</div>
+  <div class="nav-item" data-section="s5" onclick="scrollToSection('s5')"><span class="nav-num">5</span> Timeline</div>
+  <div class="nav-item" data-section="s6" onclick="scrollToSection('s6')"><span class="nav-num">6</span> Statement</div>
+  <div class="nav-item" data-section="s7" onclick="scrollToSection('s7')"><span class="nav-num">7</span> Witnesses</div>
+  <div class="nav-item" data-section="s8" onclick="scrollToSection('s8')"><span class="nav-num">8</span> Evidence</div>
+  <div class="nav-item" data-section="s9" onclick="scrollToSection('s9')"><span class="nav-num">9</span> Findings</div>
+  <div class="nav-item" data-section="s10" onclick="scrollToSection('s10')"><span class="nav-num">10</span> Certification</div>
+  <div class="sidebar-section" style="margin-top:1rem;">Tools</div>
+  <div class="nav-item" onclick="exportCSV()"><span class="nav-num">↓</span> Export to Toolkit</div>
+  <div class="nav-item" onclick="window.print()"><span class="nav-num">⎙</span> Print Record</div>
+  <div class="nav-item" onclick="saveLocal()"><span class="nav-num">💾</span> Save Draft</div>
+  <div class="nav-item" onclick="loadLocal()"><span class="nav-num">📂</span> Load Draft</div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" id="main">
+
+  <!-- PRINT HEADER -->
+  <div class="print-header">
+    <h2 style="font-family:'DM Serif Display',serif;color:#4B2D7F;font-size:1.4rem;">CAMPUS ADMINISTRATOR'S INVESTIGATION RECORD</h2>
+    <p style="color:#666;font-size:.8rem;">Clear Path Education Group, LLC · CONFIDENTIAL — FERPA Education Record · clearpathedgroup.com</p>
+  </div>
+
+  <!-- OFFENSE SELECTOR -->
+  <div class="offense-hero" id="offense-hero">
+    <h1>New Investigation Intake</h1>
+    <p>Select the offense type to load the appropriate investigation sections. All data entered here exports directly to your Command Toolkit.</p>
+    <div class="offense-grid">
+      <div class="offense-card" data-offense="fighting" onclick="selectOffense(this)">
+        <div class="oc-icon">🥊</div>
+        <div class="oc-name">Fighting / Assault</div>
+        <div class="oc-tec">TEC §37.006(a)(2)(B)</div>
+      </div>
+      <div class="offense-card" data-offense="drugs" onclick="selectOffense(this)">
+        <div class="oc-icon">💊</div>
+        <div class="oc-name">Drugs / Alcohol</div>
+        <div class="oc-tec">TEC §37.006(a)(2)(C)–(D)</div>
+      </div>
+      <div class="offense-card" data-offense="harassment" onclick="selectOffense(this)">
+        <div class="oc-icon">🎯</div>
+        <div class="oc-name">Harassment / Bullying</div>
+        <div class="oc-tec">TEC §37.0832</div>
+      </div>
+      <div class="offense-card" data-offense="threat" onclick="selectOffense(this)">
+        <div class="oc-icon">⚠️</div>
+        <div class="oc-name">Threats</div>
+        <div class="oc-tec">TEC §37.006(a)(1) / HB 3</div>
+      </div>
+      <div class="offense-card" data-offense="weapons" onclick="selectOffense(this)">
+        <div class="oc-icon">🔪</div>
+        <div class="oc-name">Weapons</div>
+        <div class="oc-tec">TEC §37.007(e)</div>
+      </div>
+      <div class="offense-card" data-offense="general" onclick="selectOffense(this)">
+        <div class="oc-icon">📋</div>
+        <div class="oc-name">General Misconduct</div>
+        <div class="oc-tec">Campus SCOC</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1 — INCIDENT OVERVIEW -->
+  <div class="form-section" id="s1">
+    <div class="section-header" onclick="toggleSection('s1')">
+      <div class="section-num">1</div>
+      <div class="section-title">Incident Overview</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s1-body">
+      <div class="field-grid cols-3" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Case / Incident ID <span class="req">*</span></label>
+          <input type="text" id="incident_id" placeholder="INC-2025-001" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>School Year</label>
+          <input type="text" id="school_year" placeholder="2025–2026" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Campus <span class="req">*</span></label>
+          <input type="text" id="campus" placeholder="Campus name" oninput="autoSave()">
+        </div>
+      </div>
+      <div class="field-grid cols-4" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Date of Incident <span class="req">*</span></label>
+          <input type="date" id="incident_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="incident_time" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Day of Week</label>
+          <input type="text" id="day_of_week" placeholder="Auto-fills" readonly style="background:#f4f4f6;color:#888;">
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <select id="location" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>Classroom</option><option>Hallway</option><option>Cafeteria</option>
+            <option>Gymnasium</option><option>Restroom</option><option>Parking Lot</option>
+            <option>Bus / Bus Stop</option><option>Athletic Field</option><option>Library</option>
+            <option>Off Campus — School Event</option><option>Off Campus — Other</option>
+            <option>Online / Social Media</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Offense Category <span class="req">*</span></label>
+          <select id="offense_category" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>Assault — Bodily Injury</option><option>Assault — Threat / Fear</option>
+            <option>Bullying / Cyberbullying</option><option>Controlled Substance — Possession</option>
+            <option>Controlled Substance — Distribution</option><option>Dangerous Weapon</option>
+            <option>Defiance / Insubordination</option><option>Disruption of Class</option>
+            <option>Fighting</option><option>Firearm</option><option>Harassment</option>
+            <option>Sexual Harassment / Misconduct</option><option>Terroristic Threat</option>
+            <option>Theft</option><option>Tobacco / E-Cigarette / Vaping</option>
+            <option>Truancy / Attendance</option><option>Vandalism / Property Damage</option>
+            <option>Other — Campus Policy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>TEC Reference</label>
+          <select id="tec_reference" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>TEC §37.002 — Teacher Removal</option>
+            <option>TEC §37.005 — Suspension</option>
+            <option>TEC §37.006(a) — Mandatory DAEP</option>
+            <option>TEC §37.006(a)(2)(B) — Assault</option>
+            <option>TEC §37.006(a)(2)(C)–(D) — Drugs/Alcohol</option>
+            <option>TEC §37.006(c) — Retaliation</option>
+            <option>TEC §37.007 — Expulsion Referral</option>
+            <option>TEC §37.007(b) — Off-Campus Felony</option>
+            <option>TEC §37.006(a)(1) — Terroristic Threat</option>
+            <option>TEC §37.007(e)(1) — Firearm (Mandatory Expulsion)</option>
+            <option>TEC §37.0012 — CBC Review Required</option>
+            <option>TEC §37.0832 — Bullying</option>
+            <option>Campus Code of Conduct</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Offense Description <span class="req">*</span></label>
+        <textarea id="offense_description" placeholder="Describe what occurred — who, what, where, when..." oninput="autoSave()"></textarea>
+      </div>
+      <div class="field-grid cols-2" style="margin-top:.875rem;">
+        <div class="field">
+          <label>Assigned Investigator</label>
+          <input type="text" id="investigator" placeholder="Admin name" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Investigation Status</label>
+          <select id="inv_status" onchange="autoSave()">
+            <option value="Open">Open</option>
+            <option>In Progress</option><option>Finding Reached</option>
+            <option>Consequence Assigned</option><option>Closed</option>
+            <option>On Hold — Legal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 — STUDENT INFO -->
+  <div class="form-section" id="s2">
+    <div class="section-header" onclick="toggleSection('s2')">
+      <div class="section-num">2</div>
+      <div class="section-title">Student Information</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s2-body">
+      <div class="field-grid cols-3" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Student ID <span class="req">*</span></label>
+          <input type="text" id="student_id" placeholder="STU-001" oninput="autoSave()">
+          <span class="hint">Must match your Command Toolkit roster ID</span>
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="student_last" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="student_first" oninput="autoSave()">
+        </div>
+      </div>
+      <div class="field-grid cols-3" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Grade Level</label>
+          <select id="student_grade" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>PK</option><option>KG</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Campus ID / Badge # (optional)</label>
+          <input type="text" id="campus_badge" placeholder="Campus ID / Badge #" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Date of Birth</label>
+          <input type="date" id="dob" oninput="autoSave()">
+        </div>
+      </div>
+
+      <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>IEP / SPED Services?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('sped_iep','yes',this)" id="sped_iep_yes">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('sped_iep','no',this)"  id="sped_iep_no">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>504 Plan?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('sped_504','yes',this)" id="sped_504_yes">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('sped_504','no',this)"  id="sped_504_no">No</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>SPED Status (for Toolkit)</label>
+        <select id="sped_status" onchange="autoSave()">
+          <option value="No">No SPED services</option>
+          <option value="IEP — IDEA">IEP — IDEA</option>
+          <option value="504 Plan">504 Plan</option>
+          <option value="ARD Required">ARD Required</option>
+          <option value="Evaluation Pending">Evaluation Pending</option>
+        </select>
+      </div>
+
+      <div class="alert warn sped-alert" id="sped-warning" style="margin-top:.875rem;">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>SPED Alert:</strong> This student has an active IEP or 504. A Manifestation Determination Review (MDR) may be required within 10 school days of any removal. Do NOT finalize placement without contacting the SPED Coordinator. The 10-Day Compliance tab in the Command Toolkit will automatically flag this student.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 — IMMEDIATE ACTIONS -->
+  <div class="form-section" id="s3">
+    <div class="section-header orange" onclick="toggleSection('s3')">
+      <div class="section-num">3</div>
+      <div class="section-title">Immediate Actions Taken</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s3-body">
+      <div class="checkbox-list">
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="student_separated"> 
+          <div><div class="check-label">Student separated from situation</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="others_separated"> 
+          <div><div class="check-label">Other student(s) / parties also separated</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="principal_notified"> 
+          <div><div class="check-label">Campus principal / AP notified</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="sro_notified"> 
+          <div><div class="check-label">SRO notified</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="parent_notified"> 
+          <div><div class="check-label">Parent / Guardian notified</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="dp_actions" value="sped_notified"> 
+          <div><div class="check-label">SPED Coordinator notified (SPED students only)</div></div>
+        </label>
+      </div>
+      <div class="field-grid cols-2" style="margin-top:.875rem;">
+        <div class="field">
+          <label>Separated by (name/role)</label>
+          <input type="text" id="sep_by" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Separation time</label>
+          <input type="time" id="sep_time" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>SRO Name</label>
+          <input type="text" id="sro_name" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>SRO Report #</label>
+          <input type="text" id="sro_report" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Parent / Guardian Name</label>
+          <input type="text" id="parent_name" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Parent Contact Method</label>
+          <select id="parent_method" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>Phone Call</option><option>Voicemail Left</option>
+            <option>Email</option><option>In-Person</option><option>Portal Message</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-grid cols-3" style="margin-top:.875rem;">
+        <div class="field">
+          <label>Parent Notified?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('parent_notified','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('parent_notified','no',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Parent Notified Date</label>
+          <input type="date" id="parent_notified_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Law Enforcement Notified?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('le_notified','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('le_notified','no',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>LE Arrival Time (if notified)</label>
+          <input type="time" id="le_arrival_time" oninput="autoSave()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 — DUE PROCESS -->
+  <div class="form-section" id="s4">
+    <div class="section-header red" onclick="toggleSection('s4')">
+      <div class="section-num">4</div>
+      <div class="section-title">Due Process Checklist</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s4-body">
+      <div class="alert error" style="margin-bottom:.875rem;">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>Every item below must be completed for ANY removal.</strong> Incomplete due process is the #1 reason decisions are overturned on appeal.</div>
+      </div>
+      <div class="checkbox-list">
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="notice_given">
+          <div><div class="check-label">Written or verbal notice of removal provided to student</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="conf_offered">
+          <div><div class="check-label">Conference offered to student (required for age 10+, TEC §37.009)</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="conf_held">
+          <div><div class="check-label">Conference held with student</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="parent_conf_offered">
+          <div><div class="check-label">Parent/Guardian conference offered</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="appeal_rights">
+          <div><div class="check-label">Appeal rights explained to parent</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="written_notice_sent">
+          <div><div class="check-label">Written notice of placement sent to parent</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="mdr_scheduled">
+          <div><div class="check-label">SPED: MDR scheduled (if applicable)</div></div>
+        </label>
+        <label class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox" name="due_process" value="sped_504_notified">
+          <div><div class="check-label">504: 504 Coordinator notified (if applicable)</div></div>
+        </label>
+      </div>
+      <div class="field-grid cols-2" style="margin-top:.875rem;">
+        <div class="field">
+          <label>Conference held date/time</label>
+          <input type="datetime-local" id="conf_held_dt" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>MDR Scheduled Date</label>
+          <input type="date" id="mdr_scheduled_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Written Notice Sent Date</label>
+          <input type="date" id="written_notice_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Written Notice Method</label>
+          <select id="notice_method" onchange="autoSave()">
+            <option value="">Select...</option>
+            <option>Phone</option><option>Email</option>
+            <option>In-Person</option><option>Certified Mail</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 — TIMELINE -->
+  <div class="form-section" id="s5">
+    <div class="section-header" onclick="toggleSection('s5')">
+      <div class="section-num">5</div>
+      <div class="section-title">Incident Timeline</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s5-body">
+      <p style="font-size:.8rem;color:var(--gray);margin-bottom:.875rem;font-style:italic;">Reconstruct the full sequence of events in chronological order. Include times, locations, and names. This timeline is the foundation of your finding.</p>
+      <table class="dynamic-table" id="timeline-table">
+        <thead><tr><th style="width:120px;">Time</th><th>Event / Observation</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="timeline-body"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addTimelineRow()">+ Add Timeline Entry</button>
+    </div>
+  </div>
+
+  <!-- SECTION 6 — STUDENT STATEMENT -->
+  <div class="form-section" id="s6">
+    <div class="section-header" onclick="toggleSection('s6')">
+      <div class="section-num">6</div>
+      <div class="section-title">Student Statement</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s6-body">
+      <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Statement Collected Date/Time</label>
+          <input type="datetime-local" id="stmt_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Collected By</label>
+          <input type="text" id="stmt_by" oninput="autoSave()">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:.875rem;">
+        <label>Statement Format</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button class="yesno-btn" onclick="setOption('stmt_format','Written',this)" style="flex:0 0 auto;padding:.4rem .9rem;">Written</button>
+          <button class="yesno-btn" onclick="setOption('stmt_format','Verbal',this)" style="flex:0 0 auto;padding:.4rem .9rem;">Verbal (admin documented)</button>
+          <button class="yesno-btn no" onclick="setOption('stmt_format','Refused',this)" style="flex:0 0 auto;padding:.4rem .9rem;">Student Refused</button>
+        </div>
+      </div>
+      <div class="alert info" style="margin-bottom:.875rem;">
+        <div class="alert-icon">💡</div>
+        <div>Opening prompt: <em>"In your own words, tell me what happened. Start from the beginning."</em></div>
+      </div>
+      <div class="field">
+        <label>Summary or Verbatim Statement</label>
+        <textarea id="stmt_text" rows="6" placeholder="Enter student's statement here..." oninput="autoSave()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7 — WITNESSES -->
+  <div class="form-section" id="s7">
+    <div class="section-header" onclick="toggleSection('s7')">
+      <div class="section-num">7</div>
+      <div class="section-title">Witness Statements</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s7-body">
+      <div class="alert warn" style="margin-bottom:.875rem;">
+        <div class="alert-icon">⚠️</div>
+        <div>FERPA: Do not share one student's statement with another student or their family. Do not include other students' full names in exported records.</div>
+      </div>
+      <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+        <div class="field">
+          <label>Witnesses Named?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('witnesses_named','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('witnesses_named','no',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label># of Witnesses</label>
+          <input type="number" id="witness_count" min="0" value="0" oninput="autoSave()">
+        </div>
+      </div>
+      <div id="witnesses-container"></div>
+      <button class="add-row-btn" onclick="addWitnessBlock()">+ Add Witness</button>
+    </div>
+  </div>
+
+  <!-- SECTION 8 — EVIDENCE -->
+  <div class="form-section" id="s8">
+    <div class="section-header teal" onclick="toggleSection('s8')">
+      <div class="section-num">8</div>
+      <div class="section-title">Evidence Summary</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s8-body">
+      <p style="font-size:.8rem;color:var(--gray);margin-bottom:.875rem;font-style:italic;">List every item of evidence. Log each item in your Evidence Tracker tab with the same Evidence ID for chain of custody.</p>
+      <table class="dynamic-table" id="evidence-table">
+        <thead><tr><th>Evidence ID</th><th>Description</th><th>Type</th><th>Collected By</th><th>Storage</th><th></th></tr></thead>
+        <tbody id="evidence-body"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addEvidenceRow()" style="margin-bottom:.875rem;">+ Add Evidence Item</button>
+      <div class="field-grid cols-2">
+        <div class="field">
+          <label>Legal Hold Required?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('legal_hold','yes',this)" id="legal_hold_yes">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('legal_hold','no',this)"  id="legal_hold_no">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Injury Reported?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('injury_reported','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('injury_reported','no',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Medical Attention Required?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('medical_attention','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('medical_attention','no',this)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Property Damage?</label>
+          <div class="yesno-group">
+            <button class="yesno-btn yes" onclick="setYesNo('property_damage','yes',this)">Yes</button>
+            <button class="yesno-btn no"  onclick="setYesNo('property_damage','no',this)">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 9 — FINDINGS -->
+  <div class="form-section" id="s9">
+    <div class="section-header orange" onclick="toggleSection('s9')">
+      <div class="section-num">9</div>
+      <div class="section-title">Administrator Findings &amp; Disposition</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s9-body">
+
+      <!-- General findings checkboxes -->
+      <div style="margin-bottom:1rem;">
+        <p style="font-size:.85rem;font-weight:600;color:var(--purple);margin-bottom:.5rem;">Based on evidence, timeline, and statements, I find:</p>
+        <div class="checkbox-list">
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" name="findings" value="occurred_as_described">
+            <div class="check-label">The incident occurred substantially as described in the initial report</div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" name="findings" value="violated_scoc">
+            <div class="check-label">The student engaged in conduct that violates the Student Code of Conduct</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Finding determination -->
+      <div class="field" style="margin-bottom:1rem;">
+        <label>Investigation Finding</label>
+        <select id="finding" onchange="autoSave()">
+          <option value="">Select...</option>
+          <option>Substantiated — Student Responsible</option>
+          <option>Substantiated — Partial (mitigating factors noted)</option>
+          <option>Unsubstantiated — Insufficient Evidence</option>
+          <option>Unfounded — Did Not Occur</option>
+          <option>Self-Defense — Affirmative Defense Applied</option>
+          <option>Pending — Investigation Continuing</option>
+        </select>
+      </div>
+
+      <!-- Mitigating / aggravating -->
+      <div class="field-grid cols-2" style="margin-bottom:1rem;">
+        <div class="field">
+          <label>Mitigating Factors</label>
+          <textarea id="mitigating" rows="3" placeholder="List any mitigating factors considered..." oninput="autoSave()"></textarea>
+        </div>
+        <div class="field">
+          <label>Aggravating Factors</label>
+          <textarea id="aggravating" rows="3" placeholder="List any aggravating factors considered..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <!-- OFFENSE-SPECIFIC SECTIONS -->
+      <div id="offense-specific-container"></div>
+
+      <!-- SPED/MDR -->
+      <div style="margin-bottom:1rem;">
+        <p style="font-size:.85rem;font-weight:700;color:var(--purple-mid);margin-bottom:.5rem;">SPED / 504 Finding (complete if applicable)</p>
+        <div class="checkbox-list">
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" name="sped_finding" value="mdr_not_required">
+            <div class="check-label">MDR not required — student does not have an IEP or 504</div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" name="sped_finding" value="mdr_completed">
+            <div class="check-label">MDR completed</div>
+          </label>
+        </div>
+        <div class="field" style="margin-top:.75rem;">
+          <label>MDR Determination</label>
+          <select id="sped_mdr_result" onchange="checkMDRResult()">
+            <option value="">N/A or Not Yet Determined</option>
+            <option value="not_manifestation">NOT a manifestation of disability — placement may proceed</option>
+            <option value="IS_manifestation">IS a manifestation of disability — PLACEMENT BLOCKED</option>
+          </select>
+        </div>
+        <div class="alert error" id="mdr-block-alert" style="display:none;margin-top:.75rem;">
+          <div class="alert-icon">🛑</div>
+          <div><strong>STOP — Placement Blocked.</strong> This student's behavior has been determined to be a manifestation of their disability. You cannot proceed with DAEP placement. Contact the SPED Coordinator and ARD team immediately.</div>
+        </div>
+      </div>
+
+      <!-- Disposition -->
+      <div>
+        <p style="font-size:.85rem;font-weight:700;color:var(--purple);margin-bottom:.75rem;">Disposition</p>
+        <div class="disposition-grid">
+          <div class="disposition-card" onclick="selectDisposition(this,'Warning / No removal')">
+            <div class="dc-title">⚪ Warning / No Removal</div>
+            <div class="dc-note">Documented warning only</div>
+          </div>
+          <div class="disposition-card" onclick="selectDisposition(this,'ISS')">
+            <div class="dc-title">🟡 In-School Suspension</div>
+            <div class="dc-note">ISS placement</div>
+          </div>
+          <div class="disposition-card" onclick="selectDisposition(this,'OSS')">
+            <div class="dc-title">🟠 Out-of-School Suspension</div>
+            <div class="dc-note">Max 3 days per TEC §37.005</div>
+          </div>
+          <div class="disposition-card" onclick="selectDisposition(this,'DAEP — Discretionary')">
+            <div class="dc-title">🔴 Discretionary DAEP</div>
+            <div class="dc-note">CBC review required</div>
+          </div>
+          <div class="disposition-card" onclick="selectDisposition(this,'DAEP — Mandatory')">
+            <div class="dc-title">🔴 Mandatory DAEP Referral</div>
+            <div class="dc-note">TEC §37.006 offense</div>
+          </div>
+          <div class="disposition-card" onclick="selectDisposition(this,'Expulsion Referral')">
+            <div class="dc-title">⛔ Expulsion Referral</div>
+            <div class="dc-note">Consult legal counsel</div>
+          </div>
+        </div>
+        <div class="field-grid cols-3" style="margin-top:.875rem;">
+          <div class="field">
+            <label>Consequence Duration (days)</label>
+            <input type="number" id="consequence_days" min="0" oninput="autoSave()">
+          </div>
+          <div class="field">
+            <label>Consequence Start Date</label>
+            <input type="date" id="consequence_start" oninput="autoSave()">
+          </div>
+          <div class="field">
+            <label>Consequence End Date</label>
+            <input type="date" id="consequence_end" oninput="autoSave()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 10 — CERTIFICATION -->
+  <div class="form-section" id="s10">
+    <div class="section-header green" onclick="toggleSection('s10')">
+      <div class="section-num">10</div>
+      <div class="section-title">Administrator Certification</div>
+      <div class="section-toggle">▾</div>
+    </div>
+    <div class="section-body" id="s10-body">
+      <div class="alert info" style="margin-bottom:.875rem;">
+        <div class="alert-icon">ℹ️</div>
+        <div>I certify that this investigation was conducted in accordance with district policy and the Texas Education Code, that all required due process steps were followed, and that the findings accurately represent the evidence collected and reviewed.</div>
+      </div>
+      <div class="field-grid cols-2">
+        <div class="field">
+          <label>Investigating Administrator (Print Name)</label>
+          <input type="text" id="cert_admin_name" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Title / Role</label>
+          <input type="text" id="cert_admin_title" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Certification Date</label>
+          <input type="date" id="cert_date" oninput="autoSave()">
+        </div>
+        <div class="field">
+          <label>Reviewed By (Principal, if different)</label>
+          <input type="text" id="cert_reviewer" oninput="autoSave()">
+        </div>
+      </div>
+      <div class="field" style="margin-top:.875rem;">
+        <label>Additional Notes</label>
+        <textarea id="notes" rows="4" placeholder="Any additional context, follow-up items, or notes not captured above..." oninput="autoSave()"></textarea>
+      </div>
+      <div style="margin-top:.875rem;padding:.875rem;background:var(--light-gray);border-radius:var(--radius-sm);font-size:.78rem;color:var(--gray);">
+        <strong>Distribution:</strong> Original — Student disciplinary file (locked) · Copy — Central office (if mandatory removal) · Copy — SPED file (if SPED student)
+      </div>
+    </div>
+  </div>
+
+  <!-- WAYPOINT CTA -->
+  <div class="waypoint-banner">
+    <div class="waypoint-banner-text">
+      <h4>🚀 Ready for real-time automation?</h4>
+      <p>Waypoint auto-routes forms, fires alerts, and updates your district dashboard the moment you hit submit — no CSV export needed.</p>
+    </div>
+    <a href="https://clearpathedgroup.com/waypoint" class="btn btn-outline" style="color:white;border-color:rgba(255,255,255,.4);flex-shrink:0;">Learn More →</a>
+  </div>
+
+</main>
+</div>
+
+<!-- ACTION BAR -->
+<div class="action-bar">
+  <div class="action-bar-left">
+    <div>
+      <div class="progress-text" id="progress-text">0 of 10 sections started</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <button class="btn btn-ghost" onclick="saveLocal()">💾 Save Draft</button>
+  </div>
+  <div class="action-bar-right">
+    <button class="btn btn-outline" onclick="window.print()">⎙ Print Record</button>
+    <button class="btn btn-teal" onclick="exportCSV()">📊 Export to Toolkit</button>
+    <button class="btn btn-orange" onclick="openExportModal()">⬇ Export Options</button>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Export Investigation Record</h3>
+      <button class="modal-close" onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="export-option" onclick="exportCSV(); closeExportModal()">
+        <div class="export-icon">📊</div>
+        <div>
+          <div class="export-title">Export to Command Toolkit (CSV)</div>
+          <div class="export-desc">Downloads a single CSV row pre-mapped to all 34 columns of the Incident Intake tab. Open your toolkit, go to Incident Intake, and paste the row. All downstream tabs (Investigation Tracker, Evidence Tracker, Parent Log, 10-Day Compliance) auto-populate instantly.</div>
+        </div>
+      </div>
+      <div class="export-option" onclick="exportJSON(); closeExportModal()">
+        <div class="export-icon">💾</div>
+        <div>
+          <div class="export-title">Export Full Record (JSON)</div>
+          <div class="export-desc">Saves the complete investigation including timeline, witnesses, evidence, and all notes — archive it with the student's disciplinary file.</div>
+        </div>
+      </div>
+      <div class="export-option" onclick="window.print(); closeExportModal()">
+        <div class="export-icon">⎙</div>
+        <div>
+          <div class="export-title">Print / Save as PDF</div>
+          <div class="export-desc">Formats the investigation record for printing. Use browser Print → Save as PDF to create a signed copy for the student's disciplinary file.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeExportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const state = {
+  offense: null,
+  yesno: {},
+  options: {},
+  disposition: null,
+  timelineRows: [],
+  witnesses: [],
+  evidenceRows: [],
+};
+
+// ── OFFENSE SELECTION ─────────────────────────────────────────────────────────
+const OFFENSE_CONFIG = {
+  fighting:   { label: 'Fighting / Assault',           tec: 'TEC §37.006(a)(2)(B)',       category: 'Fighting', ref: 'TEC §37.006(a)(2)(B) — Assault' },
+  drugs:      { label: 'Drugs / Alcohol',              tec: 'TEC §37.006(a)(2)(C)–(D)',               category: 'Controlled Substance — Possession', ref: 'TEC §37.006(a)(2)(C)–(D) — Drugs/Alcohol' },
+  harassment: { label: 'Harassment / Bullying',        tec: 'TEC §37.0832',                 category: 'Bullying / Cyberbullying', ref: 'TEC §37.0832 — Bullying' },
+  threat:     { label: 'Threats / Terroristic Threat', tec: 'TEC §37.006(a)(1) / HB 3',           category: 'Terroristic Threat', ref: 'TEC §37.006(a)(1) — Terroristic Threat' },
+  weapons:    { label: 'Weapons',                      tec: 'TEC §37.007(e)',               category: 'Dangerous Weapon', ref: 'TEC §37.007(e)(1) — Firearm (Mandatory Expulsion)' },
+  general:    { label: 'General Misconduct',           tec: 'Campus SCOC',                  category: 'Other — Campus Policy', ref: 'Campus Code of Conduct' },
+};
+
+const OFFENSE_SPECIFIC_HTML = {
+  fighting: `
+    <div class="alert warn"><div class="alert-icon">⚠️</div><div>If assault resulted in serious bodily injury or weapon was used: mandatory expulsion referral may apply under TEC §37.007. Consult legal counsel before finalizing.</div></div>
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>Who Initiated Physical Contact?</label>
+        <select id="os_initiator"><option value="">Select...</option><option>Subject Student</option><option>Other Party</option><option>Cannot Determine from Evidence</option></select></div>
+      <div class="field"><label>Injury Observed?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_injury','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_injury','no',this)">No</button></div></div>
+      <div class="field"><label>Describe Injury (if any)</label><input type="text" id="os_injury_desc" placeholder="Describe visible injury..."></div>
+      <div class="field"><label>Weapon Involved?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_weapon','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_weapon','no',this)">No</button></div></div>
+      <div class="field"><label>Weapon Description (if applicable)</label><input type="text" id="os_weapon_desc" placeholder="Describe weapon..."></div>
+      <div class="field"><label>Separation Order Issued?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_separation','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_separation','no',this)">No</button></div></div>
+    </div>`,
+  drugs: `
+    <div class="alert error"><div class="alert-icon">⚠️</div><div>Distribution / delivery of controlled substances may require mandatory expulsion under TEC §37.007. Consult legal counsel before finalizing.</div></div>
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>Nature of Offense</label>
+        <select id="os_drug_nature"><option value="">Select...</option><option>Possession</option><option>Under the Influence</option><option>Distribution / Delivery</option><option>Paraphernalia Only</option></select></div>
+      <div class="field"><label>Student Appeared Impaired?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_impaired','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_impaired','no',this)">No</button></div></div>
+      <div class="field"><label>Substance Description (type, amount)</label><input type="text" id="os_substance" placeholder="e.g. vape pen, marijuana, unknown pills..."></div>
+      <div class="field"><label>Substance Secured By</label><input type="text" id="os_secured_by" placeholder="Name / role"></div>
+      <div class="field"><label>Medical Evaluation Sought?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_med_eval','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_med_eval','no',this)">No</button></div></div>
+      <div class="field"><label>Counseling Referral Made?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_counseling','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_counseling','no',this)">No</button></div></div>
+    </div>`,
+  harassment: `
+    <div class="alert error"><div class="alert-icon">⚠️</div><div>If conduct is based on a protected class: Title IX or Section 504/ADA obligations apply. Contact the district Title IX Coordinator and legal counsel before finalizing.</div></div>
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>Harassment Type</label>
+        <select id="os_harassment_type"><option value="">Select...</option><option>In-person Bullying</option><option>Cyberbullying</option><option>General Harassment</option><option>Sexual Harassment</option><option>Combination</option></select></div>
+      <div class="field"><label>Pattern of Behavior?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_pattern','yes',this)">Yes — Multiple Incidents</button><button class="yesno-btn no" onclick="setYesNo('os_pattern','no',this)">No — Single</button></div></div>
+      <div class="field"><label>Conduct Basis (protected class?)</label>
+        <select id="os_basis"><option value="">Select / Not Identified</option><option>Race / Ethnicity</option><option>Gender / Sex</option><option>Disability</option><option>Religion</option><option>National Origin</option><option>Sexual Orientation</option><option>No Identified Basis</option></select></div>
+      <div class="field"><label>Target Student Impact</label>
+        <select id="os_impact"><option value="">Select...</option><option>Emotional Distress Reported</option><option>Absence Attributed to Bullying</option><option>Physical Harm</option><option>Multiple</option></select></div>
+      <div class="field"><label>Cyberbullying Platform / Account</label><input type="text" id="os_platform" placeholder="Instagram, Snapchat, etc."></div>
+      <div class="field"><label>Screenshots Secured?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_screenshots','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_screenshots','no',this)">No</button></div></div>
+      <div class="field"><label>Victim Support Offered?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_victim_support','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_victim_support','no',this)">No</button></div></div>
+      <div class="field"><label>Title IX Coordinator Involved?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_title9','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_title9','no',this)">No</button></div></div>
+    </div>`,
+  threat: `
+    <div class="alert error"><div class="alert-icon">🛑</div><div>Threat assessment is REQUIRED under Texas HB 3 regardless of whether the threat appears credible. Failure to document the assessment is a compliance gap.</div></div>
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>Threat Type</label>
+        <select id="os_threat_type"><option value="">Select...</option><option>Verbal</option><option>Written / Note</option><option>Social Media / Online</option><option>Physical Gesture</option><option>Combination</option></select></div>
+      <div class="field"><label>Threat Specificity</label>
+        <select id="os_specificity"><option value="">Select...</option><option>Named Target(s)</option><option>General / Non-Specific</option><option>Specific Date or Method Referenced</option></select></div>
+      <div class="field"><label>HB 3 Threat Assessment Convened?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_assess','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_assess','no',this)">No</button></div></div>
+      <div class="field"><label>Threat Assessment Level</label>
+        <select id="os_threat_level"><option value="">Select...</option><option>Level 1 — Low</option><option>Level 2 — Medium</option><option>Level 3 — High</option><option>Level 4 — Severe</option></select></div>
+      <div class="field"><label>Law Enforcement Referral Made?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_le_ref','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_le_ref','no',this)">No</button></div></div>
+      <div class="field"><label>Safety Plan Established for Target?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_safety_plan','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_safety_plan','no',this)">No</button></div></div>
+    </div>`,
+  weapons: `
+    <div class="alert error"><div class="alert-icon">⛔</div><div>Firearm possession requires mandatory 1-year expulsion under federal GFSA. Consult legal counsel and law enforcement immediately. Do NOT release student from campus.</div></div>
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>Weapon Type</label>
+        <select id="os_weapon_type"><option value="">Select...</option><option>Firearm — Handgun</option><option>Firearm — Rifle / Shotgun</option><option>Firearm — Other</option><option>Knife</option><option>Club / Bat</option><option>Explosive Device</option><option>Other Dangerous Weapon</option></select></div>
+      <div class="field"><label>Weapon Description</label><input type="text" id="os_wdesc" placeholder="Make, model, description..."></div>
+      <div class="field"><label>Weapon Secured By</label><input type="text" id="os_wsecured" placeholder="Name / role / law enforcement"></div>
+      <div class="field"><label>Law Enforcement Called?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_wle','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_wle','no',this)">No</button></div></div>
+      <div class="field"><label>Student in Custody of LE?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_custody','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_custody','no',this)">No</button></div></div>
+      <div class="field"><label>Campus Cleared / Secured?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_secured','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_secured','no',this)">No</button></div></div>
+    </div>`,
+  general: `
+    <div class="field-grid cols-2" style="margin-bottom:.875rem;">
+      <div class="field"><label>SCOC Level</label>
+        <select id="os_scoc_level"><option value="">Select...</option><option>Level I</option><option>Level II</option><option>Level III</option><option>Level IV — Mandatory</option></select></div>
+      <div class="field"><label>Repeat Offense?</label><div class="yesno-group"><button class="yesno-btn yes" onclick="setYesNo('os_repeat','yes',this)">Yes</button><button class="yesno-btn no" onclick="setYesNo('os_repeat','no',this)">No</button></div></div>
+      <div class="field"><label>Rule / Policy Violated</label><input type="text" id="os_rule" placeholder="SCOC section or description..."></div>
+      <div class="field"><label>Prior Incidents This Year</label><input type="number" id="os_prior_count" min="0" value="0"></div>
+    </div>
+    <div class="field"><label>Prior Interventions Attempted</label><textarea id="os_prior_interventions" rows="3" placeholder="What has been tried before this incident?"></textarea></div>
+    <div class="field" style="margin-top:.75rem;"><label>Recommended Intervention (in addition to or instead of removal)</label><input type="text" id="os_recommended_intervention"></div>`,
+};
+
+function selectOffense(card) {
+  document.querySelectorAll('.offense-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.offense = card.dataset.offense;
+
+  const cfg = OFFENSE_CONFIG[state.offense];
+  // Pre-fill category and TEC ref
+  const catEl = document.getElementById('offense_category');
+  const tecEl = document.getElementById('tec_reference');
+  if (catEl) catEl.value = cfg.category;
+  if (tecEl) tecEl.value = cfg.ref;
+
+  // Show all sections
+  document.querySelectorAll('.form-section').forEach(s => s.classList.add('visible'));
+
+  // Inject offense-specific content
+  const container = document.getElementById('offense-specific-container');
+  if (container) {
+    container.innerHTML = `
+      <div style="margin-bottom:1rem;">
+        <p style="font-size:.85rem;font-weight:700;color:var(--orange);margin-bottom:.75rem;">${cfg.label.toUpperCase()} — SPECIFIC FINDINGS</p>
+        ${OFFENSE_SPECIFIC_HTML[state.offense] || ''}
+      </div>`;
+  }
+
+  // Seed timeline and evidence rows if empty
+  if (state.timelineRows.length === 0) {
+    for (let i = 0; i < 4; i++) addTimelineRow();
+  }
+  if (state.evidenceRows.length === 0) {
+    for (let i = 0; i < 3; i++) addEvidenceRow();
+  }
+  if (state.witnesses.length === 0) {
+    addWitnessBlock();
+  }
+
+  // Auto-set today's date
+  const dateEl = document.getElementById('incident_date');
+  if (dateEl && !dateEl.value) {
+    dateEl.value = new Date().toISOString().split('T')[0];
+    updateDayOfWeek();
+  }
+
+  updateProgress();
+  setTimeout(() => document.getElementById('s1').scrollIntoView({ behavior: 'smooth' }), 100);
+}
+
+// ── TOGGLE / YESNO / OPTIONS ───────────────────────────────────────────────────
+function toggleSection(id) {
+  const body = document.getElementById(id + '-body');
+  const header = document.querySelector(`#${id} .section-header`);
+  const toggle = document.querySelector(`#${id} .section-toggle`);
+  if (!body) return;
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    if (toggle) toggle.textContent = '▾';
+  } else {
+    body.classList.add('collapsed');
+    if (toggle) toggle.textContent = '▸';
+  }
+}
+
+function toggleCheck(el) {
+  const cb = el.querySelector('input[type=checkbox]');
+  if (!cb) return;
+  // Let default checkbox behavior handle state
+  el.classList.toggle('checked', cb.checked);
+  updateProgress();
+}
+
+function setYesNo(field, val, btn) {
+  state.yesno[field] = val;
+  // Clear siblings
+  const group = btn.closest('.yesno-group');
+  if (group) group.querySelectorAll('.yesno-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // SPED warning
+  if (field === 'sped_iep' || field === 'sped_504') {
+    const iep = state.yesno['sped_iep'];
+    const f504 = state.yesno['sped_504'];
+    const warn = document.getElementById('sped-warning');
+    if (warn) warn.classList.toggle('visible', iep === 'yes' || f504 === 'yes');
+    if (iep === 'yes') { const el = document.getElementById('sped_status'); if (el) el.value = 'IEP — IDEA'; }
+    else if (f504 === 'yes') { const el = document.getElementById('sped_status'); if (el) el.value = '504 Plan'; }
+  }
+  autoSave();
+}
+
+function setOption(field, val, btn) {
+  state.options[field] = val;
+  const group = btn.closest('div');
+  if (group) group.querySelectorAll('button').forEach(b => b.classList.remove('active', 'yes', 'no'));
+  btn.classList.add('active', 'yes');
+}
+
+function selectDisposition(card, val) {
+  document.querySelectorAll('.disposition-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.disposition = val;
+  const el = document.getElementById('consequence');
+  if (!el) { /* create hidden state */ }
+  autoSave();
+}
+
+function checkMDRResult() {
+  const val = document.getElementById('sped_mdr_result').value;
+  const alert = document.getElementById('mdr-block-alert');
+  if (alert) alert.style.display = val === 'IS_manifestation' ? 'flex' : 'none';
+}
+
+// ── DYNAMIC ROWS ───────────────────────────────────────────────────────────────
+let tlRowId = 0;
+function addTimelineRow() {
+  const id = ++tlRowId;
+  state.timelineRows.push(id);
+  const tbody = document.getElementById('timeline-body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.id = `tl-row-${id}`;
+  tr.innerHTML = `
+    <td><input type="time" id="tl-time-${id}" placeholder="HH:MM"></td>
+    <td><textarea id="tl-event-${id}" rows="2" placeholder="Describe what occurred..." style="min-height:50px;"></textarea></td>
+    <td><button class="del-btn" onclick="delTimelineRow(${id})">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function delTimelineRow(id) {
+  const el = document.getElementById(`tl-row-${id}`);
+  if (el) el.remove();
+  state.timelineRows = state.timelineRows.filter(r => r !== id);
+}
+
+let evRowId = 0;
+function addEvidenceRow() {
+  const id = ++evRowId;
+  state.evidenceRows.push(id);
+  const tbody = document.getElementById('evidence-body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.id = `ev-row-${id}`;
+  tr.innerHTML = `
+    <td><input type="text" id="ev-id-${id}" placeholder="EV-001"></td>
+    <td><input type="text" id="ev-desc-${id}" placeholder="Describe the item..."></td>
+    <td><select id="ev-type-${id}" style="font-size:.78rem;">
+      <option value="">Type...</option>
+      <option>Video — Campus Camera</option><option>Video — Personal Device</option>
+      <option>Screenshot — Social Media</option><option>Physical — Weapon</option>
+      <option>Physical — Substance</option><option>Written Statement</option>
+      <option>Medical Report</option><option>Police Report</option><option>Photograph</option><option>Other</option>
+    </select></td>
+    <td><input type="text" id="ev-by-${id}" placeholder="Name/role"></td>
+    <td><input type="text" id="ev-storage-${id}" placeholder="Admin office, safe..."></td>
+    <td><button class="del-btn" onclick="delEvidenceRow(${id})">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function delEvidenceRow(id) {
+  const el = document.getElementById(`ev-row-${id}`);
+  if (el) el.remove();
+  state.evidenceRows = state.evidenceRows.filter(r => r !== id);
+}
+
+let wtnId = 0;
+function addWitnessBlock() {
+  const id = ++wtnId;
+  state.witnesses.push(id);
+  const container = document.getElementById('witnesses-container');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.id = `witness-${id}`; div.className = 'witness-block';
+  div.innerHTML = `
+    <div class="witness-header">
+      <span>Witness ${id}</span>
+      <button onclick="delWitness(${id})">Remove</button>
+    </div>
+    <div class="witness-body">
+      <div class="field-grid cols-2" style="margin-bottom:.75rem;">
+        <div class="field"><label>Witness Name</label><input type="text" id="wtn-name-${id}" placeholder="Full name or initials (FERPA)"></div>
+        <div class="field"><label>Role / Relationship</label>
+          <select id="wtn-role-${id}">
+            <option value="">Select...</option>
+            <option>Student — Bystander</option><option>Student — Involved Party</option>
+            <option>Teacher</option><option>Staff / Para</option><option>Administrator</option>
+            <option>SRO</option><option>Parent / Adult</option><option>Other</option>
+          </select></div>
+        <div class="field"><label>Interview Date / Time</label><input type="datetime-local" id="wtn-dt-${id}"></div>
+        <div class="field"><label>Interviewed By</label><input type="text" id="wtn-by-${id}"></div>
+      </div>
+      <div class="field" style="margin-bottom:.75rem;"><label>Statement Summary</label><textarea id="wtn-stmt-${id}" rows="4" placeholder="Summarize what this witness reported..."></textarea></div>
+      <div class="field"><label>Written Statement Obtained?</label>
+        <div class="yesno-group" style="max-width:280px;">
+          <button class="yesno-btn yes" onclick="setYesNo('wtn_written_${id}','yes',this)">Yes — Attached</button>
+          <button class="yesno-btn no"  onclick="setYesNo('wtn_written_${id}','no',this)">No</button>
+          <button class="yesno-btn"     onclick="setYesNo('wtn_written_${id}','declined',this)" style="flex:.8;">Declined</button>
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+function delWitness(id) {
+  const el = document.getElementById(`witness-${id}`);
+  if (el) el.remove();
+  state.witnesses = state.witnesses.filter(w => w !== id);
+}
+
+// ── AUTO-FILL DATE ─────────────────────────────────────────────────────────────
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'incident_date') updateDayOfWeek();
+});
+function updateDayOfWeek() {
+  const d = document.getElementById('incident_date');
+  const dow = document.getElementById('day_of_week');
+  if (d && dow && d.value) {
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const date = new Date(d.value + 'T12:00:00');
+    dow.value = days[date.getDay()];
+  }
+}
+
+// ── PROGRESS ───────────────────────────────────────────────────────────────────
+function updateProgress() {
+  if (!state.offense) return;
+  const sections = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'];
+  let filled = 0;
+  // Quick check: if section has any filled input
+  sections.forEach(id => {
+    const sec = document.getElementById(id);
+    if (!sec) return;
+    const inputs = sec.querySelectorAll('input, select, textarea');
+    for (let inp of inputs) {
+      if (inp.value && inp.value.trim()) { filled++; return; }
+    }
+  });
+  const pct = Math.min(100, Math.round((filled / sections.length) * 100));
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  if (fill) fill.style.width = pct + '%';
+  if (text) text.textContent = `${filled} of ${sections.length} sections have data`;
+  // Update sidebar
+  sections.forEach(id => {
+    const navItem = document.querySelector(`[data-section="${id}"]`);
+    if (!navItem) return;
+    const sec = document.getElementById(id);
+    if (!sec) return;
+    const inputs = sec.querySelectorAll('input, select, textarea');
+    let hasFill = false;
+    for (let inp of inputs) { if (inp.value && inp.value.trim()) { hasFill = true; break; } }
+    navItem.classList.toggle('complete', hasFill);
+  });
+}
+
+function autoSave() {
+  updateProgress();
+  updateDayOfWeek();
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────────
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.querySelector(`[data-section="${id}"]`);
+  if (nav) nav.classList.add('active');
+}
+
+// ── COLLECT ALL DATA ───────────────────────────────────────────────────────────
+function collectData() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const yn = field => state.yesno[field] || '';
+  const cbs = name => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(c => c.value).join('; ');
+
+  // Timeline
+  const timeline = state.timelineRows.map(id => ({
+    time: g(`tl-time-${id}`), event: g(`tl-event-${id}`)
+  })).filter(r => r.time || r.event);
+
+  // Witnesses
+  const witnesses = state.witnesses.map(id => ({
+    name: g(`wtn-name-${id}`), role: g(`wtn-role-${id}`),
+    dt: g(`wtn-dt-${id}`), by: g(`wtn-by-${id}`),
+    stmt: g(`wtn-stmt-${id}`), written: yn(`wtn_written_${id}`)
+  })).filter(w => w.name || w.stmt);
+
+  // Evidence
+  const evidence = state.evidenceRows.map(id => ({
+    id: g(`ev-id-${id}`), desc: g(`ev-desc-${id}`), type: g(`ev-type-${id}`),
+    by: g(`ev-by-${id}`), storage: g(`ev-storage-${id}`)
+  })).filter(e => e.id || e.desc);
+
+  return {
+    // ── Toolkit Incident Intake columns (A–AH) ──
+    incident_id:          g('incident_id')           || `INC-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+    incident_date:        g('incident_date'),
+    incident_time:        g('incident_time'),
+    day_of_week:          g('day_of_week'),
+    student_id:           g('student_id'),
+    student_last:         g('student_last'),
+    student_first:        g('student_first'),
+    student_grade:        g('student_grade'),
+    campus:               g('campus'),
+    offense_category:     g('offense_category'),
+    offense_description:  g('offense_description'),
+    tec_reference:        g('tec_reference'),
+    location:             g('location'),
+    witnesses_named:      yn('witnesses_named'),
+    witness_count:        g('witness_count'),
+    injury_reported:      yn('injury_reported'),
+    medical_attention:    yn('medical_attention'),
+    property_damage:      yn('property_damage'),
+    le_notified:          yn('le_notified'),
+    le_arrival_time:      g('le_arrival_time'),
+    sped_status:          g('sped_status'),
+    inv_status:           g('inv_status'),
+    investigator:         g('investigator'),
+    parent_notified:      yn('parent_notified'),
+    parent_notified_date: g('parent_notified_date'),
+    consequence:          state.disposition || '',
+    consequence_start:    g('consequence_start'),
+    consequence_end:      g('consequence_end'),
+    appeal_filed:         yn('appeal_filed') || 'No',
+    notes:                g('notes'),
+    // ── Extended investigation data ──
+    school_year:          g('school_year'),
+    campus_badge:         g('campus_badge'),
+    sped_iep:             yn('sped_iep'),
+    sped_504:             yn('sped_504'),
+    offense_type:         state.offense,
+    sep_by:               g('sep_by'),
+    sep_time:             g('sep_time'),
+    sro_name:             g('sro_name'),
+    sro_report:           g('sro_report'),
+    parent_name:          g('parent_name'),
+    parent_method:        g('parent_method'),
+    due_process:          cbs('due_process'),
+    dp_actions:           cbs('dp_actions'),
+    conf_held_dt:         g('conf_held_dt'),
+    written_notice_date:  g('written_notice_date'),
+    notice_method:        g('notice_method'),
+    mdr_scheduled_date:   g('mdr_scheduled_date'),
+    stmt_date:            g('stmt_date'),
+    stmt_by:              g('stmt_by'),
+    stmt_format:          state.options['stmt_format'] || '',
+    stmt_text:            g('stmt_text'),
+    finding:              g('finding'),
+    mitigating:           g('mitigating'),
+    aggravating:          g('aggravating'),
+    sped_mdr_result:      g('sped_mdr_result'),
+    cert_admin:           g('cert_admin_name'),
+    cert_title:           g('cert_admin_title'),
+    cert_date:            g('cert_date'),
+    cert_reviewer:        g('cert_reviewer'),
+    timeline, witnesses, evidence,
+  };
+}
+
+// ── EXPORT TO TOOLKIT CSV ──────────────────────────────────────────────────────
+// Maps to exact column order in Command Toolkit Incident Intake tab (A–AH)
+function exportCSV() {
+  const d = collectData();
+  // Column order matches Incident Intake exactly (skip AUTO-calc cols D, V, W, Z, AG)
+  const cols = [
+    d.incident_id,        // A
+    d.incident_date,      // B
+    d.incident_time,      // C
+    '',                   // D (⚙ auto)
+    d.student_id,         // E
+    d.student_last,       // F
+    d.student_first,      // G
+    d.student_grade,      // H
+    d.campus,             // I
+    d.offense_category,   // J
+    d.offense_description,// K
+    d.tec_reference,      // L
+    d.location,           // M
+    d.witnesses_named,    // N
+    d.witness_count,      // O
+    d.injury_reported,    // P
+    d.medical_attention,  // Q
+    d.property_damage,    // R
+    d.le_notified,        // S
+    d.le_arrival_time,    // T
+    d.sped_status,        // U
+    '',                   // V (⚙ auto)
+    '',                   // W (⚙ auto)
+    d.inv_status,         // X
+    d.investigator,       // Y
+    '',                   // Z (⚙ auto)
+    d.parent_notified,    // AA
+    d.parent_notified_date,// AB
+    d.consequence,        // AC
+    d.consequence_start,  // AD
+    d.consequence_end,    // AE
+    d.appeal_filed,       // AF
+    '',                   // AG (⚙ auto)
+    d.notes,              // AH
+  ];
+
+  const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
+  const headers = [
+    'Incident ID','Date','Time','⚙ Day of Week','Student ID','Last Name','First Name','Grade','Campus',
+    'Offense Category','Offense Description','TEC Reference','Location','Witnesses Named?','# Witnesses',
+    'Injury Reported?','Medical Attention?','Property Damage?','Law Enforcement Notified?','LE Arrival Time',
+    'SPED Status','⚙ 10-Day Total','⚙ 10-Day Flag','Investigation Status','Assigned Investigator',
+    '⚙ Days Open','Parent Notified?','Parent Notified Date','Consequence Assigned',
+    'Consequence Start','Consequence End','Appeal Filed?','⚙ Case Age','Notes'
+  ];
+
+  const csv = headers.map(esc).join(',') + '\n' + cols.map(esc).join(',');
+  download(`${d.incident_id || 'investigation'}-toolkit-row.csv`, csv, 'text/csv');
+
+  showToast('✅ CSV exported! Open Command Toolkit → Incident Intake tab → paste this row at the next empty row.', 6000);
+}
+
+// ── EXPORT FULL JSON ───────────────────────────────────────────────────────────
+function exportJSON() {
+  const d = collectData();
+  d._exported = new Date().toISOString();
+  d._product = 'Clear Path Investigation Intake Form — clearpathedgroup.com';
+  download(`${d.incident_id || 'investigation'}-full-record.json`, JSON.stringify(d, null, 2), 'application/json');
+  showToast('✅ Full record saved as JSON for your records.', 5000);
+}
+
+// ── SAVE / LOAD LOCAL DRAFT ────────────────────────────────────────────────────
+function saveLocal() {
+  try {
+    const d = collectData();
+    localStorage.setItem('clearpath_investigation_draft', JSON.stringify(d));
+    showToast('💾 Draft saved to browser storage.', 3000);
+  } catch(e) { showToast('⚠ Could not save draft.', 3000); }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem('clearpath_investigation_draft');
+    if (!raw) { showToast('No saved draft found.', 3000); return; }
+    const d = JSON.parse(raw);
+    if (d.offense_type) {
+      const card = document.querySelector(`[data-offense="${d.offense_type}"]`);
+      if (card) selectOffense(card);
+    }
+    setTimeout(() => {
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      Object.keys(d).forEach(k => set(k, d[k]));
+      set('cert_admin_name', d.cert_admin);
+      set('cert_admin_title', d.cert_title);
+      // yes/no toggles — click the real buttons so classes + SPED warning fire
+      const restoreYN = (field, val) => {
+        if (!val) return;
+        const btn = document.querySelector(`[onclick*="setYesNo('${field}','${val}'"]`);
+        if (btn) btn.click();
+      };
+      ['witnesses_named','injury_reported','medical_attention','property_damage','le_notified','parent_notified','appeal_filed','sped_iep','sped_504'].forEach(f => restoreYN(f, d[f]));
+      // checkboxes (due process, immediate actions)
+      const restoreCbs = (name, joined) => {
+        if (!joined) return;
+        const want = joined.split('; ');
+        document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+          if (want.includes(cb.value)) {
+            cb.checked = true;
+            const ci = cb.closest('.check-item');
+            if (ci) ci.classList.add('checked');
+          }
+        });
+      };
+      restoreCbs('due_process', d.due_process);
+      restoreCbs('dp_actions', d.dp_actions);
+      // statement format + disposition
+      if (d.stmt_format) {
+        state.options['stmt_format'] = d.stmt_format;
+        const b = document.querySelector(`[onclick*="setOption('stmt_format','${d.stmt_format}'"]`);
+        if (b) b.classList.add('active');
+      }
+      if (d.consequence) state.disposition = d.consequence;
+      // dynamic rows: replace the seeded blanks with the saved rows
+      if (Array.isArray(d.timeline) && d.timeline.length) {
+        document.getElementById('timeline-body').innerHTML = ''; state.timelineRows = []; tlRowId = 0;
+        d.timeline.forEach(t => { addTimelineRow(); set(`tl-time-${tlRowId}`, t.time); set(`tl-event-${tlRowId}`, t.event); });
+      }
+      if (Array.isArray(d.evidence) && d.evidence.length) {
+        document.getElementById('evidence-body').innerHTML = ''; state.evidenceRows = []; evRowId = 0;
+        d.evidence.forEach(e => { addEvidenceRow(); set(`ev-id-${evRowId}`, e.id); set(`ev-desc-${evRowId}`, e.desc); set(`ev-type-${evRowId}`, e.type); set(`ev-by-${evRowId}`, e.by); set(`ev-storage-${evRowId}`, e.storage); });
+      }
+      if (Array.isArray(d.witnesses) && d.witnesses.length) {
+        document.getElementById('witnesses-container').innerHTML = ''; state.witnesses = []; wtnId = 0;
+        d.witnesses.forEach(w => { addWitnessBlock(); set(`wtn-name-${wtnId}`, w.name); set(`wtn-role-${wtnId}`, w.role); set(`wtn-dt-${wtnId}`, w.dt); set(`wtn-by-${wtnId}`, w.by); set(`wtn-stmt-${wtnId}`, w.stmt); restoreYN(`wtn_written_${wtnId}`, w.written); });
+      }
+      updateProgress();
+      showToast('📂 Draft loaded.', 3000);
+    }, 300);
+  } catch(e) { showToast('⚠ Could not load draft.', 3000); }
+}
+
+function clearForm() {
+  if (!confirm('Clear all form data? This cannot be undone.')) return;
+  document.querySelectorAll('input, select, textarea').forEach(el => { el.value = ''; });
+  document.querySelectorAll('.offense-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.form-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.yesno-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.check-item').forEach(c => c.classList.remove('checked'));
+  document.querySelectorAll('.disposition-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('witnesses-container').innerHTML = '';
+  document.getElementById('timeline-body').innerHTML = '';
+  document.getElementById('evidence-body').innerHTML = '';
+  document.getElementById('offense-specific-container').innerHTML = '';
+  Object.keys(state).forEach(k => {
+    if (Array.isArray(state[k])) state[k] = [];
+    else if (state[k] && typeof state[k] === 'object') state[k] = {};
+    else state[k] = null;
+  });
+  tlRowId = 0; evRowId = 0; wtnId = 0;
+  showToast('Form cleared.', 2000);
+}
+
+// ── UTILITIES ──────────────────────────────────────────────────────────────────
+function download(filename, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+let toastTimer;
+function showToast(msg, dur = 3000) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:var(--dark);color:white;padding:.75rem 1.25rem;
+      border-radius:var(--radius);font-size:.85rem;font-weight:500;
+      box-shadow:var(--shadow-lg);z-index:9999;max-width:480px;text-align:center;
+      transition:opacity .3s;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.opacity = '0', dur);
+}
+
+function openExportModal()  { document.getElementById('export-modal').classList.add('open'); }
+function closeExportModal() { document.getElementById('export-modal').classList.remove('open'); }
+
+// Close modal on overlay click
+document.getElementById('export-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeExportModal();
+});
+
+// ── SCROLL SPY ─────────────────────────────────────────────────────────────────
+const sections = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'];
+window.addEventListener('scroll', () => {
+  for (const id of [...sections].reverse()) {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top <= 120) {
+      document.querySelectorAll('.nav-item[data-section]').forEach(n => n.classList.remove('active'));
+      const nav = document.querySelector(`[data-section="${id}"]`);
+      if (nav) nav.classList.add('active');
+      break;
+    }
+  }
+}, { passive: true });
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Check for auto-load
+  const draft = localStorage.getItem('clearpath_investigation_draft');
+  if (draft) {
+    try {
+      const d = JSON.parse(draft);
+      if (d.incident_date) {
+        // Show hint
+        setTimeout(() => {
+          if (confirm('A saved draft was found. Load it?')) loadLocal();
+        }, 500);
+      }
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>
