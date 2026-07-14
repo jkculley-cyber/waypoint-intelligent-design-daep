@@ -255,7 +255,10 @@
           </div>
           <div style="flex-shrink:0;text-align:center">
             <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:4px">Scan to pay</div>
-            <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:8px;border:2px solid var(--border-purple);background:#fff;padding:6px">
+            <a href="https://enroll.zellepay.com/qr-codes?data=ewogICJ0b2tlbiIgOiAiY2xlYXJwYXRoZWRncm91cCIsCiAgImFjdGlvbiIgOiAicGF5bWVudCIsCiAgIm5hbWUiIDogIkNMRUFSIFBBVEggRURVQ0FUSU9OIEdST1VQLCBMTEMiCn0=" target="_blank" rel="noopener" style="display:inline-block">
+              <img src="/zelle-qr.jpg" alt="Zelle QR Code — tap to pay" style="width:300px;height:300px;border-radius:8px;border:2px solid var(--border-purple);background:#fff;padding:6px">
+            </a>
+            <div style="font-size:.74rem;color:var(--amber-light);font-weight:600;margin-top:6px">On your phone? <u>Tap the QR</u> to open Zelle.</div>
           </div>
         </div>
         <div style="margin-top:12px;padding:10px 14px;background:rgba(107,47,160,.08);border:1px solid rgba(107,47,160,.25);border-radius:8px;text-align:center">
@@ -588,11 +591,12 @@ function switchSheet(productId, index) {
 
 function openCheckout(productId) {
   const item = PRODUCTS.find(p => p.id === productId) || BUNDLES.find(b => b.id === productId) || CLASSROOM_BUNDLES.find(c => c.id === productId);
-  if (!item) return;
+  if (!item) return false;
   document.getElementById('co-product-name').textContent = item.title;
   document.getElementById('co-product-price').textContent = '$' + item.price;
   document.getElementById('co-zelle-amount').textContent = '$' + item.price;
   document.getElementById('checkout-modal').classList.add('open');
+  return true;
 }
 
 function closeCheckout() {
@@ -785,7 +789,10 @@ function renderProducts() {
           <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
             <div style="flex-shrink:0;text-align:center">
               <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
-              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
+              <a href="https://enroll.zellepay.com/qr-codes?data=ewogICJ0b2tlbiIgOiAiY2xlYXJwYXRoZWRncm91cCIsCiAgImFjdGlvbiIgOiAicGF5bWVudCIsCiAgIm5hbWUiIDogIkNMRUFSIFBBVEggRURVQ0FUSU9OIEdST1VQLCBMTEMiCn0=" target="_blank" rel="noopener" style="display:inline-block">
+                <img src="/zelle-qr.jpg" alt="Zelle QR Code — tap to pay" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(42,122,80,.3);background:#fff;padding:6px">
+              </a>
+              <div style="font-size:.76rem;color:#4ade80;font-weight:600;margin-top:6px">On your phone? <u>Tap the QR</u> to open Zelle.</div>
             </div>
             <div style="flex:1;min-width:220px;padding-top:8px">
               <div style="font-size:1rem;font-weight:700;color:#4ade80;margin-bottom:16px">Complete Your Payment</div>
@@ -883,7 +890,10 @@ function renderProducts() {
           <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center;max-width:700px;margin:0 auto">
             <div style="flex-shrink:0;text-align:center">
               <div style="font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Scan to pay with Zelle</div>
-              <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(99,102,241,.25);background:#fff;padding:6px">
+              <a href="https://enroll.zellepay.com/qr-codes?data=ewogICJ0b2tlbiIgOiAiY2xlYXJwYXRoZWRncm91cCIsCiAgImFjdGlvbiIgOiAicGF5bWVudCIsCiAgIm5hbWUiIDogIkNMRUFSIFBBVEggRURVQ0FUSU9OIEdST1VQLCBMTEMiCn0=" target="_blank" rel="noopener" style="display:inline-block">
+                <img src="/zelle-qr.jpg" alt="Zelle QR Code — tap to pay" style="width:300px;height:300px;border-radius:10px;border:2px solid rgba(99,102,241,.25);background:#fff;padding:6px">
+              </a>
+              <div style="font-size:.76rem;color:#818cf8;font-weight:600;margin-top:6px">On your phone? <u>Tap the QR</u> to open Zelle.</div>
             </div>
             <div style="flex:1;min-width:220px;padding-top:8px">
               <div style="font-size:1rem;font-weight:700;color:#818cf8;margin-bottom:16px">Complete Your Payment</div>
@@ -1030,8 +1040,16 @@ function renderBundleCard(b) {
 
 // Deep link from hash
 function handleHash() {
-  const hash = window.location.hash.slice(1);
+  let hash = window.location.hash.slice(1);
   if (!hash) return;
+  // #buy-<id> (deep link from resources.html) → open the 2-step checkout
+  // directly; falls through to card-highlight for ids without a checkout
+  // entry (e.g. investigator-toolkit, which has its own on-page purchase flow).
+  if (hash.startsWith('buy-')) {
+    const id = hash.slice(4);
+    if (openCheckout(id)) return;
+    hash = id;
+  }
   const card = document.getElementById('card-' + hash);
   if (card) {
     setTimeout(() => {
@@ -1107,7 +1125,7 @@ async function submitBeaconRequest(e) {
   }
 }
 
-async function submitPaidNotification(e, product, idPrefix) {
+async function submitPaidNotification(e, product, idPrefix, amountHint) {
   e.preventDefault();
   const form = e.target;
   const btn = document.getElementById(idPrefix + '-paid-btn');
@@ -1120,14 +1138,18 @@ async function submitPaidNotification(e, product, idPrefix) {
   const email = form.email.value.trim();
   const school = form.school ? form.school.value.trim() : '';
   const plan = form.plan ? form.plan.value : '';
+  // Dollar amount for reconciliation: plan strings look like "annual_$79";
+  // one-time products pass the price in via amountHint.
+  const amount = (plan.match(/\$[\d.]+/) || [])[0] || amountHint || '';
   const data = {
     name: name,
     email: email,
     school: school,
     plan: plan,
+    amount: amount,
     source: 'purchase_registration',
     product: product,
-    subject: 'REGISTER: ' + product + ' — ' + email + ' (' + (plan || 'no plan') + ')',
+    subject: 'REGISTER: ' + product + ' — ' + email + ' (' + (plan || amount || 'no plan') + ')',
   };
 
   const OPS = 'https://xbpuqaqpcbixxodblaes.supabase.co';
@@ -1142,7 +1164,8 @@ async function submitPaidNotification(e, product, idPrefix) {
       email: email,
       name: name,
       district_name: school || '',
-      referrer: 'REGISTER: ' + product + ' (' + plan + ')',
+      referrer: 'REGISTER: ' + product + ' (' + (plan || amount) + ')',
+      utm_source: 'store',
       status: 'new',
     }),
   }).then(r => r.ok).catch(() => false);
@@ -1163,17 +1186,22 @@ async function submitPaidNotification(e, product, idPrefix) {
     return;
   }
 
+  // Email the buyer their payment instructions so closing the tab at Step 2
+  // doesn't strand them with no way to pay (fire-and-forget — registration is
+  // already recorded above, and the drip nudge is the backstop if this fails).
+  fetch('/api/store-register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, email: email, product: product, amount: amount }),
+  }).catch(function() {});
+
   // Populate the Step-2 confirmation with the buyer's info
   const nameEl = document.getElementById(idPrefix + '-success-name');
   const emailEl = document.getElementById(idPrefix + '-success-email');
   const amtEl = document.getElementById(idPrefix + '-success-amount');
   if (nameEl) nameEl.textContent = name;
   if (emailEl) emailEl.textContent = email;
-  if (amtEl) {
-    // plan looks like "monthly_$8" or "annual_$79"
-    const amt = (plan.match(/\$\d+/) || [''])[0];
-    if (amt) amtEl.textContent = amt;
-  }
+  if (amtEl && amount) amtEl.textContent = amount;
 
   document.getElementById(idPrefix + '-paid-form').style.display = 'none';
   document.getElementById(idPrefix + '-paid-success').style.display = 'block';
@@ -1184,7 +1212,9 @@ async function submitPaidNotification(e, product, idPrefix) {
 function submitCheckoutPaid(e) {
   const productEl = document.getElementById('co-product-name');
   const product = productEl && productEl.textContent ? productEl.textContent : 'Store product';
-  return submitPaidNotification(e, product, 'co');
+  const priceEl = document.getElementById('co-product-price');
+  const amount = priceEl ? priceEl.textContent.trim() : '';
+  return submitPaidNotification(e, product, 'co', amount);
 }
 
 renderProducts();

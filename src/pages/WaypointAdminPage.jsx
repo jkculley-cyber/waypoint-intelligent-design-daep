@@ -1186,7 +1186,15 @@ function DemoLeadsSection() {
     setLoading(true)
     try {
       const data = await opsLeads('list')
-      setDemoLeads(data.leads || [])
+      const now = Date.now()
+      setDemoLeads((data.leads || []).map(l => ({
+        ...l,
+        // Store registrations (2-step checkout) that never turned into a Zelle
+        // payment — Kim moves them off 'new' when the payment lands.
+        _unpaidDays: (l.referrer || '').startsWith('REGISTER:') && (l.status || 'new') === 'new'
+          ? Math.floor((now - new Date(l.created_at).getTime()) / 86400000)
+          : null,
+      })))
     } catch {
       setDemoLeads([])
     }
@@ -1196,7 +1204,7 @@ function DemoLeadsSection() {
   useEffect(() => { fetchDemoLeads() }, [fetchDemoLeads])
 
   const updateStatus = async (leadId, newStatus) => {
-    setDemoLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l))
+    setDemoLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus, _unpaidDays: newStatus === 'new' ? l._unpaidDays : null } : l))
     await opsLeads('update', { id: leadId, status: newStatus })
   }
 
@@ -1233,10 +1241,19 @@ function DemoLeadsSection() {
             <tbody>
               {demoLeads.map(lead => {
                 const status = LEAD_STATUSES.find(s => s.value === (lead.status || 'new')) || LEAD_STATUSES[0]
+                const isRegistration = (lead.referrer || '').startsWith('REGISTER:')
+                const unpaidDays = lead._unpaidDays ?? null
                 return (
                   <tr key={lead.id} className="border-b border-gray-800 hover:bg-gray-800/40 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="text-white font-medium">{lead.name}</p>
+                      <p className="text-white font-medium">
+                        {lead.name}
+                        {unpaidDays !== null && (
+                          <span className="ml-2 text-[10px] font-bold bg-amber-900/60 text-amber-300 px-1.5 py-0.5 rounded uppercase tracking-wide" title={lead.referrer}>
+                            Unpaid {unpaidDays}d
+                          </span>
+                        )}
+                      </p>
                       <p className="text-gray-400 text-xs">{lead.email}</p>
                     </td>
                     <td className="px-4 py-3 text-xs">
@@ -1257,6 +1274,10 @@ function DemoLeadsSection() {
                     <td className="px-4 py-3 text-xs">
                       {(() => {
                         const src = (lead.utm_source || '').toLowerCase()
+                        if (src === 'store' || isRegistration) {
+                          const product = isRegistration ? lead.referrer.replace(/^REGISTER:\s*/, '') : 'Store'
+                          return <span className="bg-amber-900/60 text-amber-300 px-2 py-0.5 rounded font-medium" title={product}>Store: {product.length > 32 ? product.slice(0, 32) + '…' : product}</span>
+                        }
                         if (src === 'beacon') return <span className="bg-teal-900/60 text-teal-300 px-2 py-0.5 rounded font-medium">Beacon</span>
                         if (src === 'waypoint') return <span className="bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-medium">Waypoint</span>
                         if (src === 'toolkit') return <span className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-medium">Toolkit</span>
