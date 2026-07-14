@@ -360,7 +360,7 @@ function renderResources() {
               <span class="tp-price">${price}</span>
               <button class="tp-buy" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
             </div>
-            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · PDF delivered within 24 hours</div>
+            <div class="tp-zelle-info">Checkout via Zelle · PDF delivered within 24 hours of payment</div>
           </div>
         </div>
       </div>`;
@@ -402,7 +402,7 @@ function renderResources() {
                 <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
                 <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
               </div>
-              <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
+              <div class="tp-zelle-info">Checkout via Zelle · Delivered within 24 hours of payment</div>
             </div>
           </div>
         </div>`;
@@ -417,7 +417,7 @@ function renderResources() {
               <span class="tp-price" style="background:linear-gradient(90deg,${color},${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${price}</span>
               <button class="tp-buy" style="background:linear-gradient(135deg,${color},${color}cc)" onclick="openZelle('${escHtml(res.title)}','${price}')">Buy Now →</button>
             </div>
-            <div class="tp-zelle-info">Send ${price} via Zelle to <strong>clearpathedgroup</strong> · Delivered within 24 hours</div>
+            <div class="tp-zelle-info">Checkout via Zelle · Delivered within 24 hours of payment</div>
           </div>
         </div>`;
       }
@@ -458,6 +458,7 @@ function titleToStoreId(title) {
     'Behavior Intervention System': 'bundle-behavior',
     "Administrator's Investigation Kit": 'bundle-investigation',
     'Campus Leadership Complete': 'bundle-flagship',
+    'Investigator Toolkit': 'investigator-toolkit',
     'Partner Engagement Activities': 'partner-activities',
     'Small Group Engagement Activities': 'small-group-activities',
     'Whole Class Engagement Activities': 'whole-class-activities',
@@ -543,31 +544,13 @@ function carouselNav(key, dir) {
   carouselGo(key, next);
 }
 
+// All purchases go through the store's 2-step checkout (register email first,
+// THEN the Zelle QR) — never show a bare QR here, or payments arrive with no
+// matching identity (DECISIONS 2026-04-20). New paid resources must be added
+// to titleToStoreId AND the store catalog.
 function openZelle(productName, price) {
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)';
-  modal.innerHTML = `
-    <div style="background:#1a0a2e;border:1px solid rgba(42,157,143,.4);border-radius:16px;padding:32px;max-width:420px;width:90%;position:relative">
-      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:rgba(240,230,211,.4);font-size:1.5rem;cursor:pointer">&times;</button>
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:#f0e6d3">${escHtml(productName)}</div>
-        <div style="font-family:'Cinzel',serif;font-size:1.8rem;font-weight:900;color:#5eead4;margin-top:4px">${escHtml(price)}</div>
-      </div>
-      <div style="text-align:center;margin-bottom:20px">
-        <img src="/zelle-qr.jpg" alt="Zelle QR Code" style="width:280px;height:280px;border-radius:14px;border:3px solid rgba(42,157,143,.4);box-shadow:0 4px 20px rgba(0,0,0,.3)" />
-        <div style="font-size:.82rem;color:#5eead4;font-weight:600;margin-top:10px">Scan with your phone to pay via Zelle</div>
-      </div>
-      <div style="background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.3);border-radius:10px;padding:16px 20px;margin-bottom:16px;font-size:.9rem;color:#f0e6d3;line-height:1.8">
-        <strong style="color:#5eead4">Or send manually:</strong> <strong>${escHtml(price)}</strong> via Zelle to <span style="font-family:monospace;font-size:1rem;color:#5eead4;font-weight:700">clearpathedgroup</span><br>
-        Include the product name in the memo · PDF delivered within 24 hours
-      </div>
-      <div style="text-align:center">
-        <a href="mailto:support@clearpathedgroup.com?subject=Bundle%20Purchase:%20${encodeURIComponent(productName)}&body=I%20just%20sent%20${encodeURIComponent(price)}%20via%20Zelle%20for%20${encodeURIComponent(productName)}.%20Please%20send%20my%20PDF." style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2A9D8F,#0d9488);color:white;padding:12px 24px;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none">Confirm Purchase via Email →</a>
-        <div style="font-size:.72rem;color:rgba(240,230,211,.4);margin-top:12px">Questions? support@clearpathedgroup.com</div>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  const id = titleToStoreId(productName);
+  window.location.href = id ? '/store#buy-' + id : '/store';
 }
 
 // On load: read ?cat= param and activate tab
