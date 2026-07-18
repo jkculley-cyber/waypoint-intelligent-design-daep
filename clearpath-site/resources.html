@@ -210,6 +210,7 @@
   <div class="cat-tabs" id="cat-tabs">
     <button class="cat-tab" data-cat="all" onclick="setCategory('all', this)">All Resources</button>
     <button class="cat-tab" data-cat="teacher" onclick="setCategory('teacher', this)">Teacher Resources</button>
+    <button class="cat-tab" data-cat="counselor" onclick="setCategory('counselor', this)">Counselor Resources</button>
     <button class="cat-tab" data-cat="principal" onclick="setCategory('principal', this)">Principal Resources</button>
     <button class="cat-tab" data-cat="ib" onclick="setCategory('ib', this)">IB Resources</button>
     <button class="cat-tab" data-cat="pd" onclick="setCategory('pd', this)">Professional Development</button>
@@ -235,7 +236,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
 const TYPE_LABELS = { link: 'Article / Link', pdf: 'PDF', video: 'Video', doc: 'Document', tool: 'Tool' };
-const CAT_LABELS = { teacher: 'Teacher', principal: 'Principal', ib: 'IB', pd: 'Professional Development', tpt: 'TpT Store' };
+const CAT_LABELS = { teacher: 'Teacher', counselor: 'Counselor', principal: 'Principal', ib: 'IB', pd: 'Professional Development', tpt: 'TpT Store' };
 
 let allResources = [];
 let currentCat = 'all';
@@ -318,9 +319,78 @@ function findTeacherBundle(title) {
   return null;
 }
 
+// ── Counselor Resources — curated section (SEL curriculum, counselor software) ──
+// Not in the DB `resources` table; rendered client-side. All purchases route to the
+// store's 2-step checkout via /store#buy-<id> (DECISIONS 2026-04-20 — never a bare QR here).
+function renderCounselorSection() {
+  // 8 representative covers for the Self Aware Series carousel (7 units + K-5)
+  const sasCovers = [
+    ['SAS-RNR-MS-Lesson-Pack',    'Unit 1 · Recognize. Name. Respond.'],
+    ['SAS-FRA-MS-Lesson-Pack',    'Unit 2 · Focus. Release. Act.'],
+    ['SAS-NNC-MS-Lesson-Pack',    'Unit 3 · Notice. Name. Choose.'],
+    ['SAS-Unit4-Stress-Lesson-Pack', 'Unit 4 · Fuel or Flood.'],
+    ['SAS-Unit5-Calm-Lesson-Pack',   'Unit 5 · Calm Your System.'],
+    ['SAS-Unit6-Mind-Lesson-Pack',   'Unit 6 · Rewrite the Script.'],
+    ['SAS-Unit7-Energy-Lesson-Pack', 'Unit 7 · Use Your Energy.'],
+    ['SAS-RNR-K5-Lesson-Pack',    'K–5 Edition · Little Learners'],
+  ];
+  const themes = ['Emotional Regulation','Circle of Control','Digital Wellness','Stress Regulation','Calming Skills','Cognitive Reframing','Performance Energy'];
+
+  const sasCard = `<div class="teacher-product" style="border-color:rgba(99,102,241,.45)">
+    <div class="tp-layout">
+      <div class="tp-images" id="carousel-sas-series" onclick="openLightbox('sas-series')">
+        ${sasCovers.map((c, i) => `<img src="/previews/sas/${c[0]}-cover.jpg" alt="${escHtml(c[1])}" class="${i === 0 ? 'active' : ''}" loading="lazy" />`).join('')}
+        <button class="tp-img-nav tp-img-prev" onclick="event.stopPropagation();carouselNav('sas-series',-1)">‹</button>
+        <button class="tp-img-nav tp-img-next" onclick="event.stopPropagation();carouselNav('sas-series',1)">›</button>
+        <div class="tp-dots">${sasCovers.map((_, i) => `<button class="tp-dot${i === 0 ? ' active' : ''}" onclick="event.stopPropagation();carouselGo('sas-series',${i})"></button>`).join('')}</div>
+      </div>
+      <div class="tp-body" style="display:flex;flex-direction:column">
+        <span class="tp-badge" style="color:#a5b4fc;background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.4)">SEL Curriculum · Grades 6–8 + K–5</span>
+        <div class="tp-title">Self Aware Series — Complete SEL Curriculum</div>
+        <div class="tp-desc">A coherent, classroom-tested SEL system that takes students from &ldquo;I don&rsquo;t know what I&rsquo;m feeling&rdquo; to &ldquo;I can regulate myself and use stress on purpose.&rdquo; Eight units, one consistent method and design, CASEL-aligned — perfect for small-group counseling, advisory, and SEL blocks. 29 print-and-go PDF resources: lesson packs, activity packs, bulletin-board sets & assessment tools.</div>
+        <div class="tp-activities">${themes.map(t => `<span class="tp-activity-tag" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);color:#a5b4fc">${escHtml(t)}</span>`).join('')}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px">✅ 29 resources · ✅ CASEL-aligned · ✅ No prep · ✅ Worksheet for every lesson · ✅ Color + B&amp;W</div>
+        <div class="tp-footer">
+          <span class="tp-price" style="color:#a5b4fc">$89 <span style="font-size:.45em;color:var(--text-muted);font-family:'Raleway',sans-serif;font-weight:600">full series · save ~61%</span></span>
+          <a class="tp-buy" href="/store#buy-sas-series" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);text-decoration:none">Buy full series →</a>
+          <a class="tp-buy" href="/store#self-aware" style="background:none;border:1px solid rgba(99,102,241,.5);color:#a5b4fc;text-decoration:none">Browse units &amp; singles →</a>
+        </div>
+        <div class="tp-zelle-info">Also sold by the unit ($20) or the individual resource (from $5) — full previews in the store. Checkout via Zelle; PDFs delivered within 24 hours of payment.</div>
+      </div>
+    </div>
+  </div>`;
+
+  const toolCards = `<div class="resource-grid" style="margin-top:20px">
+    <div class="resource-card">
+      <span class="resource-type-badge">Software · Counselor</span>
+      <h3>Beacon — Elementary Counselor Platform</h3>
+      <p>The first command center built for elementary counselors: track your SB 179 80/20 time split, manage caseloads, run small groups with 35 bundled lessons, and prove your impact. Privacy-first — data stays on your device by default.</p>
+      <a href="/beacon-product.html" class="resource-link">View Beacon →</a>
+    </div>
+    <div class="resource-card">
+      <span class="resource-type-badge">Tool · Counselor</span>
+      <h3>Counselor Caseload Tracker</h3>
+      <p>A focused tracker for referrals, tiered caseloads, session logs, and follow-ups — see your whole caseload and direct-vs-indirect service time at a glance.</p>
+      <a href="/counselor-caseload-tracker.html" class="resource-link">View Tracker →</a>
+    </div>
+  </div>`;
+
+  return `<div style="margin-bottom:32px">
+    <div style="font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">Counselor Resources <span style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.4);padding:3px 10px;border-radius:4px">SEL · Small Groups · Caseload</span></div>
+    <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px">Everything for school counselors in one place — a complete SEL curriculum plus counselor software.</div>
+    ${sasCard}
+    ${toolCards}
+  </div>`;
+}
+
 function renderResources() {
-  const filtered = currentCat === 'all' ? allResources : allResources.filter(r => r.category === currentCat);
   const container = document.getElementById('resource-container');
+  // Counselor tab: curated client-side section (no rows in the DB `resources` table yet)
+  if (currentCat === 'counselor') {
+    container.innerHTML = renderCounselorSection();
+    return;
+  }
+  const filtered = currentCat === 'all' ? allResources : allResources.filter(r => r.category === currentCat);
   if (!filtered.length) {
     container.innerHTML = `<div class="resource-grid"><div class="empty-state"><div class="empty-icon">📂</div>No resources in this category yet.<br><span style="font-size:.8rem;margin-top:8px;display:block">Check back soon — we're adding new materials regularly.</span></div></div>`;
     return;
@@ -435,6 +505,9 @@ function renderResources() {
       }).join('')}</div>`;
     }
   }
+
+  // Surface the curated Counselor section in the "All Resources" view as well.
+  if (currentCat === 'all') html = renderCounselorSection() + html;
 
   container.innerHTML = html;
 }

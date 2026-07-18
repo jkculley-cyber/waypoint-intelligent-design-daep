@@ -197,6 +197,23 @@
 </footer>
 
 <!-- PURCHASE MODAL -->
+<!-- SELF AWARE SERIES — PREVIEW LIGHTBOX -->
+<div class="modal-overlay" id="sas-lightbox">
+  <div class="modal-box" style="max-width:560px;width:94%">
+    <button class="modal-close" onclick="closeSasPreview()">✕</button>
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a5b4fc;margin-bottom:6px">Self Aware Series · Preview</div>
+    <div id="sas-lb-title" style="font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:14px;line-height:1.35"></div>
+    <div style="position:relative;background:#fff;border-radius:10px;border:1px solid var(--border-purple);overflow:hidden">
+      <img id="sas-lb-main" src="" alt="Product preview" style="display:block;width:100%;max-height:60vh;object-fit:contain;background:#fff">
+      <button onclick="sasLbNav(-1)" aria-label="Previous" style="position:absolute;top:50%;left:8px;transform:translateY(-50%);background:rgba(20,6,36,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;width:40px;height:40px;border-radius:50%;cursor:pointer">‹</button>
+      <button onclick="sasLbNav(1)" aria-label="Next" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:rgba(20,6,36,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;width:40px;height:40px;border-radius:50%;cursor:pointer">›</button>
+    </div>
+    <div id="sas-lb-thumbs" style="display:flex;gap:8px;justify-content:center;margin-top:12px"></div>
+    <button id="sas-lb-buy" class="pc-buy" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);margin-top:16px">Buy this — <span id="sas-lb-price"></span> →</button>
+    <div style="font-size:.7rem;color:var(--text-muted);text-align:center;margin-top:6px">Sample pages shown. Full product delivered as a printable PDF after payment.</div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="checkout-modal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeCheckout()">✕</button>
@@ -569,6 +586,74 @@ const CLASSROOM_BUNDLES = [
   },
 ];
 
+// ── Self Aware Series — SEL curriculum (Grades 6–8 + K-5). Direct-via-Zelle only. ──
+// Three purchase tiers: full series bundle, per-unit bundle, or any single resource.
+// Files live in the private build; fulfilled by email after payment clears (same
+// manual flow as every other store product — buyer email + owner notification via
+// Formspree/ops go through the shared checkout modal).
+const SAS_SERIES = {
+  id: 'sas-series',
+  title: 'Self Aware Series — Complete SEL Curriculum Bundle (29 products)',
+  price: 89, origPrice: 226, noTpt: true,
+};
+
+// The four resources every middle-school unit ships (identical price/format across units).
+const SAS_COMPONENTS = [
+  { key: 'lesson',     type: 'Lesson Pack',        price: 10, desc: '5 research-based lessons + a student worksheet for every lesson (45–50 min each).' },
+  { key: 'activity',   type: 'Activity Pack',      price: 6,  desc: 'Print-and-cut scenario cards, strategy cards, a check-in journal, and a personal toolkit poster.' },
+  { key: 'bulletin',   type: 'Bulletin Board Set', price: 5,  desc: 'A full classroom display — header, the three-step method posters, and supporting cards.' },
+  { key: 'assessment', type: 'Assessment Tools',   price: 6,  desc: 'Pre/post self-assessment, skills quiz, rubric, weekly class tracker, and a parent letter.' },
+];
+
+const SAS_UNITS = [
+  { n: 1, method: 'Recognize. Name. Respond.', theme: 'Emotional Regulation',    blurb: 'Emotional literacy — read the body signal, name the feeling precisely, and choose the response. Five no-prep lessons grounded in the neuroscience of emotion.' },
+  { n: 2, method: 'Focus. Release. Act.',       theme: 'Circle of Control',       blurb: 'The Circle of Control — separate what you can and can’t control, release the worry that drains you, and take one real next step. Turns "don’t stress" into a usable skill.' },
+  { n: 3, method: 'Notice. Name. Choose.',      theme: 'Digital Wellness',        blurb: 'Digital wellness — how devices are designed to capture attention, what students are really seeking when they scroll, and how to use tech on purpose instead of on autopilot.' },
+  { n: 4, method: 'Fuel or Flood.',             theme: 'Stress Regulation',       blurb: 'Stress regulation — eustress vs. distress and the window of tolerance. Read it, Rate it, Route it, so students work with stress instead of drowning in it.' },
+  { n: 5, method: 'Calm Your System.',          theme: 'Body-Based Regulation',   blurb: 'Body-based regulation — breath, movement, sensory grounding, and co-regulation as evidence-based tools for bringing the nervous system back to baseline.' },
+  { n: 6, method: 'Rewrite the Script.',        theme: 'Cognitive Reframing',     blurb: 'Cognitive reframing (CBT-informed) — catch the thought, check it against the facts, and reframe it. The most evidence-based thinking tool in psychology, made middle-school friendly.' },
+  { n: 7, method: 'Use Your Energy.',           theme: 'Performance Energy',      blurb: 'Performance energy — reframe anxiety as excitement, build a pre-performance routine, and turn stress into a performance advantage. Great for test anxiety and athletes.' },
+];
+
+const SAS_K5 = {
+  id: 'sas-k5',
+  title: 'Self Aware Series · K–5 Lesson Pack — Recognize. Name. Respond. (Little Learners)',
+  price: 9, noTpt: true,
+};
+
+const sasUnitBundleId = (n) => 'sas-u' + n;
+const sasCompId = (n, key) => 'sas-u' + n + '-' + key;
+
+// Flat lookup index of every buyable SAS item (id → title/price) for openCheckout.
+// The title is what lands in the Zelle memo + the owner-notification email, so it
+// must be self-identifying enough to fulfill from.
+const SAS_INDEX = [{ id: SAS_SERIES.id, title: SAS_SERIES.title, price: SAS_SERIES.price, noTpt: true }];
+SAS_UNITS.forEach(u => {
+  SAS_INDEX.push({ id: sasUnitBundleId(u.n), title: `Self Aware Series · Unit ${u.n} Bundle — ${u.method} (${u.theme})`, price: 20, noTpt: true });
+  SAS_COMPONENTS.forEach(c => {
+    SAS_INDEX.push({ id: sasCompId(u.n, c.key), title: `Self Aware Series · Unit ${u.n} ${c.type} — ${u.method}`, price: c.price, noTpt: true });
+  });
+});
+SAS_INDEX.push({ id: SAS_K5.id, title: SAS_K5.title, price: SAS_K5.price, noTpt: true });
+
+// ── Preview images (cover + 3 sample pages per product), served from /previews/sas/ ──
+const SAS_UNIT_CODE = { 1: 'RNR-MS', 2: 'FRA-MS', 3: 'NNC-MS', 4: 'Unit4-Stress', 5: 'Unit5-Calm', 6: 'Unit6-Mind', 7: 'Unit7-Energy' };
+const SAS_TYPE_FILE = { lesson: 'Lesson-Pack', activity: 'Activity-Pack', bulletin: 'Bulletin-Board-Set', assessment: 'Assessment-Tools' };
+const sasCompSlug = (n, key) => `SAS-${SAS_UNIT_CODE[n]}-${SAS_TYPE_FILE[key]}`;
+const sasCoverUrl = (slug) => `/previews/sas/${slug}-cover.jpg`;
+const sasImgs = (slug) => [sasCoverUrl(slug), `/previews/sas/${slug}-preview-1.jpg`, `/previews/sas/${slug}-preview-2.jpg`, `/previews/sas/${slug}-preview-3.jpg`];
+
+// Registry keyed by buyable id → preview payload, so onclick handlers pass a clean
+// id (no title-quoting hazards) and the lightbox wires straight back to checkout.
+const SAS_PREVIEWS = {};
+SAS_UNITS.forEach(u => {
+  SAS_COMPONENTS.forEach(c => {
+    const slug = sasCompSlug(u.n, c.key);
+    SAS_PREVIEWS[sasCompId(u.n, c.key)] = { slug, title: `Unit ${u.n} · ${c.type} — ${u.method}`, imgs: sasImgs(slug) };
+  });
+});
+SAS_PREVIEWS[SAS_K5.id] = { slug: 'SAS-RNR-K5-Lesson-Pack', title: 'K–5 Lesson Pack — Recognize. Name. Respond. (Little Learners)', imgs: sasImgs('SAS-RNR-K5-Lesson-Pack') };
+
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -587,8 +672,19 @@ function switchSheet(productId, index) {
 }
 
 function openCheckout(productId) {
-  const item = PRODUCTS.find(p => p.id === productId) || BUNDLES.find(b => b.id === productId) || CLASSROOM_BUNDLES.find(c => c.id === productId);
+  const item = PRODUCTS.find(p => p.id === productId) || BUNDLES.find(b => b.id === productId) || CLASSROOM_BUNDLES.find(c => c.id === productId) || SAS_INDEX.find(s => s.id === productId);
   if (!item) return false;
+  // Reset the 2-step state so re-opening for a different product starts clean
+  // (buyers often purchase several Self Aware resources in one visit).
+  document.getElementById('co-paid-form').style.display = '';
+  document.getElementById('co-paid-success').style.display = 'none';
+  const coBtn = document.getElementById('co-paid-btn');
+  if (coBtn) { coBtn.disabled = false; coBtn.textContent = 'Continue to payment →'; }
+  const coMsg = document.getElementById('co-paid-msg');
+  if (coMsg) coMsg.style.display = 'none';
+  // Direct-only products (Self Aware Series) hide the TpT option.
+  const tpt = document.getElementById('co-tpt-link');
+  if (tpt) tpt.style.display = item.noTpt ? 'none' : '';
   document.getElementById('co-product-name').textContent = item.title;
   document.getElementById('co-product-price').textContent = '$' + item.price;
   document.getElementById('co-zelle-amount').textContent = '$' + item.price;
@@ -661,6 +757,9 @@ function renderProducts() {
       </div>
     `).join('')}
   </div>`;
+
+  // ── Self Aware Series — SEL curriculum (series / unit / individual) ──
+  html += renderSAS();
 
   // ── Principal Tools Section — Apex (Coming Soon — paused for new sign-ups) ──
   html += `<div class="store-section" style="padding-top:40px">
@@ -1032,6 +1131,165 @@ function renderBundleCard(b) {
         <div class="pc-note">TpT instant download or buy direct.<br>All products included.</div>
       </div>
     </div>
+  </div>`;
+}
+
+function toggleSas(n) {
+  const el = document.getElementById('sas-comps-u' + n);
+  const t = document.getElementById('sas-toggle-u' + n);
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (t) t.innerHTML = open ? 'Or buy pieces individually ▾' : 'Hide individual products ▴';
+}
+
+// ── Self Aware Series preview lightbox ──
+let sasLbImgs = [], sasLbIdx = 0;
+function sasLbGo(i) {
+  if (!sasLbImgs.length) return;
+  sasLbIdx = (i + sasLbImgs.length) % sasLbImgs.length;
+  document.getElementById('sas-lb-main').src = sasLbImgs[sasLbIdx];
+  document.querySelectorAll('#sas-lb-thumbs img').forEach((t, j) => {
+    t.style.outline = j === sasLbIdx ? '2px solid #8b5cf6' : '1px solid rgba(99,102,241,.25)';
+  });
+}
+function sasLbNav(d) { sasLbGo(sasLbIdx + d); }
+function openSasPreview(id) {
+  const p = SAS_PREVIEWS[id];
+  const item = SAS_INDEX.find(s => s.id === id);
+  if (!p) return;
+  sasLbImgs = p.imgs; sasLbIdx = 0;
+  document.getElementById('sas-lb-title').textContent = p.title;
+  const priceEl = document.getElementById('sas-lb-price');
+  if (priceEl) priceEl.textContent = item ? '$' + item.price : '';
+  const buy = document.getElementById('sas-lb-buy');
+  buy.onclick = function () { closeSasPreview(); openCheckout(id); };
+  document.getElementById('sas-lb-thumbs').innerHTML = p.imgs.map((src, i) =>
+    `<img src="${src}" alt="Preview ${i + 1}" onclick="sasLbGo(${i})" style="width:56px;height:56px;object-fit:cover;background:#fff;border-radius:6px;cursor:pointer;outline:1px solid rgba(99,102,241,.25)">`
+  ).join('');
+  sasLbGo(0);
+  document.getElementById('sas-lightbox').classList.add('open');
+}
+function closeSasPreview() { document.getElementById('sas-lightbox').classList.remove('open'); }
+document.addEventListener('DOMContentLoaded', function () {
+  const lb = document.getElementById('sas-lightbox');
+  if (lb) lb.addEventListener('click', function (e) { if (e.target === this) closeSasPreview(); });
+});
+
+function renderSAS() {
+  const s = SAS_SERIES;
+  const save = s.origPrice - s.price;
+  const pct = Math.round(save / s.origPrice * 100);
+
+  // Full-series hero
+  const heroHtml = `<div class="product-card bundle flagship" id="card-${s.id}" style="border-color:rgba(139,92,246,.5)">
+    <div style="height:4px;background:linear-gradient(90deg,#0ea5e9,#6366f1,#8b5cf6)"></div>
+    <div class="pc-layout">
+      <div class="pc-main">
+        <span class="pc-tag" style="color:#a78bfa">Complete Series · Best Value</span>
+        <div class="pc-title">Self Aware Series — Complete SEL Curriculum</div>
+        <div class="pc-short">One coherent, classroom-tested SEL system for grades 6–8 (plus a K–5 edition of Unit 1). Eight units take students from &ldquo;I don&rsquo;t know what I&rsquo;m feeling&rdquo; all the way to &ldquo;I can regulate myself and use stress on purpose&rdquo; — one method, one design, and one evidence base across every unit.</div>
+        <ul class="pc-includes">
+          <li><strong>29 print-and-go PDF resources</strong> — lesson packs, activity packs, bulletin-board sets & assessment tools</li>
+          <li><strong>7 middle-school units</strong> — emotional regulation, self-control, digital wellness, stress, calming skills, cognitive reframing & performance energy</li>
+          <li><strong>K–5 Elementary Edition</strong> of Unit 1 for younger learners</li>
+          <li><strong>CASEL-aligned & no-prep</strong> — 45–50 min lessons for advisory, homeroom, SEL block & small-group counseling</li>
+          <li>A student worksheet for every lesson + teacher implementation notes throughout</li>
+        </ul>
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#818cf8;margin:4px 0 8px">🔍 Preview the units — tap any cover</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${SAS_UNITS.map(u => `<button onclick="openSasPreview('${sasCompId(u.n, 'lesson')}')" title="Preview Unit ${u.n} — ${esc(u.method)}" style="padding:0;border:1px solid rgba(99,102,241,.3);border-radius:6px;background:none;cursor:pointer;line-height:0">
+            <img src="${sasCoverUrl(sasCompSlug(u.n, 'lesson'))}" alt="Unit ${u.n} preview" loading="lazy" style="width:58px;height:58px;object-fit:cover;background:#fff;border-radius:5px">
+          </button>`).join('')}
+        </div>
+      </div>
+      <div class="pc-sidebar">
+        <div style="font-size:.72rem;color:var(--text-muted);text-decoration:line-through">$${s.origPrice} à la carte</div>
+        <span class="pc-price">$${s.price}</span>
+        <div style="font-size:.72rem;color:#4ade80;font-weight:700;margin:-2px 0 12px">Save $${save} · ~${pct}% off</div>
+        <button class="pc-buy" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="openCheckout('${s.id}')">Buy the full series →</button>
+        <div class="pc-note">Direct via Zelle. Files emailed after payment clears.</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Per-unit cards: bundle up top, individual resources behind a toggle
+  const unitsHtml = SAS_UNITS.map(u => {
+    const comps = SAS_COMPONENTS.map(c => `
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.16);border-radius:8px">
+        <img src="${sasCoverUrl(sasCompSlug(u.n, c.key))}" alt="${esc(c.type)} preview" loading="lazy" onclick="openSasPreview('${sasCompId(u.n, c.key)}')" title="Preview ${esc(c.type)}" style="flex-shrink:0;width:46px;height:46px;object-fit:cover;background:#fff;border-radius:5px;border:1px solid rgba(99,102,241,.3);cursor:pointer">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text)">${esc(c.type)} — $${c.price}</div>
+          <div style="font-size:.72rem;color:var(--text-muted);line-height:1.45">${esc(c.desc)}</div>
+          <button onclick="openSasPreview('${sasCompId(u.n, c.key)}')" style="background:none;border:none;color:#818cf8;font-size:.68rem;font-weight:600;cursor:pointer;padding:2px 0;text-decoration:underline">🔍 Preview</button>
+        </div>
+        <button onclick="openCheckout('${sasCompId(u.n, c.key)}')" style="flex-shrink:0;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#c7d2fe;font-size:.74rem;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;min-height:36px">Buy →</button>
+      </div>`).join('');
+
+    return `<div class="product-card" id="card-${sasUnitBundleId(u.n)}" style="border-color:rgba(99,102,241,.3)">
+      <div style="height:3px;background:linear-gradient(90deg,#0ea5e9,#6366f1,#8b5cf6)"></div>
+      <div style="padding:22px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px">
+            <span style="font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#818cf8">Unit ${u.n} · ${esc(u.theme)}</span>
+            <div style="font-family:'Cinzel',serif;font-size:1.08rem;font-weight:700;color:var(--text);margin:5px 0 7px">${esc(u.method)}</div>
+            <div style="font-size:.84rem;color:var(--text-muted);line-height:1.6">${esc(u.blurb)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
+              ${SAS_COMPONENTS.map(c => `<button onclick="openSasPreview('${sasCompId(u.n, c.key)}')" title="Preview ${esc(c.type)}" style="display:block;padding:0;border:none;background:none;cursor:pointer;text-align:center;width:66px">
+                <img src="${sasCoverUrl(sasCompSlug(u.n, c.key))}" alt="${esc(c.type)} preview" loading="lazy" style="width:66px;height:66px;object-fit:cover;background:#fff;border-radius:6px;border:1px solid rgba(99,102,241,.3)">
+                <div style="font-size:.6rem;color:#a5b4fc;margin-top:3px;line-height:1.2">${esc(c.type.replace(' Set','').replace(' Pack',''))}</div>
+              </button>`).join('')}
+            </div>
+            <div style="font-size:.68rem;color:#818cf8;margin-top:6px">🔍 Tap a cover to preview sample pages</div>
+          </div>
+          <div style="flex-shrink:0;text-align:center;min-width:158px">
+            <div style="font-size:.7rem;color:var(--text-muted);text-decoration:line-through">$27 separately</div>
+            <div style="font-family:'Cinzel',serif;font-size:1.9rem;font-weight:900;color:#a5b4fc;line-height:1.1">$20</div>
+            <div style="font-size:.68rem;color:#4ade80;font-weight:700;margin-bottom:10px">Save $7 · all 4 resources</div>
+            <button class="pc-buy" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);margin-bottom:8px" onclick="openCheckout('${sasUnitBundleId(u.n)}')">Buy unit bundle →</button>
+            <button id="sas-toggle-u${u.n}" onclick="toggleSas(${u.n})" style="background:none;border:none;color:#818cf8;font-size:.74rem;font-weight:600;cursor:pointer;text-decoration:underline;padding:2px">Or buy pieces individually ▾</button>
+          </div>
+        </div>
+        <div id="sas-comps-u${u.n}" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid rgba(99,102,241,.2)">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">${comps}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // K-5 edition (standalone lesson pack)
+  const k5 = SAS_K5;
+  const k5Html = `<div class="product-card" id="card-${k5.id}" style="border-color:rgba(14,165,233,.3)">
+    <div style="height:3px;background:linear-gradient(90deg,#38bdf8,#0ea5e9,#6366f1)"></div>
+    <div class="pc-layout">
+      <div class="pc-main">
+        <span class="pc-tag" style="color:#38bdf8">K–5 Edition · Grades K–5</span>
+        <div class="pc-title">Recognize. Name. Respond. — Little Learners</div>
+        <div class="pc-short">Big ideas for little people — the K–5 edition of the series&rsquo; emotional-literacy unit. Five gentle, engaging lessons teaching young students to notice what their body is feeling, name their emotions, and choose a healthy response. Includes emotion vocabulary cards.</div>
+        <button onclick="openSasPreview('${k5.id}')" style="display:inline-flex;align-items:center;gap:10px;margin-top:6px;padding:6px;border:1px solid rgba(14,165,233,.3);border-radius:8px;background:none;cursor:pointer">
+          <img src="${sasCoverUrl('SAS-RNR-K5-Lesson-Pack')}" alt="K–5 Lesson Pack preview" loading="lazy" style="width:52px;height:52px;object-fit:cover;background:#fff;border-radius:5px">
+          <span style="font-size:.72rem;font-weight:700;color:#38bdf8">🔍 Preview sample pages</span>
+        </button>
+      </div>
+      <div class="pc-sidebar">
+        <span class="pc-price">$${k5.price}</span>
+        <button class="pc-buy" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)" onclick="openCheckout('${k5.id}')">Buy Now →</button>
+        <div class="pc-note">Lesson Pack · printable PDF, color + B&W.</div>
+      </div>
+    </div>
+  </div>`;
+
+  return `<div class="store-section" id="self-aware" style="padding-top:40px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+      <div class="section-label" style="margin-bottom:0">Self Aware Series — SEL Curriculum</div>
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.4);padding:3px 10px;border-radius:4px">New</span>
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(14,165,233,.12);color:#38bdf8;border:1px solid rgba(14,165,233,.35);padding:3px 10px;border-radius:4px">Grades 6–8 + K–5</span>
+    </div>
+    <div class="section-desc">A complete, classroom-tested social-emotional learning curriculum — buy the whole series, a single unit, or any individual resource. Print-and-go PDFs, no prep, CASEL-aligned, with one consistent method and design across all 8 units.</div>
+    ${heroHtml}
+    <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#818cf8;margin:4px 0 16px">Or buy by the unit ↓</div>
+    ${unitsHtml}
+    ${k5Html}
   </div>`;
 }
 
