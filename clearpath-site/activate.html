@@ -196,7 +196,7 @@ const OPS_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const HEADERS = { 'apikey': OPS_KEY, 'Authorization': `Bearer ${OPS_KEY}` };
 
 const PRODUCTS = {
-  INV: { name: 'Investigator Toolkit', file: '/downloads/Campus-Investigation-Toolkit.html', color: '#6366f1' },
+  INV: { name: 'Investigator Toolkit', file: '/downloads/Campus-Investigation-Toolkit.html', filename: 'Campus-Investigation-Toolkit.html', color: '#6366f1' },
   // Beacon is a Vite SPA deployed on its own Cloudflare Pages project.
   // The /downloads/ HTML was a broken multi-chunk build (assets not bundled).
   // Point activated users straight at the deployed app with their key prefilled.
@@ -301,7 +301,14 @@ async function activate() {
     } else {
       // Downloadable single-file product (e.g. Investigator Toolkit)
       link.href = productInfo.file;
-      link.setAttribute('download', '');
+      // Force the saved filename, INCLUDING the .html extension. Cloudflare
+      // Pages strips .html from URLs (a 308 sends /x.html -> /x), and the
+      // response carries no Content-Disposition, so a bare `download` attribute
+      // made the browser name the file from the redirected URL — saving
+      // "Campus-Investigation-Toolkit" with NO extension. A single-file HTML app
+      // saved without .html doesn't open on double-click, which is exactly what
+      // the note below tells the counselor to do.
+      link.setAttribute('download', productInfo.filename || 'download.html');
       link.removeAttribute('target');
       link.removeAttribute('rel');
       label.textContent = 'Download Now';
