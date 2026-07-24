@@ -163,14 +163,25 @@ async function sendEmail(env, to, { subject, text, html }) {
 
 /* ─── Plan computation (pure) ─── */
 
-export function computeStoreNudges({ leads, state, now }) {
+export function computeStoreNudges({ leads, state, now, customerEmails }) {
   const plan = [];
   const optout = new Set((state.optout || []).map((e) => e.toLowerCase()));
+  // Anyone holding an ACTIVE license is an existing paying customer and must
+  // never receive an automated "we haven't seen your payment" nudge.
+  // Why this exists: on 2026-07-19 this drip emailed a paying Beacon customer
+  // (nhill@magnoliaisd.org, active license) because she re-registered while
+  // DEMOING the store to her district — status stayed 'new', so she looked
+  // unpaid. Dunning a customer in front of a district is a relationship cost.
+  // Deliberately conservative: we skip on ANY active license, not just one
+  // matching this product. A missed nudge costs nothing (the lead is still
+  // visible in Waypoint Admin for a personal follow-up); a wrongly-sent nudge
+  // costs trust.
+  const customers = new Set([...(customerEmails || [])].map((e) => (e || '').toLowerCase()));
   const seen = new Set(); // dedupe by email|product, earliest registration wins
 
   for (const lead of leads) {
     const email = (lead.email || '').toLowerCase();
-    if (!isRealEmail(email) || optout.has(email)) continue;
+    if (!isRealEmail(email) || optout.has(email) || customers.has(email)) continue;
     const reg = parseRegistration(lead.referrer);
     if (!reg) continue;
     const key = `${email}|${reg.product.toLowerCase()}`;
@@ -221,6 +232,20 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse(502, { error: `ops fetch failed: ${err.message}` });
   }
 
+  // Existing paying customers — never nudge these. If this lookup fails we
+  // FAIL THE RUN rather than send: a missed cycle is recoverable, an email
+  // dunning a paying customer is not.
+  let customerEmails = [];
+  try {
+    const res = await opsFetch(env, 'product_licenses?status=eq.active&select=customer_email');
+    if (!res.ok) throw new Error(`product_licenses ${res.status}`);
+    customerEmails = (await res.json()).map((r) => r.customer_email).filter(Boolean);
+  } catch (err) {
+    return jsonResponse(502, {
+      error: `customer-license lookup failed, refusing to send: ${err.message}`,
+    });
+  }
+
   let stateWrap;
   try {
     stateWrap = await loadState(env);
@@ -229,12 +254,17 @@ export async function onRequestPost({ request, env }) {
   }
   const { state, exists } = stateWrap;
 
-  const plan = computeStoreNudges({ leads, state, now: Date.now() });
+  const plan = computeStoreNudges({ leads, state, now: Date.now(), customerEmails });
 
   if (dry) {
+    const customerSet = new Set(customerEmails.map((e) => e.toLowerCase()));
     return jsonResponse(200, {
       dry: true,
       unpaid_registrations: leads.length,
+      active_customers_protected: customerEmails.length,
+      skipped_existing_customers: leads
+        .map((l) => (l.email || '').toLowerCase())
+        .filter((e) => customerSet.has(e)),
       planned: plan.map((p) => ({ email: p.email, product: p.reg.product, amount: p.reg.amount })),
     });
   }
