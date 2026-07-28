@@ -1,0 +1,68 @@
+name: Uptime Monitor (X-2)
+
+# Watches every customer-facing surface and asserts on CONTENT, not just status
+# codes — because every real incident here returned HTTP 200 while broken
+# (CC31 served the Waypoint app at the marketing domain; B-2's /api/* returned
+# HTML instead of JSON). See docs/ops/x2-uptime-monitoring-scope.md.
+#
+# Alerting:
+#   - Primary: this job FAILS, and GitHub emails the repo owner. Zero config.
+#   - Optional: add a RESEND_API_KEY repo secret for a rich email naming the
+#     failing check, expected vs actual. The script degrades gracefully without it.
+#
+# Deliberately does NOT call a Pages Function to do its work (unlike the drip
+# cron): if the site is down that Function is down too, and could not report it.
+# Everything runs here, independent of the infrastructure being watched.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 min — hearings/crises are hour-scale events
+  workflow_dispatch:
+    inputs:
+      json:
+        description: 'Machine-readable JSON output'
+        type: boolean
+        default: false
+
+# A backed-up queue of monitor runs helps nobody; keep only the newest.
+concurrency:
+  group: uptime-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'   # global fetch, no dependencies to install
+
+      - name: Probe production
+        env:
+          # Empty when the secret isn't set — the script then relies on this
+          # job's own failure as the alert.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL: ${{ vars.ALERT_EMAIL }}
+        run: |
+          if [ "${{ inputs.json }}" = "true" ]; then
+            node scripts/uptime-check.mjs --json
+          else
+            node scripts/uptime-check.mjs
+          fi
+
+      - name: Explain a failure
+        if: failure()
+        run: |
+          echo "::notice::Production checks failed. See the step above for which surface and why."
+          echo "Runbook: docs/ops/x2-uptime-monitoring-scope.md"
+          echo ""
+          echo "Two failure modes that look alike but aren't:"
+          echo "  * 'served the SPA fallback' -> a route/Function is missing from the deploy."
+          echo "  * 'still serves real content' -> a file that should be GONE is still cached"
+          echo "    at the Cloudflare edge. Purge it; removing it from git is not enough."
