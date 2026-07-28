@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Counselor Crisis Response Card</title>
+<style>
+  :root {
+    --ink: #1e1b3a; --navy: #221844; --paper: #fff; --muted: #6b6885;
+    --suicide: #c22a2a; --abuse: #b45309; --threat: #7c2d8f;
+    --medical: #1f6fb5; --parent: #17998a; --doc: #3a3f58;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #555; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); }
+  .page { width: 11in; height: 8.5in; background: var(--paper); position: relative; overflow: hidden; margin: 0 auto 12px; display: flex; flex-direction: column; }
+  @media print { html, body { background: #fff; } .page { margin: 0; page-break-after: always; } .page:last-child { page-break-after: avoid; } }
+  @page { size: 11in 8.5in; margin: 0; }
+
+  .band { background: var(--navy); color: #fff; padding: 0.24in 0.5in 0.2in; display: flex; align-items: baseline; justify-content: space-between; }
+  .band h1 { font-size: 20pt; letter-spacing: 0.5px; }
+  .band .sub { font-size: 10pt; color: #cfc8e8; font-weight: 600; }
+  .foot { margin-top: auto; padding: 0.12in 0.5in; border-top: 2px solid var(--navy); display: flex; justify-content: space-between; font-size: 8.5pt; color: var(--muted); font-weight: 600; letter-spacing: 0.4px; }
+  .foot .brand { color: var(--navy); }
+
+  .cover { background: var(--navy); color: #fff; justify-content: center; align-items: center; text-align: center; }
+  .cover .free { display: inline-block; background: #ffd23f; color: var(--navy); font-weight: 800; font-size: 11pt; letter-spacing: 2px; padding: 5px 22px; border-radius: 99px; margin-bottom: 0.35in; }
+  .cover h1 { font-size: 40pt; line-height: 1.12; }
+  .cover h2 { font-size: 15pt; font-weight: 600; color: #cfc8e8; margin-top: 0.22in; }
+  .cover .chips { margin-top: 0.45in; max-width: 9in; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .cover .chip { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.35); border-radius: 99px; padding: 7px 16px; font-size: 11pt; font-weight: 600; }
+  .cover .org { position: absolute; bottom: 0.45in; left: 0; right: 0; font-size: 11pt; letter-spacing: 3px; color: #cfc8e8; font-weight: 700; }
+
+  .cols { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.24in; padding: 0.24in 0.5in; }
+  .proto { border: 1.5px solid; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+  .proto h3 { color: #fff; font-size: 12.5pt; letter-spacing: 1px; padding: 0.08in 0.15in; }
+  .proto ol { padding: 0.08in 0.15in 0.06in 0.42in; display: flex; flex-direction: column; flex: 1; justify-content: space-evenly; gap: 3px; }
+  .proto li { font-size: 9.4pt; line-height: 1.28; padding-left: 3px; }
+  .proto li::marker { font-weight: 800; }
+  .hotline { margin: 0 0.15in 0.1in; padding: 0.06in 0.1in; border-radius: 6px; font-size: 8.8pt; font-weight: 700; }
+  .proto.suicide { border-color: var(--suicide); } .proto.suicide h3 { background: var(--suicide); } .proto.suicide li::marker { color: var(--suicide); } .proto.suicide .hotline { background: #fbeaea; color: #8f1f1f; }
+  .proto.abuse   { border-color: var(--abuse); }   .proto.abuse h3   { background: var(--abuse); }   .proto.abuse li::marker   { color: var(--abuse); }   .proto.abuse .hotline   { background: #fdf3e0; color: #7a4a05; }
+  .proto.threat  { border-color: var(--threat); }  .proto.threat h3  { background: var(--threat); }  .proto.threat li::marker  { color: var(--threat); }  .proto.threat .hotline  { background: #f6eafa; color: #5e2270; }
+  .proto.medical { border-color: var(--medical); } .proto.medical h3 { background: var(--medical); } .proto.medical li::marker { color: var(--medical); } .proto.medical .hotline { background: #e8f2fb; color: #164e80; }
+  .proto.parent  { border-color: var(--parent); }  .proto.parent h3  { background: var(--parent); }  .proto.parent li::marker  { color: var(--parent); }  .proto.parent .hotline  { background: #e6f5f3; color: #0f6b60; }
+
+  .law { background: #fbeaea; border: 1.5px solid var(--suicide); border-radius: 6px; margin: 0 0.15in 0.1in; padding: 0.07in 0.1in; font-size: 8.8pt; line-height: 1.35; font-weight: 700; color: #8f1f1f; }
+
+  /* page 4 */
+  .threecol { flex: 1; display: grid; grid-template-columns: 1fr 1.15fr; gap: 0.24in; padding: 0.24in 0.5in; }
+  .panel { border: 1.5px solid var(--doc); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+  .panel h3 { background: var(--doc); color: #fff; font-size: 12pt; letter-spacing: 1px; padding: 0.08in 0.15in; }
+  .panel .body { padding: 0.1in 0.15in; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+  .check { font-size: 9.6pt; line-height: 1.35; display: flex; gap: 8px; }
+  .check .box { flex: 0 0 auto; width: 11px; height: 11px; border: 1.6px solid var(--doc); border-radius: 2px; margin-top: 2.5px; }
+  .warnnote { margin: 0.08in 0.15in 0.12in; padding: 0.06in 0.1in; background: #fdf3e0; border: 1.5px solid var(--abuse); border-radius: 6px; font-size: 8.8pt; font-weight: 700; color: #7a4a05; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--navy); color: #fff; text-align: left; font-size: 9.5pt; padding: 0.05in 0.1in; letter-spacing: 0.5px; }
+  td { font-size: 9.2pt; line-height: 1.3; padding: 0.045in 0.1in; border-bottom: 1px solid #e4e1f0; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f7f6fc; }
+  td.k { font-weight: 700; color: var(--navy); white-space: nowrap; }
+  td.ph { font-weight: 800; color: var(--suicide); white-space: nowrap; }
+  .stack { display: flex; flex-direction: column; gap: 0.22in; min-height: 0; }
+  .stack > .proto, .stack > .panel { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 · COVER -->
+<div class="page cover">
+  <div>
+    <div class="free">FREE RESOURCE</div>
+    <h1>Counselor Crisis<br>Response Card</h1>
+    <h2>For Texas Public School Counselors, K–12 · Step-by-step protocols for when it matters most</h2>
+    <div class="chips">
+      <span class="chip">🔴 Suicide Ideation / Self-Harm</span>
+      <span class="chip">🟠 Abuse / Neglect Disclosure</span>
+      <span class="chip">🟣 Threat to Others</span>
+      <span class="chip">🔵 Medical / Mental Health Emergency</span>
+      <span class="chip">🟢 Parent in Crisis</span>
+      <span class="chip">📋 Documentation + Texas Reporting Law</span>
+      <span class="chip" style="background:#ffd23f; color:#221844; border-color:#ffd23f; font-weight:800;">🚫 NEW SB 571: Why Telling Your SRO Isn't Enough</span>
+    </div>
+  </div>
+  <div class="org">CLEAR PATH EDUCATION GROUP</div>
+</div>
+
+<!-- PAGE 2 · SUICIDE + ABUSE -->
+<div class="page">
+  <div class="band">
+    <h1>CRISIS PROTOCOLS — Act First, In Order</h1>
+    <span class="sub">Texas Public School Counselors &nbsp;·&nbsp; 1 of 2</span>
+  </div>
+  <div class="cols">
+    <div class="proto suicide">
+      <h3>1 · SUICIDE IDEATION / SELF-HARM</h3>
+      <ol>
+        <li>Stay calm. Do NOT leave the student alone.</li>
+        <li>Ask directly: "Are you thinking about hurting yourself?" (Asking does NOT plant the idea.)</li>
+        <li>Assess: Does the student have a plan? Access to means? Timeline?</li>
+        <li>Contact parent/guardian IMMEDIATELY. Document exact words.</li>
+        <li>If imminent danger → Call 911. Otherwise → Refer to LCSW/crisis center.</li>
+        <li>Create a safety plan before the student leaves your office.</li>
+        <li>Follow up within 24 hours. Document everything.</li>
+      </ol>
+      <div class="hotline">☎ 988 Suicide &amp; Crisis Lifeline &nbsp;|&nbsp; Crisis Text Line: text HOME to 741741</div>
+    </div>
+    <div class="proto abuse">
+      <h3>2 · ABUSE / NEGLECT DISCLOSURE</h3>
+      <ol>
+        <li>Listen. Do not react with shock or emotion on your face.</li>
+        <li>Say: "Thank you for telling me. This is NOT your fault."</li>
+        <li>Do NOT ask leading questions. Do NOT investigate.</li>
+        <li>Document the student's EXACT words (use quotation marks).</li>
+        <li>Report within 24 hours to DFPS or a law enforcement agency — many districts require BOTH; follow your district policy (TFC §261.101, as amended by SB 571, 2025). Failure to report is a Class A misdemeanor (TFC §261.109).</li>
+        <li>Do NOT tell the parent if the parent is the suspected abuser.</li>
+        <li>Do NOT promise confidentiality. Say: "I have to tell people who can help keep you safe."</li>
+      </ol>
+      <div class="law">🚫 Telling your SRO does NOT satisfy the law. Per TEA's SB 571 guidance, "law enforcement agency" means DPS, municipal police, a county sheriff, or a county constable — it does NOT include a school district police department.</div>
+      <div class="hotline">☎ Texas Abuse Hotline (DFPS): 1-800-252-5400 — staffed 24/7</div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+<!-- PAGE 3 · THREAT + MEDICAL + PARENT -->
+<div class="page">
+  <div class="band">
+    <h1>CRISIS PROTOCOLS — Act First, In Order</h1>
+    <span class="sub">Texas Public School Counselors &nbsp;·&nbsp; 2 of 2</span>
+  </div>
+  <div class="cols">
+    <div class="proto threat">
+      <h3>3 · THREAT TO OTHERS</h3>
+      <ol>
+        <li>Separate the student from potential victims immediately.</li>
+        <li>Notify the principal and SRO (if on campus).</li>
+        <li>Conduct or initiate a threat assessment (use district protocol).</li>
+        <li>Determine: transient threat (expression of frustration) or substantive threat (intent + plan)?</li>
+        <li>Contact parents of BOTH the student making the threat AND the potential victim(s).</li>
+        <li>Document everything: time, exact words, witnesses.</li>
+        <li>Develop a safety plan. May require schedule change, supervision plan, or removal.</li>
+      </ol>
+      <div class="hotline">⚠️ Follow your district's SB 11 threat assessment team protocol for every threat.</div>
+    </div>
+    <div class="stack">
+      <div class="proto medical">
+        <h3>4 · MEDICAL / MENTAL HEALTH EMERGENCY</h3>
+        <ol>
+          <li>Call 911 if the student is unconscious, seizing, not breathing, or actively harming self.</li>
+          <li>Call the school nurse. Stay with the student.</li>
+          <li>Clear the area of other students (protect dignity). Do NOT move the student unless there is immediate danger.</li>
+          <li>Contact parent/guardian. Brief responding admin with known medical history.</li>
+          <li>After the event — offer support to witnesses (students AND staff).</li>
+        </ol>
+      </div>
+      <div class="proto parent">
+        <h3>5 · PARENT IN CRISIS (AT SCHOOL)</h3>
+        <ol>
+          <li>Stay calm. Low, steady voice. Do not match their energy. Move to a private space.</li>
+          <li>Verbally threatening → call admin/SRO. You are not required to be yelled at.</li>
+          <li>Emotionally distressed → "I can see how much you care about [child]. Let's work on this together."</li>
+          <li>Domestic violence disclosure → National DV Hotline 1-800-799-7233.</li>
+          <li>Document: date, time, who was present, key statements.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+<!-- PAGE 4 · DOCUMENTATION + LAW + NUMBERS -->
+<div class="page">
+  <div class="band">
+    <h1>DOCUMENTATION &amp; TEXAS REPORTING LAW</h1>
+    <span class="sub">Every crisis · Every time</span>
+  </div>
+  <div class="threecol">
+    <div class="panel">
+      <h3>📋 CRISIS DOCUMENTATION CHECKLIST</h3>
+      <div class="body">
+        <div class="check"><span class="box"></span>Date and time of disclosure/incident</div>
+        <div class="check"><span class="box"></span>Student's exact words (use quotation marks)</div>
+        <div class="check"><span class="box"></span>Your observations (behavior, affect, physical signs)</div>
+        <div class="check"><span class="box"></span>Who was notified and when (admin, parent, DFPS, police)</div>
+        <div class="check"><span class="box"></span>Actions taken (safety plan, referral, removal from class)</div>
+        <div class="check"><span class="box"></span>Follow-up plan and timeline</div>
+        <div class="check"><span class="box"></span>Signatures (yours + witness if available)</div>
+      </div>
+      <div class="warnnote">⚠️ Do NOT keep crisis notes in regular counseling files. Maintain a separate locked file.</div>
+    </div>
+    <div class="stack" style="min-height:0">
+      <div class="panel" style="flex:1.5">
+        <h3>⚖️ TEXAS REPORTING REQUIREMENTS</h3>
+        <div class="body">
+          <table>
+            <tr><td class="k">Report deadline</td><td>Within <b>24 hours</b> of first suspicion — TFC §261.101, as amended by SB 571 (2025). The duty is yours personally and <b>cannot be delegated</b>.</td></tr>
+            <tr><td class="k">Where to report</td><td>DFPS (1-800-252-5400) or a <b>law enforcement agency</b>: DPS, municipal police, county sheriff, or county constable. <b>Many district policies require BOTH — follow yours.</b> Per TEA guidance, a <b>school district police department does NOT count</b> — telling your SRO does not discharge the duty.</td></tr>
+            <tr><td class="k">What counts as abuse</td><td>SB 571 expanded abuse to include <b>sexual conduct harmful to a child</b> — including an improper educator-student relationship (Penal Code §21.12) and encouraging a child to engage in sexual conduct.</td></tr>
+            <tr><td class="k">Failure to report</td><td>Class A misdemeanor (TFC §261.109)</td></tr>
+            <tr><td class="k">Immunity</td><td>Good-faith reporters are immune from civil/criminal liability (TFC §261.106)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <h3>☎️ EMERGENCY NUMBERS</h3>
+        <div class="body">
+          <table>
+            <tr><th>Who</th><th>Number</th><th>When</th></tr>
+            <tr><td class="k">911</td><td class="ph">911</td><td>Imminent danger to life</td></tr>
+            <tr><td class="k">Texas Abuse Hotline (DFPS)</td><td class="ph">1-800-252-5400</td><td>Suspected abuse/neglect</td></tr>
+            <tr><td class="k">988 Suicide &amp; Crisis Lifeline</td><td class="ph">988</td><td>Suicide ideation</td></tr>
+            <tr><td class="k">Crisis Text Line</td><td class="ph">HOME → 741741</td><td>Student prefers text</td></tr>
+            <tr><td class="k">National DV Hotline</td><td class="ph">1-800-799-7233</td><td>Domestic violence disclosure</td></tr>
+            <tr><td class="k">Poison Control</td><td class="ph">1-800-222-1222</td><td>Ingestion/substance</td></tr>
+            <tr><td class="k">Texas School Safety Center</td><td class="ph">1-877-304-2727</td><td>School safety concern</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+</body>
+</html>

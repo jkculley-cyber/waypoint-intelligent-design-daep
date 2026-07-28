@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elementary Counselor's Conversation Starters</title>
+<style>
+  :root {
+    --ink: #1e1b3a;
+    --navy: #221844;
+    --paper: #ffffff;
+    --muted: #6b6885;
+    --grief: #2f6fd0;
+    --anger: #d64545;
+    --anxiety: #7c4dcc;
+    --friend: #17998a;
+    --divorce: #e07020;
+    --newstu: #2e9e4f;
+    --bully: #d98b12;
+    --abuse: #3a3f58;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #555; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); }
+
+  .page {
+    width: 11in; height: 8.5in;
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto 12px;
+    display: flex; flex-direction: column;
+  }
+  @media print {
+    html, body { background: #fff; }
+    .page { margin: 0; page-break-after: always; }
+    .page:last-child { page-break-after: avoid; }
+  }
+  @page { size: 11in 8.5in; margin: 0; }
+
+  /* ── shared chrome ─────────────────────────────── */
+  .band {
+    background: var(--navy); color: #fff;
+    padding: 0.28in 0.5in 0.24in;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .band h1 { font-size: 21pt; letter-spacing: 0.5px; }
+  .band .sub { font-size: 10pt; color: #cfc8e8; font-weight: 600; }
+  .foot {
+    margin-top: auto;
+    padding: 0.14in 0.5in;
+    border-top: 2px solid var(--navy);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8.5pt; color: var(--muted); font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+  .foot .brand { color: var(--navy); }
+
+  /* ── cover ─────────────────────────────────────── */
+  .cover { background: var(--navy); color: #fff; justify-content: center; align-items: center; text-align: center; }
+  .cover .free {
+    display: inline-block; background: #ffd23f; color: var(--navy);
+    font-weight: 800; font-size: 11pt; letter-spacing: 2px;
+    padding: 5px 22px; border-radius: 99px; margin-bottom: 0.35in;
+  }
+  .cover h1 { font-size: 40pt; line-height: 1.12; max-width: 8.6in; }
+  .cover h2 { font-size: 15pt; font-weight: 600; color: #cfc8e8; margin-top: 0.22in; }
+  .cover .chips { margin-top: 0.45in; max-width: 8.8in; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .cover .chip {
+    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 99px; padding: 7px 16px; font-size: 11pt; font-weight: 600;
+  }
+  .cover .org { position: absolute; bottom: 0.45in; left: 0; right: 0; font-size: 11pt; letter-spacing: 3px; color: #cfc8e8; font-weight: 700; }
+
+  /* ── card grid pages ───────────────────────────── */
+  .grid {
+    flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 0.22in; padding: 0.28in 0.5in;
+  }
+  .card { border: 1.5px solid; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+  .card h3 {
+    color: #fff; font-size: 12.5pt; letter-spacing: 1.5px;
+    padding: 0.09in 0.16in; display: flex; align-items: center; gap: 8px;
+  }
+  .card h3 .em { font-size: 14pt; }
+  .card ul { list-style: none; padding: 0.1in 0.16in; display: flex; flex-direction: column; gap: 5px; flex: 1; justify-content: space-evenly; }
+  .card li { font-size: 9.6pt; line-height: 1.3; display: flex; gap: 7px; align-items: flex-start; }
+  .tag {
+    flex: 0 0 auto; width: 0.34in; text-align: center;
+    font-size: 7.5pt; font-weight: 800; border-radius: 4px; padding: 2px 0;
+    margin-top: 1px; color: #fff;
+  }
+  .card.grief   { border-color: var(--grief); }   .card.grief h3   { background: var(--grief); }   .card.grief .tag   { background: var(--grief); }
+  .card.anger   { border-color: var(--anger); }   .card.anger h3   { background: var(--anger); }   .card.anger .tag   { background: var(--anger); }
+  .card.anxiety { border-color: var(--anxiety); } .card.anxiety h3 { background: var(--anxiety); } .card.anxiety .tag { background: var(--anxiety); }
+  .card.friend  { border-color: var(--friend); }  .card.friend h3  { background: var(--friend); }  .card.friend .tag  { background: var(--friend); }
+  .card.divorce { border-color: var(--divorce); } .card.divorce h3 { background: var(--divorce); } .card.divorce .tag { background: var(--divorce); }
+  .card.newstu  { border-color: var(--newstu); }  .card.newstu h3  { background: var(--newstu); }  .card.newstu .tag  { background: var(--newstu); }
+  .card.bully   { border-color: var(--bully); }   .card.bully h3   { background: var(--bully); }   .card.bully .tag   { background: var(--bully); }
+  .card.abuse   { border-color: var(--abuse); }   .card.abuse h3   { background: var(--abuse); }   .card.abuse .tag   { background: var(--abuse); }
+
+  .warn {
+    margin: 0 0.16in 0.12in; padding: 0.08in 0.12in;
+    background: #fdf3e0; border: 1.5px solid var(--bully); border-radius: 6px;
+    font-size: 8.6pt; line-height: 1.35; font-weight: 600; color: #7a4a05;
+  }
+
+  /* ── what-not-to-say table ─────────────────────── */
+  .tblwrap { flex: 1; padding: 0.26in 0.5in; }
+  table { width: 100%; border-collapse: collapse; height: 100%; }
+  th {
+    background: var(--navy); color: #fff; text-align: left;
+    font-size: 10.5pt; letter-spacing: 1px; padding: 0.08in 0.12in;
+  }
+  td { font-size: 9.3pt; line-height: 1.3; padding: 0.055in 0.12in; border-bottom: 1px solid #e4e1f0; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f7f6fc; }
+  td.no  { color: #b32424; font-weight: 700; width: 24%; }
+  td.why { color: #4a4763; width: 38%; }
+  td.yes { color: #146b3a; font-weight: 700; width: 38%; }
+</style>
+</head>
+<body>
+
+<!-- ── PAGE 1 · COVER ─────────────────────────────── -->
+<div class="page cover">
+  <div>
+    <div class="free">FREE RESOURCE</div>
+    <h1>Elementary Counselor's<br>Conversation Starters</h1>
+    <h2>Age-appropriate prompts for K–5 — what to say, and what never to say</h2>
+    <div class="chips">
+      <span class="chip">😢 Grief &amp; Loss</span>
+      <span class="chip">😡 Anger &amp; Frustration</span>
+      <span class="chip">😰 Anxiety &amp; Worry</span>
+      <span class="chip">👫 Friendship Conflict</span>
+      <span class="chip">💔 Divorce &amp; Family Changes</span>
+      <span class="chip">🆕 New Student</span>
+      <span class="chip">🛡️ Bullying</span>
+      <span class="chip">🏠 Suspected Abuse / Neglect</span>
+    </div>
+  </div>
+  <div class="org">CLEAR PATH EDUCATION GROUP</div>
+</div>
+
+<!-- ── PAGE 2 · WHAT TO SAY (1 of 2) ──────────────── -->
+<div class="page">
+  <div class="band">
+    <h1>WHAT TO SAY — Conversation Starters</h1>
+    <span class="sub">Age-Appropriate Prompts for K–5 &nbsp;·&nbsp; 1 of 2</span>
+  </div>
+  <div class="grid">
+    <div class="card grief">
+      <h3><span class="em">😢</span> GRIEF &amp; LOSS</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"Can you draw me a picture of your favorite memory with [person]?"</li>
+        <li><span class="tag">K-2</span>"Sometimes our hearts feel heavy. Can you show me where yours hurts?"</li>
+        <li><span class="tag">3-5</span>"What's the hardest part of your day right now?"</li>
+        <li><span class="tag">3-5</span>"If you could tell [person] one thing right now, what would it be?"</li>
+        <li><span class="tag">All</span>"It's okay to feel sad and happy in the same day. Both feelings are real."</li>
+      </ul>
+    </div>
+    <div class="card anger">
+      <h3><span class="em">😡</span> ANGER &amp; FRUSTRATION</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"Your body looks like it has big feelings right now. Can you show me what color your anger is?"</li>
+        <li><span class="tag">K-2</span>"Let's take 5 dragon breaths together. Ready? Breathe in through your nose... out like a dragon."</li>
+        <li><span class="tag">3-5</span>"On a scale of 1–10, how angry are you right now? What would it take to bring it down by 2?"</li>
+        <li><span class="tag">3-5</span>"I notice you're upset. Tell me what happened from the very beginning."</li>
+        <li><span class="tag">All</span>"Being angry is okay. What we DO with anger is the part we get to choose."</li>
+      </ul>
+    </div>
+    <div class="card anxiety">
+      <h3><span class="em">😰</span> ANXIETY &amp; WORRY</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"If your worry was a monster, what would it look like? Let's draw it and make it smaller."</li>
+        <li><span class="tag">K-2</span>"Let's play the 5-4-3-2-1 game. Tell me 5 things you can see right now."</li>
+        <li><span class="tag">3-5</span>"What's the worst thing you think could happen? Now... what's the most LIKELY thing?"</li>
+        <li><span class="tag">3-5</span>"If your best friend had this same worry, what would you tell them?"</li>
+        <li><span class="tag">All</span>"Your brain is trying to protect you. Let's teach it that you're safe right now."</li>
+      </ul>
+    </div>
+    <div class="card friend">
+      <h3><span class="em">👫</span> FRIENDSHIP CONFLICT</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"Can you tell me what happened using 'I felt ___ when ___'?"</li>
+        <li><span class="tag">K-2</span>"If this was a story, what would the happy ending look like?"</li>
+        <li><span class="tag">3-5</span>"What do you think [friend] was feeling when that happened?"</li>
+        <li><span class="tag">3-5</span>"What part of this is yours to fix, and what part is theirs?"</li>
+        <li><span class="tag">All</span>"Being a good friend doesn't mean never disagreeing. It means caring even when you disagree."</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="brand">CLEAR PATH EDUCATION GROUP</span>
+    <span>Free resource · For counselor &amp; school use</span>
+  </div>
+</div>
+
+<!-- ── PAGE 3 · WHAT TO SAY (2 of 2) ──────────────── -->
+<div class="page">
+  <div class="band">
+    <h1>WHAT TO SAY — Conversation Starters</h1>
+    <span class="sub">Age-Appropriate Prompts for K–5 &nbsp;·&nbsp; 2 of 2</span>
+  </div>
+  <div class="grid">
+    <div class="card divorce">
+      <h3><span class="em">💔</span> DIVORCE &amp; FAMILY CHANGES</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"Your family is changing, but your people still love you. Who are your safe people?"</li>
+        <li><span class="tag">K-2</span>"Some things change and some things stay the same. Let's make a list of what stays the same."</li>
+        <li><span class="tag">3-5</span>"This is NOT your fault. I need you to hear that. None of this is because of anything you did."</li>
+        <li><span class="tag">3-5</span>"What questions do you have that nobody has answered yet?"</li>
+        <li><span class="tag">All</span>"You don't have to choose sides. You're allowed to love everyone."</li>
+      </ul>
+    </div>
+    <div class="card newstu">
+      <h3><span class="em">🆕</span> NEW STUDENT / TRANSITION</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"I'm so glad you're here! Can you tell me one thing you're really good at?"</li>
+        <li><span class="tag">K-2</span>"Being new is hard. Who's been nice to you so far? Let's build your friend list."</li>
+        <li><span class="tag">3-5</span>"What do you miss about your old school? What are you hoping for here?"</li>
+        <li><span class="tag">3-5</span>"I'm your person here. Whenever you need help, you come find me. Deal?"</li>
+        <li><span class="tag">All</span>"Every single person in this school was new once. You belong here already."</li>
+      </ul>
+    </div>
+    <div class="card bully">
+      <h3><span class="em">🛡️</span> BULLYING</h3>
+      <ul>
+        <li><span class="tag">K-2</span>"Thank you for telling me. That was really brave. You are not in trouble."</li>
+        <li><span class="tag">K-2</span>"Nobody gets to make you feel small. Let's talk about what happened."</li>
+        <li><span class="tag">3-5</span>"How long has this been happening? You don't have to handle this alone anymore."</li>
+        <li><span class="tag">3-5</span>"I believe you. And we're going to make a plan together so this stops."</li>
+        <li><span class="tag">All</span>"Telling someone is not tattling. Telling someone is being brave."</li>
+      </ul>
+    </div>
+    <div class="card abuse">
+      <h3><span class="em">🏠</span> SUSPECTED ABUSE / NEGLECT</h3>
+      <ul>
+        <li><span class="tag">All</span>"I'm really glad you told me. You did the right thing."</li>
+        <li><span class="tag">All</span>"This is NOT your fault. I need you to know that."</li>
+        <li><span class="tag">All</span>"My job is to keep you safe. I'm going to help."</li>
+        <li><span class="tag">All</span>"I can't promise to keep this a secret, because I care about your safety too much."</li>
+      </ul>
+      <div class="warn">⚠️ DO NOT ask leading questions. DO NOT promise confidentiality. DO document the student's exact words. DO report within 24 hours to DFPS (Texas Abuse Hotline 1-800-252-5400) or a law enforcement agency — many districts require both, and your district's own police department does not count (Texas Family Code §261.101, as amended by SB 571, 2025). Reporting is your personal duty and cannot be delegated.</div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="brand">CLEAR PATH EDUCATION GROUP</span>
+    <span>Free resource · For counselor &amp; school use</span>
+  </div>
+</div>
+
+<!-- ── PAGE 4 · WHAT NOT TO SAY ───────────────────── -->
+<div class="page">
+  <div class="band">
+    <h1>WHAT NOT TO SAY — Common Mistakes</h1>
+    <span class="sub">Replace harmful defaults with healing responses</span>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <tr><th>❌ Don't Say</th><th>Why It Hurts</th><th>✅ Say Instead</th></tr>
+      <tr><td class="no">"You're okay."</td><td class="why">Dismisses their feelings. They clearly are NOT okay.</td><td class="yes">"I can see this is really hard. I'm here."</td></tr>
+      <tr><td class="no">"Just ignore them."</td><td class="why">Tells them their pain doesn't matter and removes your responsibility.</td><td class="yes">"That sounds hurtful. Let's talk about what happened."</td></tr>
+      <tr><td class="no">"Why did you do that?"</td><td class="why">Triggers defensiveness. "Why" puts them on trial.</td><td class="yes">"Help me understand what happened."</td></tr>
+      <tr><td class="no">"I know how you feel."</td><td class="why">You don't. And it centers you instead of them.</td><td class="yes">"I can't imagine how hard this is. Tell me more."</td></tr>
+      <tr><td class="no">"Everything happens for a reason."</td><td class="why">Minimizes grief. There is no good reason a child lost someone.</td><td class="yes">"This is so unfair. I'm sorry this happened."</td></tr>
+      <tr><td class="no">"You need to be strong."</td><td class="why">Teaches them to suppress emotions. Suppressed emotions come back as behavior.</td><td class="yes">"It's okay to not be okay right now."</td></tr>
+      <tr><td class="no">"Boys don't cry." / "Big girls don't cry."</td><td class="why">Gendered emotional suppression. Harmful at every age.</td><td class="yes">"Crying means you care. That's a strength."</td></tr>
+      <tr><td class="no">"I'm disappointed in you."</td><td class="why">Shame — the #1 predictor of repeated behavior.</td><td class="yes">"I know you can do better than this. What happened?"</td></tr>
+      <tr><td class="no">"Wait until your parents hear about this."</td><td class="why">Weaponizes family. Creates fear, not growth.</td><td class="yes">"Let's figure out how to fix this. Then we'll talk to your family together."</td></tr>
+      <tr><td class="no">"You should be grateful."</td><td class="why">Dismisses their experience by comparing it to others.</td><td class="yes">"Your feelings matter, no matter what."</td></tr>
+      <tr><td class="no">"That's not a big deal."</td><td class="why">It IS a big deal to them. Minimizing = dismissing.</td><td class="yes">"I can see this matters a lot to you."</td></tr>
+      <tr><td class="no">"Just try harder."</td><td class="why">If they could, they would. Something is blocking them.</td><td class="yes">"What's getting in the way? Let's figure it out together."</td></tr>
+      <tr><td class="no">"I'm too busy right now."</td><td class="why">Tells them they're not a priority. They won't come back.</td><td class="yes">"I want to hear this. Can we meet in 10 minutes? I'll come find you."</td></tr>
+      <tr><td class="no">"Don't tell anyone."</td><td class="why">NEVER. Especially with safety concerns.</td><td class="yes">"I'm glad you told me. Some things I need to share to keep you safe."</td></tr>
+      <tr><td class="no">"At least..."</td><td class="why">Any sentence starting with "at least" minimizes.</td><td class="yes">Just listen. Sometimes silence and presence is enough.</td></tr>
+    </table>
+  </div>
+  <div class="foot">
+    <span class="brand">CLEAR PATH EDUCATION GROUP</span>
+    <span>Free resource · For counselor &amp; school use</span>
+  </div>
+</div>
+
+</body>
+</html>
