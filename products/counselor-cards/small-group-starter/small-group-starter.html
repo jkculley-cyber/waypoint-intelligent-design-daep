@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elementary Counselor's Small Group Starter Kit</title>
+<style>
+  :root {
+    --ink: #1e1b3a; --navy: #221844; --paper: #fff; --muted: #6b6885;
+    --friend: #17998a; --anger: #d64545; --worry: #7c4dcc; --family: #e07020;
+    --grief: #2f6fd0; --esteem: #d98b12; --newstu: #2e9e4f; --social: #b0369c;
+    --doc: #3a3f58;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #555; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); }
+  .page { width: 11in; height: 8.5in; background: var(--paper); position: relative; overflow: hidden; margin: 0 auto 12px; display: flex; flex-direction: column; }
+  @media print { html, body { background: #fff; } .page { margin: 0; page-break-after: always; } .page:last-child { page-break-after: avoid; } }
+  @page { size: 11in 8.5in; margin: 0; }
+
+  .band { background: var(--navy); color: #fff; padding: 0.24in 0.5in 0.2in; display: flex; align-items: baseline; justify-content: space-between; }
+  .band h1 { font-size: 20pt; letter-spacing: 0.5px; }
+  .band .sub { font-size: 10pt; color: #cfc8e8; font-weight: 600; }
+  .foot { margin-top: auto; padding: 0.12in 0.5in; border-top: 2px solid var(--navy); display: flex; justify-content: space-between; font-size: 8.5pt; color: var(--muted); font-weight: 600; letter-spacing: 0.4px; }
+  .foot .brand { color: var(--navy); }
+
+  .cover { background: var(--navy); color: #fff; justify-content: center; align-items: center; text-align: center; }
+  .cover .free { display: inline-block; background: #ffd23f; color: var(--navy); font-weight: 800; font-size: 11pt; letter-spacing: 2px; padding: 5px 22px; border-radius: 99px; margin-bottom: 0.35in; }
+  .cover h1 { font-size: 38pt; line-height: 1.12; }
+  .cover h2 { font-size: 15pt; font-weight: 600; color: #cfc8e8; margin-top: 0.22in; }
+  .cover .chips { margin-top: 0.45in; max-width: 9.2in; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .cover .chip { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.35); border-radius: 99px; padding: 7px 16px; font-size: 11pt; font-weight: 600; }
+  .cover .org { position: absolute; bottom: 0.45in; left: 0; right: 0; font-size: 11pt; letter-spacing: 3px; color: #cfc8e8; font-weight: 700; }
+
+  .grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.2in; padding: 0.22in 0.5in; }
+  .card { border: 1.5px solid; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+  .card h3 { color: #fff; font-size: 12pt; letter-spacing: 1px; padding: 0.07in 0.14in; display: flex; align-items: center; gap: 8px; }
+  .meta { display: flex; gap: 6px; padding: 0.06in 0.14in 0; flex-wrap: wrap; }
+  .meta span { font-size: 7.8pt; font-weight: 800; border-radius: 4px; padding: 2px 8px; color: #fff; }
+  .card .body { padding: 0.05in 0.14in 0.08in; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+  .lbl { font-size: 8pt; font-weight: 800; letter-spacing: 1px; color: var(--muted); margin-top: 3px; }
+  .card ul { list-style: none; }
+  .card li { font-size: 8.9pt; line-height: 1.28; padding-left: 12px; position: relative; }
+  .card li::before { content: "•"; position: absolute; left: 0; font-weight: 800; }
+  .skills { font-size: 8.9pt; line-height: 1.3; }
+  .card.friend { border-color: var(--friend); } .card.friend h3 { background: var(--friend); } .card.friend .meta span { background: var(--friend); } .card.friend li::before { color: var(--friend); }
+  .card.anger  { border-color: var(--anger); }  .card.anger h3  { background: var(--anger); }  .card.anger .meta span  { background: var(--anger); }  .card.anger li::before  { color: var(--anger); }
+  .card.worry  { border-color: var(--worry); }  .card.worry h3  { background: var(--worry); }  .card.worry .meta span  { background: var(--worry); }  .card.worry li::before  { color: var(--worry); }
+  .card.family { border-color: var(--family); } .card.family h3 { background: var(--family); } .card.family .meta span { background: var(--family); } .card.family li::before { color: var(--family); }
+  .card.grief  { border-color: var(--grief); }  .card.grief h3  { background: var(--grief); }  .card.grief .meta span  { background: var(--grief); }  .card.grief li::before  { color: var(--grief); }
+  .card.esteem { border-color: var(--esteem); } .card.esteem h3 { background: var(--esteem); } .card.esteem .meta span { background: var(--esteem); } .card.esteem li::before { color: var(--esteem); }
+  .card.newstu { border-color: var(--newstu); } .card.newstu h3 { background: var(--newstu); } .card.newstu .meta span { background: var(--newstu); } .card.newstu li::before { color: var(--newstu); }
+  .card.social { border-color: var(--social); } .card.social h3 { background: var(--social); } .card.social .meta span { background: var(--social); } .card.social li::before { color: var(--social); }
+
+  /* planning page */
+  .plan { flex: 1; display: grid; grid-template-columns: 1.35fr 1fr; gap: 0.22in; padding: 0.22in 0.5in; }
+  .panel { border: 1.5px solid var(--doc); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+  .panel h3 { background: var(--doc); color: #fff; font-size: 11.5pt; letter-spacing: 1px; padding: 0.07in 0.14in; }
+  .panel .body { padding: 0.09in 0.14in; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--navy); color: #fff; text-align: left; font-size: 8.6pt; padding: 0.04in 0.08in; letter-spacing: 0.4px; }
+  td { font-size: 8.8pt; padding: 0.052in 0.08in; border-bottom: 1px solid #e4e1f0; }
+  tr:nth-child(even) td { background: #f7f6fc; }
+  td.n { font-weight: 800; color: var(--navy); width: 0.35in; }
+  .check { font-size: 9.4pt; line-height: 1.35; display: flex; gap: 8px; margin: 2px 0; }
+  .check .box { flex: 0 0 auto; width: 11px; height: 11px; border: 1.6px solid var(--doc); border-radius: 2px; margin-top: 2.5px; }
+  .tips { margin: 0.06in 0.14in 0.1in; padding: 0.07in 0.11in; background: #e9f6ec; border: 1.5px solid var(--newstu); border-radius: 6px; font-size: 8.8pt; line-height: 1.45; color: #17632f; font-weight: 600; }
+  .stack { display: flex; flex-direction: column; gap: 0.22in; min-height: 0; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 · COVER -->
+<div class="page cover">
+  <div>
+    <div class="free">FREE RESOURCE</div>
+    <h1>Small Group<br>Starter Kit</h1>
+    <h2>8 ready-to-run elementary group topics with ASCA alignment</h2>
+    <div class="chips">
+      <span class="chip">👫 Friendship Skills</span>
+      <span class="chip">😤 Anger Management</span>
+      <span class="chip">😰 Worry Warriors</span>
+      <span class="chip">💔 Changing Families</span>
+      <span class="chip">😢 Grief &amp; Loss</span>
+      <span class="chip">⭐ Self-Esteem Builders</span>
+      <span class="chip">🆕 New Student Welcome</span>
+      <span class="chip">🧠 Social Skills</span>
+    </div>
+  </div>
+  <div class="org">CLEAR PATH EDUCATION GROUP</div>
+</div>
+
+<!-- PAGE 2 · TOPICS 1-4 -->
+<div class="page">
+  <div class="band">
+    <h1>GROUP TOPICS — Ready to Run</h1>
+    <span class="sub">ASCA-aligned &nbsp;·&nbsp; 1 of 2</span>
+  </div>
+  <div class="grid">
+    <div class="card friend">
+      <h3>👫 FRIENDSHIP SKILLS</h3>
+      <div class="meta"><span>Grades K-2</span><span>Group 4-6</span><span>6-8 sessions</span><span>ASCA B-SS 1, 2</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Name game with compliments</li>
+          <li>"What makes a good friend?" brainstorm</li>
+          <li>Friendship recipe (ingredients of friendship)</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Sharing, turn-taking, using kind words, including others</div>
+      </div>
+    </div>
+    <div class="card anger">
+      <h3>😤 ANGER MANAGEMENT</h3>
+      <div class="meta"><span>Grades K-5</span><span>Group 4-6</span><span>8 sessions</span><span>ASCA B-SS 2, 9</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Volcano drawing (when do you erupt?)</li>
+          <li>Feelings thermometer check-in</li>
+          <li>Anger iceberg (what's underneath?)</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Identifying triggers, deep breathing, walking away, using I-statements</div>
+      </div>
+    </div>
+    <div class="card worry">
+      <h3>😰 WORRY WARRIORS (ANXIETY)</h3>
+      <div class="meta"><span>Grades 2-5</span><span>Group 4-6</span><span>6-8 sessions</span><span>ASCA B-SS 2, 7</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Worry jar (write worries, put them away)</li>
+          <li>5-4-3-2-1 grounding</li>
+          <li>"Is this a BIG worry or a little worry?"</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Grounding techniques, positive self-talk, separating real vs. imagined fears</div>
+      </div>
+    </div>
+    <div class="card family">
+      <h3>💔 CHANGING FAMILIES (DIVORCE)</h3>
+      <div class="meta"><span>Grades K-5</span><span>Group 4-6</span><span>6 sessions</span><span>ASCA B-SS 2, 7, 8</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Two-homes drawing</li>
+          <li>"Things that stay the same" list</li>
+          <li>Feelings check-in with emojis</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Expressing feelings, understanding it's not their fault, coping with change</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+<!-- PAGE 3 · TOPICS 5-8 -->
+<div class="page">
+  <div class="band">
+    <h1>GROUP TOPICS — Ready to Run</h1>
+    <span class="sub">ASCA-aligned &nbsp;·&nbsp; 2 of 2</span>
+  </div>
+  <div class="grid">
+    <div class="card grief">
+      <h3>😢 GRIEF &amp; LOSS</h3>
+      <div class="meta"><span>Grades K-5</span><span>Group 3-5</span><span>6-8 sessions</span><span>ASCA B-SS 2, 7</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Memory box (bring something that reminds you)</li>
+          <li>Feelings weather report</li>
+          <li>Read "The Invisible String"</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Naming grief feelings, sharing memories, understanding grief is not linear</div>
+      </div>
+    </div>
+    <div class="card esteem">
+      <h3>⭐ SELF-ESTEEM BUILDERS</h3>
+      <div class="meta"><span>Grades K-5</span><span>Group 5-6</span><span>6 sessions</span><span>ASCA B-SS 1, 4</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Superpower shield (draw your strengths)</li>
+          <li>Compliment circle</li>
+          <li>"I am..." poem</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Positive self-talk, identifying strengths, growth mindset</div>
+      </div>
+    </div>
+    <div class="card newstu">
+      <h3>🆕 NEW STUDENT WELCOME</h3>
+      <div class="meta"><span>Grades K-5</span><span>Group 3-5</span><span>4 sessions</span><span>ASCA B-SS 1, 2, 6</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>School scavenger hunt</li>
+          <li>"Two truths and a wish"</li>
+          <li>Buddy system pairing</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Finding resources, making friends, asking for help</div>
+      </div>
+    </div>
+    <div class="card social">
+      <h3>🧠 SOCIAL SKILLS</h3>
+      <div class="meta"><span>Grades K-3</span><span>Group 4-6</span><span>8 sessions</span><span>ASCA B-SS 2, 3, 4</span></div>
+      <div class="body">
+        <div class="lbl">OPENING ACTIVITIES</div>
+        <ul>
+          <li>Eye contact game</li>
+          <li>Conversation starter cards</li>
+          <li>Role-play phone call with a friend</li>
+        </ul>
+        <div class="lbl">KEY SKILLS</div>
+        <div class="skills">Listening, eye contact, reading body language, conversation skills</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+<!-- PAGE 4 · PLANNING TEMPLATE -->
+<div class="page">
+  <div class="band">
+    <h1>SESSION PLANNING TEMPLATE</h1>
+    <span class="sub">Set up · Plan · Track progress</span>
+  </div>
+  <div class="plan">
+    <div class="stack">
+      <div class="panel">
+        <h3>📋 GROUP SETUP CHECKLIST</h3>
+        <div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;">
+          <div class="check"><span class="box"></span>Topic selected from card</div>
+          <div class="check"><span class="box"></span>Students identified (referral, teacher rec, self-referral)</div>
+          <div class="check"><span class="box"></span>Parent permission slips sent</div>
+          <div class="check"><span class="box"></span>Schedule set (same day/time each week)</div>
+          <div class="check"><span class="box"></span>Room reserved</div>
+          <div class="check"><span class="box"></span>Materials gathered</div>
+          <div class="check"><span class="box"></span>Teacher notification sent</div>
+          <div class="check"><span class="box"></span>Pre-assessment created</div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <h3>🗓️ SESSION PLANNING GRID</h3>
+        <div class="body">
+          <table>
+            <tr><th>#</th><th>Date</th><th>Topic / Focus</th><th>Opening (5 min)</th><th>Main Activity (20 min)</th><th>Check-out (5 min)</th></tr>
+            <tr><td class="n">1</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">2</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">3</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">4</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">5</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">6</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">7</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="n">8</td><td></td><td></td><td></td><td></td><td></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel" style="flex:1">
+        <h3>📈 PROGRESS TRACKING</h3>
+        <div class="body">
+          <table>
+            <tr><th>Student</th><th>Pre (1-5)</th><th>Mid (1-5)</th><th>Post (1-5)</th><th>Growth</th></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>💡 QUICK TIPS</h3>
+        <div class="tips">
+          • Keep groups to 30 minutes for K-2, 45 minutes for 3-5<br>
+          • Same day, same time, same room = stability<br>
+          • Confidentiality rule: what we say here stays here (except safety)<br>
+          • End each session with a positive: one thing you're proud of today
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">CLEAR PATH EDUCATION GROUP</span><span>Free resource · For counselor &amp; school use</span></div>
+</div>
+
+</body>
+</html>
