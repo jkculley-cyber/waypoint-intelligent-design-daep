@@ -1,5 +1,5 @@
 # Session Context — Waypoint
-> Last updated: 2026-07-28 (Session CC44 — **Counselor TpT card line rebuilt + SB 571 legal sweep across ALL products + Beacon secondary verified pilot-ready + opening backlog cleared.** Trigger: "focus will be beacon and counselor material on TPT" → Kim reported the Conversation Starters TpT product broken (March PDF was a mojibake/truncated Excel export with TpT-forbidden footer links; the listing's download was the raw .xlsx) → rebuilt as an HTML→Puppeteer master (`products/counselor-cards/conversation-starters/`, 4-page landscape, no links). **SB 571 sweep (Kim: "check every reference to cps reporting ACROSS ALL PRODUCTS... 24 hours not 48"):** verified against the enrolled bill + TEA TAA letter + TASB — TFC §261.101 professional report now due in **24 hours** (was 48), non-delegable; **"law enforcement agency" = DPS/municipal PD/county sheriff/county constable ONLY — a school district police department does NOT count (TEA guidance), so telling the SRO does not discharge the duty**; statute says DFPS **or** LEA, Kim's district requires **both** → product language states the statute + "many districts require BOTH — follow your district policy"; abuse definition expanded to sexual conduct harmful to a child incl. **Penal Code §21.12** improper educator-student relationship. Swept 4 repos (text) + **56 binaries** (subagent extraction): fixed Beacon TemplatesPage + CrisisModal ([beacon#16](https://github.com/jkculley-cyber/clearpath-beacon/pull/16), [beacon#17](https://github.com/jkculley-cyber/clearpath-beacon/pull/17), both MERGED + live-bundle-verified; #17 also adds a required `le_called` documentation step to the abuse workflow — old events' integrity hashes unaffected), both counselor cards (HTML+PDF+xlsx via sharedStrings zip surgery), everything else clean. ⚠️ March `TPT/files (4|5|6).zip` archives still hold stale 48-hour copies — never re-upload from them. **⚠️ A parallel Claude session concurrently rebuilt all 5 counselor cards into `products/counselor-cards/` (benign — verified its crisis card correct, no conflicts; dedupe if it logs its own closing).** **Crisis Response Card finalized** (5 render iterations, page-by-page verified): cover now **"For Texas Public School Counselors, K–12"** (Kim killed elementary framing) + gold "NEW SB 571: Why Telling Your SRO Isn't Enough" thumbnail chip; SEO listing copy with the SRO differentiator + 20 keywords written. **Beacon secondary = PILOT-READY** (a counselor is ready to pilot): test:bands 1,914/0 ×3, build clean, two full fresh-install browser walkthroughs (High + Middle bands, 10+ surfaces incl. CCMR write + crisis workflow), zero console errors; **found+fixed a real bug — group Avg Attendance always 0%** (seeder wrote no attendance rows AND ReportsPage counted unmarked sessions as all-absent, which depressed real averages too; fixed in #16, verified 83%/100%); pilot URL **beacon.clearpathedgroup.com**. **Opening backlog cleared:** bundle-PDF leak verified fully closed (edge cache expired); **X-2 monitor merged ([#34](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/34)) — first live run 14/14 incl. leak-guards** (CC43's GitHub-500 blocker gone); stranded CC43 closing docs merged ([#35](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/35)). **User env:** Kim's Desktop is OneDrive-redirected (`C:\Users\jkcul\OneDrive\Desktop` — plain Desktop is invisible; memory saved); deliverables staged in `OneDrive\Desktop\TpT-Upload-Ready\` (both PDFs + listing copy — **Kim's manual step: replace the TpT listings' files, PDF not xlsx**). 2 decisions logged (SB 571 content rules; counselor-card HTML-master pipeline). **Watch: Nicole's Beacon license expires 2026-08-15 — confirm the renewal drip reaches her.** **Active risks: X-2 (live, unproven — needs 7 clean days + alert-path proof) + B-8 (parked).** Prior CC43 entry preserved below.)
+> Last updated: 2026-08-30 (Session CC45 — **Beacon pilot feedback shipped: Nicole's four scheduling requests + Kim's two follow-ups, both merged and live; a silent SB 179 undercount found and fixed; Cloudflare deploy-check noise diagnosed.** Trigger: "run start process we will work on Beacon" → Nicole's message from her first real week of scheduling. **[beacon#18](https://github.com/jkculley-cyber/clearpath-beacon/pull/18)** (MERGED, live): recurrence on any set of weekdays with day chips + presets and a live count; the Add-to-Schedule modal body scrolls with the action row PINNED so Cancel/Add can no longer be pushed off-screen; new **Whole Class Lesson** event type (also added to the ICS export labels so it re-imports as Guidance Curriculum); Calendar Import gained its own **date range** defaulting to the current school year, because Google's export genuinely has no range option. **The find nobody reported:** the importer ignored `RRULE` entirely, so a weekly lunch duty imported as ONE entry — a silent UNDERCOUNT inside the feature sold as SB 179 evidence. Recurring events now expand to one entry per occurrence, bounded by the import window; unexpandable rules are counted and surfaced. 34 offline assertions in `test/calendar-import.test.mjs`; `npm test` now runs bands (1,914) + calendar (34). **[beacon#19](https://github.com/jkculley-cyber/clearpath-beacon/pull/19)** (MERGED, live), from Kim: Repeats now applies to **every** entry type (individual/group/lesson/event), sessions share a `series_id`, and deleting a series CLEARS THE AUTO-LOGGED TIME for every session removed (a stranded entry would inflate the 80/20 ring); nothing auto-logs on creation, only on Completed. **Whole class lesson promoted to a TOP-LEVEL Type** beside Individual and Group — guidance curriculum is not an "other event" — and removed from the Other-event list so there is one door. Kim's "I'm not seeing changes" was NOT caching (service worker is network-first, verified live in a real browser) — every schedule change sat behind the Other-event branch, which is what motivated the follow-ups. **Cloudflare:** bot PR #1 CLOSED not merged (it would have migrated the deploy OFF Pages onto Workers); the "Workers Builds" check is PHANTOM (0-second failure on every PR while Pages deploys fine) and is not a merge blocker — disconnecting it is Kim's manual step; `CF_API_TOKEN` in `.env.local` is INVALID.)
 >
 > 2026-07-24 (Session CC43 — **Beacon secondary/grade-bands shipped + an adversarial self-audit that caught a critical data bug + a customer-dunning incident + a live revenue leak + X-2 monitoring built.** Trigger: Nicole presented Beacon to her district and interest surfaced in a **secondary** version. **Beacon grade bands ([beacon#15](https://github.com/jkculley-cyber/clearpath-beacon/pull/15), MERGED, 8 commits):** decision was **one product with a grade band, not a separate build** — three audits agreed "elementary" lived in ~5 hardcoded spots, not the architecture, and schemaless IndexedDB meant **no migration** (existing users default to elementary, zero disruption). Bands = Elementary K-5 / Middle 6-8 / High 9-12, **plus `combined`** (6-12 / K-8 / K-12 served ranges) added after Kim flagged "I have 6-12 students on my campus." **Same $79/yr across all bands.** SB 179 was a *feature* not a blocker — Kim confirmed the 80/20 rule binds all TX public-school counselors, so the compliance ring + attested PDF port unchanged. Phase 2 = secondary content (16 icebreakers, 12 scenarios, 8 mindfulness, 4 six-session kits, 12 lessons, band-aware delivery, no fabricated statutes). Phase 3 = **Post-Secondary (CCMR) Advising Log** (new `ccmr_advising` store, DB v7→v8) — documentation, deliberately NOT a scheduler/SIS. **Adversarial self-audit (graded B+ → A− after fixes)** found 10 issues, 6 real: **CRITICAL** year-end Promote & Archive drove the ladder off the *unsaved* Settings selector (could graduate the wrong cohort); **HIGH** the transition dialog claimed it would promote students it then silently skipped; **HIGH** IndexedDB v7→v8 had no `onblocked` → a second tab **hung the app forever** — *which I had explicitly dismissed in a commit message as "a dev-only artifact, not a code defect." It was a code defect.* Testing gap closed structurally: `npm run test:bands` = **1,914 assertions**, 14 counselor states × every helper + **all 196 state→state transitions** (my verification had covered states, not the moves between them). **INCIDENT ([#29](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/29), MERGED):** the store drip **emailed a paying Beacon customer a "we haven't seen your payment" nudge on 2026-07-19** — Nicole (`nhill@magnoliaisd.org`, active license to 2026-08-15) re-registered while *demoing the store to her district*, so the lead sat `status=new` and looked unpaid. Root cause: `computeStoreNudges` never asked whether the registrant was already a customer, so ANY customer walking the registration flow gets dunned. Fixed (skip active-license holders; **fail the run rather than send** if the license lookup errors; 23 regression tests replaying the incident). Lead #48 → `closed`. **LEAK ([#30](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/30), MERGED):** all 4 paid teacher bundles ($7-$12, Melissa's) were publicly downloadable. License-gating was the *wrong* fix — **no bundle keys have ever been issued** (gating would hide them behind credentials nobody has) and `/activate` is a **client-side** gate revealing a link to a still-public file. They were orphaned artifacts; `git mv`'d to `products/teacher-bundles/` (outside the Pages build root) + fulfillment README. **⚠️ Removing from git wasn't enough — the Cloudflare edge cache kept serving 2 of 4 for hours; Kim opted to wait ~4h for natural expiry then revisit.** **[#31](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/31) (MERGED):** Toolkit download saved with NO file extension (CF strips `.html`, no Content-Disposition, bare `download` attr) so it wouldn't open on double-click — *and I corrected my own false "0 bytes / broken" report, which was `curl` without `-L` measuring the 308*. **X-2 MONITORING scoped ([#32](https://github.com/jkculley-cyber/waypoint-intelligent-design-daep/pull/32), MERGED) + BUILT (branch `feat/x2-uptime-monitor` `df36ae0`, pushed, **PR BLOCKED — GitHub returns HTTP 500 on PR creation**, 8 attempts across GraphQL/REST/curl and 2 branches; reads 200, web UI 500s too).** Design rests on **a bare 200 proves nothing** — CC31 served the Waypoint app at the marketing domain, B-2's `/api/*` returned HTML, unknown paths return the 136,780-byte fallback; a status-only monitor catches none. 14 content-asserting checks (homepage must NOT contain "Waypoint DAEP"), read-only/no-auth, standalone (does NOT call a Pages Function — if the site is down that Function is down), transient-tolerant. 28 offline tests replay CC31+B-2. **First live run 12/14 — it immediately caught the still-cached bundle leak.** **X-2 stays Active** until 7 unattended clean days + the alert path proven. **B-8 logged + parked:** cloud has **18** tables vs local's **25** — no cloud table for crest/crisis/follow-ups/needs-assessments/parent-contacts/record-history/note-templates/student-goals/settings, all shipped while cloud was disabled; migration `006_grade_bands.sql` closes only the band half and is **written but NOT applied**. **Active risks: X-2 (built, unproven) + B-8 (parked).** Prior CC42/CC41 entries preserved below.)
 >
@@ -173,53 +173,46 @@
 
 ## Next Session Priority
 
-### Tier 1 — Phase 2 Edge Function gateway carryover (CC24, blocking the hourly pipeline)
+> Rewritten CC45. The previous contents were the CC24-era Edge Function gateway list, long since
+> done — it had gone stale enough to be misleading. Anything still live from it is carried below.
 
-1. **Confirm Edge Function gateway released.** Run from worktree:
-   ```bash
-   export $(grep -v '^#' .env.local | xargs)
-   curl -s -o /dev/null -w "HTTP %{http_code}\n" -X POST "$VITE_SUPABASE_URL/functions/v1/verify-and-backup-audit-chain" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Content-Type: application/json" -d '{}'
-   ```
-   - If 200 or 500 — gateway released, function code is being reached. Proceed to step 2.
-   - If 401 INVALID_CREDENTIALS — gateway still rejecting. Try one CLI redeploy: `npx supabase functions deploy verify-and-backup-audit-chain --project-ref kvxecksvkimcgwhxxyhw --no-verify-jwt`. If still blocked, dashboard toggle was reverted — re-flip it OFF.
+### Tier 1 — Beacon pilot (Nicole is actively using it; this is the best signal we have)
 
-2. **Add `supabase/config.toml` to make verify_jwt=false durable across deploys** (so CC24's manual dashboard toggle isn't undone):
-   ```toml
-   [functions.verify-and-backup-audit-chain]
-   verify_jwt = false
-   ```
-   Redeploy to confirm the config picks up.
+1. **Kim's manual step — disconnect the phantom Workers build integration.** Cloudflare dashboard →
+   Workers & Pages → the `clearpath-beacon` **Worker** (NOT the Pages project of the same name) →
+   Settings → Build → Disconnect the repo. It posts a 0-second FAILING check on every Beacon PR
+   while Pages deploys fine, so PR checks currently mean nothing. Also replace `CF_API_TOKEN` in
+   `.env.local` — it is invalid (`/user/tokens/verify` returns "Invalid API Token").
+2. **Tell Nicole her 80/20 numbers will move.** Recurring calendar events now import as every
+   occurrence instead of one. If she already imported the 2024-onward set, those entries are still
+   in her time log and probably want clearing before she re-imports.
+3. **Watch for her next feedback round.** Her licence renews **2026-09-14** (monthly $8).
+4. Beacon Phase-3 follow-ons still unbuilt: 4-year graduation checklist, caseload-by-alpha,
+   attested advising-log PDF. Secondary marketing copy on the site is still missing.
 
-3. **Re-run smoke + drift:** `node scripts/smoke-test-082-audit-backup.mjs` (expect 9/9 PASS) + `node scripts/check-schema-drift.mjs --verbose` (expect 13/13 PASS).
+### Tier 2 — Monitoring
 
-4. **Verify hourly cron is producing Storage objects:** After the gateway clears + the top-of-the-next-hour mark, query `SELECT name, created_at FROM storage.objects WHERE bucket_id='audit-edit-log-backups' ORDER BY created_at DESC LIMIT 10;` — expect chain_head.json + rows.jsonl pairs landing hourly.
+5. **X-2 DoD:** 7 unattended clean days is SATISFIED (54 runs, zero failures, verified CC45). Only
+   the alert-path proof remains — break an assertion deliberately, confirm the alert fires, then
+   Active → Watch.
 
-### Tier 2 — Phase 3 UI surface (now unblocked)
+### Tier 3 — Carried from CC44
 
-5. **Waypoint Admin "Chain Integrity" page.** Reads `audit_chain_backup_state` singleton. Surfaces: last verified at, head hash (truncated + copy button), chain length, broken_count + mismatched_count + orphaned_count (each green if 0, red otherwise), staleness alarm (red if last_run_at > 4h ago at hourly cadence), Storage object listing for the last 7 days. Wire into existing WaypointAdminPage tab structure. Closes the §99.10 footer copy upgrade: "tampering detectable by periodic audit" → "verified hourly via SHA-256 hash chain externally attested to Supabase Storage; head hash signature: `<truncated>`".
+6. TpT uploads from `OneDrive\Desktop\TpT-Upload-Ready\` (Kim, manual).
+7. The other 3 counselor cards (Referral-Triage, SB179, Small-Group) need the K-12 + SEO listing
+   treatment, and the parallel session that rebuilt them never logged a closing.
+8. Delete/re-zip the stale March `TPT/files (4|5|6).zip` archives — they still hold 48-hour copies.
+9. B-8 (Beacon cloud parity) parked; `sessions.series_id` is one more local-only field to carry over.
+   CC41 TEC citation pass on the 5 docx still open.
 
-### Tier 3 — Commercial track (unchanged from CC23)
+### Tier 4 — Commercial track (unchanged)
 
-6. Source-code escrow filing (Iron Mountain / NCC Group). Marlene's #1.
-7. Written §37 / §300.530 legal opinion (Walsh Gallegos / Thompson & Horton / Eichelbaum Wardell). Marlene's #2.
-8. SOC 2 Type 1 readiness assessment. Chen condition 3.
-9. Secondary engineer in MSA + E&O insurance certificate. Chen condition 4.
-10. First reference district in production for one full SY.
-11. Skyward / ed-Fi / OneRoster connector for PEIMS-validated export.
-
-### Tier 4 — CC21 Apex carryover (unchanged)
-
-12. Anthropic credits depleted — coaching-draft pipeline blocked.
-13. R4-2 magic-link smoke testable without credits.
-14. R4-3 deploy verification — `apex-audio-cleanup` 500.
-15. Apex token-budget-per-tier (~½ day).
-16. Beacon district plumbing — demand-pull parked until Nicole's Magnolia ISD conversation.
-
-### CC24 Phase 4 backlog (deferred)
-
-17. **Truly external chain head backup** to AWS S3 / GCP Cloud Storage with separate IAM. The Phase 2 Storage bucket is still deletable by Supabase project-owner dashboard access; Phase 4 escapes that trust root. Cost: AWS/GCP credential management, ~$1/month storage, ~1 day engineering. Defer until a procurement conversation demands it (Chen SOC 2 Type 2 or a hostile-CIO probe).
+10. Source-code escrow filing. Written §37 / §300.530 legal opinion. SOC 2 Type 1 readiness.
+    Secondary engineer in MSA + E&O certificate. First reference district for a full SY.
+    Skyward / ed-Fi / OneRoster connector for PEIMS-validated export.
 
 ---
+
 
 ## (Older priorities below — preserved for context)
 
